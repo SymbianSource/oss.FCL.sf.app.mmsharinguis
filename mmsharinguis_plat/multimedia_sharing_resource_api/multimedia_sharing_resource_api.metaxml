@@ -1,0 +1,17 @@
+<?xml version="1.0" ?>
+<api id="9817c873b1d66fe10873eafc0cb1f681" dataversion="2.0">
+  <name>Multimedia Sharing Resource API</name>
+  <description>To provide properties defining the availability of required resources</description>
+  <type>c++</type>
+  <collection>mmsharing</collection>
+  <libs>
+  </libs>
+  <release category="platform"/>
+  <attributes>
+     <!-- This indicates wether the api provedes separate html documentation -->
+     <!-- or is the additional documentation generated from headers. -->
+     <!-- If you are unsuere then the value is "no" -->
+     <htmldocprovided>no</htmldocprovided>
+     <adaptation>no</adaptation>
+  </attributes>
+</api>

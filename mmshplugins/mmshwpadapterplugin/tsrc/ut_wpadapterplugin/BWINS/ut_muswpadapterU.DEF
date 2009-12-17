@@ -1,0 +1,64 @@
+EXPORTS
+	?CreateTestSuiteL@@YAPAVMEUnitTest@@XZ @ 1 NONAME ; class MEUnitTest * CreateTestSuiteL(void)
+	??1CRepository@@UAE@XZ @ 2 NONAME ; CRepository::~CRepository(void)
+	?StartTransaction@CRepository@@QAEHW4TTransactionMode@1@@Z @ 3 NONAME ; int CRepository::StartTransaction(enum CRepository::TTransactionMode)
+	?ProfileL@CSIPProfileRegistryBase@@QAEPAVCSIPProfile@@K@Z @ 4 NONAME ; class CSIPProfile * CSIPProfileRegistryBase::ProfileL(unsigned long)
+	?SetNameL@CWPCharacteristic@@QAEXABVTDesC16@@@Z @ 5 NONAME ; void CWPCharacteristic::SetNameL(class TDesC16 const &)
+	?Name@CWPParameter@@QBEABVTDesC16@@XZ @ 6 NONAME ; class TDesC16 const & CWPParameter::Name(void) const
+	?Connection@CSIP@@QBEPAVCSIPConnection@@K@Z @ 7 NONAME ; class CSIPConnection * CSIP::Connection(unsigned long) const
+	?NewLC@CRepository@@SAPAV1@VTUid@@@Z @ 8 NONAME ; class CRepository * CRepository::NewLC(class TUid)
+	?Create@CRepository@@QAEHKABVTDesC8@@@Z @ 9 NONAME ; int CRepository::Create(unsigned long, class TDesC8 const &)
+	?NewL@CSIPManagedProfileRegistry@@SAPAV1@AAVMSIPProfileRegistryObserver@@@Z @ 10 NONAME ; class CSIPManagedProfileRegistry * CSIPManagedProfileRegistry::NewL(class MSIPProfileRegistryObserver &)
+	??1CSIPProfileRegistryBase@@UAE@XZ @ 11 NONAME ; CSIPProfileRegistryBase::~CSIPProfileRegistryBase(void)
+	?DefaultProfileL@CSIPProfileRegistryBase@@QAEPAVCSIPProfile@@XZ @ 12 NONAME ; class CSIPProfile * CSIPProfileRegistryBase::DefaultProfileL(void)
+	?ProfilesL@CSIPProfileRegistryBase@@QAEXABVTDesC8@@AAV?$RPointerArray@VCSIPProfile@@@@@Z @ 13 NONAME ; void CSIPProfileRegistryBase::ProfilesL(class TDesC8 const &, class RPointerArray<class CSIPProfile> &)
+	?NewL@CSIP@@SAPAV1@ABVTUid@@AAVMSIPObserver@@@Z @ 14 NONAME ; class CSIP * CSIP::NewL(class TUid const &, class MSIPObserver &)
+	??1CWPAdapter@@UAE@XZ @ 15 NONAME ; CWPAdapter::~CWPAdapter(void)
+	?Create@CRepository@@QAEHKH@Z @ 16 NONAME ; int CRepository::Create(unsigned long, int)
+	?GetParameter@CSIPProfile@@QBEHKAAPBVTDesC8@@@Z @ 17 NONAME ; int CSIPProfile::GetParameter(unsigned long, class TDesC8 const * &) const
+	??1CSIPProfileRegistry@@UAE@XZ @ 18 NONAME ; CSIPProfileRegistry::~CSIPProfileRegistry(void)
+	?SetNameL@CWPParameter@@QAEXABVTDesC16@@@Z @ 19 NONAME ; void CWPParameter::SetNameL(class TDesC16 const &)
+	?GetParameter@CSIPProfile@@QBEHKAAPBVMDesC8Array@@@Z @ 20 NONAME ; int CSIPProfile::GetParameter(unsigned long, class MDesC8Array const * &) const
+	?NewL@CSIPProfileRegistry@@SAPAV1@AAVCSIP@@AAVMSIPProfileRegistryObserver@@@Z @ 21 NONAME ; class CSIPProfileRegistry * CSIPProfileRegistry::NewL(class CSIP &, class MSIPProfileRegistryObserver &)
+	?NewL@CRepository@@SAPAV1@VTUid@@@Z @ 22 NONAME ; class CRepository * CRepository::NewL(class TUid)
+	?SetParameter@CSIPManagedProfile@@QAEHKABVMDesC8Array@@@Z @ 23 NONAME ; int CSIPManagedProfile::SetParameter(unsigned long, class MDesC8Array const &)
+	?Get@CRepository@@QAEHKAAH@Z @ 24 NONAME ; int CRepository::Get(unsigned long, int &)
+	?SupportedSecurityMechanismsL@CSIP@@QBEPAVCDesC8Array@@XZ @ 25 NONAME ; class CDesC8Array * CSIP::SupportedSecurityMechanismsL(void) const
+	?ProfilesL@CSIPProfileRegistryBase@@QAEXABVTSIPProfileTypeInfo@@AAV?$RPointerArray@VCSIPProfile@@@@@Z @ 26 NONAME ; void CSIPProfileRegistryBase::ProfilesL(class TSIPProfileTypeInfo const &, class RPointerArray<class CSIPProfile> &)
+	?Type@CSIPProfile@@QBEABVTSIPProfileTypeInfo@@XZ @ 27 NONAME ; class TSIPProfileTypeInfo const & CSIPProfile::Type(void) const
+	?NegotiatedSecurityMechanismL@CSIP@@QAEPAVHBufC8@@ABVTDesC8@@@Z @ 28 NONAME ; class HBufC8 * CSIP::NegotiatedSecurityMechanismL(class TDesC8 const &)
+	?GetParameter@CSIPProfile@@QBEHKAAK@Z @ 29 NONAME ; int CSIPProfile::GetParameter(unsigned long, unsigned long &) const
+	?SaveL@CSIPManagedProfileRegistry@@QAEXAAVCSIPProfile@@@Z @ 30 NONAME ; void CSIPManagedProfileRegistry::SaveL(class CSIPProfile &)
+	?Set@CRepository@@QAEHKH@Z @ 31 NONAME ; int CRepository::Set(unsigned long, int)
+	??1CSIP@@UAE@XZ @ 32 NONAME ; CSIP::~CSIP(void)
+	??1CSIPManagedProfile@@UAE@XZ @ 33 NONAME ; CSIPManagedProfile::~CSIPManagedProfile(void)
+	?Get@CRepository@@QAEHKAAVTDes16@@@Z @ 34 NONAME ; int CRepository::Get(unsigned long, class TDes16 &)
+	?SetValueL@CWPParameter@@QAEXABVTDesC16@@@Z @ 35 NONAME ; void CWPParameter::SetValueL(class TDesC16 const &)
+	?FindL@CRepository@@QAEHKKAAV?$RArray@K@@@Z @ 36 NONAME ; int CRepository::FindL(unsigned long, unsigned long, class RArray<unsigned long> &)
+	?NewLC@CSIPProfileRegistry@@SAPAV1@AAVCSIP@@AAVMSIPProfileRegistryObserver@@@Z @ 37 NONAME ; class CSIPProfileRegistry * CSIPProfileRegistry::NewLC(class CSIP &, class MSIPProfileRegistryObserver &)
+	?NewL@CWPParameter@@SAPAV1@XZ @ 38 NONAME ; class CWPParameter * CWPParameter::NewL(void)
+	??1CSIPProfile@@UAE@XZ @ 39 NONAME ; CSIPProfile::~CSIPProfile(void)
+	?InsertL@CWPCharacteristic@@QAEXPAVMWPElement@@@Z @ 40 NONAME ; void CWPCharacteristic::InsertL(class MWPElement *)
+	?IsSigCompSupportedL@CSIP@@QBEHXZ @ 41 NONAME ; int CSIP::IsSigCompSupportedL(void) const
+	?NewLC@CSIP@@SAPAV1@ABVTUid@@AAVMSIPObserver@@@Z @ 42 NONAME ; class CSIP * CSIP::NewLC(class TUid const &, class MSIPObserver &)
+	?ProfilesL@CSIPProfileRegistryBase@@QAEXAAV?$RPointerArray@VCSIPProfile@@@@@Z @ 43 NONAME ; void CSIPProfileRegistryBase::ProfilesL(class RPointerArray<class CSIPProfile> &)
+	?NewLC@CWPParameter@@SAPAV1@XZ @ 44 NONAME ; class CWPParameter * CWPParameter::NewLC(void)
+	?AcceptL@CWPCharacteristic@@QAEXAAVMWPVisitor@@@Z @ 45 NONAME ; void CWPCharacteristic::AcceptL(class MWPVisitor &)
+	?Set@CRepository@@QAEHKABVTDesC16@@@Z @ 46 NONAME ; int CRepository::Set(unsigned long, class TDesC16 const &)
+	?SetID@CWPParameter@@QAEXH@Z @ 47 NONAME ; void CWPParameter::SetID(int)
+	?EnableL@CSIPProfileRegistry@@QAEXAAVCSIPProfile@@AAVMSIPConnectionObserver@@@Z @ 48 NONAME ; void CSIPProfileRegistry::EnableL(class CSIPProfile &, class MSIPConnectionObserver &)
+	?IsEnabled@CSIPProfileRegistry@@QBEHABVCSIPProfile@@@Z @ 49 NONAME ; int CSIPProfileRegistry::IsEnabled(class CSIPProfile const &) const
+	??1CSIPManagedProfileRegistry@@UAE@XZ @ 50 NONAME ; CSIPManagedProfileRegistry::~CSIPManagedProfileRegistry(void)
+	?GetParameter@CSIPProfile@@QBEHKAAH@Z @ 51 NONAME ; int CSIPProfile::GetParameter(unsigned long, int &) const
+	?Value@CWPParameter@@QBEABVTDesC16@@XZ @ 52 NONAME ; class TDesC16 const & CWPParameter::Value(void) const
+	?ID@CWPParameter@@QBEHXZ @ 53 NONAME ; int CWPParameter::ID(void) const
+	?NewLC@CSIPManagedProfileRegistry@@SAPAV1@AAVMSIPProfileRegistryObserver@@@Z @ 54 NONAME ; class CSIPManagedProfileRegistry * CSIPManagedProfileRegistry::NewLC(class MSIPProfileRegistryObserver &)
+	?LastRegistrationError@CSIPProfileRegistryBase@@QBEHABVCSIPProfile@@@Z @ 55 NONAME ; int CSIPProfileRegistryBase::LastRegistrationError(class CSIPProfile const &) const
+	?SupportedProfileTypesL@CSIPProfileRegistryBase@@QAEXAAV?$RArray@VTSIPProfileTypeInfo@@@@@Z @ 56 NONAME ; void CSIPProfileRegistryBase::SupportedProfileTypesL(class RArray<class TSIPProfileTypeInfo> &)
+	?FindEqL@CRepository@@QAEHKKABVTDesC8@@AAV?$RArray@K@@@Z @ 57 NONAME ; int CRepository::FindEqL(unsigned long, unsigned long, class TDesC8 const &, class RArray<unsigned long> &)
+	?Name@CWPCharacteristic@@QBEABVTDesC16@@XZ @ 58 NONAME ; class TDesC16 const & CWPCharacteristic::Name(void) const
+	?Disable@CSIPProfileRegistry@@QAEHAAVCSIPProfile@@@Z @ 59 NONAME ; int CSIPProfileRegistry::Disable(class CSIPProfile &)
+	?SIP@CSIPProfileRegistry@@QBEAAVCSIP@@XZ @ 60 NONAME ; class CSIP & CSIPProfileRegistry::SIP(void) const
+	?Delete@CRepository@@QAEHKKAAK@Z @ 61 NONAME ; int CRepository::Delete(unsigned long, unsigned long, unsigned long &)
+	?CommitTransaction@CRepository@@QAEHAAK@Z @ 62 NONAME ; int CRepository::CommitTransaction(unsigned long &)
+

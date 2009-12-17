@@ -1,0 +1,90 @@
+EXPORTS
+	_ZN14CMusEngSession10SetVolumeLEi @ 1 NONAME
+	_ZN14CMusEngSession11IsMicMutedLEv @ 2 NONAME
+	_ZN14CMusEngSession11VolumeDownLEv @ 3 NONAME
+	_ZN14CMusEngSession18EnableLoudspeakerLEii @ 4 NONAME
+	_ZN14CMusEngSession23SetAudioRoutingObserverEP27MMusEngAudioRoutingObserver @ 5 NONAME
+	_ZN14CMusEngSession24AudioRoutingCanBeChangedEv @ 6 NONAME
+	_ZN14CMusEngSession8MuteMicLEi @ 7 NONAME
+	_ZN14CMusEngSession8SetRectLERK5TRect @ 8 NONAME
+	_ZN14CMusEngSession9VolumeUpLEv @ 9 NONAME
+	_ZN16TMusEngUriParser7UriTypeEv @ 10 NONAME
+	_ZN16TMusEngUriParser8GetUri8LEv @ 11 NONAME
+	_ZN16TMusEngUriParser9GetUri16LEi @ 12 NONAME
+	_ZN16TMusEngUriParser9ParseUriLEv @ 13 NONAME
+	_ZN16TMusEngUriParserC1ERK7TDesC16 @ 14 NONAME
+	_ZN16TMusEngUriParserC2ERK7TDesC16 @ 15 NONAME
+	_ZN17CMusEngMceSession10SetVolumeLEi @ 16 NONAME
+	_ZN17CMusEngMceSession10TerminateLEv @ 17 NONAME
+	_ZN17CMusEngMceSession11VolumeDownLEv @ 18 NONAME
+	_ZN17CMusEngMceSession12OrientationLEv @ 19 NONAME
+	_ZN17CMusEngMceSession14ContainsAudioLEv @ 20 NONAME
+	_ZN17CMusEngMceSession14EnableDisplayLEi @ 21 NONAME
+	_ZN17CMusEngMceSession15SetOrientationLENS_19TDisplayOrientationE @ 22 NONAME
+	_ZN17CMusEngMceSession5MuteLEv @ 23 NONAME
+	_ZN17CMusEngMceSession7UnmuteLEv @ 24 NONAME
+	_ZN17CMusEngMceSession8IsMutedLEv @ 25 NONAME
+	_ZN17CMusEngMceSession9VolumeUpLEv @ 26 NONAME
+	_ZN18CMusEngClipSession10IsPlayingLEv @ 27 NONAME
+	_ZN18CMusEngClipSession10TranscodeLERK4TBufILi256EE @ 28 NONAME
+	_ZN18CMusEngClipSession11FastRewindLEi @ 29 NONAME
+	_ZN18CMusEngClipSession12FastForwardLEi @ 30 NONAME
+	_ZN18CMusEngClipSession12SetPositionLERK20TTimeIntervalSeconds @ 31 NONAME
+	_ZN18CMusEngClipSession16CancelTranscodeLEv @ 32 NONAME
+	_ZN18CMusEngClipSession4NewLERK5TRectR22MMusEngSessionObserverR25MMusEngOutSessionObserverR26MMusEngClipSessionObserverj @ 33 NONAME
+	_ZN18CMusEngClipSession5PlayLEv @ 34 NONAME
+	_ZN18CMusEngClipSession6PauseLEv @ 35 NONAME
+	_ZN18CMusEngClipSession8SetClipLERK7TDesC16 @ 36 NONAME
+	_ZN18CMusEngClipSession9DurationLEv @ 37 NONAME
+	_ZN18CMusEngClipSession9PositionLEv @ 38 NONAME
+	_ZN18CMusEngLiveSession10IsPlayingLEv @ 39 NONAME
+	_ZN18CMusEngLiveSession11IsRecordingEv @ 40 NONAME
+	_ZN18CMusEngLiveSession12ZoomDefaultLEv @ 41 NONAME
+	_ZN18CMusEngLiveSession15BrightnessAutoLEv @ 42 NONAME
+	_ZN18CMusEngLiveSession18BrightnessDefaultLEv @ 43 NONAME
+	_ZN18CMusEngLiveSession19DecreaseBrightnessLEv @ 44 NONAME
+	_ZN18CMusEngLiveSession19IncreaseBrightnessLEv @ 45 NONAME
+	_ZN18CMusEngLiveSession4NewLERK5TRectR22MMusEngSessionObserverR25MMusEngOutSessionObserverR26MMusEngLiveSessionObserverj @ 46 NONAME
+	_ZN18CMusEngLiveSession4NewLERK7TDesC16RK5TRectR22MMusEngSessionObserverR25MMusEngOutSessionObserverR26MMusEngLiveSessionObserverj @ 47 NONAME
+	_ZN18CMusEngLiveSession5PlayLEv @ 48 NONAME
+	_ZN18CMusEngLiveSession6PauseLEv @ 49 NONAME
+	_ZN18CMusEngLiveSession7RecordLEi @ 50 NONAME
+	_ZN18CMusEngLiveSession7ZoomInLEv @ 51 NONAME
+	_ZN18CMusEngLiveSession8SetZoomLEi @ 52 NONAME
+	_ZN18CMusEngLiveSession8ZoomOutLEv @ 53 NONAME
+	_ZN20CMusEngMceOutSession13CancelInviteLEv @ 54 NONAME
+	_ZN20CMusEngMceOutSession27SetSupportedVideoCodecListLERK7TDesC16 @ 55 NONAME
+	_ZN20CMusEngMceOutSession7InviteLERK7TDesC16 @ 56 NONAME
+	_ZN21CMusEngReceiveSession17AcceptInvitationLERKi @ 57 NONAME
+	_ZN21CMusEngReceiveSession4NewLERK5TRectR22MMusEngSessionObserverR29MMusEngReceiveSessionObserver @ 58 NONAME
+	_ZNK14CMusEngSession20IsLoudSpeakerEnabledEv @ 59 NONAME
+	_ZNK14CMusEngSession4RectEv @ 60 NONAME
+	_ZNK14CMusEngSession7VolumeLEv @ 61 NONAME
+	_ZNK17CMusEngMceSession14GetSessionTimeEv @ 62 NONAME
+	_ZNK17CMusEngMceSession16ConnectionActiveEv @ 63 NONAME
+	_ZNK18CMusEngLiveSession12CurrentZoomLEv @ 64 NONAME
+	_ZNK18CMusEngLiveSession14MaxBrightnessLEv @ 65 NONAME
+	_ZNK18CMusEngLiveSession14MinBrightnessLEv @ 66 NONAME
+	_ZNK18CMusEngLiveSession14SetBrightnessLEi @ 67 NONAME
+	_ZNK18CMusEngLiveSession18CurrentBrightnessLEv @ 68 NONAME
+	_ZNK18CMusEngLiveSession8MaxZoomLEv @ 69 NONAME
+	_ZNK18CMusEngLiveSession8MinZoomLEv @ 70 NONAME
+	_ZTI14CMusEngSession @ 71 NONAME ; #<TI>#
+	_ZTI17CMusEngMceSession @ 72 NONAME ; #<TI>#
+	_ZTI18CMusEngClipSession @ 73 NONAME ; #<TI>#
+	_ZTI18CMusEngLiveSession @ 74 NONAME ; #<TI>#
+	_ZTI20CMusEngMceOutSession @ 75 NONAME ; #<TI>#
+	_ZTI21CMusEngReceiveSession @ 76 NONAME ; #<TI>#
+	_ZTI21CMusEngTelephoneUtils @ 77 NONAME ; #<TI>#
+	_ZTI21CMusSipProfileHandler @ 78 NONAME ; #<TI>#
+	_ZTI27CMusEngSessionDurationTimer @ 79 NONAME ; #<TI>#
+	_ZTV14CMusEngSession @ 80 NONAME ; #<VT>#
+	_ZTV17CMusEngMceSession @ 81 NONAME ; #<VT>#
+	_ZTV18CMusEngClipSession @ 82 NONAME ; #<VT>#
+	_ZTV18CMusEngLiveSession @ 83 NONAME ; #<VT>#
+	_ZTV20CMusEngMceOutSession @ 84 NONAME ; #<VT>#
+	_ZTV21CMusEngReceiveSession @ 85 NONAME ; #<VT>#
+	_ZTV21CMusEngTelephoneUtils @ 86 NONAME ; #<VT>#
+	_ZTV21CMusSipProfileHandler @ 87 NONAME ; #<VT>#
+	_ZTV27CMusEngSessionDurationTimer @ 88 NONAME ; #<VT>#
+

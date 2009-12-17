@@ -1,0 +1,44 @@
+/*
+* Copyright (c) 2005-2006 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:  project specification
+*
+*/
+#include <platform_paths.hrh>
+
+PRJ_PLATFORMS
+DEFAULT
+
+PRJ_EXPORTS
+../mmshshared/loc/mus.loc APP_LAYER_LOC_EXPORT_PATH(mus.loc)
+../mmshshared/loc/musoperator.loc APP_LAYER_LOC_EXPORT_PATH(musoperator.loc)
+
+// Generic configuration interface for multimediasharing cenrep settings  
+// component_1028238b implementation specifics for cenrep data
+// component_1028238b implementation specifics for genconf ml data
+../Conf/multimediasharing.confml APP_LAYER_CONFML(multimediasharing.confml)
+../Conf/multimediasharing_1028238B.crml APP_LAYER_CRML(multimediasharing_1028238B.crml)
+
+// Export backup registration xml file to register multimediasharing settings
+// to be securely backed up as part of symbian secure backup restore operation.
+// Here data owner will be musmanager server process but the real data stored
+// in central repository. Hence central repository uid should be specified as proxy data owner.
+../cenrep/backup_registration.xml  /epoc32/data/z/private/1028238d/backup_registration.xml
+
+PRJ_MMPFILES
+#include "../mmshavailability/group/bld.inf"
+#include "../mmshindicator/group/bld.inf"
+#include "../mmshmanagercli/group/bld.inf"
+#include "../mmshmanagersrv/group/bld.inf"
+#include "../mmshengine/group/bld.inf"
+#include "../mmshui/group/bld.inf"

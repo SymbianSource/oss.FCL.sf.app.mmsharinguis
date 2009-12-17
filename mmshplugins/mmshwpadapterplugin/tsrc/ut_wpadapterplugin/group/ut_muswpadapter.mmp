@@ -1,0 +1,102 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+#include <platform_paths.hrh>
+#include<eunitcaps.h>
+
+TARGET          ut_muswpadapter.dll
+TARGETTYPE      dll
+EPOCALLOWDLLDATA
+TARGETPATH      /DigiaEUnit/Tests
+UID             0x1000af5a 0x10282395
+
+CAPABILITY      EUNIT_CAPS
+VENDORID                VID_DEFAULT
+
+MACRO                   UNIT_TESTING
+
+// Test suite classes
+SOURCEPATH              ../src
+SOURCE                  ut_muswpadapterdllmain.cpp
+
+// Defines, stubs and other test helpers
+
+SOURCEPATH              ../../../../../tsrc/centralrepositorystub/src
+SOURCE                  centralrepositorystub.cpp
+
+SOURCEPATH              ../../../../../tsrc/provisioningenginestub/src
+SOURCE                  cwpadapterstub.cpp
+SOURCE                  cwpcharacteristicstub.cpp
+SOURCE                  cwpparameterstub.cpp
+                                      
+SOURCEPATH              ../../../../../tsrc/sipprofilestub/src
+SOURCE                  sipmanagedprofileregistrystub.cpp
+SOURCE                  sipprofileregistrystub.cpp
+SOURCE                  sipprofileregistrybasestub.cpp
+SOURCE                  sipmanagedprofilestub.cpp
+SOURCE                  sipprofilestub.cpp
+SOURCE                  sipstub.cpp
+
+SOURCEPATH              ../src
+SOURCE                  muswpadapterstubs.cpp
+
+// Test classes
+SOURCEPATH              ../src
+SOURCE                  ut_muswpadapter.cpp
+SOURCE                  ut_muswpitem.cpp
+
+// Tested classes
+SOURCEPATH              ../../../src
+SOURCE                  muswpadapter.cpp
+SOURCE                  muswpitem.cpp
+
+// Includes
+
+USERINCLUDE             ../inc
+USERINCLUDE             ../../../inc
+USERINCLUDE             ../../../../../inc
+USERINCLUDE             ../../../../../tsrc/centralrepositorystub/inc
+USERINCLUDE             ../../../../../tsrc/sipprofilestub/inc
+
+// to replace profile with a stub
+SYSTEMINCLUDE           ../../../../../tsrc/sipprofilestub/inc  
+// to replace cenrep with a stub
+SYSTEMINCLUDE           ../../../../../tsrc/centralrepositorystub/inc 
+// to replace provisioning engine with a stub
+SYSTEMINCLUDE           ../../../../../tsrc/provisioningenginestub/inc 
+
+APP_LAYER_SYSTEMINCLUDE
+
+//MUS resources
+SOURCEPATH          ../../../data
+START RESOURCE      muswpadapterresource.rss
+HEADER
+TARGET              muswpadapterresource.rsc
+TARGETPATH          RESOURCE_FILES_DIR
+LANGUAGE_IDS
+END // MUS resources
+
+LIBRARY                 euser.lib
+LIBRARY                 charconv.lib
+LIBRARY                 eunit.lib
+LIBRARY                 bafl.lib
+
+DEBUGLIBRARY flogger.lib
+
+//EXPORTUNFROZEN
+
+
+// End of file

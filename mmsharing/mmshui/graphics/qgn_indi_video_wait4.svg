@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 12.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 51448)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" [
+	<!ENTITY ns_svg "http://www.w3.org/2000/svg">
+	<!ENTITY ns_xlink "http://www.w3.org/1999/xlink">
+]>
+<svg  version="1.1" id="Layer_1" xmlns="&ns_svg;" xmlns:xlink="&ns_xlink;" width="14" height="14" viewBox="0 0 14 14"
+	 overflow="visible" enable-background="new 0 0 14 14" xml:space="preserve">
+<g>
+	<rect y="0" fill="none" width="14" height="14"/>
+	<g>
+		<g>
+			
+				<linearGradient id="XMLID_6_" gradientUnits="userSpaceOnUse" x1="10.4746" y1="-3.4502" x2="10.4746" y2="15.1461" gradientTransform="matrix(-1 0 0 -1 14.0176 13.9961)">
+				<stop  offset="0" style="stop-color:#E6EEF4"/>
+				<stop  offset="0.0772" style="stop-color:#C6DCC1"/>
+				<stop  offset="0.211" style="stop-color:#91C06F"/>
+				<stop  offset="0.321" style="stop-color:#6BAB33"/>
+				<stop  offset="0.4014" style="stop-color:#539E0E"/>
+				<stop  offset="0.4438" style="stop-color:#4A9900"/>
+				<stop  offset="0.5475" style="stop-color:#398419"/>
+				<stop  offset="0.7125" style="stop-color:#22663B"/>
+				<stop  offset="0.8486" style="stop-color:#135550"/>
+				<stop  offset="0.9382" style="stop-color:#0E4E58"/>
+			</linearGradient>
+			<path fill="url(#XMLID_6_)" d="M7.039,7.084c0-2.363,0-4.708,0-7.042C7.029,0.04,7.019,0.039,7.008,0.039
+				c-3.844,0-6.961,3.117-6.96,6.96c0,0.029,0.003,0.057,0.004,0.085C2.295,7.083,4.667,7.083,7.039,7.084z"/>
+			
+				<linearGradient id="XMLID_7_" gradientUnits="userSpaceOnUse" x1="10.4727" y1="2.6919" x2="10.4727" y2="14.1391" gradientTransform="matrix(-1 0 0 -1 14.0176 13.9961)">
+				<stop  offset="0" style="stop-color:#DCE8E4"/>
+				<stop  offset="1" style="stop-color:#43910A"/>
+			</linearGradient>
+			<path fill="url(#XMLID_7_)" d="M7.009,13.961c0.01,0,0.021-0.002,0.03-0.002c0-2.32,0-4.606,0-6.875c-2.372,0-4.744,0-6.987,0
+				C0.097,10.889,3.192,13.961,7.009,13.961z"/>
+			
+				<linearGradient id="XMLID_8_" gradientUnits="userSpaceOnUse" x1="3.5161" y1="-3.4512" x2="3.5161" y2="15.1467" gradientTransform="matrix(-1 0 0 -1 14.0176 13.9961)">
+				<stop  offset="0" style="stop-color:#E6EEF4"/>
+				<stop  offset="0.0772" style="stop-color:#C6DCC1"/>
+				<stop  offset="0.211" style="stop-color:#91C06F"/>
+				<stop  offset="0.321" style="stop-color:#6BAB33"/>
+				<stop  offset="0.4014" style="stop-color:#539E0E"/>
+				<stop  offset="0.4438" style="stop-color:#4A9900"/>
+				<stop  offset="0.5475" style="stop-color:#398419"/>
+				<stop  offset="0.7125" style="stop-color:#22663B"/>
+				<stop  offset="0.8486" style="stop-color:#135550"/>
+				<stop  offset="0.9382" style="stop-color:#0E4E58"/>
+			</linearGradient>
+			<path fill="url(#XMLID_8_)" d="M7.039,13.959c3.801-0.017,6.88-3.08,6.925-6.875c-2.205,0-4.558,0-6.925,0
+				C7.039,9.353,7.039,11.639,7.039,13.959z"/>
+			
+				<linearGradient id="XMLID_9_" gradientUnits="userSpaceOnUse" x1="3.5137" y1="2.6924" x2="3.5137" y2="14.1366" gradientTransform="matrix(-1 0 0 -1 14.0176 13.9961)">
+				<stop  offset="0" style="stop-color:#DCE8E4"/>
+				<stop  offset="1" style="stop-color:#43910A"/>
+			</linearGradient>
+			<path fill="url(#XMLID_9_)" d="M13.964,7.084c0.001-0.028,0.005-0.057,0.005-0.086c0-3.831-3.099-6.942-6.93-6.957
+				c0,2.335,0,4.679,0,7.042C9.406,7.084,11.759,7.084,13.964,7.084z"/>
+			<g>
+				<path fill="#17594C" d="M6.999,0C3.133,0,0,3.134,0,7.001C0,10.866,3.133,14,6.999,14C10.866,14,14,10.866,14,7.001
+					C14,3.134,10.866,0,6.999,0L6.999,0z M6.999,13.591c-3.634,0-6.59-2.956-6.59-6.59c0-3.635,2.956-6.592,6.59-6.592
+					c3.635,0,6.592,2.957,6.592,6.592C13.591,10.635,10.634,13.591,6.999,13.591L6.999,13.591z"/>
+			</g>
+		</g>
+		<linearGradient id="XMLID_10_" gradientUnits="userSpaceOnUse" x1="6.9282" y1="-0.4961" x2="6.9282" y2="6.2416">
+			<stop  offset="0.0056" style="stop-color:#FFFFFF"/>
+			<stop  offset="1" style="stop-color:#FFFFFF"/>
+		</linearGradient>
+		<ellipse opacity="0.2" fill="url(#XMLID_10_)" enable-background="new    " cx="6.928" cy="4.309" rx="4.983" ry="3.422"/>
+	</g>
+</g>
+</svg>

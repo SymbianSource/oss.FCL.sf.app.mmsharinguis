@@ -1,0 +1,13 @@
+-c8,8 qgn_indi_tb_call_volume
+-c8,8 qgn_indi_tb_fullscreen
+-c8,8 qgn_indi_cams_tb_rec_pause
+-c8,8 qgn_indi_tb_pause_send_video
+-c8,8 qgn_indi_tb_play
+-c8,8 qgn_indi_tb_video
+-c8,8 qgn_indi_tb_ffw_frew
+-c8,8 qgn_indi_tb_zoom
+-c8,8 qgn_indi_tb_brightness
+-c8,8 qgn_indi_tb_microphone_mute
+-c8,8 qgn_indi_tb_microphone_unmute
+-c8,8 qgn_indi_tb_ihf_off
+-c8,8 qgn_indi_tb_ihf_on

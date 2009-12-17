@@ -1,0 +1,67 @@
+/*
+* Copyright (c) 2006-2006 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:  Definition of project MceClientStub
+*
+*/
+
+
+// To get the APP_LAYER_SYSTEMINCLUDE-definition
+#include <platform_paths.hrh>
+#include <data_caging_paths.hrh>
+#include<eunitcaps.h>
+
+TARGET              	mceclientstub.dll
+TARGETTYPE            	dll
+UID                  	0x1000008d 0x00000111 // Experimental UID
+
+CAPABILITY      EUNIT_CAPS
+VENDORID                VID_DEFAULT
+
+SOURCEPATH              ../src
+SOURCE                  mcemanager.cpp
+SOURCE                  mcesession.cpp
+SOURCE                  mceoutsession.cpp
+SOURCE                  mceinsession.cpp
+SOURCE                  mcestreambundle.cpp
+SOURCE                  mcemediastream.cpp
+SOURCE                  mcevideostream.cpp
+SOURCE                  mceaudiostream.cpp
+SOURCE                  mcemediasource.cpp
+SOURCE                  mcecamerasource.cpp
+SOURCE                  mcefilesource.cpp
+SOURCE                  mcefilesink.cpp
+SOURCE                  mcertpsource.cpp
+SOURCE                  mcemediasink.cpp
+SOURCE                  mcedisplaysink.cpp
+SOURCE                  mcertpsink.cpp
+SOURCE                  mcespeakersink.cpp
+SOURCE                  mcecodec.cpp
+SOURCE                  mceaudiocodec.cpp
+SOURCE                  mceamrcodec.cpp
+SOURCE                  mcevideocodec.cpp
+SOURCE                  mceh263codec.cpp
+SOURCE                  mceavccodec.cpp
+SOURCE                  mcetransactiondatacontainer.cpp
+SOURCE                  staticdllentry.cpp
+
+USERINCLUDE             ../inc
+
+// Default system include paths for application layer modules.
+APP_LAYER_SYSTEMINCLUDE
+
+LIBRARY                 euser.lib
+LIBRARY                 bafl.lib
+
+
+EXPORTUNFROZEN

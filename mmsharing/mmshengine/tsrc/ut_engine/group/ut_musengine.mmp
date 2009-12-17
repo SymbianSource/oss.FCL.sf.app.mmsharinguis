@@ -1,0 +1,132 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+
+#include <platform_paths.hrh>
+#include <eunitcaps.h>
+
+TARGET          ut_musengine.dll
+TARGETTYPE      dll
+EPOCALLOWDLLDATA
+TARGETPATH      /DigiaEUnit/Tests
+UID             0x1000af5a 0x10282394
+
+CAPABILITY              EUNIT_CAPS
+VENDORID                VID_DEFAULT
+
+MACRO                   UNIT_TESTING
+
+// Test suite classes
+SOURCEPATH              ../src
+SOURCE                  ut_musenginedllmain.cpp
+
+// Defines, stubs and other test helpers
+SOURCEPATH              ../src
+SOURCE                  musengstubs.cpp
+
+SOURCEPATH              ../../../../../tsrc/sipprofilestub/src
+SOURCE                  sipstub.cpp
+SOURCE                  sipprofileregistrybasestub.cpp
+SOURCE                  sipprofileregistrystub.cpp
+SOURCE                  sipprofilestub.cpp
+
+SOURCEPATH              ../../../../../tsrc/telephonyaudioroutingstub/src
+SOURCE                  telephonyaudioroutingstub.cpp
+
+SOURCEPATH              ../../../../../tsrc/centralrepositorystub/src
+SOURCE                  centralrepositorystub.cpp
+
+SOURCEPATH              ../../../../../tsrc/drmstub/src
+SOURCE                  drmcommonstub.cpp
+
+SOURCEPATH              ../../../../../tsrc/mceclientstub/src
+SOURCE                  mcecamerasource.cpp
+SOURCE                  mcemediasource.cpp
+
+
+
+// Test classes
+SOURCEPATH              ../src
+SOURCE                  ut_musengsession.cpp
+SOURCE                  ut_musengmcesession.cpp
+SOURCE                  ut_musengoutsession.cpp
+SOURCE                  ut_musenglivesession.cpp
+SOURCE                  ut_musengclipsession.cpp
+SOURCE                  ut_musengreceivesession.cpp
+SOURCE                  ut_musengsipprofilehandler.cpp
+SOURCE                  ut_musengmceutils.cpp
+SOURCE                  ut_musengtelephoneutils.cpp
+SOURCE                  ut_musengsessiondurationtimer.cpp
+SOURCE                  ut_musenguriparser.cpp
+
+// Tested classes
+SOURCEPATH              ../../../src
+SOURCE                  musengsession.cpp
+SOURCE                  musengmcesession.cpp
+SOURCE                  musengmceoutsession.cpp
+SOURCE                  musenglivesession.cpp
+SOURCE                  musengclipsession.cpp
+SOURCE                  musengreceivesession.cpp
+SOURCE                  mussipprofilehandler.cpp
+SOURCE                  musengtelephoneutils.cpp
+SOURCE                  musengsessiondurationtimer.cpp
+SOURCE                  musengmceutils.cpp
+SOURCE                  musenguriparser.cpp
+
+// Includes
+
+USERINCLUDE             ../inc
+USERINCLUDE             ../../../inc
+USERINCLUDE             ../../../../mmshshared/inc
+USERINCLUDE             ../../../../inc
+USERINCLUDE             ../../../../../inc
+USERINCLUDE             ../../../../../tsrc/sipprofilestub/inc
+USERINCLUDE		../../../../../tsrc/centralrepositorystub/inc
+
+// to replace SIP profiles with a stub
+SYSTEMINCLUDE           ../inc
+// to replace profile with a stub
+SYSTEMINCLUDE           ../../../../../tsrc/sipprofilestub/inc 
+// to replace cenrep with a stub
+SYSTEMINCLUDE           ../../../../../tsrc/centralrepositorystub/inc 
+// to replace MCE API with a stub
+SYSTEMINCLUDE           ../../../../../tsrc/mceclientstub/inc 
+// to replace telephony audio routing with a stub
+SYSTEMINCLUDE           ../../../../../tsrc/telephonyaudioroutingstub/inc 
+// to replace DRMCommon with a stub
+SYSTEMINCLUDE           ../../../../../tsrc/drmstub/inc
+
+#if defined ( APP_LAYER_SYSTEMINCLUDE )
+APP_LAYER_SYSTEMINCLUDE
+#else
+SYSTEMINCLUDE     /epoc32/include
+#endif
+
+LIBRARY     euser.lib
+LIBRARY     bafl.lib
+LIBRARY		phoneclient.lib
+LIBRARY     eunit.lib
+LIBRARY     charconv.lib
+LIBRARY     inetprotutil.lib
+LIBRARY     sipcodec.lib
+LIBRARY     efsrv.lib
+LIBRARY 	mceclientstub.lib  
+
+DEBUGLIBRARY		flogger.lib
+
+//EXPORTUNFROZEN
+
+// End of file

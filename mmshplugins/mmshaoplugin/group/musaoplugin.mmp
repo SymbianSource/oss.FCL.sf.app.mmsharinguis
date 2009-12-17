@@ -1,0 +1,66 @@
+/*
+* Copyright (c) 2005-2007 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:  project specification
+*
+*/
+
+
+#include <platform_paths.hrh>
+
+TARGET                  musaoplugin.dll
+TARGETTYPE              PLUGIN
+UID                     0x10009d8d 0x1028238B
+VENDORID                VID_DEFAULT
+CAPABILITY              CAP_ECOM_PLUGIN
+LANG                    SC
+
+START RESOURCE          ../data/musaoplugin.rss
+TARGET                  musaoplugin.rsc
+END
+
+SOURCEPATH              ../src
+SOURCE                  musaopluginmain.cpp
+SOURCE                  musaoplugin.cpp
+// Enable the below line if Kodiak Ptt has to be monitered
+// SOURCE                  muspttcallmonitor.cpp
+SOURCE                  muspropertymonitor.cpp
+SOURCE                  mustsypropertymonitor.cpp
+SOURCE                  muscallmonitor.cpp
+SOURCE                  muscallmonitorbase.cpp
+SOURCE                  muscalleventmonitor.cpp
+SOURCE                  muscallstatusmonitor.cpp
+SOURCE                  muscallconferencemonitor.cpp
+SOURCE                  muscallconferenceeventmonitor.cpp
+SOURCE                  musclirmonitor.cpp
+
+USERINCLUDE             ../inc
+USERINCLUDE             ../../../inc
+
+APP_LAYER_SYSTEMINCLUDE
+
+// Symbian OS / S60 libraries:
+LIBRARY                 euser.lib
+LIBRARY                 ecom.lib
+LIBRARY                 etel.lib
+LIBRARY                 etelmm.lib
+LIBRARY                 centralrepository.lib
+LIBRARY                 etel3rdparty.lib
+
+// MultimediaSharing libraries:
+LIBRARY                 musmanagerclient.lib
+LIBRARY                 featmgr.lib
+
+DEBUGLIBRARY            flogger.lib
+
+PAGED

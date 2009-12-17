@@ -1,0 +1,54 @@
+/*
+* Copyright (c) 2006-2007 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:  Resource headers for project MUSSettingsPlugin.
+*
+*/
+
+
+
+#ifndef MUSSETTINGSPLUGIN_HRH
+#define MUSSETTINGSPLUGIN_HRH
+
+
+/** Data query max length */
+#define KGSMaxDataLength 21
+
+
+/** GSUi's commands */
+enum TGSVSSettingsMenuCommands
+    {
+    EGSCmdShowVSSettingsAttachSettingPage,
+    EGSCmdShowDialupAPNameSettingPage
+    };
+
+
+/** Identifiers for provided settings */
+enum {
+    KGSSettIdVSActivation,
+    KGSSettIdSIPProfile,
+    KGSSettIdAutoRecord,
+    KGSSettIdRecordedVideoSaving,
+    KGSSettIdNote
+    };
+
+
+/** SIP profile setting type identifiers */
+enum TGSVSProfileIDs
+    {
+    EGSVSProfileDefault = 0,
+    EGSVSProfileSelect
+    };
+
+
+#endif // MUSSETTINGSPLUGIN_HRH

@@ -1,0 +1,67 @@
+/*
+* Copyright (c) 2004 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+
+
+#include <platform_paths.hrh>
+#include<eunitcaps.h>
+
+TARGET                  ut_sipcrplugin.dll
+TARGETTYPE              dll
+EPOCALLOWDLLDATA
+TARGETPATH              /DigiaEUnit/Tests
+UID                     0x1000af5a 0x01700a21
+
+CAPABILITY      EUNIT_CAPS
+
+VENDORID                VID_DEFAULT
+
+MACRO                   UNIT_TESTING
+
+SOURCEPATH              ../src
+SOURCE                  ut_mussipcrplugindllmain.cpp
+SOURCE                  mussipcrplugintest.cpp
+
+SOURCEPATH              ../../../src
+SOURCE                  mussipcrplugin.cpp
+SOURCE                  mussipcrpluginmain.cpp
+
+SOURCEPATH              ../../../../../tsrc/musmanagerstub/src
+SOURCE    		          musmanagerstub.cpp
+
+SOURCEPATH              ../../../../../tsrc/featmgrstub/src
+SOURCE                  FeatMgr.cpp
+
+USERINCLUDE             ../../../../../tsrc/featmgrstub/inc
+USERINCLUDE             ../inc
+USERINCLUDE             ../../../inc
+USERINCLUDE             ../../../../../inc
+USERINCLUDE             ../../../../../tsrc/musmanagerstub/inc
+
+APP_LAYER_SYSTEMINCLUDE
+
+LIBRARY                 connmon.lib           
+LIBRARY                 ecom.lib                
+LIBRARY                 eunit.lib
+LIBRARY                 euser.lib
+LIBRARY                 flogger.lib 
+LIBRARY                 sipclient.lib      // SIP Client API
+LIBRARY                 sipprofilecli.lib  // SIP Profile Agent Client API
+LIBRARY                 sipcodec.lib       // SIP Codec
+
+EXPORTUNFROZEN
+
+// End of file

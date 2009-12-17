@@ -1,0 +1,40 @@
+/*
+* Copyright (c) 2006 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:  ?Description
+*
+*/
+
+
+#ifndef MUSUID_HRH
+#define MUSUID_HRH
+
+// uids of the mus binaries
+
+#define KMusAiwProviderUid          0x10282389
+#define	KMusSipCrPluginUid          0x1028238A
+#define KMusAoPluginUid             0x1028238B
+#define KMusManagerClientUid	    0x1028238C
+#define KMusManagerServerUid        0x1028238D
+#define KMusAvaPluginUid            0x1028238E
+#define KMusSettingsUiUid           0x1028238F
+#define KMusWpAdapterUid            0x10282390
+#define KMusUiUid                   0x10282391
+#define KMusEngineUid               0x10282392
+#define KMusIndicatorUid            0x10282396
+
+// interface identifier of availability plug-in
+
+#define KMusAvaPluginInterfaceUid    0x10282393
+
+#endif

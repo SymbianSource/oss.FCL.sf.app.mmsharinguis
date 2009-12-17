@@ -1,0 +1,100 @@
+/*
+* Copyright (c) 2006 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:  
+*
+*/
+
+
+
+#ifndef MCCTRANSCODER_AUDIO_CODEC_H
+#define MCCTRANSCODER_AUDIO_CODEC_H
+
+//  INCLUDES
+#include "transcodercodecinfo.h"
+
+// CONSTANTS
+
+// MACROS
+
+// DATA TYPES
+
+// FUNCTION PROTOTYPES
+
+// FORWARD DECLARATIONS
+
+// CLASS DECLARATION
+
+/**
+*  Container class for the codec information.
+*
+*/
+class CMccTranscoderAudioCodec : public CMccTranscoderCodecInfo
+    {
+    public:  // Constructors and destructor
+        
+        /**
+        * Two-phased constructor.
+        */
+        static CMccTranscoderAudioCodec* NewL();
+        
+        /**
+        * Destructor.
+        */
+        virtual ~CMccTranscoderAudioCodec();
+
+    public: // New functions
+
+   
+   
+        void SetBitrate( TInt aBitrate );
+    
+        TInt Bitrate();
+   
+        void SetSamplingRate( TInt aSamplingRate );
+    
+        TInt SamplingRate();
+        
+    protected:  // New functions
+
+    protected:  // Functions from base classes
+
+    private:
+
+        /**
+        * C++ default constructor.
+        */
+        CMccTranscoderAudioCodec();
+
+        /**
+        * By default Symbian 2nd phase constructor is private.
+        */
+        void ConstructL();
+
+    public:     // Data
+    
+    protected:  // Data
+
+    private:    // Data
+
+    public:     // Friend classes
+
+    protected:  // Friend classes
+    
+    private:    // Friend classes
+
+    };
+
+#endif      // MCCTRANSCODER_AUDIO_CODEC_H   
+            
+// End of File

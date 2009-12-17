@@ -1,0 +1,100 @@
+/*
+* Copyright (c) 2007 Nokia Corporation and/or its subsidiary(-ies). 
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+* 
+* Description:
+*
+*/
+
+NAME HELL
+
+#include <eikon.rh>
+#include <eikon.rsg>
+#include <avkon.rh>
+#include <avkon.rsg>
+
+#include "IndicatorTestApp.hrh"
+
+
+// ---------------------------------------------------------
+//   
+//    Define the resource file signature 
+//    This resource should be empty.
+//
+// ---------------------------------------------------------
+//
+RESOURCE RSS_SIGNATURE { }
+
+// ---------------------------------------------------------
+//   
+//    Default Document Name
+//
+// ---------------------------------------------------------
+//
+RESOURCE TBUF r_default_document_name { buf=""; }
+
+// ---------------------------------------------------------
+//   
+//    Define default menu and CBA key.
+//
+// ---------------------------------------------------------
+//
+RESOURCE EIK_APP_INFO
+    {
+    menubar = r_IndicatorTestApp_menubar;
+    cba = R_AVKON_SOFTKEYS_OPTIONS_EXIT;
+    }
+
+
+// ---------------------------------------------------------
+//   
+//   r_IndicatorTestApp_menubar
+//   Menubar for IndicatorTestApp example
+//
+// ---------------------------------------------------------
+//
+RESOURCE MENU_BAR r_IndicatorTestApp_menubar
+    {
+    titles =
+        {
+        MENU_TITLE {menu_pane = r_IndicatorTestApp_menu;}
+        };
+    }
+
+
+// ---------------------------------------------------------
+//   
+//   r_IndicatorTestApp_menu
+//   Menu for "Options"
+//
+// ---------------------------------------------------------
+//
+RESOURCE MENU_PANE r_IndicatorTestApp_menu
+    {
+    items = 
+        {
+        MENU_ITEM {command = EIndicatorTestAppSharingAvailable;  txt = "Sharing Available";},
+        MENU_ITEM {command = EIndicatorTestAppSharingNotAvailable;  txt = "Sharing Not Available";},
+
+        MENU_ITEM {command = EIndicatorTestAppEnableOperator;  txt = "Set operator specific";},
+        MENU_ITEM {command = EIndicatorTestAppDisableOperator;  txt = "Set non operator specific";},
+
+
+        MENU_ITEM {command = EIndicatorTestAppAudiotoryNotification;  txt = "Set play sound";},
+        MENU_ITEM {command = EIndicatorTestAppNoAudiotoryNotification;  txt = "Set no sound";},
+
+        MENU_ITEM {command = EIndicatorTestAppIconNotification;  txt = "Set icon notification";},
+        MENU_ITEM {command = EIndicatorTestAppNoIconNotification;  txt = "Set no icon notification";},
+
+        MENU_ITEM {command = EAknSoftkeyExit;   txt = "Exit";}
+        };
+    }
