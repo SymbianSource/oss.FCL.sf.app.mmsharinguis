@@ -12,19 +12,19 @@
 * Contributors:
 *
 * Description:  Document model class for MUSSettingsPlugin.
-*  Version     : %version: 15 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: 17 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
 
-
-#include    "mmussipprofilehandler.h"
 #include    "mussettingsmodel.h"
-#include    "mussipprofilemodel.h"
 #include    "muslogger.h"
-#include    <centralrepository.h>
-#include    <escapeutils.h>
+#include    "mussipprofilemodel.h"
+#include    "mussettings.h"
+#include    "mmussipprofilehandler.h"
 
+#include    <escapeutils.h>
+#include    <centralrepository.h>
 #include    <CAknMemorySelectionDialogMultiDrive.h>
 #include    <AknCommonDialogsDynMem.h>
 #include    <mussettingsuirsc.rsg> // GUI Resource
@@ -75,8 +75,8 @@ CMusSettingsModel::CMusSettingsModel( MMusSIPProfileHandler& aHandler )
 void CMusSettingsModel::ConstructL()
     {
     MUS_LOG( "[MUSSET] -> CMusSettingsModel::ConstructL()" )
-    iMSSettingsKeys = new (ELeave) MultimediaSharingSettings;
     InitializeProfileEnablerL();
+    static_cast<CMusSIPProfileModel*> (&iHandler)->SetCMusSettingsModel(this);
     MUS_LOG( "[MUSSET] <- CMusSettingsModel::ConstructL()" )
     }
 
@@ -88,77 +88,8 @@ void CMusSettingsModel::ConstructL()
 CMusSettingsModel::~CMusSettingsModel()
     {
     MUS_LOG( "[MUSSET] -> CMusSettingsModel::~CMusSettingsModel()" )
-    delete iMSSettingsKeys;
-    iMSSettingsKeys = NULL;
     MUS_LOG( "[MUSSET] <- CMusSettingsModel::~CMusSettingsModel()" )
     }
-
-
-// -----------------------------------------------------------------------------
-// Returns operator variant mode (normal or operator specific. This is used for
-// runtime variation of Settings UI.
-// -----------------------------------------------------------------------------
-//
-MusSettingsKeys::TOperatorVariant CMusSettingsModel::VSSettingsOperatorVariantL()
-    {
-    MUS_LOG( "[MUSSET] -> CMusSettingsModel::VSSettingsOperatorVariantL()" )
-
-    MusSettingsKeys::TOperatorVariant operatorVariant =
-    	iMSSettingsKeys->OperatorVariantSettingL();
-
-    MUS_LOG1(
-        "[MUSSET] <- CMusSettingsContainer::VSSettingsOperatorVariantL()( %d )",
-        operatorVariant )
-    return operatorVariant;
-    }
-
-
-// -----------------------------------------------------------------------------
-// Returns VS activation mode.
-// -----------------------------------------------------------------------------
-//
-MusSettingsKeys::TActivation CMusSettingsModel::VSSettingsActivationL()
-    {
-    MUS_LOG( "[MUSSET] -> CMusSettingsModel::VSSettingsActivationL()" )
-    MusSettingsKeys::TActivation activationMode =
-    	iMSSettingsKeys->ActivationSettingL();
-    MUS_LOG1(
-        "[MUSSET] <- CMusSettingsContainer::VSSettingsActivationL()( %d )",
-        activationMode )
-    return activationMode;
-    }
-
-
-// -----------------------------------------------------------------------------
-// Returns SIP profile mode.
-// -----------------------------------------------------------------------------
-//
-TInt CMusSettingsModel::VSSettingsProfileL()
-    {
-    MUS_LOG( "[MUSSET] -> CMusSettingsModel::VSSettingsProfileL()" )
-    TInt vsProfileMode = iMSSettingsKeys->SipProfileSettingL();
-    MUS_LOG1(
-        "[MUSSET] <- CMusSettingsContainer::VSSettingsProfileL()( %d )",
-        vsProfileMode )
-    return vsProfileMode;
-    }
-
-
-// -----------------------------------------------------------------------------
-// Returns video autorecord mode.
-// -----------------------------------------------------------------------------
-//
-MusSettingsKeys::TAutoRecord CMusSettingsModel::VSSettingsAutoRecordL()
-    {
-    MUS_LOG( "[MUSSET] -> CMusSettingsModel::VSSettingsAutoRecordL()" )
-    MusSettingsKeys::TAutoRecord vsAutoRecordMode =
-        iMSSettingsKeys->AutoRecordSettingL();
-    MUS_LOG1(
-        "[MUSSET] <- CMusSettingsContainer::VSSettingsAutoRecordL()( %d )",
-        vsAutoRecordMode )
-    return  vsAutoRecordMode;
-    }
-
 
 // -----------------------------------------------------------------------------
 // Returns recorded video saving mode.
@@ -167,101 +98,11 @@ MusSettingsKeys::TAutoRecord CMusSettingsModel::VSSettingsAutoRecordL()
 TInt CMusSettingsModel::VSSettingsRecordedVideoSavingL()
     {
     MUS_LOG( "[MUSSET] -> CMusSettingsModel::VSSettingsRecordedVideoSavingL()" )
-    TInt vsVideoLocationMode = iMSSettingsKeys->VideoLocationSettingL();
+    TInt vsVideoLocationMode = MultimediaSharingSettings::VideoLocationSettingL();
     MUS_LOG1(
     "[MUSSET] <- CMusSettingsContainer::VSSettingsRecordedVideoSavingL()( %d )",
         vsVideoLocationMode )
     return vsVideoLocationMode;
-    }
-
-
-// -----------------------------------------------------------------------------
-// Returns mode of audible note.
-// -----------------------------------------------------------------------------
-//
-MusSettingsKeys::TAuditoryNotification CMusSettingsModel::VSSettingsNoteL()
-    {
-    MUS_LOG( "[MUSSET] -> CMusSettingsModel::VSSettingsNoteL()" )
-    MusSettingsKeys::TAuditoryNotification vsNoteMode =
-        iMSSettingsKeys->AuditoryNotificationSettingL();
-    MUS_LOG1(
-    "[MUSSET] <- CMusSettingsContainer::VSSettingsNoteL()( %d )",
-        vsNoteMode )
-    return vsNoteMode;
-    }
-
-
-// -----------------------------------------------------------------------------
-// Sets VS activation mode.
-// -----------------------------------------------------------------------------
-//
-void CMusSettingsModel::SetVSSettingsActivationL(
-        const MusSettingsKeys::TActivation aActivation)
-    {
-    MUS_LOG1(
-    "[MUSSET] -> CMusSettingsContainer::SetVSSettingsActivationL()( %d )",
-        aActivation )
-    iMSSettingsKeys->SetActivationSettingL( aActivation );
-    MUS_LOG( "[MUSSET] <- CMusSettingsModel::SetVSSettingsActivationL()" )
-    }
-
-
-// -----------------------------------------------------------------------------
-// Sets SIP Profile mode.
-// -----------------------------------------------------------------------------
-//
-void CMusSettingsModel::SetVSSettingsProfileL( const TInt aProfile )
-    {
-    MUS_LOG1(
-    "[MUSSET] -> CMusSettingsContainer::SetVSSettingsProfileL()( %d )",
-        aProfile )
-    iMSSettingsKeys->SetSipProfileSettingL( aProfile );
-    MUS_LOG( "[MUSSET] <- CMusSettingsModel::SetVSSettingsProfileL()" )
-    }
-
-
-// -----------------------------------------------------------------------------
-// Sets video autorecord mode.
-// -----------------------------------------------------------------------------
-//
-void CMusSettingsModel::SetVSSettingsAutoRecordL(
-    const MusSettingsKeys::TAutoRecord aAutoRecord )
-    {
-    MUS_LOG1(
-    "[MUSSET] -> CMusSettingsContainer::SetVSSettingsAutoRecordL()( %d )",
-        aAutoRecord )
-    iMSSettingsKeys->SetAutoRecordSettingL( aAutoRecord );
-    MUS_LOG( "[MUSSET] <- CMusSettingsModel::SetVSSettingsAutoRecordL()" )
-    }
-
-
-// -----------------------------------------------------------------------------
-// Sets video location.
-// -----------------------------------------------------------------------------
-//
-void CMusSettingsModel::SetVSSettingsRecordedVideoSavingL(
-    const TInt  aVideoLocation )
-    {
-    MUS_LOG1(
-    "[MUSSET] -> CMusSettingsContainer::SetVSSettingsRecordedVideoSavingL()( %d )",
-        aVideoLocation )
-    iMSSettingsKeys->SetVideoLocationSettingL( aVideoLocation );
-    MUS_LOG(
-        "[MUSSET] <- CMusSettingsModel::SetVSSettingsRecordedVideoSavingL()" )
-    }
-
-
-// -----------------------------------------------------------------------------
-// Sets mode of auditory note.
-// -----------------------------------------------------------------------------
-//
-void CMusSettingsModel::SetVSSettingsNoteL(
-    const MusSettingsKeys::TAuditoryNotification aValue )
-    {
-    MUS_LOG1( "[MUSSET] -> CMusSettingsContainer::SetVSSettingsNoteL()( %d )",
-              aValue )
-    iMSSettingsKeys->SetAuditoryNotificationSettingL( aValue );
-    MUS_LOG( "[MUSSET] <- CMusSettingsContainer::SetActivationItem()" )
     }
 
 // ----------------------------------------------------------------------------
@@ -271,8 +112,7 @@ void CMusSettingsModel::SetVSSettingsNoteL(
 void CMusSettingsModel::SetActivationItem( TBool aActive )
     {
     MUS_LOG( "[MUSSET] -> CMusSettingsContainer::SetActivationItem()" )
-    MUS_LOG1( "Profile disabled? ( %d )",
-            aActive )
+    MUS_LOG1( "            Profile disabled? ( %d )", aActive )
     iProfileDisabled = aActive;
     MUS_LOG( "[MUSSET] <- CMusSettingsContainer::SetActivationItem()" )
     }
@@ -294,16 +134,16 @@ TBool CMusSettingsModel::ActivationItem()
 CDesCArray* CMusSettingsModel::ListOfProfileNamesL()
     {
     MUS_LOG( "[MUSSET] -> CMusSettingsModel::ListOfProfileNamesL()" )
-    CArrayPtr<CSIPManagedProfile>* list = iHandler.ProfileArrayL();
+    RPointerArray<CSIPProfile>& list = iHandler.ProfileArrayL();
 
     CDesCArray* array = new ( ELeave ) CDesCArrayFlat( KSIPGranularity );
     CleanupStack::PushL( array );
 
-    for ( TInt i = 0; i < list->Count(); i++ )
+    for ( TInt i = 0; i < list.Count(); i++ )
         {
         const TDesC8* providerName = 0;
         User::LeaveIfError(
-            list->At(i)->GetParameter( KSIPProviderName, providerName ) );
+            list[i]->GetParameter( KSIPProviderName, providerName ) );
 
         HBufC8* decodedProvider =
             EscapeUtils::EscapeDecodeL( *providerName );
@@ -339,7 +179,7 @@ HBufC* CMusSettingsModel::ProfileNameL( TInt aId )
 
     if ( index >= 0 )
         {
-        if ( KErrNone == iHandler.ProfileArrayL()->At( index )->
+        if ( KErrNone == iHandler.ProfileArrayL()[index]->
                 GetParameter( KSIPProviderName, providerName ) )
             {
             HBufC8* decodedProvider =
@@ -407,7 +247,7 @@ TUint32 CMusSettingsModel::ProfileIdByIndex( TUint aIndex )
 void CMusSettingsModel::InitializeProfileEnablerL() 
     {
     MUS_LOG( "[MUSSET] -> CMusSettingsModel::InitializeProfileEnabler()" )
-    if ( VSSettingsOperatorVariantL() ==
+    if ( MultimediaSharingSettings::OperatorVariantSettingL() ==
                MusSettingsKeys::EOperatorSpecific )
        {
        TBool enabled(EFalse);

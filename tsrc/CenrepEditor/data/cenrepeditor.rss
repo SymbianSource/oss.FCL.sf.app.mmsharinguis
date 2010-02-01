@@ -495,9 +495,8 @@ RESOURCE ARRAY r_activation_editor_settings_page_texts_array
     {
         items =
         {
-        AVKON_ENUMERATED_TEXT { value=0; text = "0.EAlwaysActive"; },
-        AVKON_ENUMERATED_TEXT { value=1; text = "1.EActiveInHomeNetworks"; },        
-        AVKON_ENUMERATED_TEXT { value=2; text = "2.ENever"; }        
+        AVKON_ENUMERATED_TEXT { value=0; text = "0.EAlwaysActive"; },   
+        AVKON_ENUMERATED_TEXT { value=1; text = "1.ENever"; }        
         };
     }
 
@@ -506,8 +505,7 @@ RESOURCE ARRAY r_activation_editor_settings_page_popedup
         items =
         {
         LBUF { txt = "0.EAlwaysActive"; },
-        LBUF { txt = "1.EActiveInHomeNetworks"; },        
-        LBUF { txt = "2.ENever"; }
+        LBUF { txt = "1.ENever"; }
         };
     }
 

@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  MUSSettingsPlugin implementation.
-*  Version     : %version: 16.1.11 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: 21 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -183,11 +183,6 @@ protected:
     virtual void NewContainerL();
 
 private:
-
-    /**
-    * Shows VS activation Setting dialog.
-    */
-    void ShowVSSettingsActivationSettingDialogL();
 
     /**
     * Shows Profile Setting dialog.

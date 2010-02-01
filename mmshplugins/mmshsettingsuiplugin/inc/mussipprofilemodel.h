@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Class implementing SIP profile model.
-*  Version     : %version: 5.1.6 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: 7 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -24,19 +24,16 @@
 
 #include "mmussipprofilehandler.h"
 #include <e32base.h>
-#include <sipmanagedprofile.h>
-#include <gsplugininterface.h>
 #include <sipprofileregistryobserver.h>
 
 
 class CSIPManagedProfileRegistry;
+class CMusSettingsModel;
 
 
 /**
  *  CMusSIPProfileModel model class.
  *  Model class implementing SIP profile model.
- *
- *  @since S60 v3.2
  */
 class CMusSIPProfileModel
     :public CBase,
@@ -107,15 +104,15 @@ public: // From base class MMusSIPProfileHandler.
 
     /**
      * From MMusSIPProfileHandler.
-     * Returns pointer to the SIP profile array, does not change ownership.
+     * Returns a reference to the SIP profile array.
      * Note that previously returned value goes out of scope after a new
      * call to ProfileArrayL. So it is not advised to store return value
      * in long persistent variable, but rather to be used like stack
      * variables for safety.
      *
-     * @return Pointer to internally cached SIP profile array.
+     * @return Reference to internally cached SIP profile array.
      */
-    virtual CArrayPtr<CSIPManagedProfile>* ProfileArrayL();
+    virtual RPointerArray<CSIPProfile>& ProfileArrayL();
 
 public: // From base class MSIPProfileRegistryObserver.
 
@@ -138,40 +135,29 @@ public: // From base class MSIPProfileRegistryObserver.
 	virtual void ProfileRegistryErrorOccurred(
 	    TUint32 aSIPProfileId,
 	    TInt aError );
+	
+	
+	
+    /**
+     * Set CMusSettingsModel to handle ProfileRegistry Event.
+     * @param aCMusSettingsModel the CMusSettingsModel to handle ProfileRegistry Event
+     */		
+	void SetCMusSettingsModel(CMusSettingsModel* aCMusSettingsModel);
 
 protected:
-
-    /**
-     * Reads the profile array from SIP Profile Client.
-     */
-    void ReadArrayFromEngineL();
 
     /**
      * Sorts internal array of SIP profiles by id.
      */
     void SortProfilesL();
 
-    /**
-     * Deletes internally cached profiles.
-     */
-    void DeleteProfiles();
-
-    /**
-     * Reads profile list from the engine; if reading fails,
-     * keeps the old list safe.
-     */
-    void ReadProfileListFromEngineSafeL();
 
 private:
 
     CMusSIPProfileModel();
 
     void ConstructL();
-
-    /**
-     * For deleting RPointerArray in case of leave.
-     */
-    static void ResetAndDestroy( TAny* aPointerArray );
+    
 
 private: // data
 
@@ -183,9 +169,14 @@ private: // data
 
     /**
      * Locally cached array of SIP profiles.
-     * Own.
      */
-    CArrayPtrFlat<CSIPManagedProfile>* iProfiles;
+    RPointerArray<CSIPProfile> iProfiles;
+    
+    /**
+      * CMusSettingsModel to handle ProfileRegistry 
+      * Event
+      */
+    CMusSettingsModel* iCMusSettingsModel;
 
     };
 

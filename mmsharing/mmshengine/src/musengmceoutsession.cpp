@@ -64,6 +64,9 @@ const TInt KMusEngSipReasonCodeNotAcceptableHere = 488;
 const TInt KMusEngSipReasonCodeDecline = 603;
 const TInt KMusEngSipReasonCodeNotAcceptable = 606;
 // The next code represents unofficial sip error code
+// "478 Unresolveable Destination, we were not able to process the URI (478/TM)
+const TInt KMusEngSipReasonCode478NotAbleToProcessURI = 478;
+// The next code represents unofficial sip error code
 // "479 Regretfuly, we were not able to process the URI (479/SL)
 const TInt KMusEngSipReasonCode479NotAbleToProcessURI = 479;
 
@@ -251,7 +254,9 @@ void CMusEngMceOutSession::HandleTermination( TInt aStatusCode,
             iOutSessionObserver.SessionPaymentRequired();
             break;
             }
-        case KMusEngSipReasonCodeRecipientNotFound : 
+        case KMusEngSipReasonCodeRecipientNotFound :
+        	//lint -fallthrough
+        case KMusEngSipReasonCode478NotAbleToProcessURI:
             //lint -fallthrough
         case KMusEngSipReasonCode479NotAbleToProcessURI:
             //lint -fallthrough

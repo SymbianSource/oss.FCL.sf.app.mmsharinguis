@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  MUSSettingsPlugin implementation.
-*  Version     : %version: 24.1.9.1.5.1.1 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: 34 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -55,13 +55,20 @@
 // ======== MEMBER FUNCTIONS ========
 
 
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
 CMusSettingsPlugin::CMusSettingsPlugin()
     : iResources( *iCoeEnv )
     {
     MUS_LOG( "[MUSSET] <- CMusSettingsPlugin::CMusSettingsPlugin()" )
     }
 
-
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
 CMusSettingsPlugin::~CMusSettingsPlugin()
     {
     MUS_LOG( "[MUSSET] -> CMusSettingsPlugin::~CMusSettingsPlugin()" )
@@ -84,7 +91,11 @@ CMusSettingsPlugin::~CMusSettingsPlugin()
     MUS_LOG( "[MUSSET] <- CMusSettingsPlugin::~CMusSettingsPlugin()" )
     }
 
-
+// -----------------------------------------------------------------------------
+// 
+//
+// -----------------------------------------------------------------------------
+//
 void CMusSettingsPlugin::ConstructL()
     {
     MUS_LOG( "[MUSSET] -> CMusSettingsPlugin::ConstructL()" )
@@ -108,7 +119,11 @@ void CMusSettingsPlugin::ConstructL()
     MUS_LOG( "[MUSSET] <- CMusSettingsPlugin::ConstructL()" )
     }
 
-
+// -----------------------------------------------------------------------------
+// 
+//
+// -----------------------------------------------------------------------------
+//
 CMusSettingsPlugin* CMusSettingsPlugin::NewL( TAny* /*aInitParams*/ )
     {
     MUS_LOG( "[MUSSET] -> CMusSettingsPlugin::NewL()" )
@@ -120,11 +135,10 @@ CMusSettingsPlugin* CMusSettingsPlugin::NewL( TAny* /*aInitParams*/ )
     return self;
     }
 
-
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // From class CAknView.
 // Returns UID of *this* settings plugin.
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 //
 TUid CMusSettingsPlugin::Id() const
     {
@@ -133,11 +147,10 @@ TUid CMusSettingsPlugin::Id() const
     return KGSVSSettingsPluginUID;
     }
 
-
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Hides non-virtual member from base class CGSBaseView.
 // Handles a change in client rectangle size.
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 //
 void CMusSettingsPlugin::HandleClientRectChange()
     {
@@ -149,11 +162,10 @@ void CMusSettingsPlugin::HandleClientRectChange()
     MUS_LOG( "[MUSSET] <- CMusSettingsPlugin::HandleClientRectChange()" )
     }
 
-
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // From class CAknView.
 // Called by framework when *this* control is to be activated/focused.
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 //
 void CMusSettingsPlugin::DoActivateL(
     const TVwsViewId& aPrevViewId,
@@ -166,11 +178,10 @@ void CMusSettingsPlugin::DoActivateL(
     MUS_LOG( "[MUSSET] <- CMusSettingsPlugin::DoActivateL()" )
     }
 
-
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // From class CAknView.
 // Called by framework when *this* control is to be deactivated.
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 //
 void CMusSettingsPlugin::DoDeactivate()
     {
@@ -180,11 +191,10 @@ void CMusSettingsPlugin::DoDeactivate()
     MUS_LOG( "[MUSSET] <- CMusSettingsPlugin::DoDeactivate()" )
     }
 
-
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // From class CAknView.
 // Handles a user selected menu command.
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 //
 void CMusSettingsPlugin::HandleCommandL( TInt aCommand )
     {
@@ -224,11 +234,10 @@ void CMusSettingsPlugin::HandleCommandL( TInt aCommand )
     MUS_LOG( "[MUSSET] <- CMusSettingsPlugin::HandleCommandL()" )
     }
 
-
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // From class CGSPluginInterface.
 // Gets caption text of *this* plugin.
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 //
 void CMusSettingsPlugin::GetCaptionL( TDes& aCaption ) const
     {
@@ -241,11 +250,10 @@ void CMusSettingsPlugin::GetCaptionL( TDes& aCaption ) const
     MUS_LOG( "[MUSSET] <- CMusSettingsPlugin::GetCaptionL()" )
     }
 
-
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // From class CGSPluginInterface.
 // Returns provider category of *this* plugin.
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 //
 TInt CMusSettingsPlugin::PluginProviderCategory() const
     {
@@ -253,11 +261,10 @@ TInt CMusSettingsPlugin::PluginProviderCategory() const
     return KGSPluginProviderInternal;
     }
 
-
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // From class MEikMenuObserver.
 // Called by framework before creating menus
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 //
 void CMusSettingsPlugin::DynInitMenuPaneL( TInt aResourceId,
                                               CEikMenuPane* aMenuPane )
@@ -271,12 +278,11 @@ void CMusSettingsPlugin::DynInitMenuPaneL( TInt aResourceId,
             }
         }
     }
-
     
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // From MDiskNotifyHandlerCallback
 // Called by framework When disk status changed
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 //
 void CMusSettingsPlugin::HandleNotifyDisk( TInt /*aError*/, 
                                            const TDiskEvent& /*aEvent*/ )
@@ -296,11 +302,10 @@ void CMusSettingsPlugin::HandleNotifyDisk( TInt /*aError*/,
     MUS_LOG( "[MUSSET] <- CMusSettingsPlugin::HandleNotifyDisk()" )
     }
 
-
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // From class CGSBaseView.
 // Called by GS framework to create a GS container for *this* plugin.
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 //
 void CMusSettingsPlugin::NewContainerL()
     {
@@ -308,11 +313,10 @@ void CMusSettingsPlugin::NewContainerL()
     iContainer = new( ELeave ) CMusSettingsContainer( *iModel );
     }
 
-
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // From class CGSBaseView.
 // Handles users "middle click" aka MSK on selected feature.
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 //
 void CMusSettingsPlugin::HandleListBoxSelectionL()
     {
@@ -320,61 +324,35 @@ void CMusSettingsPlugin::HandleListBoxSelectionL()
     CMusSettingsContainer& container =
         *static_cast<CMusSettingsContainer*>( iContainer );
     const TInt currentItem = container.CurrentFeatureId();
-
-    RDebug::Print( _L(
-        "[CMusSettingsPlugin] Item selected: %d" ),
-        currentItem );
-
-	MusSettingsKeys::TOperatorVariant operatorVarValue =
-		iModel->VSSettingsOperatorVariantL();
+    MUS_LOG1( "[MUSSET]    Item selected: ", currentItem )
 
     switch ( currentItem )
         {
         case KGSSettIdVSActivation:
             {
-        	if ( operatorVarValue == MusSettingsKeys::EOperatorSpecific )
-    			{
-    			SwitchOnOffValueL( KGSSettIdVSActivation );
-    			container.UpdateListBoxL( KGSSettIdVSActivation );
-				}
-			else
-				{
-				ShowVSSettingsActivationSettingDialogL();
-    			}
+            SwitchOnOffValueL( KGSSettIdVSActivation );
     		break;
     	    }
-
         case KGSSettIdSIPProfile:
             {
             ShowVSSettingsProfileSettingDialogL();
             break;
             }
-
         case KGSSettIdAutoRecord:
             {
             SwitchOnOffValueL( KGSSettIdAutoRecord );
-            container.UpdateListBoxL( KGSSettIdAutoRecord );
         	break;
             }
-
         case KGSSettIdRecordedVideoSaving:
             {
-
         	ShowVSSettingsRecordedVideoSavingSettingDialogL();
-
-//        	SwitchOnOffValueL( KGSSettIdRecordedVideoSaving );
-//        	container.UpdateListBoxL( KGSSettIdRecordedVideoSaving );
-
         	break;
             }
-
         case KGSSettIdNote:
             {
         	SwitchOnOffValueL( KGSSettIdNote );
-        	container.UpdateListBoxL( KGSSettIdNote );
         	break;
             }
-
         default:
             {
             break;
@@ -383,12 +361,11 @@ void CMusSettingsPlugin::HandleListBoxSelectionL()
     MUS_LOG( "[MUSSET] <- CMusSettingsPlugin::HandleListBoxSelectionL()" )
     }
 
-
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // From class CGSBaseView.
 // Returns container class of *this* plugin. iContainer is always garanteed to
 // be of type CMusSettingsContainer*.
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 //
 CMusSettingsContainer* CMusSettingsPlugin::Container()
     {
@@ -396,57 +373,17 @@ CMusSettingsContainer* CMusSettingsPlugin::Container()
     return static_cast<CMusSettingsContainer*>( iContainer );
     }
 
-
-// ----------------------------------------------------------------------------
-// Shows a dialog for user to modify VS activation setting. Note that this
-// method has an alternative method for operator specific variant.
-// ----------------------------------------------------------------------------
-//
-void CMusSettingsPlugin::ShowVSSettingsActivationSettingDialogL()
-    {
-    MUS_LOG(
-    "[MUSSET] -> CMusSettingsPlugin::ShowVSSettingsActivationSettingDialogL()" )
-
-    MusSettingsKeys::TActivation currentValue =
-    	iModel->VSSettingsActivationL();
-
-    CDesCArrayFlat* items = iCoeEnv->ReadDesC16ArrayResourceL(
-        R_OPERATOR_ACTIVATION_SETTING_PAGE_LBX );
-
-    CleanupStack::PushL( items );
-    TInt intCurrentValue = static_cast<TInt>( currentValue );
-
-    CAknRadioButtonSettingPage* dlg =
-    	new ( ELeave ) CAknRadioButtonSettingPage(
-        	R_ACTIVATION_SETTING_PAGE,
-        	intCurrentValue,
-        	items);
-
-    if ( dlg->ExecuteLD( CAknSettingPage::EUpdateWhenChanged ) )
-        {
-        currentValue =
-        	static_cast<MusSettingsKeys::TActivation>( intCurrentValue );
-
-        iModel->SetVSSettingsActivationL( currentValue );
-        Container()->UpdateListBoxL( KGSSettIdVSActivation );
-        }
-
-    CleanupStack::PopAndDestroy( items );
-    MUS_LOG(
-    "[MUSSET] <- CMusSettingsPlugin::ShowVSSettingsActivationSettingDialogL()" )
-    }
-
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Shows SIP profile setting dialog (i.e. "use default profile" or "select
 // profile from list"). If select profile from list is selected, a list of
 // SIP profiles is provided for user to choose wanted SIP profile.
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 //
 void CMusSettingsPlugin::ShowVSSettingsProfileSettingDialogL()
     {
     MUS_LOG(
     "[MUSSET] -> CMusSettingsPlugin::ShowVSSettingsProfileSettingDialogL()" )
-    TInt cenRepValue = iModel->VSSettingsProfileL();
+    TInt cenRepValue = MultimediaSharingSettings::SipProfileSettingL();
     TInt profileMode = CMusSettingsModel::KVsSipProfileDefault;
     if ( cenRepValue != CMusSettingsModel::KVsSipProfileDefault )
     	{
@@ -470,8 +407,8 @@ void CMusSettingsPlugin::ShowVSSettingsProfileSettingDialogL()
         	{
         	if ( oldProfileMode != profileMode )
         		{
-        		iModel->SetVSSettingsProfileL( 
-        		            CMusSettingsModel::KVsSipProfileDefault );
+        		MultimediaSharingSettings::SetSipProfileSettingL( 
+                                    CMusSettingsModel::KVsSipProfileDefault );
         		Container()->ShowNewProfileActiveAfterCallL();
         		Container()->UpdateListBoxL( KGSSettIdSIPProfile );
         		}
@@ -486,10 +423,10 @@ void CMusSettingsPlugin::ShowVSSettingsProfileSettingDialogL()
     "[MUSSET] <- CMusSettingsPlugin::ShowVSSettingsProfileSettingDialogL()" )
     }
 
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Provides user a list of SIP profiles to select from. If no SIP profiles
 // exist an error note is displayed.
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 //
 void CMusSettingsPlugin::ShowVSSettingsSelectSipProfileDialogL()
     {
@@ -504,7 +441,7 @@ void CMusSettingsPlugin::ShowVSSettingsSelectSipProfileDialogL()
 	else
 		{
     	TInt selectedIndex = iModel->ProfileIndexByIdL(
-    	    iModel->VSSettingsProfileL() );
+                            MultimediaSharingSettings::SipProfileSettingL() );
         TInt currentIndex ( selectedIndex );
 
 		if ( selectedIndex == KErrNotFound )
@@ -527,7 +464,7 @@ void CMusSettingsPlugin::ShowVSSettingsSelectSipProfileDialogL()
 	        	// User has changed the selected profile, set new
     	    	// setting to persistent storage
     	    	TUint newValue = iModel->ProfileIdByIndex( selectedIndex );
-	    	    iModel->SetVSSettingsProfileL( newValue );
+	    	    MultimediaSharingSettings::SetSipProfileSettingL( newValue );
 	    	    Container()->ShowNewProfileActiveAfterCallL();
 				Container()->UpdateListBoxL( KGSSettIdSIPProfile );
     			}
@@ -537,11 +474,10 @@ void CMusSettingsPlugin::ShowVSSettingsSelectSipProfileDialogL()
 	CleanupStack::PopAndDestroy( array );  // array
     }
 
-
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Provides a dialog for user to choose saving location for recorderded video.
 // (locations are naturally phone memory or memory card).
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 //
 void CMusSettingsPlugin::ShowVSSettingsRecordedVideoSavingSettingDialogL()
     {
@@ -551,20 +487,9 @@ void CMusSettingsPlugin::ShowVSSettingsRecordedVideoSavingSettingDialogL()
                     TParsePtrC( PathInfo::PhoneMemoryRootPath() ).Drive() );
     TDriveUnit mmcUnit( TParsePtrC( PathInfo::MemoryCardRootPath() ).Drive() );
     TInt currentValue =	iModel->VSSettingsRecordedVideoSavingL();
-
-
-     CAknMemorySelectionDialogMultiDrive* dlg = 
-                                    iModel->MemorySelectionDialogLC();
-
-    // Use ECFDDialogTypeSave to have double list box in the query
-/*	CAknMemorySelectionDialog* dlg = CAknMemorySelectionDialog::NewL(
-                                    ECFDDialogTypeSave,
-                                    R_VS_RECORDED_VIDEO_SAVING_SETTING_PAGE,
-                                    EFalse );
-    CleanupStack::PushL( dlg );    
-*/
-
     
+    CAknMemorySelectionDialogMultiDrive* dlg = 
+                                    iModel->MemorySelectionDialogLC();   
 
     TBool result( EFalse );
     TDriveNumber driveNumber((TDriveNumber)currentValue);    
@@ -573,67 +498,37 @@ void CMusSettingsPlugin::ShowVSSettingsRecordedVideoSavingSettingDialogL()
     if ( result != CAknCommonDialogsBase::TReturnKey(
                                         CAknCommonDialogsBase::ERightSoftkey) )
         {
-        if ( ( TInt ) driveNumber != currentValue )
+        if ( /*( TInt )*/ driveNumber != currentValue )
             {
-            iModel->SetVSSettingsRecordedVideoSavingL( ( TInt ) driveNumber );
+            MultimediaSharingSettings::SetVideoLocationSettingL( ( TInt ) driveNumber );
             }
         Container()->UpdateListBoxL( KGSSettIdRecordedVideoSaving );
         }
-
-/*  CAknMemorySelectionDialog::TMemory mem;
-    if ( currentValue == ( TInt )mmcUnit )
-        {
-        mem = CAknMemorySelectionDialog::EMemoryCard;
-        }
-    else
-        {
-        mem = CAknMemorySelectionDialog::EPhoneMemory;
-        }
-                    
-    TFileName ignore;
-    TFileName path;
-
-    if ( dlg->ExecuteL( mem, &path, &ignore ) )
-        {
-        if ( mem == CAknMemorySelectionDialog::EPhoneMemory 
-        	&& currentValue != ( TInt ) phoneMemUnit )
-        	{
-        	iModel->SetVSSettingsRecordedVideoSavingL( ( TInt )phoneMemUnit );
-        	Container()->UpdateListBoxL( KGSSettIdRecordedVideoSaving );
-        	}	
-        else if ( mem == CAknMemorySelectionDialog::EMemoryCard
-        	&& currentValue != ( TInt )mmcUnit )
-        	{
-        	iModel->SetVSSettingsRecordedVideoSavingL( ( TInt )mmcUnit );
-        	Container()->UpdateListBoxL( KGSSettIdRecordedVideoSaving );
-        	}	
-        }
-*/
 
     CleanupStack::PopAndDestroy(dlg); 
     MUS_LOG(
     "[MUSSET] <- CMusSettingsPlugin::ShowVSSettingsRecordedVideoSavingSettingDialogL()" )
     }
 
-
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // In standard variant provides user a "Capability auditory note" setting
 // dialog, and in operator variant provides user an "Alerts" setting dialog.
 // Note that in both variants the different dialogs toggle the same setting.
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 //
 void CMusSettingsPlugin::ShowVSSettingsNoteSettingDialogL()
     {
     MUS_LOG(
     "[MUSSET] -> CMusSettingsPlugin::ShowVSSettingsNoteSettingDialogL()" )
     MusSettingsKeys::TAuditoryNotification currentValue =
-    	iModel->VSSettingsNoteL();
+                    MultimediaSharingSettings::AuditoryNotificationSettingL();
     TInt intCurrentValue = static_cast<TInt>( currentValue );
 
     CAknRadioButtonSettingPage* dlg;
     CDesCArrayFlat* items;
 
-    if ( iModel->VSSettingsOperatorVariantL() == MusSettingsKeys::EStandard )
+    if ( MultimediaSharingSettings::OperatorVariantSettingL() == 
+         MusSettingsKeys::EStandard )
         {
         items = iCoeEnv->ReadDesC16ArrayResourceL(
             R_VS_AUDIO_SETTING_PAGE_LBX );
@@ -657,9 +552,9 @@ void CMusSettingsPlugin::ShowVSSettingsNoteSettingDialogL()
     if ( dlg->ExecuteLD( CAknSettingPage::EUpdateWhenChanged ) )
         {
         currentValue =
-        	static_cast<MusSettingsKeys::TAuditoryNotification>
-        	    ( intCurrentValue );
-        iModel->SetVSSettingsNoteL( currentValue );
+                static_cast<MusSettingsKeys::TAuditoryNotification>( intCurrentValue );
+        MultimediaSharingSettings::SetAuditoryNotificationSettingL(
+                                                                currentValue );
         Container()->UpdateListBoxL( KGSSettIdNote );
         }
 
@@ -668,10 +563,9 @@ void CMusSettingsPlugin::ShowVSSettingsNoteSettingDialogL()
     "[MUSSET] <- CMusSettingsPlugin::ShowVSSettingsNoteSettingDialogL()" )
     }
 
-
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Shows a notifications that no SIP profiles exists.
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 //
 void CMusSettingsPlugin::ShowNoProfilesNotificationL()
     {
@@ -683,109 +577,119 @@ void CMusSettingsPlugin::ShowNoProfilesNotificationL()
     MUS_LOG( "[MUSSET] <- CMusSettingsPlugin::ShowNoProfilesNotificationL()" )
     }
 
-
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Switches between two possible values from one to another (i.e. toggles a
 // setting on/off). Toggled setting is passed in aValue parameter.
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 //
 void CMusSettingsPlugin::SwitchOnOffValueL( TInt aValue )
     {
     MUS_LOG( "[MUSSET] -> CMusSettingsPlugin::SwitchOnOffValueL()" )
+            
     switch( aValue )
 	    {
 	    case KGSSettIdVSActivation:
 	        {
-            TInt aCallCount = 0;
-            RProperty::Get( NMusSessionInformationApi::KCategoryUid,
-                          NMusSessionInformationApi::KMusCallCount,
-                          aCallCount );
-            MUS_LOG1( "CallCount ( %d )", aCallCount)
-            if ( aCallCount ==  0 )
-              {
-              TBool enabled = EFalse;
-              TRAPD( error, enabled = iHandler->ProfileEnabledL( ));
-              if ( error != KErrNone )
-                  {
-                  // Problems with re-reading profiles; use existing array
-                  MUS_LOG1("Error returned( %d )",
-                          error )
-                  }
-              else
-                  {
-                  if( enabled )
-                      {
-                      TRAPD( error, iHandler->EnableProfileL() );
-                      if ( error != KErrNone )
-                          {
-                          // Problems with re-reading profiles; use existing array
-                          iModel->SetActivationItem( ETrue );
-                          }
-                      iModel->SetActivationItem( EFalse );
-                      }
-                  else
-                      {
-                      TRAP_IGNORE( iHandler->DisableProfileL() );
-                      iModel->SetActivationItem( ETrue );
-                      }
-                  }
-              }
+	        MusSettingsKeys::TOperatorVariant operatorVarValue =
+                        MultimediaSharingSettings::OperatorVariantSettingL();
+	            
+	        if ( operatorVarValue == MusSettingsKeys::EOperatorSpecific )
+                {
+	        
+                TInt aCallCount = 0;
+                RProperty::Get( NMusSessionInformationApi::KCategoryUid,
+                              NMusSessionInformationApi::KMusCallCount,
+                              aCallCount );
+                MUS_LOG1( "CallCount ( %d )", aCallCount)
+                if ( aCallCount == 0 )
+                    {
+                    TBool enabled = EFalse;
+                    TRAPD( error, enabled = iHandler->ProfileEnabledL( ));
+                    if ( error != KErrNone )
+                        {
+                        // Problems with re-reading profiles; use existing array
+                        MUS_LOG1("Error returned( %d )", error )
+                        }
+                    else
+                        {
+                        if( enabled )
+                            {
+                            TRAPD( error, iHandler->EnableProfileL() );
+                            if ( error != KErrNone )
+                                {
+                                // Problems with re-reading profiles; use existing array
+                                iModel->SetActivationItem( ETrue );
+                                }
+                            iModel->SetActivationItem( EFalse );
+                            }
+                        else
+                            {
+                            TRAP_IGNORE( iHandler->DisableProfileL() );
+                            iModel->SetActivationItem( ETrue );
+                            }
+                        }
+                    }
+                }
+            else
+                {
+                if ( MusSettingsKeys::EAlwaysActive ==
+                     MultimediaSharingSettings::ActivationSettingL() )
+                    {
+                    MUS_LOG( "[MUSSET]    Activation setting set off" )
+                    //MusSettingsKeys::ENever = 2 can not be used anymore
+                    //EActiveInHomeNetworks = 1 is used instead -> off
+                    MultimediaSharingSettings::SetActivationSettingL(
+                                    MusSettingsKeys::EActiveInHomeNetworks );
+                    }
+                else
+                    {
+                    MUS_LOG( "[MUSSET]    Activation setting set on" )
+                    MultimediaSharingSettings::SetActivationSettingL(
+                                        MusSettingsKeys::EAlwaysActive );
+                    }
+                }
             break;
             }
 	    case KGSSettIdAutoRecord:
 	        {
 	        if ( MusSettingsKeys::EAutoRecordOff ==
-	                                iModel->VSSettingsAutoRecordL() )
+                            MultimediaSharingSettings::AutoRecordSettingL() )
 		    	{
-		    	iModel->SetVSSettingsAutoRecordL( 
-		    	                    MusSettingsKeys::EAutoRecordOn );
+                MultimediaSharingSettings::SetAutoRecordSettingL( 
+                                            MusSettingsKeys::EAutoRecordOn );
 		    	}
 			else
 				{
-				iModel->SetVSSettingsAutoRecordL(
-					                MusSettingsKeys::EAutoRecordOff );
+                MultimediaSharingSettings::SetAutoRecordSettingL(
+                                            MusSettingsKeys::EAutoRecordOff );
 				}
 	        break;
 	        }
-	    case KGSSettIdRecordedVideoSaving:
-	    	{
-		    TDriveUnit phoneMemUnit( 
-		            TParsePtrC( PathInfo::PhoneMemoryRootPath() ).Drive() );
-            TDriveUnit mmcUnit( 
-                    TParsePtrC( PathInfo::MemoryCardRootPath() ).Drive() );    
-    
-		    if ( ( TInt )phoneMemUnit 
-		        == iModel->VSSettingsRecordedVideoSavingL() )
-		    	{
-		    	iModel->SetVSSettingsRecordedVideoSavingL( ( TInt )mmcUnit );
-		    	}
-			else
-				{
-				iModel->SetVSSettingsRecordedVideoSavingL( ( TInt )phoneMemUnit );
-				}
-			break;
-	    	}
 		case KGSSettIdNote:
 			{
-		    if ( MusSettingsKeys::EAuditoryNotificationOn
-		    	== iModel->VSSettingsNoteL() )
+		    if ( MusSettingsKeys::EAuditoryNotificationOn == 
+		            MultimediaSharingSettings::AuditoryNotificationSettingL() )
 		    	{
-		    	iModel->SetVSSettingsNoteL(
+		    	MultimediaSharingSettings::SetAuditoryNotificationSettingL(
 		    		MusSettingsKeys::EAuditoryNotificationOff );
 		    	}
 			else
 				{
-				iModel->SetVSSettingsNoteL(
+                MultimediaSharingSettings::SetAuditoryNotificationSettingL(
 					MusSettingsKeys::EAuditoryNotificationOn );
 				}
 			break;
 			}
+			
 	    default:
 	    	{
 	    	MUS_LOG( "[MUSSET] -> CMusSettingsPlugin::SwitchOnOffValueL() - error unknown setting" )
 	    	User::Leave( KErrArgument );
 	    	}
 	    }
+	        
+	Container()->UpdateListBoxL( aValue );
+	        
     MUS_LOG( "[MUSSET] <- CMusSettingsPlugin::SwitchOnOffValueL()" )
     }
 
@@ -804,11 +708,11 @@ void CMusSettingsPlugin::ShowGlobalInformationDialogL( TInt aResourceId )
     CleanupStack::PopAndDestroy( dlg );
     }
 
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // From class CGSPluginInterface.
 // Creates a new icon of desired type. Overrided to provide custom icons.
 // Ownership of the created icon is transferred to the caller.
-// ----------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 //
 CGulIcon* CMusSettingsPlugin::CreateIconL( const TUid aIconType )
     {
@@ -849,23 +753,37 @@ CGulIcon* CMusSettingsPlugin::CreateIconL( const TUid aIconType )
     return icon;
     }
 
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
 void CMusSettingsPlugin::OpenResourceFileL()
 	{
-         if (!iResourceFileOpen) 
-         {
-         HBufC* fileName = MusResourceFinderUtil::ResourcePathL(
-         KVSSettingsResourceFileName );    
-         TFileName fName(*fileName);
-         delete fileName;
-         MUS_LOG_TDESC( "[MUSSET] Resource FileName ",fName )
-         iResources.OpenL(fName);  
-         iResourceFileOpen = true;
-         } 
+    MUS_LOG( "[MUSSET] -> CMusSettingsPlugin::OpenResourceFileL()" )
+        
+    if (!iResourceFileOpen) 
+        {
+        HBufC* fileName = MusResourceFinderUtil::ResourcePathL(
+        KVSSettingsResourceFileName );    
+        TFileName fName(*fileName);
+        delete fileName;
+        MUS_LOG_TDESC( "[MUSSET] Resource FileName ",fName )
+        iResources.OpenL(fName);  
+        iResourceFileOpen = true;
+        } 
+    
+    MUS_LOG( "[MUSSET] <- CMusSettingsPlugin::OpenResourceFileL()" )
 	}
-	
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
 void CMusSettingsPlugin::CloseResourceFile()
-	{
-        iResources.Close();
-        iResourceFileOpen = false;
-        MUS_LOG( "[MUSSET] Resource file closed " )
-	}
+    {
+    MUS_LOG( "[MUSSET] -> CMusSettingsPlugin::CloseResourceFile()" )
+    iResources.Close();
+    iResourceFileOpen = false;
+    MUS_LOG( "[MUSSET] <- CMusSettingsPlugin::CloseResourceFile()" )
+    }
+

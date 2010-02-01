@@ -13,7 +13,7 @@
 *
 * Description:  Mixin-class that provides functionality for manipulating
 *                MuS specific settings.
-*  Version     : %version: 4.1.3 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: 6 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -21,13 +21,15 @@
 #ifndef M_MMUSSIPPROFILEHANDLER_H
 #define M_MMUSSIPPROFILEHANDLER_H
 
-#include <sipmanagedprofile.h>
+#include <e32def.h>
+#include <e32cmn.h>
+
+class CSIPProfile;
 
 /**
 *  MMusSIPProfileHandler class
 *  Mixin class for SIP profile manipulation.
 *  Handles SIP profile manipulations.
-*  @since S60 v3.2
 */
 class MMusSIPProfileHandler
     {
@@ -39,17 +41,17 @@ public:
      *         default SIP profile.
      */
     virtual TInt DefaultProfileIndex() = 0;
-
+    
     /**
-     * Returns pointer to the SIP profile array, does not change ownership.
+     * Returns a reference to the SIP profile array.
      * Note that previously returned value goes out of scope after a new
      * call to ProfileArrayL. So it is not advised to store return value
      * in long persistent variable, but rather to be used like stack
      * variables for safety.
      *
-     * @return Pointer to internally cached SIP profile array.
+     * @return Reference to internally cached SIP profile array.
      */
-    virtual CArrayPtr<CSIPManagedProfile>* ProfileArrayL() = 0;
+    virtual RPointerArray<CSIPProfile>& ProfileArrayL() = 0;
 
     /**
      * Returns the id of the default SIP profile.

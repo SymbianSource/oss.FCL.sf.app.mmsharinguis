@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Model for managing SIP profiles.
-*  Version     : %version: 14 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: 16 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -25,10 +25,11 @@
 #include <StringLoader.h>
 #include <aknview.h>
 #include <sipmanagedprofileregistry.h>
+#include <sipmanagedprofile.h>
 #include <sipprofileregistry.h>
+#include  "mussettingsmodel.h"
 
 
-const TInt KSIPGranularity   = 5;
 const TInt KUnknownProfileId = 0;
 
 /** 
@@ -40,20 +41,30 @@ const TUint32 KMuSVSCDisable = 200;
 // ======== MEMBER FUNCTIONS ========
 
 
+// ----------------------------------------------------------------------------
+// 
+// ----------------------------------------------------------------------------
+//
 CMusSIPProfileModel::CMusSIPProfileModel()
     {
-    MUS_LOG( "[MUSSET] <- CMusSIPProfileModel::CMusSIPProfileModel()" )
     }
 
-
+// ----------------------------------------------------------------------------
+// 
+// ----------------------------------------------------------------------------
+//
 void CMusSIPProfileModel::ConstructL()
     {
     MUS_LOG( "[MUSSET] <- CMusSIPProfileModel::ConstructL()" )
     iEngine = CSIPManagedProfileRegistry::NewL( *this );
-    ReadArrayFromEngineL();
+    iEngine->ProfilesL( iProfiles );
+    SortProfilesL();
     }
 
-
+// ----------------------------------------------------------------------------
+// 
+// ----------------------------------------------------------------------------
+//
 CMusSIPProfileModel* CMusSIPProfileModel::NewL()
     {
     MUS_LOG( "[MUSSET] -> CMusSIPProfileModel::NewL()" )
@@ -67,29 +78,27 @@ CMusSIPProfileModel* CMusSIPProfileModel::NewL()
     return self;
     }
 
-
+// ----------------------------------------------------------------------------
+// 
+// ----------------------------------------------------------------------------
+//
 CMusSIPProfileModel::~CMusSIPProfileModel()
     {
     MUS_LOG( "[MUSSET] -> CMusSIPProfileModel::~CMusSIPProfileModel()" )
-    DeleteProfiles();
+    iProfiles.ResetAndDestroy();
     delete iEngine;
-    iEngine = NULL;
     MUS_LOG( "[MUSSET] <- CMusSIPProfileModel::~CMusSIPProfileModel()" )
     }
 
-
 // ----------------------------------------------------------------------------
-// Returns pointer to the locally cached SIP profile array.
+// Returns reference to the locally cached SIP profile array.
 // ----------------------------------------------------------------------------
 //
-CArrayPtr<CSIPManagedProfile>* CMusSIPProfileModel::ProfileArrayL()
+RPointerArray<CSIPProfile>& CMusSIPProfileModel::ProfileArrayL()
     {
-    MUS_LOG( "[MUSSET] -> CMusSIPProfileModel::ProfileArrayL()" )
-    ReadProfileListFromEngineSafeL();
-    MUS_LOG( "[MUSSET] <- CMusSIPProfileModel::ProfileArrayL()" )
+    MUS_LOG( "[MUSSET] <-> CMusSIPProfileModel::ProfileArrayL()" )
     return iProfiles;
     }
-
 
 // ----------------------------------------------------------------------------
 // Returns index to the default SIP profile in locally cached array.
@@ -100,12 +109,12 @@ TInt CMusSIPProfileModel::DefaultProfileIndex()
     MUS_LOG( "[MUSSET] -> CMusSIPProfileModel::DefaultProfileIndex()" )
     TInt index( KErrNotFound );
 
-    for ( TInt i = 0; i < iProfiles->Count(); i++ )
+    for ( TInt i = 0; i < iProfiles.Count(); i++ )
         {
         TBool defProfile( EFalse );
         if (
     	    KErrNone ==
-    	    iProfiles->At( i )->GetParameter( KSIPDefaultProfile, defProfile )
+    	    iProfiles[i]->GetParameter( KSIPDefaultProfile, defProfile )
     	    && defProfile )
             {
             index = i;
@@ -118,7 +127,6 @@ TInt CMusSIPProfileModel::DefaultProfileIndex()
     return index;
     }
 
-
 // ----------------------------------------------------------------------------
 // Returns id of the default SIP profile. If default SIP profile is not found
 // KUnknownProfileId is returned.
@@ -129,15 +137,13 @@ TUint32 CMusSIPProfileModel::DefaultProfileId()
     MUS_LOG( "[MUSSET] -> CMusSIPProfileModel::DefaultProfileId()" )
     TUint32 id( KUnknownProfileId );
 
-    for ( TInt i = 0; i < iProfiles->Count(); i++ )
+    for ( TInt i = 0; i < iProfiles.Count(); i++ )
         {
         TBool defProfile( EFalse );
-        if (
-    	    KErrNone ==
-    	    iProfiles->At( i )->GetParameter( KSIPDefaultProfile, defProfile )
-    	    && defProfile )
+        TInt error = iProfiles[i]->GetParameter( KSIPDefaultProfile, defProfile );
+        if ( error == KErrNone && defProfile )
             {
-        	iProfiles->At( i )->GetParameter( KSIPProfileId, id );
+        	iProfiles[i]->GetParameter( KSIPProfileId, id );
         	break;
             }
         }
@@ -146,6 +152,7 @@ TUint32 CMusSIPProfileModel::DefaultProfileId()
               id )
     return id;
     }
+
 // -----------------------------------------------------------------------------
 // Disable SIP Registration.
 // -----------------------------------------------------------------------------
@@ -204,6 +211,7 @@ TBool CMusSIPProfileModel::ProfileEnabledL()
     MUS_LOG( "[MUSSET]  <- CMusAvaRegisterAvailability::ProfileEnabledL " )
     return enabled;
     }
+
 // ----------------------------------------------------------------------------
 // Returns index of the default SIP profile on locally cached array. If default
 // SIP profile is not found, KErrNotFound is returned.
@@ -213,14 +221,12 @@ TInt CMusSIPProfileModel::ProfileIndexByIdL( TUint32 aId )
     {
     MUS_LOG( "[MUSSET] -> CMusSIPProfileModel::ProfileIndexByIdL()" )
     TInt index( KErrNotFound );
-
-	ReadProfileListFromEngineSafeL();
-    for ( TInt i = 0; i < iProfiles->Count(); i++ )
+    
+    for ( TInt i = 0; i < iProfiles.Count(); i++ )
         {
         TUint32 id( KUnknownProfileId );
-
-        if ( KErrNone == iProfiles->At( i )->GetParameter( KSIPProfileId, id )
-            && id == aId )
+        TInt error = iProfiles[i]->GetParameter( KSIPProfileId, id );
+        if ( error == KErrNone && id == aId )
             {
             index = i;
             break;
@@ -242,10 +248,9 @@ TUint32 CMusSIPProfileModel::ProfileIdByIndex( TUint aIndex )
     MUS_LOG1( "[MUSSET] -> CMusSIPProfileModel::ProfileIdByIndex()( %d )",
               aIndex )
 	TUint32 profileId( KUnknownProfileId );
-    if ( iProfiles->Count() > aIndex )
+    if ( aIndex < iProfiles.Count() )
         {
-        if ( iProfiles->At( aIndex )->GetParameter(
-            KSIPProfileId, profileId ) )
+        if ( iProfiles[aIndex]->GetParameter( KSIPProfileId, profileId ) )
             {
             profileId = KUnknownProfileId;
             }
@@ -254,41 +259,6 @@ TUint32 CMusSIPProfileModel::ProfileIdByIndex( TUint aIndex )
     MUS_LOG( "[MUSSET] <- CMusSIPProfileModel::ProfileIdByIndex()" )
     return profileId;
     }
-
-
-// ----------------------------------------------------------------------------
-// Reads SIP profiles from SIP Profile Client array to locally cached array.
-// ----------------------------------------------------------------------------
-//
-void CMusSIPProfileModel::ReadArrayFromEngineL()
-    {
-    MUS_LOG( "[MUSSET] -> CMusSIPProfileModel::ReadArrayFromEngineL()" )
-
-    DeleteProfiles();
-
-    // Create the profile pointer array
-    iProfiles =
-        new ( ELeave ) CArrayPtrFlat<CSIPManagedProfile>( KSIPGranularity );
-
-    RPointerArray<CSIPProfile> profilePointerArray;
-    TCleanupItem clItem( ResetAndDestroy, &profilePointerArray );
-    CleanupStack::PushL( clItem );
-
-    iEngine->ProfilesL( profilePointerArray );
-    for ( TInt i = 0; i < profilePointerArray.Count(); i++ )
-        {
-        iProfiles->AppendL(
-            static_cast<CSIPManagedProfile*>( profilePointerArray[i] ) );
-        }
-
-    profilePointerArray.Reset();
-    CleanupStack::PopAndDestroy(); // clItem (profilePointerArray)
-
-    SortProfilesL();
-
-    MUS_LOG( "[MUSSET] <- CMusSIPProfileModel::ReadArrayFromEngineL()" )
-    }
-
 
 // ----------------------------------------------------------------------------
 // Sorts internal array of SIP profiles by id. Used algorithm is generally
@@ -300,39 +270,23 @@ void CMusSIPProfileModel::SortProfilesL()
     {
 	TUint32 profileIdFirst( 0 );
 	TUint32 profileIdSecond( 0 );
-    for ( TInt a = 0; a < iProfiles->Count() - 1; a++ )
+    for ( TInt a = 0; a < iProfiles.Count() - 1; a++ )
         {
-        for ( TInt b = a + 1; b < iProfiles->Count(); b++ )
+        for ( TInt b = a + 1; b < iProfiles.Count(); b++ )
             {
-            User::LeaveIfError( iProfiles->At( a )->GetParameter(
+            User::LeaveIfError( iProfiles[a]->GetParameter(
             	KSIPProfileId, profileIdFirst ) );
-    		User::LeaveIfError( iProfiles->At( b )->GetParameter(
+    		User::LeaveIfError( iProfiles[b]->GetParameter(
     			KSIPProfileId, profileIdSecond ) );
             if ( profileIdFirst > profileIdSecond )
                 {
-                CSIPManagedProfile* tmp = iProfiles->At( b );
-                iProfiles->At( b ) = iProfiles->At( a );
-                iProfiles->At( a )  = tmp;
+                CSIPProfile* tmp = iProfiles[b];
+                iProfiles[b] = iProfiles[a];
+                iProfiles[a]  = tmp;
                 }
             }
         }
     }
-
-
-// ----------------------------------------------------------------------------
-// Deletes internally cached SIP profiles.
-// ----------------------------------------------------------------------------
-//
-void CMusSIPProfileModel::DeleteProfiles()
-    {
-    if ( iProfiles )
-        {
-        iProfiles->ResetAndDestroy();
-        delete iProfiles;
-        iProfiles = NULL;
-        }
-    }
-
 
 // ----------------------------------------------------------------------------
 // From class MSIPProfileRegistryObserver.
@@ -340,11 +294,44 @@ void CMusSIPProfileModel::DeleteProfiles()
 // ----------------------------------------------------------------------------
 //
 void CMusSIPProfileModel::ProfileRegistryEventOccurred(
-    TUint32 /*aSIPProfileId*/, TEvent /*aEvent*/ )
-	{
+    TUint32 aSIPProfileId, TEvent aEvent )
+	{  
+    MUS_LOG("[MUSSET] -> CMusSIPProfileModel::ProfileRegistryEventOccurred()" )
+    MUS_LOG2("            SIPProfileId is %d,Event is %d",aSIPProfileId,aEvent)
+    
+    // We revert back to default settings if the profile used by MuS is deleted
+    if ( aEvent == EProfileDestroyed )
+    	{
+    	TRAP_IGNORE( 
+            //if the profile is the profile used by mush
+            if ( MultimediaSharingSettings::SipProfileSettingL() ==
+                 aSIPProfileId )
+                {
+                //set the profile to default	
+                MultimediaSharingSettings::SetSipProfileSettingL( 
+                                    CMusSettingsModel::KVsSipProfileDefault );
+                //set mush off
+                MultimediaSharingSettings::SetActivationSettingL(
+                                    MusSettingsKeys::EActiveInHomeNetworks );
+                }
+            );
+		 }
+    
+    if ( aEvent == EProfileCreated ||
+         aEvent == EProfileUpdated ||
+         aEvent == EProfileDestroyed )
+        {
+        // Profiles have been manipulated in SIP side, we must delete client
+        // side profile objects and retrieve them again. If fetching fails,
+        // we have empty array which is better than showing wrong values to
+        // user.
+        iProfiles.ResetAndDestroy();
+        TRAP_IGNORE( iEngine->ProfilesL( iProfiles ) );
+        TRAP_IGNORE( SortProfilesL() );
+        }
+    
     MUS_LOG( "[MUSSET] <- CMusSIPProfileModel::ProfileRegistryEventOccurred()" )
 	}
-
 
 // ----------------------------------------------------------------------------
 // From class MSIPProfileRegistryObserver.
@@ -358,50 +345,11 @@ void CMusSIPProfileModel::ProfileRegistryErrorOccurred(
     MUS_LOG( "[MUSSET] <- CMusSIPProfileModel::ProfileRegistryErrorOccurred()" )
     }
 
-
 // ----------------------------------------------------------------------------
-// Reads SIP profile list from engine; if reading fails, old cached list is
-// kept and returned.
+//Set CMusSettingsModel to handle ProfileRegistry Event.
 // ----------------------------------------------------------------------------
 //
-void CMusSIPProfileModel::ReadProfileListFromEngineSafeL()
-    {
-    MUS_LOG(
-    	"[MUSSET] -> CMusSIPProfileModel::ReadProfileListFromEngineSafeL()" )
-    // To prevent complete disaster it we'll save the pointer of the old array
-    CArrayPtrFlat<CSIPManagedProfile>* profiles = iProfiles;
-    iProfiles = 0;
-    TRAPD( error, ReadArrayFromEngineL() );
-
-    if ( error )
-        {
-        // Problems with re-reading profiles; use existing array
-        DeleteProfiles();
-        iProfiles = profiles;
-        User::Leave( error );
-        }
-    else
-        {
-        // No problems; delete backup array
-        profiles->ResetAndDestroy();
-        delete profiles;
-        }
-    MUS_LOG(
-    	"[MUSSET] <- CMusSIPProfileModel::ReadProfileListFromEngineSafeL()" )
-    }
-
-
-// ----------------------------------------------------------------------------
-// For deleting RPointerArray in case of leave (used in association with
-// TCleanupItem).
-// ----------------------------------------------------------------------------
-//
-void CMusSIPProfileModel::ResetAndDestroy( TAny* aPointerArray )
-    {
-    MUS_LOG( "[MUSSET] -> CMusSIPProfileModel::ResetAndDestroy()" )
-    RPointerArray<CSIPProfile>* array =
-        static_cast<RPointerArray<CSIPProfile>*>( aPointerArray );
-    array->ResetAndDestroy();
-    array->Close();
-    MUS_LOG( "[MUSSET] <- CMusSIPProfileModel::ResetAndDestroy()" )
-    }
+void CMusSIPProfileModel::SetCMusSettingsModel(CMusSettingsModel* aCMusSettingsModel)
+	{
+	iCMusSettingsModel = aCMusSettingsModel;
+	}

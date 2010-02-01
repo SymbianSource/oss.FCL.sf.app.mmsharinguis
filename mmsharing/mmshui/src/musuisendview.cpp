@@ -61,12 +61,16 @@ void CMusUiSendView::ManualAddressEntryL( const TDesC& aAddress )
     {
     MUS_LOG_TDESC( "mus: [MUSUI ]    -> CMusUiSendView::ManualAddressEntryL: ",
                             aAddress );
-
-    TBuf<KMusSipAddressMaxLength> address( aAddress );
+     
+    CAknAppUiBase::TAppUiOrientation aOrientation ;
+    
+     TBuf<KMusSipAddressMaxLength> address( aAddress );
     if ( SendController() && MusUiDialogUtil::ShowTextQueryDialogL( 
                                     R_MUS_TEXT_ENTER_ADDRESS_DIALOG_PROMPT, 
                                     address ) )
         {
+        //to get the AppOrientation before sending invatation
+        aOrientation = MusAppUi()->AppOrientation();       
         SendController()->InviteL( address );
         }
     else
@@ -76,7 +80,10 @@ void CMusUiSendView::ManualAddressEntryL( const TDesC& aAddress )
         MusAppUi()->HandleExit();
         }
 
-    SendController()->ChangeOrientationL( iSavedOrientation );
+    if( aOrientation != iSavedOrientation)
+    	{
+         SendController()->ChangeOrientationL( iSavedOrientation );
+    	}
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiSendView::ManualAddressEntryL" );
     }
 
