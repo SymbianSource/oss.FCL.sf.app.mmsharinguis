@@ -183,10 +183,6 @@ void CMusUiSendViewContainer::SetLevelIndicatorVisibility( TBool aVisible)
               
     MakeVisible( aVisible );
     
-    if ( !aVisible )
-        {
-        iView->LevelIndicatorDismissed();
-        }
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiSendViewContainer::SetLevelIndicatorVisibility" )
     }
 

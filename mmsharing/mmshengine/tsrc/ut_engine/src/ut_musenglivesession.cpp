@@ -235,6 +235,25 @@ void UT_CMusEngLiveSession::UT_CurrentZoomLL()
 //
 // -----------------------------------------------------------------------------
 //
+void UT_CMusEngLiveSession::UT_CMusEngLiveSession_SetZoomLL()
+    {
+    TRAPD( error, iLiveSession->SetZoomL(2) );
+    MUS_TEST_FORWARD_ALLOC_FAILURE( error );
+    EUNIT_ASSERT( error == KErrNotReady );
+    ESTABLISH_OUT_SESSION( iLiveSession );
+    CMceCameraSource* camera = 
+                        MusEngMceUtils::GetCameraL( *(iLiveSession->iSession) );
+    EUNIT_ASSERT( camera->iZoomFactor == 1 );
+    EUNIT_ASSERT( camera->iDigitalZoomFactor == 0 );
+    TRAPD( err, iLiveSession->SetZoomL(0) );
+    EUNIT_ASSERT( err == KErrArgument );
+    iLiveSession->SetZoomL(2);
+    EUNIT_ASSERT( camera->iZoomFactor == 2 );
+    TRAPD( err1, iLiveSession->SetZoomL(14) );
+    EUNIT_ASSERT( err1 == KErrArgument );
+    iLiveSession->SetZoomL( 5 );
+    EUNIT_ASSERT( camera->iDigitalZoomFactor == 2 );
+    }
 void UT_CMusEngLiveSession::UT_MaxZoomLL()
     {
     // Check that checking maximum zoom is not possible before invite

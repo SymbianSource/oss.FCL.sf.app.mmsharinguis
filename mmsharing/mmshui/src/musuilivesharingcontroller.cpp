@@ -383,10 +383,11 @@ void CMusUiLiveSharingController::HandleCommandL( TInt aCommand )
             {
             iToolbarZoomSelected = ETrue;
             iToolbarBrightnessSelected = EFalse;
-            iLiveObserver.SetZoomVisible( iToolbarZoomSelected );
             iLiveObserver.SetZoomValues( iSession->MinZoomL(), 
                                          iSession->MaxZoomL() );
             iLiveObserver.SetZoomL( iSession->CurrentZoomL() );
+            
+            iLiveObserver.SetZoomVisible( iToolbarZoomSelected );
             break;
             }
         case EMusuiCmdViewMiddleSoftkeyOk:
@@ -420,10 +421,11 @@ void CMusUiLiveSharingController::HandleCommandL( TInt aCommand )
             {
             iToolbarZoomSelected = EFalse;
             iToolbarBrightnessSelected = ETrue;
-            iLiveObserver.SetBrightnessVisible( iToolbarBrightnessSelected );
             iLiveObserver.SetBrightnessValues( iSession->MinBrightnessL(),
                                                iSession->MaxBrightnessL() );
             iLiveObserver.SetBrightnessL( iSession->CurrentBrightnessL() );
+            
+            iLiveObserver.SetBrightnessVisible( iToolbarBrightnessSelected );
             break;
             }
         case EMusuiCmdViewBrightness:
@@ -621,17 +623,6 @@ void CMusUiLiveSharingController::ZoomL()
         }
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiLiveSharingController::ZoomL" );
     }
-
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void CMusUiLiveSharingController::ResetToolbarSelected()
-    {
-	iToolbarZoomSelected = EFalse;
-    iToolbarBrightnessSelected = EFalse;
-	}
 
 
 // -----------------------------------------------------------------------------

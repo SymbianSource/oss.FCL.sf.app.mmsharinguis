@@ -64,6 +64,8 @@ public:	// new functions
     void SetZoomVisible( TBool aVisible );
 
     void SetBrightnessVisible( TBool aVisible );
+    
+    TMusUiIndicatorType GetIndicatorType();
 
 
 private: // from base class CCoeControl

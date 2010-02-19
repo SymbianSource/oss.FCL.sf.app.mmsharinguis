@@ -110,8 +110,6 @@ public:	// new functions
     TBool ToolbarZoomSelected();
 
     TBool ToolbarBrightnessSelected();
-    
-    void ResetToolbarSelected();
 
 
 private:	// new functions:
