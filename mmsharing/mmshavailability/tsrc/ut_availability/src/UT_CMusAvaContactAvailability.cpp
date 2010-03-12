@@ -1469,7 +1469,7 @@ void UT_CMusAvaContactAvailability::UT_CMusAvaController_UpdateContactNameLL()
                iContactAvailability->UpdateContactNameL( contactItem->ContactItem() ) );
         if ( error == KErrNoMemory ) User::Leave( error );
         EUNIT_ASSERT( error == KErrNone );
-        EUNIT_ASSERT( iContactAvailability->iContactName->Compare( KNameWithOneChar ) == -1 );
+        EUNIT_ASSERT( iContactAvailability->iContactName->Compare( KNameWithOneChar ) == 0 );
 
         CleanupStack::PopAndDestroy( contactItem );
         array = NULL;

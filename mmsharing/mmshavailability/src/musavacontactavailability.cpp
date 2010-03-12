@@ -426,7 +426,7 @@ void CMusAvaContactAvailability::UpdateContactNameL(
         iContactName = iContactName->ReAllocL( strLength );
         }
 
-    if ( strLength > 1 )
+    if ( strLength > 0 )
         {
         TPtr ptr = iContactName->Des();
         if ( iBeginWithFirstName )
