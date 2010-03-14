@@ -153,13 +153,13 @@ EXPORT_C void CMusEngLiveSession::SetZoomL( TInt aNewZoomFactor )
     
     CMceCameraSource* camera = MusEngMceUtils::GetCameraL( *iSession );
 
-    if ( aNewZoomFactor <= iCameraInfo.iMaxZoom )
+    if ( aNewZoomFactor < iCameraInfo.iMaxZoom )
         {
         MUS_LOG( "mus: [ENGINE]     Optical zoom factor increased" )
         camera->SetZoomFactorL( aNewZoomFactor ); 
         }
     
-    if ( aNewZoomFactor - iCameraInfo.iMaxZoom > 0 )
+    if ( aNewZoomFactor - iCameraInfo.iMaxZoom >= 0 )
         {
         camera->SetDigitalZoomFactorL( aNewZoomFactor - iCameraInfo.iMaxZoom );
         MUS_LOG1( "mus: [ENGINE]     Digital zoom factor increased to %d",

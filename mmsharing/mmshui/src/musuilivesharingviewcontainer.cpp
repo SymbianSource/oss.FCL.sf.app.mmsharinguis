@@ -146,6 +146,16 @@ void CMusUiLiveSharingViewContainer::SetBrightnessVisible( TBool aVisible)
 
 
 // -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+TMusUiIndicatorType CMusUiLiveSharingViewContainer::GetIndicatorType()
+	{
+	return iIndicator->GetIndicatorType();
+	}
+
+
+// -----------------------------------------------------------------------------
 // Called by framework when to retrieve the no. of controls.
 // -----------------------------------------------------------------------------
 //
@@ -242,12 +252,7 @@ void CMusUiLiveSharingViewContainer::HandlePointerEventL(
         }
     else
         {
-        // Tapping outside slider area means ending of zoom or brightness
-        // adjustment
-        SetZoomVisible( EFalse ); // This hides also the brightness slider
-        CMusUiLiveSharingView* liveView = 
-                               (CMusUiLiveSharingView*)this->MusUiView();
-        liveView->ResetToolBarSelected();
+        MakeVisible( EFalse );
         }
     }
 

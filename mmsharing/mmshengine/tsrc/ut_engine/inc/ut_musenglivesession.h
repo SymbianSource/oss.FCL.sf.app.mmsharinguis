@@ -65,6 +65,7 @@ NONSHARABLE_CLASS( UT_CMusEngLiveSession ): public CEUnitTestSuiteClass
     
         void UT_NewLL();
         void UT_CurrentZoomLL();
+        void UT_CMusEngLiveSession_SetZoomLL();
         void UT_MaxZoomLL();
         void UT_ZoomInLL();
         void UT_ZoomOutLL();

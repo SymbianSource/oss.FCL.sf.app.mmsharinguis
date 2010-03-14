@@ -757,15 +757,5 @@ void CMusUiLiveSharingView::HideToolbarCommandForPause( TBool aIsPaused )
     Toolbar()->HideItem( EMusuiCmdToolbarZoom, aIsPaused, ETrue );
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiLiveSharingView::HideToolbarCommandForPause");
     }
-	
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void CMusUiLiveSharingView::ResetToolBarSelected()
-	{
-	MUS_LOG( "mus: [MUSUI ]  -> CMusUiLiveSharingView::ResetToolBarSelected" );
-	iController->ResetToolbarSelected();
-	MUS_LOG( "mus: [MUSUI ]  <- CMusUiLiveSharingView::ResetToolBarSelected" );
-	}
+
 // end of file

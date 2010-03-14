@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Resource file for MUSSettingsPlugin.
-*  Version     : %version: 18 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: be1sipx1#19 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -285,11 +285,11 @@ RESOURCE ARRAY r_operator_activation_setting_page_lbx
         {
         LBUF
             {
-            txt = qtn_msh_set_note_on;
+            txt = qtn_msh_set_activation_on;
             },
         LBUF
             {
-            txt = qtn_msh_set_note_off;
+            txt = qtn_msh_set_activation_off;
             }
         };
     }

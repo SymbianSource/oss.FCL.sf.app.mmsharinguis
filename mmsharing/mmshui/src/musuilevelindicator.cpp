@@ -330,7 +330,17 @@ void CMusUiLevelIndicator::SetIndicatorType( TMusUiIndicatorType aType )
     iIndicatorType = aType;
     }
     
-    
+  
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+TMusUiIndicatorType CMusUiLevelIndicator::GetIndicatorType()
+	{
+	return iIndicatorType;
+	}
+
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------

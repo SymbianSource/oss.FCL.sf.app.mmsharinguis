@@ -62,7 +62,8 @@ void CMusUiSendView::ManualAddressEntryL( const TDesC& aAddress )
     MUS_LOG_TDESC( "mus: [MUSUI ]    -> CMusUiSendView::ManualAddressEntryL: ",
                             aAddress );
      
-    CAknAppUiBase::TAppUiOrientation aOrientation ;
+    CAknAppUiBase::TAppUiOrientation aOrientation 
+					= CAknAppUiBase::EAppUiOrientationUnspecified;
     
      TBuf<KMusSipAddressMaxLength> address( aAddress );
     if ( SendController() && MusUiDialogUtil::ShowTextQueryDialogL( 

@@ -96,6 +96,11 @@ class CMusUiLevelIndicator : public CCoeControl,
 		*
 		*/
 		void SetIndicatorType( TMusUiIndicatorType aType );
+		
+		/**
+		*
+		*/
+		TMusUiIndicatorType GetIndicatorType();
 			
 		
 	private: // From CCoeControl
@@ -181,7 +186,7 @@ class CMusUiLevelIndicator : public CCoeControl,
 
         CMusUiActiveTimer* iDisableLevelTimer;       
       
-		TInt iIndicatorType;
+        TMusUiIndicatorType iIndicatorType;
 		
         CAknSlider* iSlider;
 
