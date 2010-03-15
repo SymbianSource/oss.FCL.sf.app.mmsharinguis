@@ -113,7 +113,7 @@ public: // New functions
      *
      * @return Volume controller.
      */
-    void ActivateVolumeControlL( TInt aVolume );
+    void ActivateVolumeControlL( TInt aVolume, TBool aOnlyIfVisible );
 
     /**
      * Activate media navi pane.
@@ -163,10 +163,6 @@ private: // data
     CAknVolumePopup*                    iVolumePopup;
     // Navi pane media control
     CAknNavigationDecorator*            iMediaControl;
-
-    // Volume level of the volume control
-    TInt                                iVolume;
-
     };
 
 #endif // MUSUISTATUSPANEHANDLER_H

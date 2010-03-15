@@ -395,7 +395,14 @@ TBool CMusEngObserverStub::AudioRouteChangeAllowed() const
     return iAudioRouteChangeAllowed;
     }
     
-    
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//    
+void CMusEngObserverStub::VolumeChanged( TInt aVolume, TBool /*aAudioRouteChanged*/ )
+    {
+    iVolume = aVolume;
+    }
 
 // ----- HELPERS ---------------------------------------------------------------
 
@@ -439,7 +446,8 @@ TBool CMusEngObserverStub::IsReseted()
              !iSessionTemporarilyNotAvailable &&
              !iIncomingSessionOriginator &&
              !iShowNote &&
-             iAudioRouteChangeAllowed );
+             iAudioRouteChangeAllowed &&
+             !iVolume );
     }
 
 // -----------------------------------------------------------------------------
@@ -483,6 +491,7 @@ void CMusEngObserverStub::Reset()
     iIncomingSessionOriginator = NULL;
     iShowNote = EFalse;
     iAudioRouteChangeAllowed = ETrue;
+    iVolume = 0;
     }
 
 

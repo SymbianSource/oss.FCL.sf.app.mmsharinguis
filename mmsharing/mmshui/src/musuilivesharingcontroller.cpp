@@ -42,6 +42,7 @@ using namespace NMusResourceApi;
 using namespace MusSettingsKeys;
 
 
+const TInt KMusUiIntervalToPlay = 5000000;
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -110,6 +111,7 @@ void CMusUiLiveSharingController::ConstructL( const TRect& aRect )
                                          iSipProfileId );
 
     iSession->SetAudioRoutingObserver( this );
+    iSession->SetVolumeChangeObserver( this );
         
     if ( iSession->AudioRoutingCanBeChanged() )
         {
@@ -142,6 +144,42 @@ void CMusUiLiveSharingController::PlayL()
 
 
 // -----------------------------------------------------------------------------
+// When orientation changed , Camera instances has to be recreated inorder
+// to receive proper orientated frames.
+// -----------------------------------------------------------------------------
+//
+void CMusUiLiveSharingController::RefreshCameraOrientationL()
+    {
+    MUS_LOG( "mus: [MUSUI ]  -> CMusUiLiveSharingController::RefreshCameraOrientationL" );
+    if ( IsPlayingL() )
+         {
+         MUS_LOG( "mus: [MUSUI ]  -> Playing, pause/stop to restart camera" );
+         TTimeIntervalMicroSeconds32 interval( KMusUiIntervalToPlay ); 
+         PauseL();
+         EnableDisplayL(false);
+         EnableDisplayL(true);
+         User::After( interval );
+         PlayL();
+         } 
+     else
+         {
+         MUS_LOG( "mus: [MUSUI ]  -> Not Playing, try display to restart camera");
+         if ( IsDisplayEnabledL() )
+             {
+             //Disabling of display will cause disabling of viewfinder and in its 
+             //turn releasing of camera, enabling of display will recreate a camera
+             //with new orientation
+             MUS_LOG( "mus: [MUSUI ]  -> display is enabled, disable/enable it");
+             EnableDisplayL(false);
+             EnableDisplayL(true);
+             }
+         else
+             {
+             MUS_LOG( "mus: [MUSUI ]  -> Not refreshing ");
+             }
+         }
+    MUS_LOG( "mus: [MUSUI ]  <- CMusUiLiveSharingController::RefreshCameraOrientationL" );
+    }
 //
 // -----------------------------------------------------------------------------
 //

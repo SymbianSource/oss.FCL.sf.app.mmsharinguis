@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Application's UI class.
-*  Version     : %version:  75.1.10 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version:  75.1.11 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -118,6 +118,7 @@ void CMusUiReceiveController::ConstructL( const TRect& aRect )
     // construct an engine session
     iSession = CMusEngReceiveSession::NewL( aRect, *this, *this );
     iSession->SetAudioRoutingObserver( this );
+    iSession->SetVolumeChangeObserver( this );
         
     iTimer = CMusUiActiveTimer::NewL( this );
     iTimer->After( KMusReceiveTimeout );

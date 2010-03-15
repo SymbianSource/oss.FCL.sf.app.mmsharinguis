@@ -439,6 +439,23 @@ void UT_CMusEngSession::UT_SetVolumeLL()
     }
 
 
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngSession::UT_SetVolumeChangeObserverL()
+    {
+    EUNIT_ASSERT( !iLiveSession->iVolumeObserver )
+    
+    iLiveSession->SetVolumeChangeObserver( iObserver );
+    
+    EUNIT_ASSERT_EQUALS( iLiveSession->iVolumeObserver, iObserver )
+    
+    iObserver->VolumeChanged( 2, EFalse );
+    EUNIT_ASSERT( iObserver->iVolume == 2 );
+    }
+
+
 //  TEST TABLE
 
 EUNIT_BEGIN_TEST_TABLE(
@@ -530,6 +547,14 @@ EUNIT_TEST(
     "FUNCTIONALITY",
     SetupL, UT_SetVolumeLL, Teardown) 
     
+EUNIT_TEST(
+    "SetVolumeChangeObserver - test ",
+    "CMusEngSession",
+    "SetVolumeChangeObserver",
+    "FUNCTIONALITY",
+    SetupL, UT_SetVolumeChangeObserverL, Teardown) 
+
+
 EUNIT_END_TEST_TABLE
 
 //  END OF FILE

@@ -86,6 +86,8 @@ void CMusUiAppUi::ConstructL()
                             EMbmMusuiQgn_menu_mus_app_cxt,
                             EMbmMusuiQgn_menu_mus_app_cxt_mask );
 
+    iStatusPaneHandler->GetVolumePopup()->SetObserver(this);
+    
     AknsUtils::InitSkinSupportL();
     AknsUtils::SetAvkonSkinEnabledL( ETrue );
 
@@ -169,16 +171,7 @@ void CMusUiAppUi::HandleWsEventL( const TWsEvent& aEvent, CCoeControl* aDestinat
         MUS_LOG( "mus: [MUSUI ]  <- CMusUiAppUi::HandleWsEventL, view is NULL" );
         return;
         }
-    
-    if ( type == EEventPointer &&
-         iStatusPaneHandler->GetVolumePopup()->IsVisible() )
-        {
-        MUS_LOG( "mus: [MUSUI ]  EMusuiCmdViewVolumeChanged" );
-        CMusUiGeneralView* activatedView = 
-                                   static_cast<CMusUiGeneralView*>( iView );
-        activatedView->HandleCommandL( EMusuiCmdViewVolumeChanged );
-        }
-   
+
     if( type == EEventKeyUp )
         {
         static_cast<CMusUiGeneralView*>
@@ -744,4 +737,23 @@ void CMusUiAppUi::FindWindowGroupIdentifiersL()
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiAppUi::FindWindowGroupIdentifiersL" );
     }
 
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
+void CMusUiAppUi::HandleControlEventL(CCoeControl* aControl,TCoeEvent aEventType)
+    {
+    CAknVolumePopup* popup = iStatusPaneHandler->GetVolumePopup();
+    if ( popup && popup->IsVisible() && (popup == aControl) && 
+         (aEventType == MCoeControlObserver::EEventStateChanged) )
+        {
+        MUS_LOG1( "mus: [MUSUI ]  CMusUiAppUi::HandleControlEventL(): volume[%d]",
+                popup->Value() );
+        CMusUiGeneralView* activatedView = 
+                               static_cast<CMusUiGeneralView*>( iView );
+        activatedView->HandleCommandL( EMusuiCmdViewVolumeChanged );
+        }
+
+    }
 // end of file

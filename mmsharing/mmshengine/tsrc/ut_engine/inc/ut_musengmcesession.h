@@ -31,6 +31,7 @@ class CMusEngReceiveSession;
 class CMusEngClipSession;
 class CMusEngObserverStub;
 class CMceSession;
+class CMusEngMceSession;
 
 //  CLASS DEFINITION
 /**
@@ -104,10 +105,14 @@ NONSHARABLE_CLASS( UT_CMusEngMceSession ): public CEUnitTestSuiteClass
         void UT_CMusEngMceSession_SsrcRemovedL();
         void UT_CMusEngMceSession_UpdateTimerEventL();
         void UT_CMusEngMceSession_IsRoamingBetweenAPsAllowedL(); 
+        void UT_CMusEngMceSession_IsDisplayEnabledLL();
+        
+        void UT_CMusEngMceSession_VolumeChangedL();
     
     private:
         
         void SetMaxVolForSpeakersL(CMceSession& aSession, TInt aMaxVol);
+        TBool VerifySpeakersVolume(CMusEngMceSession& aSession, TInt aVolume);
         
     private:    // Data
 

@@ -21,6 +21,7 @@
 
 // USER INCLUDES
 #include "musunittesting.h"
+#include "musengvolumechangeobserver.h"
 
 //SYSTEM INCLUDES
 #include <e32base.h>
@@ -31,6 +32,7 @@ class CMusEngTelephoneUtils;
 class CMusSipProfileHandler;
 class CRepository;
 class MMusEngAudioRoutingObserver;
+class MMusEngVolumeChangeObserver;
 
 // CLASS DECLARATION
 
@@ -43,7 +45,8 @@ class MMusEngAudioRoutingObserver;
 *
 * @lib musengine.lib
 */
-class CMusEngSession : public CBase
+class CMusEngSession : public CBase,
+                       public MMusEngVolumeChangeObserver
     {
     MUS_UNITTEST( UT_CMusEngSession )
     
@@ -116,6 +119,12 @@ class CMusEngSession : public CBase
         IMPORT_C void SetAudioRoutingObserver( 
                                     MMusEngAudioRoutingObserver* aObserver );
         
+        /**
+        * Sets volume level change observer. Can be set to NULL in order to indicate
+        * ending of observing changes in volume level.
+        */
+        IMPORT_C void SetVolumeChangeObserver( 
+                                    MMusEngVolumeChangeObserver* aObserver );
 
     public:  // VIRTUAL API FUNCTIONS
         
@@ -159,6 +168,9 @@ class CMusEngSession : public CBase
         virtual void RectChangedL() = 0;
 
 
+        //from MMusEngVolumeChangeObserver
+        virtual void VolumeChanged( TInt aVolume, TBool aAudioRouteChanged );
+        
     protected:
 
         /**
@@ -189,6 +201,11 @@ class CMusEngSession : public CBase
         * Telephone utilities.
         */
         CMusEngTelephoneUtils* iTelephoneUtils;
+        
+        /**
+        * Volume change observer
+        */
+        MMusEngVolumeChangeObserver* iVolumeObserver;
 
     };
 

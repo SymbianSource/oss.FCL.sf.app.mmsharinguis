@@ -326,21 +326,29 @@ void UT_CMusEngTelephoneUtils::UT_OutputChangedL()
     
     iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput = 
                                         CTelephonyAudioRouting::ELoudspeaker;
+    iTelephoneUtils->iRepository->Set( KTelIncallLoudspeakerVolume, 8 );
+    EUNIT_ASSERT( iTelephoneUtils->iCurrentVolume == 4 )
+    EUNIT_ASSERT( iObserver->iVolume == 0 );
     
     iTelephoneUtils->OutputChanged( *iTelephoneUtils->iTelephonyAudioRouting );
                                                                 
     EUNIT_ASSERT_EQUALS( iTelephoneUtils->iAudioOutputAtStartup, 
                          CTelephonyAudioRouting::ELoudspeaker )
     
+    EUNIT_ASSERT( iTelephoneUtils->iCurrentVolume == 8 )
+    EUNIT_ASSERT( iObserver->iVolume == 0 );
     // Test observer
     
     iTelephoneUtils->SetAudioRoutingObserver( iObserver );
+    iTelephoneUtils->SetVolumeChangeObserver(iObserver);
     
     iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput = 
                                         CTelephonyAudioRouting::EHandset;
     
     iTelephoneUtils->OutputChanged( *iTelephoneUtils->iTelephonyAudioRouting );
-                                                                
+    
+    EUNIT_ASSERT( iTelephoneUtils->iCurrentVolume == 4 )
+    EUNIT_ASSERT( iObserver->iVolume == 4 );                                                               
     EUNIT_ASSERT_EQUALS( iTelephoneUtils->iAudioOutputAtStartup,
                          CTelephonyAudioRouting::EHandset )
     
@@ -355,17 +363,22 @@ void UT_CMusEngTelephoneUtils::UT_OutputChangedL()
 void UT_CMusEngTelephoneUtils::UT_SetOutputCompleteL()
     {
     iTelephoneUtils->SetAudioRoutingObserver( iObserver );
-    
+    iTelephoneUtils->SetVolumeChangeObserver(iObserver);
+    EUNIT_ASSERT( iObserver->iVolume == 0 );
+    EUNIT_ASSERT( iTelephoneUtils->iCurrentVolume == 4 )
+
     // Setoutput fails
     iTelephoneUtils->SetOutputComplete( 
                             *iTelephoneUtils->iTelephonyAudioRouting,
                             KErrGeneral );
                             
     EUNIT_ASSERT( !iObserver->iAudioRoutingChangedCalled )
+    EUNIT_ASSERT( iObserver->iVolume == 0 );
     
     // Setoutput succesful and note is shown by audiorouting api
     // There's already next pending setoutput for which we are going to
     // show note -> that cannot be forgotten
+    iTelephoneUtils->iRepository->Set( KTelIncallEarVolume, 5 );
     iTelephoneUtils->iShowDialog = ETrue;
     iTelephoneUtils->iTelephonyAudioRouting->SetShowNote( ETrue );
     iTelephoneUtils->SetOutputComplete( 
@@ -374,6 +387,8 @@ void UT_CMusEngTelephoneUtils::UT_SetOutputCompleteL()
     EUNIT_ASSERT( iObserver->iAudioRoutingChangedCalled == ETrue )
     EUNIT_ASSERT( iObserver->iShowNote == EFalse )
     EUNIT_ASSERT( iTelephoneUtils->iShowDialog == ETrue )
+    EUNIT_ASSERT( iObserver->iVolume == 5 );
+    EUNIT_ASSERT( iTelephoneUtils->iCurrentVolume == 5 )
     
     iObserver->Reset();
     
@@ -454,6 +469,58 @@ void UT_CMusEngTelephoneUtils::UT_DestructorL()
     // Cannot really assert anything
     }
 
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngTelephoneUtils::UT_UpdateCurrentVolumeL()
+    {    
+    //Volume changed, no observer
+    EUNIT_ASSERT( iTelephoneUtils->iCurrentVolume == 4 )
+    iTelephoneUtils->iRepository->Set( KTelIncallEarVolume, 5 );
+    iTelephoneUtils->UpdateCurrentVolume(EFalse);
+    EUNIT_ASSERT( iTelephoneUtils->iCurrentVolume == 5 )
+    EUNIT_ASSERT( iObserver->iVolume == 0 );
+
+    //Volume changed, observer set
+    iTelephoneUtils->SetVolumeChangeObserver(iObserver);
+    iTelephoneUtils->iRepository->Set( KTelIncallEarVolume, 6 );
+    iTelephoneUtils->UpdateCurrentVolume(EFalse);
+    EUNIT_ASSERT( iTelephoneUtils->iCurrentVolume == 6 )
+    EUNIT_ASSERT( iObserver->iVolume == 6 );
+
+    //Volume didn't change, observer not notified
+    iObserver->iVolume = 0;
+    iTelephoneUtils->UpdateCurrentVolume(EFalse);
+    EUNIT_ASSERT( iTelephoneUtils->iCurrentVolume == 6 )
+    EUNIT_ASSERT( iObserver->iVolume == 0 );    
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngTelephoneUtils::UT_HandleNotifyGenericL()
+    {
+    //Loudspeakers volume changed, no observer
+    iTelephoneUtils->iRepository->Set( KTelIncallLoudspeakerVolume, 8 );
+    EUNIT_ASSERT( iTelephoneUtils->iCurrentVolume == 4 )
+    iTelephoneUtils->HandleNotifyGeneric(KTelIncallLoudspeakerVolume);    
+    EUNIT_ASSERT( iTelephoneUtils->iCurrentVolume == 8 )
+    EUNIT_ASSERT( iObserver->iVolume == 0 );
+    
+    //Ear volume changed, observer set => observer notified
+    iTelephoneUtils->SetVolumeChangeObserver(iObserver);
+    iTelephoneUtils->HandleNotifyGeneric(KTelIncallEarVolume);    
+    EUNIT_ASSERT( iTelephoneUtils->iCurrentVolume == 4 )
+    EUNIT_ASSERT( iObserver->iVolume == 4 );
+    
+    //Volume hasn't changed => observer not notifies
+    iObserver->iVolume = 0;
+    iTelephoneUtils->HandleNotifyGeneric(KTelIncallEarVolume);    
+    EUNIT_ASSERT( iTelephoneUtils->iCurrentVolume == 4 )
+    EUNIT_ASSERT( iObserver->iVolume == 0 );
+    }
 
 
 //  TEST TABLE
@@ -540,7 +607,20 @@ EUNIT_TEST(
     "FUNCTIONALITY",
     SetupL, UT_DestructorL, Teardown)
 
-     
+EUNIT_TEST(
+    "UpdateCurrentVolume - test ",
+    "UpdateCurrentVolume",
+    "Destructor",
+    "FUNCTIONALITY",
+    SetupL, UT_UpdateCurrentVolumeL, Teardown)
+    
+EUNIT_TEST(
+    "HandleNotifyGeneric - test ",
+    "CMusEngTelephoneUtils",
+    "HandleNotifyGeneric",
+    "FUNCTIONALITY",
+    SetupL, UT_HandleNotifyGenericL, Teardown)
+
     
 EUNIT_END_TEST_TABLE
 

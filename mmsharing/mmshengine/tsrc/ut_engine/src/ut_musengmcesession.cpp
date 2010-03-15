@@ -220,7 +220,26 @@ void UT_CMusEngMceSession::UT_CMusEngMceSession_GetSessionTimeL()
     EUNIT_ASSERT( sessionTime >= TTimeIntervalSeconds( 0 ) );
     }
     
+void UT_CMusEngMceSession::UT_CMusEngMceSession_IsDisplayEnabledLL()
+    {
+    TRAPD( error, iLiveSession->IsDisplayEnabledL() );
+    MUS_TEST_FORWARD_ALLOC_FAILURE( error );
+    EUNIT_ASSERT( error == KErrNotReady );
 
+    ESTABLISH_OUT_SESSION( iLiveSession );
+     
+    //Enable
+    CMceDisplaySink* display = 
+                    MusEngMceUtils::GetDisplayL( *(iLiveSession->iSession) );
+    display->iIsEnabled = ETrue;
+    EUNIT_ASSERT( iLiveSession->IsDisplayEnabledL() );
+    
+    //Disable
+    display->iIsEnabled = EFalse;
+    EUNIT_ASSERT( !iLiveSession->IsDisplayEnabledL() );
+    }
+	
+	
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -1732,7 +1751,61 @@ void UT_CMusEngMceSession::UT_CMusEngMceSession_IsRoamingBetweenAPsAllowedL()
     EUNIT_ASSERT( iLiveSession->IsRoamingBetweenAPsAllowed() )
     }
 
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngMceSession::UT_CMusEngMceSession_VolumeChangedL()
+    {
+    // Try without session, nothing happens
+    EUNIT_ASSERT( iObserver->iVolume == 0 );
+    iLiveSession->VolumeChanged( 1, EFalse );
+    EUNIT_ASSERT( !VerifySpeakersVolume(*iLiveSession, 1) )
+    EUNIT_ASSERT( iObserver->iVolume == 0 );
+
+    // Establish session
+    ESTABLISH_OUT_SESSION( iClipSession )
+    
+    // Try without observer
+    iClipSession->VolumeChanged( 2, EFalse );
+    EUNIT_ASSERT( VerifySpeakersVolume(*iClipSession, 2) )
+    EUNIT_ASSERT( iObserver->iVolume == 0 );
+    
+    
+    // Try with observer set
+    iClipSession->SetVolumeChangeObserver( iObserver );
+    iClipSession->VolumeChanged( 3, EFalse );
+    EUNIT_ASSERT( VerifySpeakersVolume(*iClipSession, 3) )
+    EUNIT_ASSERT( iObserver->iVolume == 3 );
+    
+    }
+
 // HELPERS
+TBool UT_CMusEngMceSession::VerifySpeakersVolume(CMusEngMceSession& aSession, TInt aVolume)
+    {
+    TBool result = EFalse;
+    
+    CMceSpeakerSink* speaker = NULL;    
+    CMceSession* session = aSession.iSession;
+    
+    if ( session ) 
+        {
+        for ( TInt i = 0; i < session->Streams().Count(); ++i )
+            {
+            for ( TInt j = 0; j < session->Streams()[i]->Sinks().Count(); ++j )
+                {
+                if ( session->Streams()[i]->Sinks()[j]->Type() == KMceSpeakerSink )
+                    {
+                    speaker = static_cast<CMceSpeakerSink*>(
+                                              session->Streams()[i]->Sinks()[j] );
+                    result = ( speaker->VolumeL() == aVolume );
+                    }
+                }
+            } 
+        }
+    return result;
+    }
+
 
 // -----------------------------------------------------------------------------
 //
@@ -1991,6 +2064,12 @@ EUNIT_TEST(
     "SsrcRemoved",
     "FUNCTIONALITY",
     SetupL, UT_CMusEngMceSession_SsrcRemovedL, Teardown)         
+EUNIT_TEST(
+    "IsDisplayEnabledL - test ",
+    "CMusEngMceSession",
+    "IsDisplayEnabledL",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusEngMceSession_IsDisplayEnabledLL, Teardown)  	
 
 EUNIT_TEST(
     "UpdateTimerEvent - test ",
@@ -2006,6 +2085,14 @@ EUNIT_TEST(
     "FUNCTIONALITY",
     SetupL, UT_CMusEngMceSession_IsRoamingBetweenAPsAllowedL, Teardown)
         
+EUNIT_TEST(
+    "VolumeChanged - test ",
+    "CMusEngMceSession",
+    "VolumeChanged",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusEngMceSession_VolumeChangedL, Teardown)
+    
+
 EUNIT_END_TEST_TABLE
 
 //  END OF FILE

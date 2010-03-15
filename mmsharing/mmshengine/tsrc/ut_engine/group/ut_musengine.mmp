@@ -48,6 +48,7 @@ SOURCE                  telephonyaudioroutingstub.cpp
 
 SOURCEPATH              ../../../../../tsrc/centralrepositorystub/src
 SOURCE                  centralrepositorystub.cpp
+SOURCE                  cenrepnotifyhandlerstub.cpp
 
 SOURCEPATH              ../../../../../tsrc/drmstub/src
 SOURCE                  drmcommonstub.cpp
@@ -94,7 +95,7 @@ USERINCLUDE             ../../../../mmshshared/inc
 USERINCLUDE             ../../../../inc
 USERINCLUDE             ../../../../../inc
 USERINCLUDE             ../../../../../tsrc/sipprofilestub/inc
-USERINCLUDE		../../../../../tsrc/centralrepositorystub/inc
+USERINCLUDE             ../../../../../tsrc/centralrepositorystub/inc
 
 // to replace SIP profiles with a stub
 SYSTEMINCLUDE           ../inc

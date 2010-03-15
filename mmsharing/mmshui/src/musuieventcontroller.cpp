@@ -331,6 +331,18 @@ TBool CMusUiEventController::AudioRouteChangeAllowed() const
 //
 // -----------------------------------------------------------------------------
 //
+void CMusUiEventController::VolumeChanged( TInt aVolume, TBool aAudioRouteChanged )
+    {
+    // Set Volume:
+    //If volume changed due to audio route change, we want to update volume
+    //popup control only if it is already visible
+    TBool onlyIfVisible = aAudioRouteChanged;
+    TRAP_IGNORE( iSharingObserver.ActivateVolumeControlL(aVolume, onlyIfVisible) );
+    }
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
 void CMusUiEventController::SetRect(const TRect& aRect)
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiEventController::SetRect" );
@@ -691,6 +703,22 @@ void CMusUiEventController::ChangeOrientationL(
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiEventController::ChangeOrientationL" );
     }
 
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+TBool CMusUiEventController::IsDisplayEnabledL()
+    {
+    MUS_LOG( "mus: [MUSUI ]  -> CMusUiEventController::IsDisplayEnabledL" );
+    TBool ret = EFalse;
+    if ( EngineSession() )
+        {
+        ret = EngineSession()->IsDisplayEnabledL();
+        }
+    MUS_LOG1( "mus: [MUSUI ]  <- CMusUiEventController::IsDisplayEnabledL, %d", ret );
+    return ret;   
+    }
+
 
 // -----------------------------------------------------------------------------
 //
@@ -872,9 +900,8 @@ void CMusUiEventController::HandleCommandL( TInt aCommand )
             // Set Volume:
             __ASSERT_ALWAYS( EngineSession(), User::Leave( KErrNotReady ) );
             EngineSession()->VolumeUpL();
-            // Update the status pane:
-            iSharingObserver.ActivateVolumeControlL( 
-                                            EngineSession()->VolumeL() );
+            // Status pane update will be done later. When we get 
+			// VolumeChanged() callback
             break;
             }
         case EMusuiCmdViewVolumeDown:
@@ -882,9 +909,8 @@ void CMusUiEventController::HandleCommandL( TInt aCommand )
             // Set Volume:
             __ASSERT_ALWAYS( EngineSession(), User::Leave( KErrNotReady ) );
             EngineSession()->VolumeDownL();
-            // Update the status pane:
-            iSharingObserver.ActivateVolumeControlL( 
-                                            EngineSession()->VolumeL() );
+            // Status pane update will be done later. When we get 
+			// VolumeChanged() callback
             break;
             }
         case EMusuiCmdViewVolumeChanged:

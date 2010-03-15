@@ -72,6 +72,8 @@ NONSHARABLE_CLASS( UT_CMusEngTelephoneUtils ): public CEUnitTestSuiteClass
         void UT_SetOutputCompleteL();
         void UT_ValidateVolumeL();
         void UT_DestructorL();
+        void UT_UpdateCurrentVolumeL();
+        void UT_HandleNotifyGenericL();
 
     private:    // Data
 

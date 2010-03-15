@@ -370,11 +370,10 @@ void CMusUiGeneralView::EnableMiddleSoftkeyL( TInt aResourceId )
 //
 // -----------------------------------------------------------------------------
 //
-void CMusUiGeneralView::ActivateVolumeControlL( TInt aValue )
+void CMusUiGeneralView::ActivateVolumeControlL( TInt aValue, TBool aOnlyIfVisible )
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiGeneralView::ActivateVolumeControlL" );
-    
-    MusAppUi()->MusStatusPane()->ActivateVolumeControlL( aValue );
+    MusAppUi()->MusStatusPane()->ActivateVolumeControlL( aValue, aOnlyIfVisible );
     
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiGeneralView::ActivateVolumeControlL" );
     }

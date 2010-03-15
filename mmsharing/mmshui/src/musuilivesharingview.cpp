@@ -709,8 +709,11 @@ void CMusUiLiveSharingView::DoDeactivate()
 void CMusUiLiveSharingView::RefreshCameraOrientationL(TRect& aNewRect)
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiLiveSharingView::RefreshCameraOrientation" );
-    if( iController && iController->IsPlayingL() )
+    if ( !iController || !iController->EngineSession() )
         {        
+        MUS_LOG( "mus: [MUSUI ]  <- CMusUiLiveSharingView::RefreshCameraOrientation, no session" );
+        return;
+        }
         TRect oldRect = iController->EngineSession()->Rect();
         MUS_LOG2( "mus: [MUSUI ]  -> Old Rect (width = %d,height=%d)",oldRect.Width(),oldRect.Height() );
         MUS_LOG2( "mus: [MUSUI ]  -> New Rect (width = %d,height=%d)",aNewRect.Width(),aNewRect.Height() );
@@ -726,18 +729,14 @@ void CMusUiLiveSharingView::RefreshCameraOrientationL(TRect& aNewRect)
            )
            {
            MUS_LOG( "mus: [MUSUI ]  -> Orientation Changed.Restart Camera" );
-           iController->PauseL();
-           iController->PlayL();        
+           iController->RefreshCameraOrientationL();
            }  
         else
            {
            MUS_LOG( "mus: [MUSUI ]  -> Orientation Not changed. dont restart camera");    
            }          
-        }        
-    else
-        {
-        MUS_LOG( "mus: [MUSUI ]  -> Not Playing");
-        }
+       
+
 
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiLiveSharingView::RefreshCameraOrientation" );
     }

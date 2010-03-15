@@ -147,7 +147,7 @@ public: // from MMusUiSharingObserver
 
     virtual void EnableMiddleSoftkeyL( TInt aResourceId );
 
-    virtual void ActivateVolumeControlL( TInt aValue );  
+    virtual void ActivateVolumeControlL( TInt aValue, TBool aOnlyIfVisible = EFalse );  
     
     virtual void HighlightSelectedToolbarItem( TInt aCommand );
     

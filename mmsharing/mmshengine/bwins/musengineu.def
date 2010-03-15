@@ -52,20 +52,22 @@ EXPORTS
 	?GetSessionTime@CMusEngMceSession@@QBE?AVTTimeIntervalSeconds@@XZ @ 51 NONAME ; class TTimeIntervalSeconds CMusEngMceSession::GetSessionTime(void) const
 	?SetVolumeL@CMusEngMceSession@@UAEXH@Z @ 52 NONAME ; void CMusEngMceSession::SetVolumeL(int)
 	?Rect@CMusEngSession@@QBE?AVTRect@@XZ @ 53 NONAME ; class TRect CMusEngSession::Rect(void) const
-	?SetBrightnessL@CMusEngLiveSession@@QBEXH@Z @ 54 NONAME ; void CMusEngLiveSession::SetBrightnessL(int) const
-	?TranscodeL@CMusEngClipSession@@QAEXABV?$TBuf@$0BAA@@@@Z @ 55 NONAME ; void CMusEngClipSession::TranscodeL(class TBuf<256> const &)
-	?MaxZoomL@CMusEngLiveSession@@QBEHXZ @ 56 NONAME ; int CMusEngLiveSession::MaxZoomL(void) const
-	?VolumeDownL@CMusEngMceSession@@UAEXXZ @ 57 NONAME ; void CMusEngMceSession::VolumeDownL(void)
-	?ZoomOutL@CMusEngLiveSession@@QAEXXZ @ 58 NONAME ; void CMusEngLiveSession::ZoomOutL(void)
-	?ConnectionActive@CMusEngMceSession@@QBEHXZ @ 59 NONAME ; int CMusEngMceSession::ConnectionActive(void) const
-	?PositionL@CMusEngClipSession@@QAE?AVTTimeIntervalSeconds@@XZ @ 60 NONAME ; class TTimeIntervalSeconds CMusEngClipSession::PositionL(void)
-	?MuteMicL@CMusEngSession@@QAEXH@Z @ 61 NONAME ; void CMusEngSession::MuteMicL(int)
-	?NewL@CMusEngLiveSession@@SAPAV1@ABVTDesC16@@ABVTRect@@AAVMMusEngSessionObserver@@AAVMMusEngOutSessionObserver@@AAVMMusEngLiveSessionObserver@@I@Z @ 62 NONAME ; class CMusEngLiveSession * CMusEngLiveSession::NewL(class TDesC16 const &, class TRect const &, class MMusEngSessionObserver &, class MMusEngOutSessionObserver &, class MMusEngLiveSessionObserver &, unsigned int)
-	?EnableDisplayL@CMusEngMceSession@@UAEXH@Z @ 63 NONAME ; void CMusEngMceSession::EnableDisplayL(int)
-	?CurrentBrightnessL@CMusEngLiveSession@@QBEHXZ @ 64 NONAME ; int CMusEngLiveSession::CurrentBrightnessL(void) const
-	?RecordL@CMusEngLiveSession@@QAEXH@Z @ 65 NONAME ; void CMusEngLiveSession::RecordL(int)
-	?IsPlayingL@CMusEngLiveSession@@UAEHXZ @ 66 NONAME ; int CMusEngLiveSession::IsPlayingL(void)
-	?TerminateL@CMusEngMceSession@@QAEXXZ @ 67 NONAME ; void CMusEngMceSession::TerminateL(void)
-	?PlayL@CMusEngLiveSession@@UAEXXZ @ 68 NONAME ; void CMusEngLiveSession::PlayL(void)
-	?SetPositionL@CMusEngClipSession@@QAEXABVTTimeIntervalSeconds@@@Z @ 69 NONAME ; void CMusEngClipSession::SetPositionL(class TTimeIntervalSeconds const &)
+	?IsDisplayEnabledL@CMusEngMceSession@@QAEHXZ @ 54 NONAME ; int CMusEngMceSession::IsDisplayEnabledL(void)
+	?SetBrightnessL@CMusEngLiveSession@@QBEXH@Z @ 55 NONAME ; void CMusEngLiveSession::SetBrightnessL(int) const
+	?TranscodeL@CMusEngClipSession@@QAEXABV?$TBuf@$0BAA@@@@Z @ 56 NONAME ; void CMusEngClipSession::TranscodeL(class TBuf<256> const &)
+	?MaxZoomL@CMusEngLiveSession@@QBEHXZ @ 57 NONAME ; int CMusEngLiveSession::MaxZoomL(void) const
+	?VolumeDownL@CMusEngMceSession@@UAEXXZ @ 58 NONAME ; void CMusEngMceSession::VolumeDownL(void)
+	?ZoomOutL@CMusEngLiveSession@@QAEXXZ @ 59 NONAME ; void CMusEngLiveSession::ZoomOutL(void)
+	?ConnectionActive@CMusEngMceSession@@QBEHXZ @ 60 NONAME ; int CMusEngMceSession::ConnectionActive(void) const
+	?PositionL@CMusEngClipSession@@QAE?AVTTimeIntervalSeconds@@XZ @ 61 NONAME ; class TTimeIntervalSeconds CMusEngClipSession::PositionL(void)
+	?MuteMicL@CMusEngSession@@QAEXH@Z @ 62 NONAME ; void CMusEngSession::MuteMicL(int)
+	?NewL@CMusEngLiveSession@@SAPAV1@ABVTDesC16@@ABVTRect@@AAVMMusEngSessionObserver@@AAVMMusEngOutSessionObserver@@AAVMMusEngLiveSessionObserver@@I@Z @ 63 NONAME ; class CMusEngLiveSession * CMusEngLiveSession::NewL(class TDesC16 const &, class TRect const &, class MMusEngSessionObserver &, class MMusEngOutSessionObserver &, class MMusEngLiveSessionObserver &, unsigned int)
+	?EnableDisplayL@CMusEngMceSession@@UAEXH@Z @ 64 NONAME ; void CMusEngMceSession::EnableDisplayL(int)
+	?CurrentBrightnessL@CMusEngLiveSession@@QBEHXZ @ 65 NONAME ; int CMusEngLiveSession::CurrentBrightnessL(void) const
+	?RecordL@CMusEngLiveSession@@QAEXH@Z @ 66 NONAME ; void CMusEngLiveSession::RecordL(int)
+	?IsPlayingL@CMusEngLiveSession@@UAEHXZ @ 67 NONAME ; int CMusEngLiveSession::IsPlayingL(void)
+	?TerminateL@CMusEngMceSession@@QAEXXZ @ 68 NONAME ; void CMusEngMceSession::TerminateL(void)
+	?PlayL@CMusEngLiveSession@@UAEXXZ @ 69 NONAME ; void CMusEngLiveSession::PlayL(void)
+	?SetPositionL@CMusEngClipSession@@QAEXABVTTimeIntervalSeconds@@@Z @ 70 NONAME ; void CMusEngClipSession::SetPositionL(class TTimeIntervalSeconds const &)
+	?SetVolumeChangeObserver@CMusEngSession@@QAEXPAVMMusEngVolumeChangeObserver@@@Z @ 71 NONAME ; void CMusEngSession::SetVolumeChangeObserver(class MMusEngVolumeChangeObserver *)
 

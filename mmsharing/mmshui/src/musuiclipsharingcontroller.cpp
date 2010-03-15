@@ -113,6 +113,7 @@ void CMusUiClipSharingController::ConstructL( const TRect& aRect )
                                          *this,
                                          iSipProfileId );
     iSession->SetAudioRoutingObserver( this );
+    iSession->SetVolumeChangeObserver( this );
     
     if ( iSession->AudioRoutingCanBeChanged() )
         {

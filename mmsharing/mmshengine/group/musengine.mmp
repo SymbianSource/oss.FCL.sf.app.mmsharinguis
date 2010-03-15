@@ -43,7 +43,7 @@ SOURCE          musenglivesession.cpp
 SOURCE          musengreceivesession.cpp
 SOURCE      	musengtelephoneutils.cpp
 SOURCE      	musengsessiondurationtimer.cpp
-SOURCE			musengclipsession.cpp
+SOURCE          musengclipsession.cpp
 SOURCE          musenguriparser.cpp
 SOURCE          musengmceutils.cpp
 
@@ -61,17 +61,18 @@ APP_LAYER_SYSTEMINCLUDE
 LIBRARY     euser.lib
 LIBRARY     bafl.lib
 LIBRARY     inetprotutil.lib
-LIBRARY		phoneclient.lib
-LIBRARY		centralrepository.lib
+LIBRARY	    phoneclient.lib
+LIBRARY	    centralrepository.lib
 
-LIBRARY		sipprofilecli.lib
-LIBRARY		sipclient.lib
-LIBRARY         sipcodec.lib
-LIBRARY 	mceclient.lib  
-LIBRARY 	drmcommon.lib
-LIBRARY		charconv.lib
+LIBRARY	    sipprofilecli.lib
+LIBRARY	    sipclient.lib
+LIBRARY     sipcodec.lib
+LIBRARY     mceclient.lib  
+LIBRARY     drmcommon.lib
+LIBRARY     charconv.lib
 LIBRARY     telephonyaudiorouting.lib
 LIBRARY     efsrv.lib
+LIBRARY     cenrepnotifhandler.lib	
 
 DEBUGLIBRARY		flogger.lib
 

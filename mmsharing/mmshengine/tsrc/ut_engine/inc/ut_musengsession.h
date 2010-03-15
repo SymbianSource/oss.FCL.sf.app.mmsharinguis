@@ -77,6 +77,7 @@ NONSHARABLE_CLASS( UT_CMusEngSession ): public CEUnitTestSuiteClass
         void UT_VolumeUpLL();
         void UT_VolumeDownLL();
         void UT_SetVolumeLL();
+        void UT_SetVolumeChangeObserverL();
 
     private:    // Data
 

@@ -204,7 +204,7 @@ TInt CMusUiStatusPaneHandler::GetVolumeControlValue() const
 // Activates volume control.
 // -----------------------------------------------------------------------------
 //
-void CMusUiStatusPaneHandler::ActivateVolumeControlL( TInt aVolume )
+void CMusUiStatusPaneHandler::ActivateVolumeControlL( TInt aVolume, TBool aOnlyIfVisible )
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiStatusPaneHandler::ActivateVolumeControlL" );
 
@@ -213,10 +213,12 @@ void CMusUiStatusPaneHandler::ActivateVolumeControlL( TInt aVolume )
         MUS_LOG( "mus: [MUSUI ]  <- CMusUiStatusPaneHandler::SetVolumeControlValue: returning" );
         return;
         }
-        
-    iVolumePopup->SetValue( aVolume );
-    iVolumePopup->ShowVolumePopupL();
-    
+
+    if ( !aOnlyIfVisible || (aOnlyIfVisible && iVolumePopup->IsVisible()) )
+        {
+        iVolumePopup->SetValue( aVolume );
+        iVolumePopup->ShowVolumePopupL();
+        }
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiStatusPaneHandler::ActivateVolumeControlL" );
     }
     

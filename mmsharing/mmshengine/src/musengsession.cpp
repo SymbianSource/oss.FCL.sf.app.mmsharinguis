@@ -113,7 +113,7 @@ EXPORT_C TBool CMusEngSession::IsLoudSpeakerEnabled() const
 //
 EXPORT_C TInt CMusEngSession::VolumeL() const
     {
-    return iTelephoneUtils->GetVolumeL();
+    return iTelephoneUtils->GetVolume();
     }
 
 
@@ -147,6 +147,16 @@ EXPORT_C void CMusEngSession::SetAudioRoutingObserver(
     iTelephoneUtils->SetAudioRoutingObserver( aObserver );
     }
 
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+EXPORT_C void CMusEngSession::SetVolumeChangeObserver( 
+                                   MMusEngVolumeChangeObserver* aObserver )
+    {
+    iVolumeObserver = aObserver;
+    }
+
 
 // -----------------------------------------------------------------------------
 // Increases CS call volume level by one.
@@ -155,7 +165,7 @@ EXPORT_C void CMusEngSession::SetAudioRoutingObserver(
 //
 EXPORT_C void CMusEngSession::VolumeUpL( )
     {
-    TInt currentVolume = iTelephoneUtils->GetVolumeL();
+    TInt currentVolume = iTelephoneUtils->GetVolume();
     iTelephoneUtils->SetVolumeL( currentVolume  + 1 );
     }
 
@@ -167,7 +177,7 @@ EXPORT_C void CMusEngSession::VolumeUpL( )
 //
 EXPORT_C void CMusEngSession::VolumeDownL( )
     {
-    TInt currentVolume = iTelephoneUtils->GetVolumeL();
+    TInt currentVolume = iTelephoneUtils->GetVolume();
     iTelephoneUtils->SetVolumeL( currentVolume - 1 );
     }
 
@@ -200,7 +210,18 @@ void CMusEngSession::ConstructL() // second-phase constructor
     {
     MUS_LOG( "mus: [ENGINE]  -> CMusEngSession::ConstructL()" )
     iTelephoneUtils = CMusEngTelephoneUtils::NewL();
+    iTelephoneUtils->SetVolumeChangeObserver( this );
     MUS_LOG( "mus: [ENGINE]  <- CMusEngSession::ConstructL()" )
     }
 
-
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngSession::VolumeChanged( TInt aVolume, TBool aAudioRouteChanged )
+    {
+    if ( iVolumeObserver )         
+        {
+        iVolumeObserver->VolumeChanged( aVolume, aAudioRouteChanged );
+        }
+    }

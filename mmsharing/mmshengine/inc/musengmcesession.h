@@ -162,6 +162,12 @@ class CMusEngMceSession : public CMusEngSession,
         */
         IMPORT_C void SetOrientationL( TDisplayOrientation aOrientation );
         
+        /**
+        * Returns state of the screen device.
+        * 
+        * @pre Session is ongoing
+        */
+        IMPORT_C TBool IsDisplayEnabledL();
 
     public: // VIRTUAL API
 
@@ -315,7 +321,14 @@ class CMusEngMceSession : public CMusEngSession,
         void Reject( CMceInSession& aSession,
                      const TDesC8& aReason = KNullDesC8(),
                      TUint32 aCode = 0 );
-                     
+
+    protected:  // from CMusEngSession
+	
+        /**
+        *
+        */
+        void VolumeChanged( TInt aVolume, TBool aAudioRouteChanged );
+             
     
     protected: // from MMceInSessionObserver
     

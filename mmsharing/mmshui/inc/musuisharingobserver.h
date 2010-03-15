@@ -67,7 +67,7 @@ class MMusUiSharingObserver
         */
         virtual void EnableMiddleSoftkeyL( TInt aResourceId ) = 0;   
 	    
-        virtual void ActivateVolumeControlL( TInt aValue ) = 0;  
+        virtual void ActivateVolumeControlL( TInt aValue, TBool aOnlyIfVisible = EFalse ) = 0;  
         
         virtual void HighlightSelectedToolbarItem( TInt aCommand ) = 0;
         

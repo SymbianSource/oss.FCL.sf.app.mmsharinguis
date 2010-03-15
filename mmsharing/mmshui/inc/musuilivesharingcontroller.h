@@ -110,6 +110,11 @@ public:	// new functions
     TBool ToolbarZoomSelected();
 
     TBool ToolbarBrightnessSelected();
+    
+    /**
+    * 
+    */
+    void RefreshCameraOrientationL();
 
 
 private:	// new functions:

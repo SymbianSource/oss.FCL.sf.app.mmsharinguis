@@ -245,12 +245,10 @@ TKeyResponse CMusUiLiveSharingViewContainer::OfferKeyEventL(
 void CMusUiLiveSharingViewContainer::HandlePointerEventL( 
                                             const TPointerEvent& aPointerEvent)
     {
-    if ( Rect().Contains( aPointerEvent.iPosition ) )
-        {
         // Forward to base class in order to use slider
         CCoeControl::HandlePointerEventL( aPointerEvent );
-        }
-    else
+	    
+	if ( !Rect().Contains( aPointerEvent.iPosition ) )
         {
         MakeVisible( EFalse );
         }

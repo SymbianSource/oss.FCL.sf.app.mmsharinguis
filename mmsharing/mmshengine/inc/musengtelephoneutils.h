@@ -27,19 +27,22 @@
 #include <MTelephonyAudioRoutingObserver.h>
 #include <TelephonyAudioRouting.h>
 #include <RPhCltServer.h>
+#include <cenrepnotifyhandler.h>
 
 // FORWARD DECLARATIONS
 class CRepository;
 class CTelephonyAudioRouting;
 class CPhCltCommandHandler;
 class MMusEngAudioRoutingObserver;
+class MMusEngVolumeChangeObserver;
 
 /**
 * Utility class to handle all phone related requests:
 * Audio routing, volume control and microphone muting.
 */
 class CMusEngTelephoneUtils : public CActive,
-                              public MTelephonyAudioRoutingObserver
+                              public MTelephonyAudioRoutingObserver,
+                              public MCenRepNotifyHandlerCallback
     {
     MUS_UNITTEST( UT_CMusEngTelephoneUtils )
     MUS_UNITTEST( UT_CMusEngSession )
@@ -79,10 +82,15 @@ class CMusEngTelephoneUtils : public CActive,
 		TBool IsLoudSpeakerEnabled() const;
 		
 		/**
-   		*
+   		* Returns current CS call volume level from central repository
         */
 		TInt GetVolumeL() const;
 
+        /**
+        * Returns locally cached CS call volume level
+        */
+		TInt GetVolume() const;
+		
 		/**
    		*
         */
@@ -104,6 +112,11 @@ class CMusEngTelephoneUtils : public CActive,
         */
         void SetAudioRoutingObserver( MMusEngAudioRoutingObserver* aObserver );
                                         
+        /**
+        * Sets volume level observer. Can be set to NULL in order to indicate
+        * ending of observing changes in volume level.
+        */
+        void SetVolumeChangeObserver( MMusEngVolumeChangeObserver* aObserver );
     
     private: // inherited from CActive
 
@@ -145,6 +158,10 @@ class CMusEngTelephoneUtils : public CActive,
         */
         void DoSetOutputL( CTelephonyAudioRouting::TAudioOutput aAudioOutput );
         
+    private:// From MCenRepNotifyHandlerCallback
+        
+        void HandleNotifyGeneric( TUint32 aId );
+        
     private:
 
 		/**
@@ -167,7 +184,13 @@ class CMusEngTelephoneUtils : public CActive,
         */
 		TInt ValidateVolume( const TInt aVolume ) const;
 		
-
+		/**
+		 * Checks current volume level and notifies observer, if volume changed
+		 * @param aAudioRouteChanged, ETrue if volume check should be done
+		 *        because of audio route change
+		 */
+		void UpdateCurrentVolume( TBool aAudioRouteChanged );
+		
     private: // DATA
 
         /**
@@ -197,6 +220,18 @@ class CMusEngTelephoneUtils : public CActive,
 
         TBool iShowDialog;
         
+        /**
+         * Central repository notifier instance. Owned.
+         */
+        CCenRepNotifyHandler* iNotifier;
+       
+        /**
+         * Volume change observer
+         * Used to inform session about volume updates
+         */
+        MMusEngVolumeChangeObserver* iVolumeObserver;
+        
+        TInt iCurrentVolume;
     };
 
 

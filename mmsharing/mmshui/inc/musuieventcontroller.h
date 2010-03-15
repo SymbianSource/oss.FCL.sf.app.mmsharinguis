@@ -30,6 +30,7 @@
 
 #include "musengsessionobserver.h"
 #include "musengaudioroutingobserver.h"
+#include "musengvolumechangeobserver.h"
 
 #include <aknappui.h>        // CAknAppUiBase::TAppUiOrientation
 
@@ -57,7 +58,8 @@ class CMusUiEventController : public CBase,
                               public MMusUiCallbackObserver,
                               public MMusUiMmcObserver,
                               public MMusEngSessionObserver,
-                              public MMusEngAudioRoutingObserver
+                              public MMusEngAudioRoutingObserver,
+                              public MMusEngVolumeChangeObserver
     {
 
 public: // enumerations
@@ -156,6 +158,14 @@ public: // From MMusEngAudioRoutingObserver
     *
     */
     virtual TBool AudioRouteChangeAllowed() const;
+    
+public: // From MMusEngVolumeChangeObserver
+    
+    /**
+    * Indicates that some other application has changed volume level.
+    *
+    */
+    virtual void VolumeChanged( TInt aVolume, TBool aAudioRouteChanged );
     
 
 public:	// New functions
@@ -295,6 +305,11 @@ public:	// New functions
     * 
     */
     virtual void DeleteEngineSession() = 0;
+      
+    /**
+    * 
+    */
+    TBool IsDisplayEnabledL();
     
 
 protected:    // New functions

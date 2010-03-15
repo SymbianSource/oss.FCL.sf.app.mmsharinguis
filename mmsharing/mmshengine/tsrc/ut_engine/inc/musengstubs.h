@@ -28,6 +28,7 @@
 #include "musengreceivesessionobserver.h"
 #include "musengsessiondurationtimerobserver.h"
 #include "musengaudioroutingobserver.h"
+#include "musengvolumechangeobserver.h"
 
 #include <e32base.h>
 
@@ -71,7 +72,8 @@ class CMusEngObserverStub : public CBase,
                             public MMusEngLiveSessionObserver,
                             public MMusEngClipSessionObserver,
                             public MMusEngReceiveSessionObserver,
-                            public MMusEngAudioRoutingObserver
+                            public MMusEngAudioRoutingObserver,
+                            public MMusEngVolumeChangeObserver
     {
     
     public:
@@ -145,7 +147,9 @@ class CMusEngObserverStub : public CBase,
         
         TBool AudioRouteChangeAllowed() const;
         
-    
+        // From MMusEngVolumeChangeObserver
+        void VolumeChanged( TInt aVolume, TBool aAudioRouteChanged );
+        
     public: // Helper
     
         /**
@@ -203,6 +207,7 @@ class CMusEngObserverStub : public CBase,
         TBool iSessionTemporarilyNotAvailable;
         HBufC* iIncomingSessionOriginator;
         
+        TInt iVolume;
     };
 
 

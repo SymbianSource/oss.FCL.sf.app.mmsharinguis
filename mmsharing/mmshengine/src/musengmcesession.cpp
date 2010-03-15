@@ -321,6 +321,17 @@ EXPORT_C void CMusEngMceSession::EnableDisplayL( TBool aEnable )
     MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::EnableDisplay()")
     }
 
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
+EXPORT_C TBool CMusEngMceSession::IsDisplayEnabledL()
+    {
+    __ASSERT_ALWAYS( iSession, User::Leave( KErrNotReady ) );
+    CMceDisplaySink* display = MusEngMceUtils::GetDisplayL( *iSession );
+    return display->IsEnabled();
+    }
+
 
 // -----------------------------------------------------------------------------
 // Mutes playback of sended audio streams. Audio data is still streamed.
@@ -528,7 +539,7 @@ void CMusEngMceSession::SetSpeakerVolumeL( TInt aNewVolume )
                 MusEngMceUtils::GetSpeaker( *( iSession->Streams()[i] ) );
 
             if ( speaker &&        
-                 aNewVolume >= 1 &&
+                 aNewVolume >= KMusEngMinVolume &&
                  aNewVolume <= KMusEngMaxVolume )
                 {
                 // MCE might have different scale for volume than MUS
@@ -1455,4 +1466,20 @@ void CMusEngMceSession::DoCodecConfigurationBasedRemovalL( CMceVideoStream& aVid
             }
         }    
     MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::DoCodecConfigurationBasedRemovalL()" )
+    }
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::VolumeChanged( TInt aVolume, TBool aAudioRouteChanged )
+    {
+    MUS_LOG1( "mus: [ENGINE]  -> CMusEngMceSession::VolumeChanged(): %d", aVolume )
+    if ( iSession )
+        {
+        CMusEngSession::VolumeChanged( aVolume, aAudioRouteChanged );
+        TRAP_IGNORE( SetSpeakerVolumeL( aVolume ) );
+        }
+
+    MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::VolumeChanged()" )
     }

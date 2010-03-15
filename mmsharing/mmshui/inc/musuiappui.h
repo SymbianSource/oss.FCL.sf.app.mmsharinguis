@@ -28,6 +28,7 @@
 #include <coeccntx.h>
 #include <aknViewAppUi.h>
 #include <remconcoreapitargetobserver.h>
+#include <coecobs.h>
 
 class CMusUiStatusPaneHandler;
 class CMusUiActiveQueryDialog;
@@ -42,7 +43,8 @@ class CRemConCoreApiTarget;
 class CMusUiAppUi : public CAknViewAppUi, 
                     public MMusUiEventObserver,
                     public MMusUiQueryObserver,
-                    public MRemConCoreApiTargetObserver
+                    public MRemConCoreApiTargetObserver,
+                    public MCoeControlObserver
     {
 
 public:  // constructors and destructor
@@ -145,6 +147,11 @@ private: // from base class CEikAppUi
     
     // Help context from CCoeAppUi
     CArrayFix<TCoeHelpContext>* HelpContextL() const;
+    
+private:
+    
+    //from MCoeControlObserver
+    void HandleControlEventL(CCoeControl* aControl,TCoeEvent aEventType);
 
 private:
     
