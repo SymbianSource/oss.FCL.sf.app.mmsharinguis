@@ -186,8 +186,7 @@ public: // static API
      * @param aTrx request
      * @return originator's URI
      */
-    static const CUri8& MusAvaCapabilityContext::OriginatorL( 
-                                const CSIPServerTransaction& aTrx );
+    static const CUri8& OriginatorL( const CSIPServerTransaction& aTrx );
 
     /**
      * Finds header from user headers based on header's name
@@ -226,7 +225,7 @@ public: // static API
      * @param aMessage SIP message header.     
      * @return array which has all P-Asserted-Identity header.
      */
-    static CDesCArrayFlat* MusAvaCapabilityContext::PAssertedIdentityHeaderL(
+    static CDesCArrayFlat* PAssertedIdentityHeaderL(
                                     const CSIPMessageElements& aMessage );
     //MUS_UNITTEST ( UT_ )
 

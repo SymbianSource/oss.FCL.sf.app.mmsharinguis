@@ -49,15 +49,14 @@ public:
      *
      * @return
      */
-    static MusSettingsKeys::TOperatorVariant
-                MultimediaSharingSettings::OperatorVariantSettingL();
+    static MusSettingsKeys::TOperatorVariant OperatorVariantSettingL();
 
     /**
      * Sets 
      *
      * @param
      */
-    static void MultimediaSharingSettings::SetOperatorVariantSettingL(
+    static void SetOperatorVariantSettingL(
                      MusSettingsKeys::TOperatorVariant aVariantSetting );
 
     /**
@@ -235,9 +234,7 @@ public:
      * @param
      * @param
      */
-    static void MultimediaSharingSettings::SetPropertyValueL( 
-                                            TUint32 aKey,
-                                            const TDesC& aValue );
+    static void SetPropertyValueL( TUint32 aKey, const TDesC& aValue );
                                             
      /**
      * For internal usage only. Use direct getters/setters for each setting. 
@@ -253,7 +250,7 @@ public:
      * Means AVC will be disabled when encoding device cenrep configuration 
      * set to 0x0fffffff.
      */
-    static TBool MultimediaSharingSettings::IsAvcDisabled();
+    static TBool IsAvcDisabled();
     
 
      /**
