@@ -203,10 +203,8 @@ class CMusEngClipSession : public CMusEngMceOutSession
 
         /**
         * Returns current position as microseconds.
-        * @param aActualPosition ETrue if actual position is wanted, EFalse
-        *   if buffering time is taken in count.
         */
-        TTimeIntervalMicroSeconds PositionMicroSecondsL( TBool aActualPosition = EFalse );
+        TTimeIntervalMicroSeconds PositionMicroSecondsL();
 
         /**
         * Constructs audio stream structure during session completion and adds
@@ -218,10 +216,6 @@ class CMusEngClipSession : public CMusEngMceOutSession
         void ConstructAudioStructureL( CMceStreamBundle& aLocalBundle );
         
         void DetermineBufferingPeriod( CMceMediaStream& aStream );
-
-        TTimeIntervalMicroSeconds GetVideoSinkRelativeFilePos( 
-            const TTimeIntervalMicroSeconds& aActualPosition,
-            const TTimeIntervalMicroSeconds& aDuration );
             
         TBool IsH264Supported() const;
 

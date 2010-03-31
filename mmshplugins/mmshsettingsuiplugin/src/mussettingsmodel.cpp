@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Document model class for MUSSettingsPlugin.
-*  Version     : %version: 17 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: 18 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -100,7 +100,7 @@ TInt CMusSettingsModel::VSSettingsRecordedVideoSavingL()
     MUS_LOG( "[MUSSET] -> CMusSettingsModel::VSSettingsRecordedVideoSavingL()" )
     TInt vsVideoLocationMode = MultimediaSharingSettings::VideoLocationSettingL();
     MUS_LOG1(
-    "[MUSSET] <- CMusSettingsContainer::VSSettingsRecordedVideoSavingL()( %d )",
+    "[MUSSET] <- CMusSettingsModel::VSSettingsRecordedVideoSavingL()( %d )",
         vsVideoLocationMode )
     return vsVideoLocationMode;
     }
@@ -111,10 +111,10 @@ TInt CMusSettingsModel::VSSettingsRecordedVideoSavingL()
 //
 void CMusSettingsModel::SetActivationItem( TBool aActive )
     {
-    MUS_LOG( "[MUSSET] -> CMusSettingsContainer::SetActivationItem()" )
+    MUS_LOG( "[MUSSET] -> CMusSettingsModel::SetActivationItem()" )
     MUS_LOG1( "            Profile disabled? ( %d )", aActive )
     iProfileDisabled = aActive;
-    MUS_LOG( "[MUSSET] <- CMusSettingsContainer::SetActivationItem()" )
+    MUS_LOG( "[MUSSET] <- CMusSettingsModel::SetActivationItem()" )
     }
 
 // ----------------------------------------------------------------------------
@@ -123,8 +123,8 @@ void CMusSettingsModel::SetActivationItem( TBool aActive )
 //
 TBool CMusSettingsModel::ActivationItem()
     {
-    MUS_LOG( "[MUSSET] -> CMusSettingsContainer::SetActivationItem()" )
-    MUS_LOG( "[MUSSET] <- CMusSettingsContainer::SetActivationItem()" )
+    MUS_LOG( "[MUSSET] -> CMusSettingsModel::ActivationItem()" )
+    MUS_LOG( "[MUSSET] <- CMusSettingsModel::ActivationItem()" )
     return iProfileDisabled;
     }
 
@@ -171,7 +171,7 @@ CDesCArray* CMusSettingsModel::ListOfProfileNamesL()
 HBufC* CMusSettingsModel::ProfileNameL( TInt aId )
     {
     MUS_LOG1(
-    "[MUSSET] -> CMusSettingsContainer::ProfileNameL()( %d )",
+    "[MUSSET] -> CMusSettingsModel::ProfileNameL()( %d )",
         aId )
     const TDesC8* providerName = 0;
     TInt index = ProfileIndexByIdL( aId );
@@ -255,25 +255,11 @@ void CMusSettingsModel::InitializeProfileEnablerL()
        CMusSIPProfileModel& handler = 
            static_cast<CMusSIPProfileModel&>( iHandler );
        TRAPD( error, enabled = handler.ProfileEnabledL());
-       if ( error != KErrNone )
-           {
-           MUS_LOG( "Error returned" )
-           // Problems with re-reading profiles; use existing array
-           SetActivationItem( EFalse );
-           }
-       else
-           {
-           MUS_LOG1("SIP registration service( %d )",
-           enabled )
-           if( enabled )
-               {
-               SetActivationItem( enabled );
-               }
-           else
-               {
-               SetActivationItem( enabled);
-               }
-           }
+       enabled = error != KErrNone ? EFalse : enabled;
+       MUS_LOG2("SIP registration service( %d ), error( %d )", enabled, error )
+       //profile enabled - activation disabled = false 
+       //profile disabled - activation disabled = true 
+       SetActivationItem( !enabled );
        }
     MUS_LOG( "[MUSSET] <- CMusSettingsModel::InitializeProfileEnabler()" )
     }

@@ -152,7 +152,7 @@ EXPORT_C void CMusEngClipSession::FastForwardL( TBool aUseFFWD )
             }
 
         // Set new position
-        file->SetPositionL( PositionMicroSecondsL( ETrue ) );
+        file->SetPositionL( PositionMicroSecondsL() );
         MUS_LOG( "                 SetPositionL returned without error " )
         
         // Reset timer
@@ -207,7 +207,7 @@ EXPORT_C void CMusEngClipSession::FastRewindL( TBool aUseFRWD )
             }
 
         // Set new position
-        file->SetPositionL( PositionMicroSecondsL( ETrue ) );
+        file->SetPositionL( PositionMicroSecondsL() );
         MUS_LOG( "                 SetPositionL returned without error " )
         
         // Reset timer
@@ -840,8 +840,7 @@ TBool CMusEngClipSession::HasClipEnded()
 //
 // -----------------------------------------------------------------------------
 //
-TTimeIntervalMicroSeconds CMusEngClipSession::PositionMicroSecondsL( 
-    TBool aActualPosition )
+TTimeIntervalMicroSeconds CMusEngClipSession::PositionMicroSecondsL()
     {
     __ASSERT_ALWAYS( iSession, User::Leave( KErrNotReady ) );
 
@@ -885,12 +884,6 @@ TTimeIntervalMicroSeconds CMusEngClipSession::PositionMicroSecondsL(
     else
         {
         calculatedPosition = position;
-        }
-    
-    if ( !aActualPosition )
-        {
-        calculatedPosition = 
-            GetVideoSinkRelativeFilePos( calculatedPosition, duration );
         }
         
     return calculatedPosition;
@@ -1004,65 +997,6 @@ void CMusEngClipSession::DetermineBufferingPeriod( CMceMediaStream& aStream )
         }
         
     MUS_LOG( "mus: [ENGINE] <- CMusEngClipSession::DetermineBufferingPeriod()" )
-    }
-
-// -----------------------------------------------------------------------------
-// Modifies file position if position has reached end before clip has ended.
-// File position is not going in sync with local video playback as playback
-// buffers media before starting playing.
-// -----------------------------------------------------------------------------
-//
-TTimeIntervalMicroSeconds CMusEngClipSession::GetVideoSinkRelativeFilePos( 
-    const TTimeIntervalMicroSeconds& aActualPosition, 
-    const TTimeIntervalMicroSeconds& aDuration )
-    { 
-    MUS_LOG1( "mus: [ENGINE] PositionMicroSecondsL, pos before mod:%d", 
-              aActualPosition.Int64() )
-    
-    TTimeIntervalMicroSeconds tempCalculatedPosition( aActualPosition );
-    
-    if ( iDelayFileEndingPos != 0 )
-        {
-        iDelayFileEndingPos = aDuration;
-        tempCalculatedPosition = iDelayFileEndingPos;
-        }
-    else
-        {
-        // FRWD can go to zero even if clip has not ended, do not modify 
-        // time in such situation.
-        if ( aActualPosition == 0 && 
-             !iClipEnded && 
-             iFRWDStartTime.Int64() == 0 && 
-             !iRewindedToBeginning )
-            {
-            const TInt KMusDelayEndingModifier = 2;
-            iDelayFileEndingPos = aDuration.Int64() - 
-                iBufferingPeriod.Int64() / KMusDelayEndingModifier;
-            tempCalculatedPosition = iDelayFileEndingPos;
-            if ( iPreviousPos > tempCalculatedPosition )
-                {
-                tempCalculatedPosition = iPreviousPos;
-                }
-            }
-        else
-            {
-            iDelayFileEndingPos = 0;
-            }
-        
-        if ( iRewindedToBeginning && aActualPosition > 0 )
-            {
-            iRewindedToBeginning = EFalse;
-            }
-            
-        if ( tempCalculatedPosition < 0 )
-            {
-            tempCalculatedPosition = 0;
-            }
-        }
-    
-    iPreviousPos = tempCalculatedPosition;
-            
-    return tempCalculatedPosition;
     }
 
 // -----------------------------------------------------------------------------

@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  MUSSettingsPlugin model class.
-*  Version     : %version: 10 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: 11 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -23,7 +23,7 @@
 
 #include <e32base.h>
 #include <badesca.h>
-//class CDesCArray;
+
 class MMusSIPProfileHandler;
 class CMusSIPProfileModel;
 class CAknMemorySelectionDialogMultiDrive;
@@ -67,35 +67,35 @@ public:
      * operator specific variant
      * @return activation item 
      */
-    TBool ActivationItem( );
+    TBool ActivationItem();
     
     /**
      * Returns the array containing the profile names.
      * NOTE! The ownership of the array is transferred to the caller.
      * @return Array consisting of the names of the SIP profiles.
      */
-	CDesCArray* ListOfProfileNamesL();
+    CDesCArray* ListOfProfileNamesL();
 
     /**
      * Gets a SIP profile name by ID.
      * Ownership is transferred to caller.
      * @return SIP profile name.
      */
-	HBufC* ProfileNameL( TInt aId );
+    HBufC* ProfileNameL( TInt aId );
 
     /**
      * Gets the index of the default SIP profile.
      * @return KErrNotFound, if one does not exist, otherwise index of the
      *         default SIP profile.
      */
-	TInt DefaultProfileIndex();
+    TInt DefaultProfileIndex();
 
     /**
      * Gets the id of the default SIP profile.
      * @return KErrNotFound, if one does not exist, otherwise id of the
      *         default SIP profile.
      */
-	TUint32 DefaultProfileId();
+    TUint32 DefaultProfileId();
 
     /**
      * Returns SIP profile index on locally cached array based on id.
@@ -118,23 +118,27 @@ public:
      */
     CAknMemorySelectionDialogMultiDrive* MemorySelectionDialogLC();
 
+    /**
+    * Initialize SIP profile enabler data.
+    */
+    void InitializeProfileEnablerL();
     
 public: // constants
 
     /**
      * Default SIP profile.
      */
-	static const TInt KVsSipProfileDefault;
-
+    static const TInt KVsSipProfileDefault;
+    
     /**
      * SIP profile select.
      */
-	static const TInt KVsSipProfileSelect;
+    static const TInt KVsSipProfileSelect;
 
     /**
      * Null selection SIP profile.
      */
-	static const TInt KVsSipProfileSelectNone;
+    static const TInt KVsSipProfileSelectNone;
 
 private:
 
@@ -144,11 +148,6 @@ private:
      */
     CMusSettingsModel( MMusSIPProfileHandler& aHandler );
     
-    /**
-    * Initialize SIP profile enabler data.
-    */
-    void InitializeProfileEnablerL();
-
     void ConstructL();
 
 private: // data

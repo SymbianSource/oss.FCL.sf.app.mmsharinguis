@@ -12,28 +12,28 @@
 * Contributors:
 *
 * Description:  Container for MUSSettingsPlugin.
-*  Version     : %version: 20 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: 21 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
 
 
-#include    "mussettingscontainer.h"
-#include    "mussettingsplugin.h"
-#include    "mussettingsmodel.h"
-#include    "gslistbox.h"
-#include    "mussettingsplugin.hrh"
-#include    <mussettingsuirsc.rsg>
-#include    <aknlists.h>
-#include    <akntitle.h>
-#include 	<aknnotewrappers.h>
-#include    <csxhelp/msh.hlp.hrh>
-#include    <gsfwviewuids.h>
-#include    <StringLoader.h>
-#include 	<sipmanagedprofile.h>
-#include 	<ctsydomainpskeys.h>
-#include	<e32property.h>
-#include    <pathinfo.h>
+#include "mussettingscontainer.h"
+#include "mussettingsplugin.h"
+#include "mussettingsmodel.h"
+#include "gslistbox.h"
+#include "mussettingsplugin.hrh"
+#include <mussettingsuirsc.rsg>
+#include <aknlists.h>
+#include <akntitle.h>
+#include <aknnotewrappers.h>
+#include <csxhelp/msh.hlp.hrh>
+#include <gsfwviewuids.h>
+#include <StringLoader.h>
+#include <sipmanagedprofile.h>
+#include <ctsydomainpskeys.h>
+#include <e32property.h>
+#include <pathinfo.h>
 
 
 #ifdef RD_MULTIPLE_DRIVE
@@ -86,9 +86,9 @@ CMusSettingsContainer::~CMusSettingsContainer()
     {
     MUS_LOG( "[MUSSET] -> CMusSettingsContainer::~CMusSettingsContainer()" )
     delete iActivationItems;
-  	delete iProfileItems;
-  	delete iAutoRecordItems;
-   	delete iListboxItemArray;
+    delete iProfileItems;
+    delete iAutoRecordItems;
+    delete iListboxItemArray;
     MUS_LOG( "[MUSSET] <- CMusSettingsContainer::~CMusSettingsContainer()" )
     }
 
@@ -106,10 +106,10 @@ void CMusSettingsContainer::ConstructListBoxL( TInt aResLbxId )
     iListBox->Model()->SetItemTextArray( iListboxItemArray );
     iListBox->Model()->SetOwnershipType( ELbmDoesNotOwnItemArray );
 
-	// OCC: removed "Automatic in home network" choice
-	iActivationItems =
-		iCoeEnv->ReadDesC16ArrayResourceL(
-		R_OPERATOR_ACTIVATION_SETTING_PAGE_LBX );
+    // OCC: removed "Automatic in home network" choice
+    iActivationItems =
+            iCoeEnv->ReadDesC16ArrayResourceL(
+            R_OPERATOR_ACTIVATION_SETTING_PAGE_LBX );
 
     iAutoRecordItems = iCoeEnv->ReadDesC16ArrayResourceL(
                                     R_VS_VIDEO_SAVING_SETTING_PAGE_LBX );
@@ -177,19 +177,19 @@ void CMusSettingsContainer::UpdateListBoxL( TInt aFeatureId )
             	{
             	MakeOperatorActivationItemL();
             	}
-	        break;
+            break;
         case KGSSettIdSIPProfile:
             MakeSIPProfileItemL();
             break;
         case KGSSettIdAutoRecord:
             MakeAutoRecordItemL();
-        	break;
+            break;
         case KGSSettIdRecordedVideoSaving:
-        	MakeRecordedVideoSavingItemL();
-        	break;
+            MakeRecordedVideoSavingItemL();
+            break;
         case KGSSettIdNote:
-        	MakeNoteItemL();
-        	break;
+            MakeNoteItemL();
+            break;
         default:
             break;
         }
@@ -204,13 +204,13 @@ void CMusSettingsContainer::UpdateListBoxL( TInt aFeatureId )
 // -----------------------------------------------------------------------------
 //
 void CMusSettingsContainer::AddItemL( TInt aId, const TPtrC aText )
-	{
-	MUS_LOG( "[MUSSET] -> CMusSettingsContainer::AddItemL()" )
+    {
+    MUS_LOG( "[MUSSET] -> CMusSettingsContainer::AddItemL()" )
     iListboxItemArray->SetDynamicTextL( aId, aText );
     iListboxItemArray->SetItemVisibilityL( aId,
-    	CGSListBoxItemTextArray::EVisible );
-	MUS_LOG( "[MUSSET] <- CMusSettingsContainer::AddItemL()" )
-	}
+    CGSListBoxItemTextArray::EVisible );
+    MUS_LOG( "[MUSSET] <- CMusSettingsContainer::AddItemL()" )
+    }
 
 
 // -----------------------------------------------------------------------------
@@ -231,7 +231,7 @@ void CMusSettingsContainer::MakeActivationItemL()
         activation = MusSettingsKeys::EActiveInHomeNetworks;
         }
     
-   	AddItemL( KGSSettIdVSActivation, ( *iActivationItems )[ activation ] );
+    AddItemL( KGSSettIdVSActivation, ( *iActivationItems )[ activation ] );
 
     MUS_LOG( "[MUSSET] <- CMusSettingsContainer::MakeActivationItemL()" )
     }
@@ -244,9 +244,12 @@ void CMusSettingsContainer::MakeActivationItemL()
 void CMusSettingsContainer::MakeOperatorActivationItemL()
     {
     MUS_LOG( "[MUSSET] -> CMusSettingsContainer::MakeOperatorActivationItemL()" )
-    MUS_LOG1( "Activation item( %d )",
-            iModel.ActivationItem() )
-	AddItemL( KGSSettIdVSActivation, ( *iActivationItems )[ iModel.ActivationItem() ] );
+            
+    //sync with real value, if op specifig
+    iModel.InitializeProfileEnablerL();
+    
+    MUS_LOG1( "Activation item=%d (0=VS enabled, 1=VS disabled)", iModel.ActivationItem() )
+    AddItemL( KGSSettIdVSActivation, ( *iActivationItems )[ iModel.ActivationItem() ] );
 
     MUS_LOG( "[MUSSET] <- CMusSettingsContainer::MakeOperatorActivationItemL()" )
     }
@@ -266,33 +269,33 @@ void CMusSettingsContainer::MakeSIPProfileItemL()
 
     if ( profile != KDefaultSipProfile && profile != KNoSipProfileSelected )
     	{
-    	// profile id defined, get profile name
-		HBufC* name = iModel.ProfileNameL( profile );
+        // profile id defined, get profile name
+        HBufC* name = iModel.ProfileNameL( profile );
 
-		if ( name )
-			{
-			CleanupStack::PushL( name );
-			AddItemL( KGSSettIdSIPProfile, *name );
-			CleanupStack::PopAndDestroy( name );
-    		}
+        if ( name )
+            {
+            CleanupStack::PushL( name );
+            AddItemL( KGSSettIdSIPProfile, *name );
+            CleanupStack::PopAndDestroy( name );
+            }
     	else
-    		{
-    		// show profile value not selected
-    		AddItemL( KGSSettIdSIPProfile,
-    			( *iProfileItems )[ CMusSettingsModel::KVsSipProfileSelectNone ] );
-			}
-		}
+            {
+            // show profile value not selected
+            AddItemL( KGSSettIdSIPProfile,
+                    ( *iProfileItems )[ CMusSettingsModel::KVsSipProfileSelectNone ] );
+                    }
+            }
     else if ( profile == KNoSipProfileSelected )
     	{
     	AddItemL( KGSSettIdSIPProfile,
     		( *iProfileItems )[ CMusSettingsModel::KVsSipProfileSelectNone ] );
-		}
+        }
     else
     	{
-	    AddItemL(
-	    	KGSSettIdSIPProfile,
-	    	( *iProfileItems )[ CMusSettingsModel::KVsSipProfileDefault ] );
-		}
+        AddItemL(
+            KGSSettIdSIPProfile,
+            ( *iProfileItems )[ CMusSettingsModel::KVsSipProfileDefault ] );
+            }
 
     MUS_LOG( "[MUSSET] <- CMusSettingsContainer::MakeSIPProfileItemL()" )
     }
@@ -379,13 +382,13 @@ void CMusSettingsContainer::MakeNoteItemL()
 
     // If unset, use and set default value
     if ( auditoryNotification < 0 || auditoryNotification > 1 )
-	    {
+        {
         auditoryNotification = MusSettingsKeys::EAuditoryNotificationOff;
         MultimediaSharingSettings::SetAuditoryNotificationSettingL(
                                     MusSettingsKeys::EAuditoryNotificationOff );
-	    }
+        }
 
-	AddItemL( KGSSettIdNote, ( *iActivationItems )[ auditoryNotification ] );
+    AddItemL( KGSSettIdNote, ( *iActivationItems )[ auditoryNotification ] );
 	
     MUS_LOG( "[MUSSET] <- CMusSettingsContainer::MakeNoteItemL()" )
     }
@@ -424,25 +427,27 @@ void CMusSettingsContainer::ShowNewProfileActiveAfterCallL()
     {
     MUS_LOG(
     	"[MUSSET] -> CMusSettingsContainer::ShowNewProfileActiveAfterCallL()" )
-	TPSCTsyCallState callState;
-	User::LeaveIfError( RProperty::Get( KPSUidCtsyCallInformation,
-			KCTsyCallState,
-			(TInt&)callState) );
-	if ( callState == EPSCTsyCallStateAlerting ||
-		callState ==  EPSCTsyCallStateRinging ||
-		callState ==  EPSCTsyCallStateDialling ||
-		callState ==  EPSCTsyCallStateAnswering ||
-		callState ==  EPSCTsyCallStateDisconnecting ||
-		callState ==  EPSCTsyCallStateConnected ||
-		callState ==  EPSCTsyCallStateHold)
-		{
-		HBufC* infoTxt = StringLoader::LoadLC( R_QTN_MSH_SET_PROFILE_NOTE );
-	    CAknInformationNote* note = new ( ELeave ) CAknInformationNote( ETrue );
-	    note->ExecuteLD( infoTxt->Des() );
-	    CleanupStack::PopAndDestroy( infoTxt );
-	    MUS_LOG(
-	    	"[MUSSET] <- CMusSettingsContainer::ShowNewProfileActiveAfterCallL()" )
-		}
+    TPSCTsyCallState callState;
+    User::LeaveIfError( RProperty::Get( KPSUidCtsyCallInformation,
+                    KCTsyCallState,
+                    (TInt&)callState) );
+    
+    if ( callState == EPSCTsyCallStateAlerting ||
+         callState ==  EPSCTsyCallStateRinging ||
+         callState ==  EPSCTsyCallStateDialling ||
+         callState ==  EPSCTsyCallStateAnswering ||
+         callState ==  EPSCTsyCallStateDisconnecting ||
+         callState ==  EPSCTsyCallStateConnected ||
+         callState ==  EPSCTsyCallStateHold)
+        {
+        HBufC* infoTxt = StringLoader::LoadLC( R_QTN_MSH_SET_PROFILE_NOTE );
+        CAknInformationNote* note = new ( ELeave ) CAknInformationNote( ETrue );
+        note->ExecuteLD( infoTxt->Des() );
+        CleanupStack::PopAndDestroy( infoTxt );
+        }
+    
+    MUS_LOG(
+        "[MUSSET] <- CMusSettingsContainer::ShowNewProfileActiveAfterCallL()" )
     }
 
 // -----------------------------------------------------------------------------
@@ -455,5 +460,6 @@ void CMusSettingsContainer::HideItemsL(TInt aItemIndex)
     MUS_LOG1("[MUSSET] -> CMusSettingsContainer::HideItemsL() %d",aItemIndex )    
     iListboxItemArray->SetItemVisibilityL( aItemIndex,
             	CGSListBoxItemTextArray::EInvisible );
-	MUS_LOG("[MUSSET] <- CMusSettingsContainer::HideItemsL()" )	
+    MUS_LOG("[MUSSET] <- CMusSettingsContainer::HideItemsL()" )	
     }
+

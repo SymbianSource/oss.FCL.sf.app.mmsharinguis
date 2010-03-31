@@ -12,30 +12,21 @@
 * Contributors:
 *
 * Description:  Model for managing SIP profiles.
-*  Version     : %version: 16 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: 19 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
 
+#include <sipmanagedprofileregistry.h>
+#include <sipmanagedprofile.h>
 
 #include "mussipprofilemodel.h"
 #include "muslogger.h"
 #include "mussettings.inl"
-#include <aknnotewrappers.h>
-#include <StringLoader.h>
-#include <aknview.h>
-#include <sipmanagedprofileregistry.h>
-#include <sipmanagedprofile.h>
-#include <sipprofileregistry.h>
-#include  "mussettingsmodel.h"
+#include "mussettingsmodel.h"
 
 
 const TInt KUnknownProfileId = 0;
-
-/** 
-* VSC Enable/Disable is of type TBool
-*/
-const TUint32 KMuSVSCDisable = 200;
 
 
 // ======== MEMBER FUNCTIONS ========
@@ -56,9 +47,15 @@ CMusSIPProfileModel::CMusSIPProfileModel()
 void CMusSIPProfileModel::ConstructL()
     {
     MUS_LOG( "[MUSSET] <- CMusSIPProfileModel::ConstructL()" )
+            
+    MUS_LOG( "[MUSSET]  Creating CSIPManagedProfileRegistry " )
     iEngine = CSIPManagedProfileRegistry::NewL( *this );
+    MUS_LOG( "[MUSSET]  Done " )
+    MUS_LOG( "[MUSSET]  Getting profiles " )
     iEngine->ProfilesL( iProfiles );
+    MUS_LOG( "[MUSSET]  Done " )
     SortProfilesL();
+    MUS_LOG( "[MUSSET] -> CMusSIPProfileModel::ConstructL()" )
     }
 
 // ----------------------------------------------------------------------------
@@ -143,8 +140,8 @@ TUint32 CMusSIPProfileModel::DefaultProfileId()
         TInt error = iProfiles[i]->GetParameter( KSIPDefaultProfile, defProfile );
         if ( error == KErrNone && defProfile )
             {
-        	iProfiles[i]->GetParameter( KSIPProfileId, id );
-        	break;
+            iProfiles[i]->GetParameter( KSIPProfileId, id );
+            break;
             }
         }
 
@@ -163,13 +160,14 @@ void CMusSIPProfileModel::DisableProfileL()
     CSIPManagedProfile* managedProfile = static_cast<CSIPManagedProfile*>(
             iEngine->ProfileL( DefaultProfileId()) );
     CleanupStack::PushL( managedProfile );
-    //Disable registration from profile.dat file
-    MUS_LOG( "Add registration parameter profile.dat file " )
-    TInt err = managedProfile->SetParameter( KMuSVSCDisable, (TBool)ETrue );
-    User::LeaveIfError(err);
+    MUS_LOG( "[MUSSET]  Add registration parameter to profile.dat file " )
+    //set autoregistration off (i.e. when needed) => disable profile
+    User::LeaveIfError( managedProfile->SetParameter( KSIPAutoRegistration, EFalse ) );
+    MUS_LOG( "[MUSSET]  Saving profile " )
     iEngine->SaveL( *managedProfile );
+    MUS_LOG( "[MUSSET]  Saved" )
     CleanupStack::PopAndDestroy( managedProfile );
-    MUS_LOG( "[MUSSET]  <- CMusAvaRegisterAvailability::DisableProfileL " )        
+    MUS_LOG( "[MUSSET]  <- CMusSIPProfileModel::DisableProfileL " )        
     }
 
 // -----------------------------------------------------------------------------
@@ -182,13 +180,14 @@ void CMusSIPProfileModel::EnableProfileL()
     CSIPManagedProfile* managedProfile = static_cast<CSIPManagedProfile*>(
             iEngine->ProfileL( DefaultProfileId() ) );
     CleanupStack::PushL( managedProfile );
-    //Disable registration from profile.dat file
-    MUS_LOG( "Add registration parameter profile.dat file " )
-    TInt err = managedProfile->SetParameter( KMuSVSCDisable, (TBool)EFalse );
-    User::LeaveIfError(err);
+    MUS_LOG( "[MUSSET] Add registration parameters to profile.dat file " )
+    //set autoregistration on (i.e. always on) => enable profile
+    User::LeaveIfError( managedProfile->SetParameter( KSIPAutoRegistration, ETrue ) );
+    MUS_LOG( "[MUSSET]  Saving profile " )
     iEngine->SaveL( *managedProfile );
+    MUS_LOG( "[MUSSET]  Saved" )
     CleanupStack::PopAndDestroy( managedProfile );
-    MUS_LOG( "[MUSSET]  <- CMusAvaRegisterAvailability::EnableRegisterL " )        
+    MUS_LOG( "[MUSSET]  <- CMusSIPProfileModel::EnableRegisterL " )        
     }
 
 // -----------------------------------------------------------------------------
@@ -201,14 +200,14 @@ TBool CMusSIPProfileModel::ProfileEnabledL()
     CSIPManagedProfile* managedProfile = static_cast<CSIPManagedProfile*>(
             iEngine->ProfileL( DefaultProfileId() ) );
     CleanupStack::PushL( managedProfile );
-    //Activation status from profile.dat file
-    TBool enabled = EFalse;
-    MUS_LOG( "Get registration parameter from profile.dat file " )
-    TInt err = managedProfile->GetParameter( KMuSVSCDisable, enabled ); 
-    MUS_LOG1( "KMuSVSCDisable value %d )",
-            enabled )
+    TBool enabled;
+    MUS_LOG( "[MUSSET]  Getting KSIPAutoRegistration" ) 
+    User::LeaveIfError( 
+            managedProfile->GetParameter( KSIPAutoRegistration, enabled ) );
+    MUS_LOG( "[MUSSET]  Done" ) 
+    MUS_LOG1( "[MUSSET]  KSIPAutoRegistration=%d", enabled ) 
     CleanupStack::PopAndDestroy( managedProfile );
-    MUS_LOG( "[MUSSET]  <- CMusAvaRegisterAvailability::ProfileEnabledL " )
+    MUS_LOG( "[MUSSET]  <- CMusSIPProfileModel::ProfileEnabledL " )
     return enabled;
     }
 

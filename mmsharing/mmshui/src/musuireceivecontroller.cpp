@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Application's UI class.
-*  Version     : %version:  75.1.11 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version:  be1sipx1#75.1.13 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -595,6 +595,10 @@ void CMusUiReceiveController::StreamIdle()
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiReceiveController::StreamIdle" );
     iStreamPaused = ETrue;
     TRAPD( err, iEventObserver.ShowNaviPaneIconL( EMusUiNaviIconPause ) );
+    if ( iFullScreenSelected )
+    	{
+        TRAP_IGNORE( ChangeFullScreenModeL() );
+    	}
     if ( err != KErrNone )
         {
         iEventObserver.HandleError( err );

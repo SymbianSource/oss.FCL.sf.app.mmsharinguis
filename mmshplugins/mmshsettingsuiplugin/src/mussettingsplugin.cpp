@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  MUSSettingsPlugin implementation.
-*  Version     : %version: 34 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: 36 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -111,7 +111,8 @@ void CMusSettingsPlugin::ConstructL()
     iModel = CMusSettingsModel::NewL( *iHandler );
     iDiskNotifyHandler = CDiskNotifyHandler::NewL( *this, 
                                             iEikonEnv->FsSession() );
-    User::LeaveIfError( iDiskNotifyHandler->NotifyDisk() ); // Subscribe disk notifications
+    // Subscribe disk notifications
+    User::LeaveIfError( iDiskNotifyHandler->NotifyDisk() ); 
 
     iCaption = StringLoader::LoadL( R_GS_VS_PLUGIN_CAPTION );
     CloseResourceFile();
@@ -205,7 +206,7 @@ void CMusSettingsPlugin::HandleCommandL( TInt aCommand )
         case EGSMSKCmdAppChange:
 //        case EGSCmdAppChange:
             {
-       		HandleListBoxSelectionL();
+            HandleListBoxSelectionL();
             break;
             }
 
@@ -243,9 +244,9 @@ void CMusSettingsPlugin::GetCaptionL( TDes& aCaption ) const
     {
     MUS_LOG( "[MUSSET] -> CMusSettingsPlugin::GetCaptionL()" )
     if ( iCaption && iCaption->Length() <= aCaption.MaxLength() )
-		{
+        {
     	aCaption.Copy( *iCaption );
-		}
+        }
     
     MUS_LOG( "[MUSSET] <- CMusSettingsPlugin::GetCaptionL()" )
     }
@@ -331,7 +332,7 @@ void CMusSettingsPlugin::HandleListBoxSelectionL()
         case KGSSettIdVSActivation:
             {
             SwitchOnOffValueL( KGSSettIdVSActivation );
-    		break;
+            break;
     	    }
         case KGSSettIdSIPProfile:
             {
@@ -341,17 +342,17 @@ void CMusSettingsPlugin::HandleListBoxSelectionL()
         case KGSSettIdAutoRecord:
             {
             SwitchOnOffValueL( KGSSettIdAutoRecord );
-        	break;
+            break;
             }
         case KGSSettIdRecordedVideoSaving:
             {
-        	ShowVSSettingsRecordedVideoSavingSettingDialogL();
-        	break;
+            ShowVSSettingsRecordedVideoSavingSettingDialogL();
+            break;
             }
         case KGSSettIdNote:
             {
-        	SwitchOnOffValueL( KGSSettIdNote );
-        	break;
+            SwitchOnOffValueL( KGSSettIdNote );
+            break;
             }
         default:
             {
@@ -404,19 +405,19 @@ void CMusSettingsPlugin::ShowVSSettingsProfileSettingDialogL()
     if ( dlg->ExecuteLD( CAknSettingPage::EUpdateWhenChanged ) )
         {
         if ( profileMode == CMusSettingsModel::KVsSipProfileDefault )
-        	{
-        	if ( oldProfileMode != profileMode )
-        		{
-        		MultimediaSharingSettings::SetSipProfileSettingL( 
-                                    CMusSettingsModel::KVsSipProfileDefault );
-        		Container()->ShowNewProfileActiveAfterCallL();
-        		Container()->UpdateListBoxL( KGSSettIdSIPProfile );
-        		}
-        	}
+            {
+            if ( oldProfileMode != profileMode )
+                {
+                MultimediaSharingSettings::SetSipProfileSettingL( 
+                            CMusSettingsModel::KVsSipProfileDefault );
+                Container()->ShowNewProfileActiveAfterCallL();
+                Container()->UpdateListBoxL( KGSSettIdSIPProfile );
+                }
+            }
         else
-        	{
+            {
             ShowVSSettingsSelectSipProfileDialogL();
-			}
+            }
         }
     CleanupStack::PopAndDestroy( items );
     MUS_LOG(
@@ -435,41 +436,40 @@ void CMusSettingsPlugin::ShowVSSettingsSelectSipProfileDialogL()
 	CleanupStack::PushL( array );
 
 	if ( array->Count() < 1 )
-		{
-		ShowNoProfilesNotificationL();
-		}
+            {
+            ShowNoProfilesNotificationL();
+            }
 	else
-		{
-    	TInt selectedIndex = iModel->ProfileIndexByIdL(
-                            MultimediaSharingSettings::SipProfileSettingL() );
-        TInt currentIndex ( selectedIndex );
+            {
+            TInt selectedIndex = iModel->ProfileIndexByIdL(
+                                MultimediaSharingSettings::SipProfileSettingL() );
+            TInt currentIndex ( selectedIndex );
 
-		if ( selectedIndex == KErrNotFound )
-			{
-			// first profile in the list
-			selectedIndex = CMusSettingsModel::KVsSipProfileDefault;
-			}
+            if ( selectedIndex == KErrNotFound )
+                {
+                // first profile in the list
+                selectedIndex = CMusSettingsModel::KVsSipProfileDefault;
+                }
 
-		// Create and display the pop-up list
-		CAknRadioButtonSettingPage* defaultPopUp =
-			new ( ELeave ) CAknRadioButtonSettingPage(
-    			R_VS_SIP_PROFILE_LIST_VIEW_SELECT_SETTING_PAGE,
-    			selectedIndex,
-    			array );
-		if ( defaultPopUp->ExecuteLD(
-			CAknSettingPage::EUpdateWhenChanged ) )
-			{
-			if ( selectedIndex != currentIndex )
-        		{
-	        	// User has changed the selected profile, set new
-    	    	// setting to persistent storage
-    	    	TUint newValue = iModel->ProfileIdByIndex( selectedIndex );
-	    	    MultimediaSharingSettings::SetSipProfileSettingL( newValue );
-	    	    Container()->ShowNewProfileActiveAfterCallL();
-				Container()->UpdateListBoxL( KGSSettIdSIPProfile );
-    			}
-			}
-		}
+            // Create and display the pop-up list
+            CAknRadioButtonSettingPage* defaultPopUp =
+                    new ( ELeave ) CAknRadioButtonSettingPage(
+                    R_VS_SIP_PROFILE_LIST_VIEW_SELECT_SETTING_PAGE,
+                    selectedIndex,
+                    array );
+            if ( defaultPopUp->ExecuteLD( CAknSettingPage::EUpdateWhenChanged ) )
+                {
+                if ( selectedIndex != currentIndex )
+                    {
+                    // User has changed the selected profile, set new
+                    // setting to persistent storage
+                    TUint newValue = iModel->ProfileIdByIndex( selectedIndex );
+                        MultimediaSharingSettings::SetSipProfileSettingL( newValue );
+                        Container()->ShowNewProfileActiveAfterCallL();
+                                    Container()->UpdateListBoxL( KGSSettIdSIPProfile );
+                    }
+                }
+            }
 
 	CleanupStack::PopAndDestroy( array );  // array
     }
@@ -587,45 +587,45 @@ void CMusSettingsPlugin::SwitchOnOffValueL( TInt aValue )
     MUS_LOG( "[MUSSET] -> CMusSettingsPlugin::SwitchOnOffValueL()" )
             
     switch( aValue )
-	    {
-	    case KGSSettIdVSActivation:
-	        {
-	        MusSettingsKeys::TOperatorVariant operatorVarValue =
-                        MultimediaSharingSettings::OperatorVariantSettingL();
-	            
-	        if ( operatorVarValue == MusSettingsKeys::EOperatorSpecific )
+        {
+        case KGSSettIdVSActivation:
+            {
+            MusSettingsKeys::TOperatorVariant operatorVarValue =
+                    MultimediaSharingSettings::OperatorVariantSettingL();
+                
+            if ( operatorVarValue == MusSettingsKeys::EOperatorSpecific )
                 {
-	        
+                
                 TInt aCallCount = 0;
                 RProperty::Get( NMusSessionInformationApi::KCategoryUid,
                               NMusSessionInformationApi::KMusCallCount,
                               aCallCount );
-                MUS_LOG1( "CallCount ( %d )", aCallCount)
+                MUS_LOG1( "[MUSSET] CallCount ( %d )", aCallCount)
                 if ( aCallCount == 0 )
                     {
+                    MUS_LOG( "[MUSSET] no calls. Set VS on/off" )
                     TBool enabled = EFalse;
                     TRAPD( error, enabled = iHandler->ProfileEnabledL( ));
-                    if ( error != KErrNone )
+                    MUS_LOG2( "[MUSSET]   VS now %d (err=%d)", enabled, error )
+                    if ( !error ) 
                         {
-                        // Problems with re-reading profiles; use existing array
-                        MUS_LOG1("Error returned( %d )", error )
-                        }
-                    else
-                        {
-                        if( enabled )
+                        if( enabled ) //currently enabled => disable
+                            {
+                            TRAPD( error, iHandler->DisableProfileL() );
+                            MUS_LOG1( "[MUSSET]   VS is off (err=%d)", error )
+                            //activation disabled = true
+                            //to remove warning :)
+                            enabled = error != KErrNone ? ETrue : ETrue;
+                            iModel->SetActivationItem( enabled );
+                            }
+                        else//currently disabled => enable
                             {
                             TRAPD( error, iHandler->EnableProfileL() );
-                            if ( error != KErrNone )
-                                {
-                                // Problems with re-reading profiles; use existing array
-                                iModel->SetActivationItem( ETrue );
-                                }
-                            iModel->SetActivationItem( EFalse );
-                            }
-                        else
-                            {
-                            TRAP_IGNORE( iHandler->DisableProfileL() );
-                            iModel->SetActivationItem( ETrue );
+                            MUS_LOG1( "[MUSSET]   VS is on (err=%d)", error )
+                            //if failed activation disabled = true
+                            enabled = error != KErrNone;
+                            //activation disabled = false/true(if failed)
+                            iModel->SetActivationItem( enabled );
                             }
                         }
                     }
@@ -649,44 +649,43 @@ void CMusSettingsPlugin::SwitchOnOffValueL( TInt aValue )
                     }
                 }
             break;
-            }
-	    case KGSSettIdAutoRecord:
-	        {
-	        if ( MusSettingsKeys::EAutoRecordOff ==
-                            MultimediaSharingSettings::AutoRecordSettingL() )
-		    	{
+        }
+        case KGSSettIdAutoRecord:
+            {
+            if ( MusSettingsKeys::EAutoRecordOff ==
+                        MultimediaSharingSettings::AutoRecordSettingL() )
+                {
                 MultimediaSharingSettings::SetAutoRecordSettingL( 
                                             MusSettingsKeys::EAutoRecordOn );
-		    	}
-			else
-				{
+                }
+            else
+                {
                 MultimediaSharingSettings::SetAutoRecordSettingL(
                                             MusSettingsKeys::EAutoRecordOff );
-				}
-	        break;
-	        }
-		case KGSSettIdNote:
-			{
-		    if ( MusSettingsKeys::EAuditoryNotificationOn == 
-		            MultimediaSharingSettings::AuditoryNotificationSettingL() )
-		    	{
-		    	MultimediaSharingSettings::SetAuditoryNotificationSettingL(
-		    		MusSettingsKeys::EAuditoryNotificationOff );
-		    	}
-			else
-				{
+                }
+            break;
+            }
+        case KGSSettIdNote:
+            {
+            if ( MusSettingsKeys::EAuditoryNotificationOn == 
+                        MultimediaSharingSettings::AuditoryNotificationSettingL() )
+                {
                 MultimediaSharingSettings::SetAuditoryNotificationSettingL(
-					MusSettingsKeys::EAuditoryNotificationOn );
-				}
-			break;
-			}
-			
-	    default:
-	    	{
-	    	MUS_LOG( "[MUSSET] -> CMusSettingsPlugin::SwitchOnOffValueL() - error unknown setting" )
-	    	User::Leave( KErrArgument );
-	    	}
-	    }
+                        MusSettingsKeys::EAuditoryNotificationOff );
+                }
+            else
+                {
+                MultimediaSharingSettings::SetAuditoryNotificationSettingL(
+                                        MusSettingsKeys::EAuditoryNotificationOn );
+                }
+            break;
+            }
+        default:
+            {
+            MUS_LOG( "[MUSSET] -> CMusSettingsPlugin::SwitchOnOffValueL() - error unknown setting" )
+            User::Leave( KErrArgument );
+            }
+        }
 	        
 	Container()->UpdateListBoxL( aValue );
 	        

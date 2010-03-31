@@ -59,6 +59,7 @@ inline HBufC* MusResourceFinderUtil::ResourcePathL( const TDesC& aFileName )
          BaflUtils::NearestLanguageFile(fs ,fName );
          CleanupStack::PopAndDestroy( fileName ); // fileName
          fileName = fName.AllocLC();
+		 fileNamePtr.Set(fileName->Des());
          }
         if ( BaflUtils::FileExists( fs, *fileName ) )
             {

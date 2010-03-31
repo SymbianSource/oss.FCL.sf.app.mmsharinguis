@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Class implementing SIP profile model.
-*  Version     : %version: 7 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: 9 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -25,21 +25,20 @@
 #include "mmussipprofilehandler.h"
 #include <e32base.h>
 #include <sipprofileregistryobserver.h>
-
+#include <sipobserver.h>
+#include <sipconnectionobserver.h>
 
 class CSIPManagedProfileRegistry;
 class CMusSettingsModel;
-
 
 /**
  *  CMusSIPProfileModel model class.
  *  Model class implementing SIP profile model.
  */
-class CMusSIPProfileModel
-    :public CBase,
-     public MSIPProfileRegistryObserver,
-	 public MMusSIPProfileHandler
-	 {
+class CMusSIPProfileModel : public CBase,
+                            public MSIPProfileRegistryObserver,
+                            public MMusSIPProfileHandler
+{
 public:
 
     static CMusSIPProfileModel* NewL();
@@ -55,36 +54,32 @@ public: // From base class MMusSIPProfileHandler.
      * From MMusSIPProfileHandler.
      * Returns the index of the default SIP profile.
      * @return KErrNotFound, if one does not exist, otherwise index of the
-     *         default SIP profile.
+     * default SIP profile.
      */
-    virtual TInt DefaultProfileIndex();
+    TInt DefaultProfileIndex();
 
     /**
      * From MMusSIPProfileHandler.
      * Returns the id of the default SIP profile.
      * @return KErrNotFound, if one does not exist, otherwise id of the
-     *         default SIP profile.
+     * default SIP profile.
      */
-	virtual TUint32 DefaultProfileId();
+    TUint32 DefaultProfileId();
 	
-	
-	/*
-	 * 
-	 * 
-	 */
-	virtual void DisableProfileL();
-	
-	/*
-     * 
-     * 
+    /*
+     * Disables MUS profile
      */
-	virtual void EnableProfileL();
+    void DisableProfileL();
 	
-	/*
-     * 
-     * 
+    /*
+     * Enables MUS profile
      */
-	virtual TBool ProfileEnabledL();
+    void EnableProfileL();
+	
+    /*
+     * Checks, if MUS profile is enabled
+     */
+    TBool ProfileEnabledL();
 
     /**
      * From MMusSIPProfileHandler.
@@ -92,7 +87,7 @@ public: // From base class MMusSIPProfileHandler.
      * @param aId Profile id
      * @return Profile index or KErrNotFound if no matching profile is found.
      */
-    virtual TInt ProfileIndexByIdL( TUint32 aId );
+    TInt ProfileIndexByIdL( TUint32 aId );
 
     /**
      * From MMusSIPProfileHandler.
@@ -100,7 +95,7 @@ public: // From base class MMusSIPProfileHandler.
      * @param aIndex Profile index
      * @return Profile id or KUnknownProfileId if no matching profile is found.
      */
-    virtual TUint32 ProfileIdByIndex( TUint aIndex );
+    TUint32 ProfileIdByIndex( TUint aIndex );
 
     /**
      * From MMusSIPProfileHandler.
@@ -112,7 +107,7 @@ public: // From base class MMusSIPProfileHandler.
      *
      * @return Reference to internally cached SIP profile array.
      */
-    virtual RPointerArray<CSIPProfile>& ProfileArrayL();
+    RPointerArray<CSIPProfile>& ProfileArrayL();
 
 public: // From base class MSIPProfileRegistryObserver.
 
@@ -121,28 +116,29 @@ public: // From base class MSIPProfileRegistryObserver.
      * SIP profile information event.
      * @param aProfileId Id of SIP profile in question.
      * @param aEvent Type of information event.
-	 */
-	virtual void ProfileRegistryEventOccurred(
+     */
+    void ProfileRegistryEventOccurred(
 	    TUint32 aSIPProfileId,
 	    TEvent aEvent );
 
-	/**
-     * From MSIPProfileRegistryObserver.
-	 * An asynchronous error has occurred related to SIP profile.
-     * @param aSIPProfileId Id of the failed profile.
-	 * @param aError An error code.
-	 */
-	virtual void ProfileRegistryErrorOccurred(
-	    TUint32 aSIPProfileId,
-	    TInt aError );
-	
-	
-	
+    /**
+    * From MSIPProfileRegistryObserver.
+    * An asynchronous error has occurred related to SIP profile.
+    * @param aSIPProfileId Id of the failed profile.
+    * @param aError An error code.
+    */
+    void ProfileRegistryErrorOccurred(
+        TUint32 aSIPProfileId,
+        TInt aError );
+
+
+public:
+    
     /**
      * Set CMusSettingsModel to handle ProfileRegistry Event.
      * @param aCMusSettingsModel the CMusSettingsModel to handle ProfileRegistry Event
      */		
-	void SetCMusSettingsModel(CMusSettingsModel* aCMusSettingsModel);
+    void SetCMusSettingsModel(CMusSettingsModel* aCMusSettingsModel);
 
 protected:
 
@@ -162,21 +158,23 @@ private:
 private: // data
 
     /**
-     * Instance of the SIP profile registry engine for managing SIP profiles.
-     * Own.
-     */
+    * Instance of the SIP profile registry engine for managing SIP profiles.
+    * Own.
+    */
     CSIPManagedProfileRegistry* iEngine;
 
     /**
-     * Locally cached array of SIP profiles.
-     */
+    * Locally cached array of SIP profiles.
+    */
     RPointerArray<CSIPProfile> iProfiles;
     
     /**
-      * CMusSettingsModel to handle ProfileRegistry 
-      * Event
-      */
+    * CMusSettingsModel to handle ProfileRegistry 
+    * Event
+    */
     CMusSettingsModel* iCMusSettingsModel;
+    
+    
 
     };
 
