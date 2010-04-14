@@ -132,13 +132,7 @@ void UT_CMusAvaSettingAvailability::UT_CMusAvaSettingAvailability_CheckActivatio
 
     MultimediaSharingSettings::SetActivationSettingL(MusSettingsKeys::EActiveInHomeNetworks);
     iSettingAvailability->CheckActivationState();
-    EUNIT_GET_ALLOC_DECORATOR_FAILCOUNT( count );
-    if ( count > 0 && iSettingAvailability->iState 
-        == MMusAvaObserver::EMusActivationError )
-        {
-        User::Leave( KErrNoMemory );
-        }
-    EUNIT_ASSERT( iSettingAvailability->iState == MMusAvaObserver::EMusAvaStatusAvailable );
+    EUNIT_ASSERT( iSettingAvailability->iState == MMusAvaObserver::EMusActivationError );
     
     MultimediaSharingSettings::SetActivationSettingL(MusSettingsKeys::ENever);    
     iSettingAvailability->CheckActivationState();

@@ -56,7 +56,7 @@ class CTelephonyAudioRouting
         static CTelephonyAudioRouting* NewL(
                             MTelephonyAudioRoutingObserver& aObserver );
                             
-        ~CTelephonyAudioRouting();
+        virtual ~CTelephonyAudioRouting();
 
         /**
         * Returns array of currently available outputs.
@@ -74,7 +74,7 @@ class CTelephonyAudioRouting
         * @param none.
         * @return TArray<TAudioOutput>& Array of available outputs.
         */     
-        const TArray<TAudioOutput>& AvailableOutputs();
+        virtual const TArray<TAudioOutput>& AvailableOutputs();
 
         /**
         * Returns the current output configured by the client application to play
@@ -94,7 +94,7 @@ class CTelephonyAudioRouting
         * @param none.
         * @return TAudioOutput Current output.
         */       
-        TAudioOutput Output();
+        virtual TAudioOutput Output();
 
         /**
         * Sends an asynchronous request to Adaptation to set the output
@@ -118,7 +118,7 @@ class CTelephonyAudioRouting
         *           of the outputs from AvailableOutputs() list or ENotActive.
         * @return none.
         */
-        void SetOutputL( TAudioOutput aOutput = ENotActive );
+        virtual void SetOutputL( TAudioOutput aOutput = ENotActive );
         
         /**
         * Returns the second last output that was successfully configured to
@@ -137,7 +137,7 @@ class CTelephonyAudioRouting
         *           audio. ENone will never be returned since telephony apps cannot call
         *           SetOutputL(ENone).
         */
-        TAudioOutput PreviousOutput();
+        virtual TAudioOutput PreviousOutput();
 
         /*
         * Sends the Show Note mode to server along with the next SetOutputL()
@@ -155,7 +155,7 @@ class CTelephonyAudioRouting
         * @param TBool aMode Show Note mode. ETrue or EFalse.
         * @return KErrNone if succesfull, otherwise system-wide error code.
         */
-        TInt SetShowNote( TBool aMode );
+        virtual TInt SetShowNote( TBool aMode );
         
         /*
         * Returns the the Show Note mode for the last succesfully completed
@@ -182,7 +182,7 @@ class CTelephonyAudioRouting
         *        Show Note mode. EFalse or ETrue.
         * @return KErrNone if succesfull, otherwise system-wide error code.
         */
-        TInt GetShowNote( TBool& aMode );    
+        virtual TInt GetShowNote( TBool& aMode );    
     
     private:
     

@@ -26,179 +26,197 @@ EXPORTS
 	_ZN14CMusEngSession11VolumeDownLEv @ 25 NONAME
 	_ZN14CMusEngSession18EnableLoudspeakerLEii @ 26 NONAME
 	_ZN14CMusEngSession23SetAudioRoutingObserverEP27MMusEngAudioRoutingObserver @ 27 NONAME
-	_ZN14CMusEngSession24AudioRoutingCanBeChangedEv @ 28 NONAME
-	_ZN14CMusEngSession8MuteMicLEi @ 29 NONAME
-	_ZN14CMusEngSession8SetRectLERK5TRect @ 30 NONAME
-	_ZN14CMusEngSession9VolumeUpLEv @ 31 NONAME
-	_ZN15CMceMediaSourceD0Ev @ 32 NONAME
-	_ZN15CMceMediaSourceD1Ev @ 33 NONAME
-	_ZN15CMceMediaSourceD2Ev @ 34 NONAME
-	_ZN16CMceCameraSource11BrightnessLEv @ 35 NONAME
-	_ZN16CMceCameraSource11ZoomFactorLEv @ 36 NONAME
-	_ZN16CMceCameraSource12SetContrastLEi @ 37 NONAME
-	_ZN16CMceCameraSource12SetExposureLEN7CCamera9TExposureE @ 38 NONAME
-	_ZN16CMceCameraSource13WhiteBalanceLEv @ 39 NONAME
-	_ZN16CMceCameraSource14SetBrightnessLEi @ 40 NONAME
-	_ZN16CMceCameraSource14SetZoomFactorLEi @ 41 NONAME
-	_ZN16CMceCameraSource15SetCameraIndexLEi @ 42 NONAME
-	_ZN16CMceCameraSource16SetWhiteBalanceLEN7CCamera13TWhiteBalanceE @ 43 NONAME
-	_ZN16CMceCameraSource18DigitalZoomFactorLEv @ 44 NONAME
-	_ZN16CMceCameraSource21SetDigitalZoomFactorLEi @ 45 NONAME
-	_ZN16CMceCameraSource4NewLER11CMceManager @ 46 NONAME
-	_ZN16CMceCameraSource5NewLCER11CMceManager @ 47 NONAME
-	_ZN16CMceCameraSource7EnableLEv @ 48 NONAME
-	_ZN16CMceCameraSource8DisableLEv @ 49 NONAME
-	_ZN16CMceCameraSource9ContrastLEv @ 50 NONAME
-	_ZN16CMceCameraSource9ExposureLEv @ 51 NONAME
-	_ZN16CMceCameraSourceD0Ev @ 52 NONAME
-	_ZN16CMceCameraSourceD1Ev @ 53 NONAME
-	_ZN16CMceCameraSourceD2Ev @ 54 NONAME
-	_ZN16TMusEngUriParser7UriTypeEv @ 55 NONAME
-	_ZN16TMusEngUriParser8GetUri8LEv @ 56 NONAME
-	_ZN16TMusEngUriParser9GetUri16LEi @ 57 NONAME
-	_ZN16TMusEngUriParser9ParseUriLEv @ 58 NONAME
-	_ZN16TMusEngUriParserC1ERK7TDesC16 @ 59 NONAME
-	_ZN16TMusEngUriParserC2ERK7TDesC16 @ 60 NONAME
-	_ZN17CMusEngMceSession10SetVolumeLEi @ 61 NONAME
-	_ZN17CMusEngMceSession10TerminateLEv @ 62 NONAME
-	_ZN17CMusEngMceSession11VolumeDownLEv @ 63 NONAME
-	_ZN17CMusEngMceSession12OrientationLEv @ 64 NONAME
-	_ZN17CMusEngMceSession14ContainsAudioLEv @ 65 NONAME
-	_ZN17CMusEngMceSession14EnableDisplayLEi @ 66 NONAME
-	_ZN17CMusEngMceSession15SetOrientationLENS_19TDisplayOrientationE @ 67 NONAME
-	_ZN17CMusEngMceSession5MuteLEv @ 68 NONAME
-	_ZN17CMusEngMceSession7UnmuteLEv @ 69 NONAME
-	_ZN17CMusEngMceSession8IsMutedLEv @ 70 NONAME
-	_ZN17CMusEngMceSession9VolumeUpLEv @ 71 NONAME
-	_ZN18CMusEngClipSession10IsPlayingLEv @ 72 NONAME
-	_ZN18CMusEngClipSession10TranscodeLERK4TBufILi256EE @ 73 NONAME
-	_ZN18CMusEngClipSession11FastRewindLEi @ 74 NONAME
-	_ZN18CMusEngClipSession12FastForwardLEi @ 75 NONAME
-	_ZN18CMusEngClipSession12SetPositionLERK20TTimeIntervalSeconds @ 76 NONAME
-	_ZN18CMusEngClipSession16CancelTranscodeLEv @ 77 NONAME
-	_ZN18CMusEngClipSession4NewLERK5TRectR22MMusEngSessionObserverR25MMusEngOutSessionObserverR26MMusEngClipSessionObserverj @ 78 NONAME
-	_ZN18CMusEngClipSession5PlayLEv @ 79 NONAME
-	_ZN18CMusEngClipSession6PauseLEv @ 80 NONAME
-	_ZN18CMusEngClipSession8SetClipLERK7TDesC16 @ 81 NONAME
-	_ZN18CMusEngClipSession9DurationLEv @ 82 NONAME
-	_ZN18CMusEngClipSession9PositionLEv @ 83 NONAME
-	_ZN18CMusEngLiveSession10IsPlayingLEv @ 84 NONAME
-	_ZN18CMusEngLiveSession11IsRecordingEv @ 85 NONAME
-	_ZN18CMusEngLiveSession12ZoomDefaultLEv @ 86 NONAME
-	_ZN18CMusEngLiveSession15BrightnessAutoLEv @ 87 NONAME
-	_ZN18CMusEngLiveSession18BrightnessDefaultLEv @ 88 NONAME
-	_ZN18CMusEngLiveSession19DecreaseBrightnessLEv @ 89 NONAME
-	_ZN18CMusEngLiveSession19IncreaseBrightnessLEv @ 90 NONAME
-	_ZN18CMusEngLiveSession4NewLERK5TRectR22MMusEngSessionObserverR25MMusEngOutSessionObserverR26MMusEngLiveSessionObserverj @ 91 NONAME
-	_ZN18CMusEngLiveSession4NewLERK7TDesC16RK5TRectR22MMusEngSessionObserverR25MMusEngOutSessionObserverR26MMusEngLiveSessionObserverj @ 92 NONAME
-	_ZN18CMusEngLiveSession5PlayLEv @ 93 NONAME
-	_ZN18CMusEngLiveSession6PauseLEv @ 94 NONAME
-	_ZN18CMusEngLiveSession7RecordLEi @ 95 NONAME
-	_ZN18CMusEngLiveSession7ZoomInLEv @ 96 NONAME
-	_ZN18CMusEngLiveSession8SetZoomLEi @ 97 NONAME
-	_ZN18CMusEngLiveSession8ZoomOutLEv @ 98 NONAME
-	_ZN19CSIPProfileRegistry4NewLER4CSIPR27MSIPProfileRegistryObserver @ 99 NONAME
-	_ZN19CSIPProfileRegistry5NewLCER4CSIPR27MSIPProfileRegistryObserver @ 100 NONAME
-	_ZN19CSIPProfileRegistry7DisableER11CSIPProfile @ 101 NONAME
-	_ZN19CSIPProfileRegistry7EnableLER11CSIPProfileR22MSIPConnectionObserver @ 102 NONAME
-	_ZN19CSIPProfileRegistryD0Ev @ 103 NONAME
-	_ZN19CSIPProfileRegistryD1Ev @ 104 NONAME
-	_ZN19CSIPProfileRegistryD2Ev @ 105 NONAME
-	_ZN20CMusEngMceOutSession13CancelInviteLEv @ 106 NONAME
-	_ZN20CMusEngMceOutSession27SetSupportedVideoCodecListLERK7TDesC16 @ 107 NONAME
-	_ZN20CMusEngMceOutSession7InviteLERK7TDesC16 @ 108 NONAME
-	_ZN21CMusEngReceiveSession17AcceptInvitationLERKi @ 109 NONAME
-	_ZN21CMusEngReceiveSession4NewLERK5TRectR22MMusEngSessionObserverR29MMusEngReceiveSessionObserver @ 110 NONAME
-	_ZN23CSIPProfileRegistryBase15DefaultProfileLEv @ 111 NONAME
-	_ZN23CSIPProfileRegistryBase22SupportedProfileTypesLER6RArrayI19TSIPProfileTypeInfoE @ 112 NONAME
-	_ZN23CSIPProfileRegistryBase8ProfileLEm @ 113 NONAME
-	_ZN23CSIPProfileRegistryBase9ProfilesLER13RPointerArrayI11CSIPProfileE @ 114 NONAME
-	_ZN23CSIPProfileRegistryBase9ProfilesLERK19TSIPProfileTypeInfoR13RPointerArrayI11CSIPProfileE @ 115 NONAME
-	_ZN23CSIPProfileRegistryBase9ProfilesLERK6TDesC8R13RPointerArrayI11CSIPProfileE @ 116 NONAME
-	_ZN23CSIPProfileRegistryBaseD0Ev @ 117 NONAME
-	_ZN23CSIPProfileRegistryBaseD1Ev @ 118 NONAME
-	_ZN23CSIPProfileRegistryBaseD2Ev @ 119 NONAME
-	_ZN4CSIP28NegotiatedSecurityMechanismLERK6TDesC8 @ 120 NONAME
-	_ZN4CSIP4NewLERK4TUidR12MSIPObserver @ 121 NONAME
-	_ZN4CSIP5NewLCERK4TUidR12MSIPObserver @ 122 NONAME
-	_ZN4CSIPD0Ev @ 123 NONAME
-	_ZN4CSIPD1Ev @ 124 NONAME
-	_ZN4CSIPD2Ev @ 125 NONAME
-	_ZN9DRMCommon10ConstructLEv @ 126 NONAME
-	_ZN9DRMCommon10DisconnectEv @ 127 NONAME
-	_ZN9DRMCommon15IsProtectedFileERK7TDesC16Ri @ 128 NONAME
-	_ZN9DRMCommon4NewLEv @ 129 NONAME
-	_ZN9DRMCommon7ConnectEv @ 130 NONAME
-	_ZN9DRMCommonC1Ev @ 131 NONAME
-	_ZN9DRMCommonC2Ev @ 132 NONAME
-	_ZN9DRMCommonD0Ev @ 133 NONAME
-	_ZN9DRMCommonD1Ev @ 134 NONAME
-	_ZN9DRMCommonD2Ev @ 135 NONAME
-	_ZNK11CSIPProfile12GetParameterEmRPK11MDesC8Array @ 136 NONAME
-	_ZNK11CSIPProfile12GetParameterEmRPK6TDesC8 @ 137 NONAME
-	_ZNK11CSIPProfile12GetParameterEmRi @ 138 NONAME
-	_ZNK11CSIPProfile12GetParameterEmRm @ 139 NONAME
-	_ZNK11CSIPProfile4TypeEv @ 140 NONAME
-	_ZNK14CMusEngSession20IsLoudSpeakerEnabledEv @ 141 NONAME
-	_ZNK14CMusEngSession4RectEv @ 142 NONAME
-	_ZNK14CMusEngSession7VolumeLEv @ 143 NONAME
-	_ZNK15CMceMediaSource4TypeEv @ 144 NONAME
-	_ZNK15CMceMediaSource9IsEnabledEv @ 145 NONAME
-	_ZNK16CMceCameraSource13GetCameraInfoER11TCameraInfo @ 146 NONAME
-	_ZNK16CMceCameraSource16CamerasAvailableEv @ 147 NONAME
-	_ZNK17CMusEngMceSession14GetSessionTimeEv @ 148 NONAME
-	_ZNK17CMusEngMceSession16ConnectionActiveEv @ 149 NONAME
-	_ZNK18CMusEngLiveSession12CurrentZoomLEv @ 150 NONAME
-	_ZNK18CMusEngLiveSession14MaxBrightnessLEv @ 151 NONAME
-	_ZNK18CMusEngLiveSession14MinBrightnessLEv @ 152 NONAME
-	_ZNK18CMusEngLiveSession14SetBrightnessLEi @ 153 NONAME
-	_ZNK18CMusEngLiveSession18CurrentBrightnessLEv @ 154 NONAME
-	_ZNK18CMusEngLiveSession8MaxZoomLEv @ 155 NONAME
-	_ZNK18CMusEngLiveSession8MinZoomLEv @ 156 NONAME
-	_ZNK19CSIPProfileRegistry3SIPEv @ 157 NONAME
-	_ZNK19CSIPProfileRegistry9IsEnabledERK11CSIPProfile @ 158 NONAME
-	_ZNK23CSIPProfileRegistryBase21LastRegistrationErrorERK11CSIPProfile @ 159 NONAME
-	_ZNK4CSIP10ConnectionEm @ 160 NONAME
-	_ZNK4CSIP19IsSigCompSupportedLEv @ 161 NONAME
-	_ZNK4CSIP28SupportedSecurityMechanismsLEv @ 162 NONAME
-	_ZTI11CRepository @ 163 NONAME ; #<TI>#
-	_ZTI11CSIPProfile @ 164 NONAME ; #<TI>#
-	_ZTI14CMusEngSession @ 165 NONAME ; #<TI>#
-	_ZTI15CMceMediaSource @ 166 NONAME ; #<TI>#
-	_ZTI16CMceCameraSource @ 167 NONAME ; #<TI>#
-	_ZTI17CMusEngMceSession @ 168 NONAME ; #<TI>#
-	_ZTI18CMusEngClipSession @ 169 NONAME ; #<TI>#
-	_ZTI18CMusEngLiveSession @ 170 NONAME ; #<TI>#
-	_ZTI19CMusEngObserverStub @ 171 NONAME ; #<TI>#
-	_ZTI19CSIPProfileRegistry @ 172 NONAME ; #<TI>#
-	_ZTI20CMusEngMceOutSession @ 173 NONAME ; #<TI>#
-	_ZTI21CMusEngReceiveSession @ 174 NONAME ; #<TI>#
-	_ZTI21CMusEngTelephoneUtils @ 175 NONAME ; #<TI>#
-	_ZTI21CMusSipProfileHandler @ 176 NONAME ; #<TI>#
-	_ZTI22CSIPProfileBehaviorTls @ 177 NONAME ; #<TI>#
-	_ZTI23CSIPProfileRegistryBase @ 178 NONAME ; #<TI>#
-	_ZTI27CMusEngSessionDurationTimer @ 179 NONAME ; #<TI>#
-	_ZTI4CSIP @ 180 NONAME ; #<TI>#
-	_ZTI9DRMCommon @ 181 NONAME ; #<TI>#
-	_ZTV11CRepository @ 182 NONAME ; #<VT>#
-	_ZTV11CSIPProfile @ 183 NONAME ; #<VT>#
-	_ZTV14CMusEngSession @ 184 NONAME ; #<VT>#
-	_ZTV15CMceMediaSource @ 185 NONAME ; #<VT>#
-	_ZTV16CMceCameraSource @ 186 NONAME ; #<VT>#
-	_ZTV17CMusEngMceSession @ 187 NONAME ; #<VT>#
-	_ZTV18CMusEngClipSession @ 188 NONAME ; #<VT>#
-	_ZTV18CMusEngLiveSession @ 189 NONAME ; #<VT>#
-	_ZTV19CMusEngObserverStub @ 190 NONAME ; #<VT>#
-	_ZTV19CSIPProfileRegistry @ 191 NONAME ; #<VT>#
-	_ZTV20CMusEngMceOutSession @ 192 NONAME ; #<VT>#
-	_ZTV21CMusEngReceiveSession @ 193 NONAME ; #<VT>#
-	_ZTV21CMusEngTelephoneUtils @ 194 NONAME ; #<VT>#
-	_ZTV21CMusSipProfileHandler @ 195 NONAME ; #<VT>#
-	_ZTV22CSIPProfileBehaviorTls @ 196 NONAME ; #<VT>#
-	_ZTV23CSIPProfileRegistryBase @ 197 NONAME ; #<VT>#
-	_ZTV27CMusEngSessionDurationTimer @ 198 NONAME ; #<VT>#
-	_ZTV4CSIP @ 199 NONAME ; #<VT>#
-	_ZTV9DRMCommon @ 200 NONAME ; #<VT>#
-	_ZThn4_N11CSIPProfileD0Ev @ 201 NONAME ; #<thunk>#
-	_ZThn4_N11CSIPProfileD1Ev @ 202 NONAME ; #<thunk>#
+	_ZN14CMusEngSession23SetVolumeChangeObserverEP27MMusEngVolumeChangeObserver @ 28 NONAME
+	_ZN14CMusEngSession24AudioRoutingCanBeChangedEv @ 29 NONAME
+	_ZN14CMusEngSession8MuteMicLEi @ 30 NONAME
+	_ZN14CMusEngSession8SetRectLERK5TRect @ 31 NONAME
+	_ZN14CMusEngSession9VolumeUpLEv @ 32 NONAME
+	_ZN15CMceMediaSourceD0Ev @ 33 NONAME
+	_ZN15CMceMediaSourceD1Ev @ 34 NONAME
+	_ZN15CMceMediaSourceD2Ev @ 35 NONAME
+	_ZN16CMceCameraSource11BrightnessLEv @ 36 NONAME
+	_ZN16CMceCameraSource11ZoomFactorLEv @ 37 NONAME
+	_ZN16CMceCameraSource12SetContrastLEi @ 38 NONAME
+	_ZN16CMceCameraSource12SetExposureLEN7CCamera9TExposureE @ 39 NONAME
+	_ZN16CMceCameraSource13WhiteBalanceLEv @ 40 NONAME
+	_ZN16CMceCameraSource14SetBrightnessLEi @ 41 NONAME
+	_ZN16CMceCameraSource14SetZoomFactorLEi @ 42 NONAME
+	_ZN16CMceCameraSource15SetCameraIndexLEi @ 43 NONAME
+	_ZN16CMceCameraSource16SetWhiteBalanceLEN7CCamera13TWhiteBalanceE @ 44 NONAME
+	_ZN16CMceCameraSource18DigitalZoomFactorLEv @ 45 NONAME
+	_ZN16CMceCameraSource21SetDigitalZoomFactorLEi @ 46 NONAME
+	_ZN16CMceCameraSource4NewLER11CMceManager @ 47 NONAME
+	_ZN16CMceCameraSource5NewLCER11CMceManager @ 48 NONAME
+	_ZN16CMceCameraSource7EnableLEv @ 49 NONAME
+	_ZN16CMceCameraSource8DisableLEv @ 50 NONAME
+	_ZN16CMceCameraSource9ContrastLEv @ 51 NONAME
+	_ZN16CMceCameraSource9ExposureLEv @ 52 NONAME
+	_ZN16CMceCameraSourceD0Ev @ 53 NONAME
+	_ZN16CMceCameraSourceD1Ev @ 54 NONAME
+	_ZN16CMceCameraSourceD2Ev @ 55 NONAME
+	_ZN16TMusEngUriParser7UriTypeEv @ 56 NONAME
+	_ZN16TMusEngUriParser8GetUri8LEv @ 57 NONAME
+	_ZN16TMusEngUriParser9GetUri16LEi @ 58 NONAME
+	_ZN16TMusEngUriParser9ParseUriLEv @ 59 NONAME
+	_ZN16TMusEngUriParserC1ERK7TDesC16 @ 60 NONAME
+	_ZN16TMusEngUriParserC2ERK7TDesC16 @ 61 NONAME
+	_ZN17CMusEngMceSession10SetVolumeLEi @ 62 NONAME
+	_ZN17CMusEngMceSession10TerminateLEv @ 63 NONAME
+	_ZN17CMusEngMceSession11VolumeDownLEv @ 64 NONAME
+	_ZN17CMusEngMceSession12OrientationLEv @ 65 NONAME
+	_ZN17CMusEngMceSession14ContainsAudioLEv @ 66 NONAME
+	_ZN17CMusEngMceSession14EnableDisplayLEi @ 67 NONAME
+	_ZN17CMusEngMceSession15SetOrientationLENS_19TDisplayOrientationE @ 68 NONAME
+	_ZN17CMusEngMceSession17IsDisplayEnabledLEv @ 69 NONAME
+	_ZN17CMusEngMceSession5MuteLEv @ 70 NONAME
+	_ZN17CMusEngMceSession7UnmuteLEv @ 71 NONAME
+	_ZN17CMusEngMceSession8IsMutedLEv @ 72 NONAME
+	_ZN17CMusEngMceSession9VolumeUpLEv @ 73 NONAME
+	_ZN18CMusEngClipSession10IsPlayingLEv @ 74 NONAME
+	_ZN18CMusEngClipSession10TranscodeLERK4TBufILi256EE @ 75 NONAME
+	_ZN18CMusEngClipSession11FastRewindLEi @ 76 NONAME
+	_ZN18CMusEngClipSession12FastForwardLEi @ 77 NONAME
+	_ZN18CMusEngClipSession12SetPositionLERK20TTimeIntervalSeconds @ 78 NONAME
+	_ZN18CMusEngClipSession16CancelTranscodeLEv @ 79 NONAME
+	_ZN18CMusEngClipSession4NewLERK5TRectR22MMusEngSessionObserverR25MMusEngOutSessionObserverR26MMusEngClipSessionObserverj @ 80 NONAME
+	_ZN18CMusEngClipSession5PlayLEv @ 81 NONAME
+	_ZN18CMusEngClipSession6PauseLEv @ 82 NONAME
+	_ZN18CMusEngClipSession8SetClipLERK7TDesC16 @ 83 NONAME
+	_ZN18CMusEngClipSession9DurationLEv @ 84 NONAME
+	_ZN18CMusEngClipSession9PositionLEv @ 85 NONAME
+	_ZN18CMusEngLiveSession10IsPlayingLEv @ 86 NONAME
+	_ZN18CMusEngLiveSession11IsRecordingEv @ 87 NONAME
+	_ZN18CMusEngLiveSession12ZoomDefaultLEv @ 88 NONAME
+	_ZN18CMusEngLiveSession15BrightnessAutoLEv @ 89 NONAME
+	_ZN18CMusEngLiveSession18BrightnessDefaultLEv @ 90 NONAME
+	_ZN18CMusEngLiveSession19DecreaseBrightnessLEv @ 91 NONAME
+	_ZN18CMusEngLiveSession19IncreaseBrightnessLEv @ 92 NONAME
+	_ZN18CMusEngLiveSession4NewLERK5TRectR22MMusEngSessionObserverR25MMusEngOutSessionObserverR26MMusEngLiveSessionObserverj @ 93 NONAME
+	_ZN18CMusEngLiveSession4NewLERK7TDesC16RK5TRectR22MMusEngSessionObserverR25MMusEngOutSessionObserverR26MMusEngLiveSessionObserverj @ 94 NONAME
+	_ZN18CMusEngLiveSession5PlayLEv @ 95 NONAME
+	_ZN18CMusEngLiveSession6PauseLEv @ 96 NONAME
+	_ZN18CMusEngLiveSession7RecordLEi @ 97 NONAME
+	_ZN18CMusEngLiveSession7ZoomInLEv @ 98 NONAME
+	_ZN18CMusEngLiveSession8SetZoomLEi @ 99 NONAME
+	_ZN18CMusEngLiveSession8ZoomOutLEv @ 100 NONAME
+	_ZN19CSIPProfileRegistry4NewLER4CSIPR27MSIPProfileRegistryObserver @ 101 NONAME
+	_ZN19CSIPProfileRegistry5NewLCER4CSIPR27MSIPProfileRegistryObserver @ 102 NONAME
+	_ZN19CSIPProfileRegistry7DisableER11CSIPProfile @ 103 NONAME
+	_ZN19CSIPProfileRegistry7EnableLER11CSIPProfileR22MSIPConnectionObserver @ 104 NONAME
+	_ZN19CSIPProfileRegistryD0Ev @ 105 NONAME
+	_ZN19CSIPProfileRegistryD1Ev @ 106 NONAME
+	_ZN19CSIPProfileRegistryD2Ev @ 107 NONAME
+	_ZN20CCenRepNotifyHandler13StopListeningEv @ 108 NONAME
+	_ZN20CCenRepNotifyHandler15StartListeningLEv @ 109 NONAME
+	_ZN20CCenRepNotifyHandler4NewLER28MCenRepNotifyHandlerCallbackR11CRepository @ 110 NONAME
+	_ZN20CCenRepNotifyHandler5NewLCER28MCenRepNotifyHandlerCallbackR11CRepository @ 111 NONAME
+	_ZN20CCenRepNotifyHandlerD0Ev @ 112 NONAME
+	_ZN20CCenRepNotifyHandlerD1Ev @ 113 NONAME
+	_ZN20CCenRepNotifyHandlerD2Ev @ 114 NONAME
+	_ZN20CMusEngMceOutSession13CancelInviteLEv @ 115 NONAME
+	_ZN20CMusEngMceOutSession27SetSupportedVideoCodecListLERK7TDesC16 @ 116 NONAME
+	_ZN20CMusEngMceOutSession7InviteLERK7TDesC16 @ 117 NONAME
+	_ZN21CMusEngReceiveSession17AcceptInvitationLERKi @ 118 NONAME
+	_ZN21CMusEngReceiveSession4NewLERK5TRectR22MMusEngSessionObserverR29MMusEngReceiveSessionObserver @ 119 NONAME
+	_ZN23CSIPProfileRegistryBase15DefaultProfileLEv @ 120 NONAME
+	_ZN23CSIPProfileRegistryBase22SupportedProfileTypesLER6RArrayI19TSIPProfileTypeInfoE @ 121 NONAME
+	_ZN23CSIPProfileRegistryBase8ProfileLEm @ 122 NONAME
+	_ZN23CSIPProfileRegistryBase9ProfilesLER13RPointerArrayI11CSIPProfileE @ 123 NONAME
+	_ZN23CSIPProfileRegistryBase9ProfilesLERK19TSIPProfileTypeInfoR13RPointerArrayI11CSIPProfileE @ 124 NONAME
+	_ZN23CSIPProfileRegistryBase9ProfilesLERK6TDesC8R13RPointerArrayI11CSIPProfileE @ 125 NONAME
+	_ZN23CSIPProfileRegistryBaseD0Ev @ 126 NONAME
+	_ZN23CSIPProfileRegistryBaseD1Ev @ 127 NONAME
+	_ZN23CSIPProfileRegistryBaseD2Ev @ 128 NONAME
+	_ZN28MCenRepNotifyHandlerCallback19HandleNotifyGenericEm @ 129 NONAME
+	_ZN4CSIP28NegotiatedSecurityMechanismLERK6TDesC8 @ 130 NONAME
+	_ZN4CSIP4NewLERK4TUidR12MSIPObserver @ 131 NONAME
+	_ZN4CSIP5NewLCERK4TUidR12MSIPObserver @ 132 NONAME
+	_ZN4CSIPD0Ev @ 133 NONAME
+	_ZN4CSIPD1Ev @ 134 NONAME
+	_ZN4CSIPD2Ev @ 135 NONAME
+	_ZN9DRMCommon10ConstructLEv @ 136 NONAME
+	_ZN9DRMCommon10DisconnectEv @ 137 NONAME
+	_ZN9DRMCommon15IsProtectedFileERK7TDesC16Ri @ 138 NONAME
+	_ZN9DRMCommon4NewLEv @ 139 NONAME
+	_ZN9DRMCommon7ConnectEv @ 140 NONAME
+	_ZN9DRMCommonC1Ev @ 141 NONAME
+	_ZN9DRMCommonC2Ev @ 142 NONAME
+	_ZN9DRMCommonD0Ev @ 143 NONAME
+	_ZN9DRMCommonD1Ev @ 144 NONAME
+	_ZN9DRMCommonD2Ev @ 145 NONAME
+	_ZNK11CSIPProfile12GetParameterEmRPK11MDesC8Array @ 146 NONAME
+	_ZNK11CSIPProfile12GetParameterEmRPK6TDesC8 @ 147 NONAME
+	_ZNK11CSIPProfile12GetParameterEmRi @ 148 NONAME
+	_ZNK11CSIPProfile12GetParameterEmRm @ 149 NONAME
+	_ZNK11CSIPProfile4TypeEv @ 150 NONAME
+	_ZNK14CMusEngSession20IsLoudSpeakerEnabledEv @ 151 NONAME
+	_ZNK14CMusEngSession4RectEv @ 152 NONAME
+	_ZNK14CMusEngSession7VolumeLEv @ 153 NONAME
+	_ZNK15CMceMediaSource4TypeEv @ 154 NONAME
+	_ZNK15CMceMediaSource9IsEnabledEv @ 155 NONAME
+	_ZNK16CMceCameraSource13GetCameraInfoER11TCameraInfo @ 156 NONAME
+	_ZNK16CMceCameraSource16CamerasAvailableEv @ 157 NONAME
+	_ZNK17CMusEngMceSession14GetSessionTimeEv @ 158 NONAME
+	_ZNK17CMusEngMceSession16ConnectionActiveEv @ 159 NONAME
+	_ZNK18CMusEngLiveSession12CurrentZoomLEv @ 160 NONAME
+	_ZNK18CMusEngLiveSession14MaxBrightnessLEv @ 161 NONAME
+	_ZNK18CMusEngLiveSession14MinBrightnessLEv @ 162 NONAME
+	_ZNK18CMusEngLiveSession14SetBrightnessLEi @ 163 NONAME
+	_ZNK18CMusEngLiveSession18CurrentBrightnessLEv @ 164 NONAME
+	_ZNK18CMusEngLiveSession8MaxZoomLEv @ 165 NONAME
+	_ZNK18CMusEngLiveSession8MinZoomLEv @ 166 NONAME
+	_ZNK19CSIPProfileRegistry3SIPEv @ 167 NONAME
+	_ZNK19CSIPProfileRegistry9IsEnabledERK11CSIPProfile @ 168 NONAME
+	_ZNK23CSIPProfileRegistryBase21LastRegistrationErrorERK11CSIPProfile @ 169 NONAME
+	_ZNK4CSIP10ConnectionEm @ 170 NONAME
+	_ZNK4CSIP19IsSigCompSupportedLEv @ 171 NONAME
+	_ZNK4CSIP28SupportedSecurityMechanismsLEv @ 172 NONAME
+	_ZTI11CRepository @ 173 NONAME
+	_ZTI11CSIPProfile @ 174 NONAME
+	_ZTI14CMusEngSession @ 175 NONAME
+	_ZTI15CMceMediaSource @ 176 NONAME
+	_ZTI16CMceCameraSource @ 177 NONAME
+	_ZTI17CMusEngMceSession @ 178 NONAME
+	_ZTI18CMusEngClipSession @ 179 NONAME
+	_ZTI18CMusEngLiveSession @ 180 NONAME
+	_ZTI19CMusEngObserverStub @ 181 NONAME
+	_ZTI19CSIPProfileRegistry @ 182 NONAME
+	_ZTI20CCenRepNotifyHandler @ 183 NONAME
+	_ZTI20CMusEngMceOutSession @ 184 NONAME
+	_ZTI21CMusEngReceiveSession @ 185 NONAME
+	_ZTI21CMusEngTelephoneUtils @ 186 NONAME
+	_ZTI21CMusSipProfileHandler @ 187 NONAME
+	_ZTI22CSIPProfileBehaviorTls @ 188 NONAME
+	_ZTI22CTelephonyAudioRouting @ 189 NONAME
+	_ZTI23CSIPProfileRegistryBase @ 190 NONAME
+	_ZTI24CSipProfileAlrController @ 191 NONAME
+	_ZTI27CMusEngSessionDurationTimer @ 192 NONAME
+	_ZTI28MCenRepNotifyHandlerCallback @ 193 NONAME
+	_ZTI4CSIP @ 194 NONAME
+	_ZTI9DRMCommon @ 195 NONAME
+	_ZTV11CRepository @ 196 NONAME
+	_ZTV11CSIPProfile @ 197 NONAME
+	_ZTV14CMusEngSession @ 198 NONAME
+	_ZTV15CMceMediaSource @ 199 NONAME
+	_ZTV16CMceCameraSource @ 200 NONAME
+	_ZTV17CMusEngMceSession @ 201 NONAME
+	_ZTV18CMusEngClipSession @ 202 NONAME
+	_ZTV18CMusEngLiveSession @ 203 NONAME
+	_ZTV19CMusEngObserverStub @ 204 NONAME
+	_ZTV19CSIPProfileRegistry @ 205 NONAME
+	_ZTV20CCenRepNotifyHandler @ 206 NONAME
+	_ZTV20CMusEngMceOutSession @ 207 NONAME
+	_ZTV21CMusEngReceiveSession @ 208 NONAME
+	_ZTV21CMusEngTelephoneUtils @ 209 NONAME
+	_ZTV21CMusSipProfileHandler @ 210 NONAME
+	_ZTV22CSIPProfileBehaviorTls @ 211 NONAME
+	_ZTV22CTelephonyAudioRouting @ 212 NONAME
+	_ZTV23CSIPProfileRegistryBase @ 213 NONAME
+	_ZTV24CSipProfileAlrController @ 214 NONAME
+	_ZTV27CMusEngSessionDurationTimer @ 215 NONAME
+	_ZTV28MCenRepNotifyHandlerCallback @ 216 NONAME
+	_ZTV4CSIP @ 217 NONAME
+	_ZTV9DRMCommon @ 218 NONAME
+	_ZThn4_N11CSIPProfileD0Ev @ 219 NONAME
+	_ZThn4_N11CSIPProfileD1Ev @ 220 NONAME
 

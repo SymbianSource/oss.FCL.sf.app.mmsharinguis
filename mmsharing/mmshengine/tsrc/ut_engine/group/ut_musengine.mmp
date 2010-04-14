@@ -28,6 +28,8 @@ CAPABILITY              EUNIT_CAPS
 VENDORID                VID_DEFAULT
 
 MACRO                   UNIT_TESTING
+EPOCSTACKSIZE		0x14000
+EPOCHEAPSIZE		0x020000 0x800000
 
 // Test suite classes
 SOURCEPATH              ../src
@@ -96,6 +98,7 @@ USERINCLUDE             ../../../../inc
 USERINCLUDE             ../../../../../inc
 USERINCLUDE             ../../../../../tsrc/sipprofilestub/inc
 USERINCLUDE             ../../../../../tsrc/centralrepositorystub/inc
+USERINCLUDE             ../../../../../tsrc/telephonyaudioroutingstub/inc
 
 // to replace SIP profiles with a stub
 SYSTEMINCLUDE           ../inc
