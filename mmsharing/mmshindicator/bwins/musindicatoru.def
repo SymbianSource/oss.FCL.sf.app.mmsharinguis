@@ -1,6 +1,0 @@
-EXPORTS
-	?NewL@CMusIndicatorApi@@SAPAV1@AAVMMusIndicatorObserver@@@Z @ 1 NONAME ; class CMusIndicatorApi * CMusIndicatorApi::NewL(class MMusIndicatorObserver &)
-	?NewL@CMusIndicatorApi@@SAPAV1@XZ @ 2 NONAME ; class CMusIndicatorApi * CMusIndicatorApi::NewL(void)
-	?NewLC@CMusIndicatorApi@@SAPAV1@AAVMMusIndicatorObserver@@@Z @ 3 NONAME ; class CMusIndicatorApi * CMusIndicatorApi::NewLC(class MMusIndicatorObserver &)
-	?IndicateAvailabilityL@CMusIndicatorApi@@QAEXXZ @ 4 NONAME ; void CMusIndicatorApi::IndicateAvailabilityL(void)
-

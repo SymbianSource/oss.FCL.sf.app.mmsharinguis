@@ -1,5 +1,0 @@
-EXPORTS
-	?CreateTestSuiteL@@YAPAVMEUnitTest@@XZ @ 1 NONAME ; class MEUnitTest * CreateTestSuiteL(void)
-	?ImplementationGroupProxy@@YAPBUTImplementationProxy@@AAH@Z @ 2 NONAME ; struct TImplementationProxy const * ImplementationGroupProxy(int &)
-	?Copy@CFileMan@@QAEHABVTDesC16@@0I@Z @ 3 NONAME ; int CFileMan::Copy(class TDesC16 const &, class TDesC16 const &, unsigned int)
-
