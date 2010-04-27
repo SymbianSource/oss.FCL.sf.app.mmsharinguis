@@ -520,7 +520,7 @@ TBool CMusUiEventController::DeviceHasDedicatedVolumeKeys()
 //
 // -----------------------------------------------------------------------------
 //
-void CMusUiEventController::HandleExitL()
+void CMusUiEventController::HandleExitL( TBool aTerminateCall )
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiEventController::HandleExitL" );
     
@@ -557,6 +557,11 @@ void CMusUiEventController::HandleExitL()
         // Sharing Ended note
         MusUiDialogUtil::ShowGlobalInformationDialogL( 
                                 R_MUS_LIVE_SHARING_VIEW_NOTE_SHARING_ENDED );
+        
+        if( aTerminateCall )
+			{
+			iEventObserver.TerminateCall();
+			}
 
         // TODO: Continue Recording query, if sharing live video and receiving end
         //    terminates the sharing session
@@ -953,8 +958,7 @@ void CMusUiEventController::HandleCommandL( TInt aCommand )
             {
             MUS_LOG( "mus: [MUSUI ]     CMusUiReceiveController::ConstructL:\
                                     EMusuiCmdViewEndActiveCall" );
-            iEventObserver.TerminateCall();
-            HandleExitL();
+            HandleExitL( ETrue );
             break;
             }
         case EMusuiGenCmdExit:

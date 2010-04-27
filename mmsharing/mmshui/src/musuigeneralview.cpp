@@ -865,6 +865,25 @@ TInt CMusUiGeneralView::ToolbarPlaceHolderHeight() const
     }
 
 // -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+TInt CMusUiGeneralView::ToolbarPlaceHolderWidth() const 
+    { 
+    TInt toolbarPlaceHolderWidth( 0 ); 
+    CAknAppUiBase::TAppUiOrientation orientation = MusAppUi()->AppOrientation(); 
+    if ( !Toolbar()->IsShown() && 
+         orientation == CAknAppUiBase::EAppUiOrientationLandscape &&                        
+         AknLayoutUtils::PenEnabled() ) 
+        { 
+        // In touch UI in EAppUiOrientationLandscape mode the toolbar 
+        // fills the whole lower part of the screen 
+        toolbarPlaceHolderWidth = Toolbar()->Size().iWidth; 
+        } 
+    return toolbarPlaceHolderWidth;       
+    } 
+
+// -----------------------------------------------------------------------------
 // Increase/Decrease background container ordinal so that other controls
 // can preceed background
 // -----------------------------------------------------------------------------

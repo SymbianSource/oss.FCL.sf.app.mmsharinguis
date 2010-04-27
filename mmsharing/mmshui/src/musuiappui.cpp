@@ -672,9 +672,8 @@ void CMusUiAppUi::DoHandleForegroundEventL( TInt aEventType )
         iCoeEnv->RootWin().EnableFocusChangeEvents();
         handleEvent = ETrue;
         }
-    else if ( ( windowGroupId != iThisApplicationWgId ) &&
+    else if ( ( windowGroupId != iThisApplicationWgId ) && 
               ( windowGroupId != iEikonServerWgId ) &&
-              ( windowGroupId != iAknCapServerWgId ) &&
               ( windowGroupId != iAknNfyServerWgId ) )
         {
         iCoeEnv->RootWin().DisableFocusChangeEvents();

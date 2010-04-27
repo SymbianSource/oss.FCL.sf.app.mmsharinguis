@@ -240,6 +240,7 @@ protected:
     void DoBackgroundEventL( TBool aExit );
     void SetCurrentFgBgEvent( TMusFgBgEventType aEventType );
     TInt ToolbarPlaceHolderHeight() const;
+    TInt ToolbarPlaceHolderWidth() const;
     void UpdateBackgroundOrdinalPosition( TBool aUp );  
 
 protected: // data

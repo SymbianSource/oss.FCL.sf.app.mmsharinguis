@@ -208,7 +208,7 @@ public:	// New functions
     /**
     * Starts shutdown process
     */
-    void HandleExitL();
+    void HandleExitL( TBool aTerminateCall = EFalse );
 
     /**
     * 

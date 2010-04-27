@@ -95,7 +95,6 @@ protected: // from base class CAknView
 
 protected: // data
     
-    CAknAppUiBase::TAppUiOrientation iSavedOrientation;
     TBool iPauseSelected;
     
     };

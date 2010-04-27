@@ -638,11 +638,15 @@ void CMusUiLiveSharingView::DoActivateL( const TVwsViewId& aPrevViewId,
     CMusUiSendView::DoActivateL( aPrevViewId, 
                                  aCustomMessageId,
                                  aCustomMessage );
+    
+    TRect clientRect = ClientRect(); 
+    clientRect.iBr.iX -= ToolbarPlaceHolderWidth(); 
+    clientRect.iBr.iY -= ToolbarPlaceHolderHeight(); 
 
-    TRect containerRect( ClientRect().iBr.iX - KMusUiContainerWidth, 
-                         ClientRect().iTl.iY, 
-                         ClientRect().iBr.iX,
-                         ClientRect().iBr.iY - ToolbarPlaceHolderHeight() );
+    TRect containerRect( clientRect.iBr.iX - KMusUiContainerWidth, 
+    		             clientRect.iTl.iY, 
+    		             clientRect.iBr.iX,
+    		             clientRect.iBr.iY );
 
     if ( !iContainer )
         {
