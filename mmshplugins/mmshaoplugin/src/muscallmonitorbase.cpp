@@ -99,7 +99,13 @@ void CMusCallMonitorBase::SetStateL(NMusSessionInformationApi::TMusCallEvent aVa
                                                  NMusSessionInformationApi::KMusCallEvent,
                                                  aVal ));    
                 }
-            } 
+            }
+    	else if( aVal==NMusSessionInformationApi::EConferenceCall)
+    			{
+                User::LeaveIfError(RProperty::Set( NMusSessionInformationApi::KCategoryUid,
+                                                   NMusSessionInformationApi::KMusCallEvent,
+                                                   NMusSessionInformationApi::EConferenceCall   ));  
+    			}
         else if( aVal==NMusSessionInformationApi::ECallHold || iRemoteCallEvent==RMobileCall::ERemoteHold )
             {            
             User::LeaveIfError(RProperty::Set( NMusSessionInformationApi::KCategoryUid,

@@ -100,7 +100,9 @@ public: // from MMusUiLiveSharingObserver
 
 public: // new functions
 
-    void RefreshView();
+    void RefreshView( TBool aLayoutChange );
+
+    void DoRefreshView();
 
     void LevelIndicatorDismissed();
     

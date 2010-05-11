@@ -86,7 +86,8 @@ enum TMusUiAsyncEvent
     EMusUiAsyncStartInvitation,
     EMusUiAsyncStartMediaGallery,
     EMusUiAsyncStartTranscoding,
-    EMusUiAsyncHandleExit
+    EMusUiAsyncHandleExit,
+    EMusUiAsyncRefreshView
     };
 
 enum TMusUiNaviMediaDecorator

@@ -61,14 +61,20 @@ CMusEngTelephoneUtils::~CMusEngTelephoneUtils()
         {
         CTelephonyAudioRouting::TAudioOutput currentMode =
                                             iTelephonyAudioRouting->Output();
-        if( currentMode != iAudioOutputAtStartup )
+        MUS_LOG1( "mus: [ENGINE] iAudioOutputAtStartup: %d", iAudioOutputAtStartup );
+        MUS_LOG1( "mus: [ENGINE] currentMode: %d", currentMode );
+        // When active call is dropped, audio output is set to ENotActive,
+        // but in some cases Mush engine get deleted before OutputChanged()
+        // notification comes. In that case we shouldn't touch output. 
+        if( currentMode != iAudioOutputAtStartup && 
+            currentMode != CTelephonyAudioRouting::ENotActive )
             {
             // As going down, let audiorouting api to show notification
             iTelephonyAudioRouting->SetShowNote( ETrue );
             TRAPD( err, DoSetOutputL( iAudioOutputAtStartup ) );
             MUS_LOG1( "mus: [ENGINE]    final route change completed: %d", err )
             err++;
-        	}
+            }
         }
 
     if ( iNotifier )
@@ -438,7 +444,7 @@ void CMusEngTelephoneUtils::ConstructL()
     iTelephonyAudioRouting = CTelephonyAudioRouting::NewL( *this );
 
     iAudioOutputAtStartup = iTelephonyAudioRouting->Output();
-    
+    MUS_LOG1( "mus: [ENGINE] iAudioOutputAtStartup: %d", iAudioOutputAtStartup );
     // Phone
     MUS_LOG( "mus: [ENGINE]     Use static DLL" )
     iPhoneCommandHandler = CPhCltCommandHandler::NewL();

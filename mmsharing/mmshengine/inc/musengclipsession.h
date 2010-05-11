@@ -31,7 +31,6 @@ class CMceAudioStream;
 class CMceVideoStream;
 class CMceAudioCodec;
 
-
 class CMusEngClipSession : public CMusEngMceOutSession
     {
     MUS_UNITTEST( UT_CMusEngClipSession )
@@ -197,7 +196,7 @@ class CMusEngClipSession : public CMusEngMceOutSession
         
         void AddAmrCodecL( CMceAudioStream& aAudioStream );
         
-        void AddVideoCodecL( CMceVideoStream& aVideoStream );
+        void AddVideoCodecL( CMceVideoStream& aVideoStream, TBool aIgnoreNegotiated = EFalse );
         
         TBool HasClipEnded();
 
@@ -218,6 +217,12 @@ class CMusEngClipSession : public CMusEngMceOutSession
         void DetermineBufferingPeriod( CMceMediaStream& aStream );
             
         TBool IsH264Supported() const;
+        
+        void HandleTranscodingFailureL( TInt aError );
+        
+        TInt DoCompleteTranscoding();
+        
+        void DeleteTranscodingDestinationFileL();
 
     private: // Data
     
@@ -242,6 +247,7 @@ class CMusEngClipSession : public CMusEngMceOutSession
         
         TFileName iTranscodingDestFileName;
         TBool iRewindedToBeginning;
+        TBool iTranscodingRequiredDueMissingOptions;
         
     };
 

@@ -42,8 +42,10 @@ class MMusEngClipSessionObserver
         
         /**
 	    * Indicates that chosen clip must be transcoded before sharing.
+	    * @param aDueUnknownRemoteCapabilities, ETrue if transcoding is needed because
+	    *  it is unknown whether remote end can support current format of clip.
 	    */
-        virtual void TranscodingNeeded() = 0;
+        virtual void TranscodingNeeded(TBool aDueUnknownRemoteCapabilities) = 0;
         
         /**
 	    * Indicates that transcoding has progressed.

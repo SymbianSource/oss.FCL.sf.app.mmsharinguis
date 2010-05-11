@@ -434,8 +434,12 @@ void UT_CMusEngTelephoneUtils::UT_DestructorL()
     CleanupStack::PushL( utils );
     utils->iAudioOutputAtStartup = CTelephonyAudioRouting::EHandset;
     utils->iTelephonyAudioRouting->iCurrentOutput = 
-                                            CTelephonyAudioRouting::EHandset;
+                                        CTelephonyAudioRouting::EHandset;
+    CTelephonyAudioRouting::iPreviousOutput = 
+                                        CTelephonyAudioRouting::ELoudspeaker;
     CleanupStack::PopAndDestroy( utils );
+    EUNIT_ASSERT( CTelephonyAudioRouting::iPreviousOutput == 
+                  CTelephonyAudioRouting::ELoudspeaker )
     
     // Simulate that current audio output mode is not the same as original,
     // Setting fails
@@ -444,8 +448,14 @@ void UT_CMusEngTelephoneUtils::UT_DestructorL()
     utils->iAudioOutputAtStartup = CTelephonyAudioRouting::EHandset;
     utils->iTelephonyAudioRouting->iCurrentOutput = 
                                     CTelephonyAudioRouting::ELoudspeaker;
+    CTelephonyAudioRouting::iPreviousOutput = 
+                                    CTelephonyAudioRouting::EHandset;
     utils->iTelephonyAudioRouting->iForceFailWithCode = KErrGeneral;
     CleanupStack::PopAndDestroy( utils );
+    EUNIT_ASSERT( CTelephonyAudioRouting::iPreviousOutput == 
+                  CTelephonyAudioRouting::EHandset )
+    EUNIT_ASSERT( CTelephonyAudioRouting::iCurrentOutput == 
+                  CTelephonyAudioRouting::ELoudspeaker )
     
     // Simulate that current audio output mode is not the same as original,
     // Setting succeeds
@@ -454,8 +464,29 @@ void UT_CMusEngTelephoneUtils::UT_DestructorL()
     utils->iAudioOutputAtStartup = CTelephonyAudioRouting::EHandset;
     utils->iTelephonyAudioRouting->iCurrentOutput = 
                                     CTelephonyAudioRouting::ELoudspeaker;
+    CTelephonyAudioRouting::iPreviousOutput = 
+                                    CTelephonyAudioRouting::EHandset;
     CleanupStack::PopAndDestroy( utils );
+    EUNIT_ASSERT( CTelephonyAudioRouting::iPreviousOutput == 
+                  CTelephonyAudioRouting::ELoudspeaker )
+    EUNIT_ASSERT( CTelephonyAudioRouting::iCurrentOutput == 
+                  CTelephonyAudioRouting::EHandset )
     
+    // Simulate that current audio output mode is not the same as original,
+    // Setting not done due to special case handling (ENotActive)
+    utils = CMusEngTelephoneUtils::NewL();
+    CleanupStack::PushL( utils );
+    utils->iAudioOutputAtStartup = CTelephonyAudioRouting::EHandset;
+    utils->iTelephonyAudioRouting->iCurrentOutput = 
+                                    CTelephonyAudioRouting::ENotActive;
+    CTelephonyAudioRouting::iPreviousOutput = 
+                                    CTelephonyAudioRouting::ELoudspeaker;
+    CleanupStack::PopAndDestroy( utils );
+    EUNIT_ASSERT( CTelephonyAudioRouting::iPreviousOutput == 
+                  CTelephonyAudioRouting::ELoudspeaker )
+    EUNIT_ASSERT( CTelephonyAudioRouting::iCurrentOutput == 
+                  CTelephonyAudioRouting::ENotActive )                  
+                  
     // Simulate that current audio output mode is not the same as original,
     // Setting does not succeed as observer does not allow changes anymore
     utils = CMusEngTelephoneUtils::NewL();
@@ -465,8 +496,13 @@ void UT_CMusEngTelephoneUtils::UT_DestructorL()
     utils->iAudioOutputAtStartup = CTelephonyAudioRouting::EHandset;
     utils->iTelephonyAudioRouting->iCurrentOutput = 
                                     CTelephonyAudioRouting::ELoudspeaker;
+    CTelephonyAudioRouting::iPreviousOutput = 
+                                    CTelephonyAudioRouting::EHandset;
     CleanupStack::PopAndDestroy( utils );
-    // Cannot really assert anything
+    EUNIT_ASSERT( CTelephonyAudioRouting::iPreviousOutput == 
+                  CTelephonyAudioRouting::EHandset )
+    EUNIT_ASSERT( CTelephonyAudioRouting::iCurrentOutput == 
+                  CTelephonyAudioRouting::ELoudspeaker )
     }
 
 // -----------------------------------------------------------------------------

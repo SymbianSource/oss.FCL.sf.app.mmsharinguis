@@ -93,7 +93,7 @@ public: // from MMusUiReceiveObserver
 
 public: // new functions
 
-    void RefreshView();
+    void RefreshView( TBool aLayoutChange );
     
 
 protected: // from MusUiGeneralView

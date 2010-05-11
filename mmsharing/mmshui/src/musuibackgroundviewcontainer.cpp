@@ -72,6 +72,8 @@ void CMusUiBackgroundViewContainer::ConstructL( const TRect& aRect )
     iMyWindowGroup.SetName( KMusUiBackgroundWindowGroupName );
     iMyWindowGroup.SetOrdinalPosition( iOrdinalPosition, ECoeWinPriorityNormal );
     iMyWindowGroup.EnableReceiptOfFocus( EFalse );
+	iMyWindowGroup.AutoForeground( EFalse );
+    iMyWindowGroup.SetNonFading( ETrue );
 
     CreateWindowL(&iMyWindowGroup);
 

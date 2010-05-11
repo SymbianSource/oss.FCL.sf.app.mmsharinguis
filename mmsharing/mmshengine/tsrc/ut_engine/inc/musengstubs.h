@@ -120,7 +120,7 @@ class CMusEngObserverStub : public CBase,
         
         void EndOfClip(); 
         
-        void TranscodingNeeded();
+        void TranscodingNeeded(TBool aDueUnknowCapas);
         
         void TranscodingProgressed( TInt aPercentage );     
 
@@ -208,6 +208,7 @@ class CMusEngObserverStub : public CBase,
         HBufC* iIncomingSessionOriginator;
         
         TInt iVolume;
+        TBool iDueUnknowCapas;
     };
 
 

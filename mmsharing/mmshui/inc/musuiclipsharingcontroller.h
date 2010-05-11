@@ -127,7 +127,7 @@ public: // From MMusEngClipSessionObserver
 
     virtual void EndOfClip();
 
-    virtual void TranscodingNeeded();
+    virtual void TranscodingNeeded(TBool aDueUnknownRemoteCapabilities);
         
     virtual void TranscodingProgressed( TInt aPercentage );
     
@@ -176,6 +176,8 @@ private:    // new functions:
     TBool DoFastForwardingL( TBool aUseWinding );
     
     TBool DoFastRewindingL( TBool aUseWinding );
+    
+    TBool DoInviteL();
 
 
 private:
@@ -191,6 +193,8 @@ private:
     TBool iClipEnded;
 
     TBool iTranscode;
+    
+    TBool iTranscodeDueUnknownRemoteCapas;
     
     TBool iTranscodingGoing;
     

@@ -42,8 +42,9 @@ public:
     
     virtual void SetBrightnessVisible( TBool aVisible ) = 0;
 
-	
-	};
+    virtual void DoRefreshView() = 0;
+
+    };
 
 #endif // MUSUILIVESHARINGOBSERVER_H
             

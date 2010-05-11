@@ -78,7 +78,7 @@ public: // new functions
      * to landscape or vice versa.  This is a virtual function that must be 
      * implemented by all concrete MUS UI views.
      */
-    virtual void RefreshView() = 0;
+    virtual void RefreshView( TBool aLayoutChange = EFalse ) = 0;
     
     virtual void HandleToolbarCommandL( TInt aCommand ) = 0;
     

@@ -158,7 +158,6 @@ void CMusUiLiveSharingController::RefreshCameraOrientationL()
          PauseL();
          EnableDisplayL(false);
          EnableDisplayL(true);
-         User::After( interval );
          PlayL();
          } 
      else
@@ -929,7 +928,38 @@ void CMusUiLiveSharingController::InactivityTimeout()
     }
 
 
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusUiLiveSharingController::AsyncRefreshView()
+    {
+    TRAP_IGNORE( iCallbackService->AsyncEventL( EMusUiAsyncRefreshView ) );
+    }
 
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusUiLiveSharingController::HandleAsyncEventL( TMusUiAsyncEvent aEventId )
+    {
+    MUS_LOG( "mus: [MUSUI ]  -> CMusUiLiveSharingController::HandleAsyncEventL" );
+    switch ( aEventId )
+        {
+        case EMusUiAsyncRefreshView:
+            {
+            iLiveObserver.DoRefreshView();
+            break;
+            }
+        default:
+            {
+            // Not live sharing specific, let the base class handle
+            CMusUiSendController::HandleAsyncEventL( aEventId );
+            }
+        }
+    MUS_LOG( "mus: [MUSUI ]  <- CMusUiLiveSharingController::HandleAsyncEventL" );
+    
+    }
 
 
 // End of file

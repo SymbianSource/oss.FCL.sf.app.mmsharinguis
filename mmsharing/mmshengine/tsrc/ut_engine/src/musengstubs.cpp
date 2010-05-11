@@ -290,9 +290,10 @@ void CMusEngObserverStub::EndOfClip()
 // 
 // -----------------------------------------------------------------------------
 //
-void CMusEngObserverStub::TranscodingNeeded()
+void CMusEngObserverStub::TranscodingNeeded(TBool aDueUnknowCapas)
     {
     iTranscodingNeededCalled = ETrue;
+    iDueUnknowCapas = aDueUnknowCapas;
     }
 
 
@@ -492,6 +493,7 @@ void CMusEngObserverStub::Reset()
     iShowNote = EFalse;
     iAudioRouteChangeAllowed = ETrue;
     iVolume = 0;
+    iDueUnknowCapas = EFalse;
     }
 
 

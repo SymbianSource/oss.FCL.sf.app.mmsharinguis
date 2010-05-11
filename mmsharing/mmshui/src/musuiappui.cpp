@@ -532,6 +532,8 @@ void CMusUiAppUi::HandleResourceChangeL( TInt aResourceChangeType )
         {
         MUS_LOG( "mus: [MUSUI ]  CMusUiAppUi::HandleResourceChangeL:\
                  aResourceChangeType == KEikDynamicLayoutVariantSwitch" );
+        
+        iView->Toolbar()->HandleResourceChange( aResourceChangeType );
 
         CMusUiGeneralView* activatedView =
                                 static_cast<CMusUiGeneralView*>( iView );
@@ -543,7 +545,7 @@ void CMusUiAppUi::HandleResourceChangeL( TInt aResourceChangeType )
         
         if ( activatedView )
             {
-            activatedView->RefreshView();
+            activatedView->RefreshView( ETrue );
             }
         }
 

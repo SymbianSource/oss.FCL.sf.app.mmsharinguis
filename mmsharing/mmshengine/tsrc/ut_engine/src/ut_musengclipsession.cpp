@@ -409,7 +409,7 @@ void UT_CMusEngClipSession::UT_PositionLL()
     // is cleared.
     file->iPosition = 10000000;
     iClipSession->iFRWDStartTime = TTime( 0 );
-    
+    iClipSession->iRewindedToBeginning = EFalse;
     EUNIT_ASSERT( iClipSession->PositionL().Int() * 1000000 == 10000000 )
     EUNIT_ASSERT( iClipSession->iRewindedToBeginning == EFalse )
     }
@@ -1454,7 +1454,8 @@ void UT_CMusEngClipSession::UT_EstablishSessionLL()
              }
          }
 
-    EUNIT_ASSERT( !iObserver->iTranscodingNeededCalled )             
+    EUNIT_ASSERT( !iObserver->iTranscodingNeededCalled )    
+    EUNIT_ASSERT( !iClipSession->iTranscodingRequiredDueMissingOptions )
     
     ///////
     // 2.Test the case when we don't know whether peer supports H264, 
@@ -1483,10 +1484,34 @@ void UT_CMusEngClipSession::UT_EstablishSessionLL()
          }
  
     EUNIT_ASSERT( iObserver->iTranscodingNeededCalled )
-    
+    EUNIT_ASSERT( iObserver->iDueUnknowCapas )
+    EUNIT_ASSERT( iClipSession->iTranscodingRequiredDueMissingOptions )
     
     ///////
-    // 3.Test that if peer doesn't supports H264, transcoding is needed
+    // 3. Establish behaves differently at second round in case clip is AVC
+    // and because remote party's capabilities were unknown. Use-case is such
+    // that AVC is tried to be transcoded first but if it fails, invite is retried
+    // by using AVC
+    iObserver->Reset();
+    iClipSession->InviteL( KTestRecipientSipUri );
+    const RPointerArray<CMceMediaStream>& testStreams = iClipSession->iSession->Streams();
+
+    for ( TInt i = 0; i < testStreams.Count(); ++i )
+        {
+        if ( testStreams[i]->Type() == KMceVideo )
+            {
+            CMceVideoStream* videoStream = static_cast<CMceVideoStream*>( testStreams[i] );
+            const RPointerArray<CMceVideoCodec> codecs = videoStream->Codecs();
+            EUNIT_ASSERT_EQUALS( codecs.Count(), 1 )
+            EUNIT_ASSERT( codecs[0]->SdpName().FindF( KMceSDPNameH264() ) >= 0 )
+            }
+        }
+    
+    EUNIT_ASSERT( !iObserver->iTranscodingNeededCalled )
+    EUNIT_ASSERT( !iObserver->iDueUnknowCapas )
+    
+    ///////
+    // 4.Test that if peer doesn't supports H264, transcoding is needed
     // H264 codec has to be removed from the codec list
 
     iObserver->iTranscodingNeededCalled = EFalse;
@@ -1503,7 +1528,7 @@ void UT_CMusEngClipSession::UT_EstablishSessionLL()
 
     for ( TInt i = 0; i < streams3.Count(); ++i )
          {
-         if ( streams2[i]->Type() == KMceVideo )
+         if ( streams3[i]->Type() == KMceVideo )
              {
              CMceVideoStream* videoStream = static_cast<CMceVideoStream*>( streams3[i] );
              const RPointerArray<CMceVideoCodec> codecs = videoStream->Codecs();
@@ -1513,6 +1538,7 @@ void UT_CMusEngClipSession::UT_EstablishSessionLL()
          }
   
     EUNIT_ASSERT( iObserver->iTranscodingNeededCalled )
+    EUNIT_ASSERT( !iObserver->iDueUnknowCapas )
           
     }
 

@@ -327,47 +327,17 @@ void CMusUiClipSharingController::InviteL( const TDesC& aRecipient )
     iAddress = aRecipient.AllocL();
     
     
-    TRAPD( err, iSession->InviteL( aRecipient ) );
-    MUS_LOG( "mus: [MUSUI ]     CMusUiClipSharingController::InviteL: After TRAPD" );
-
-    // If address is in wrong format, Manual Address Entry Dialog
-    // is displayed
-    if ( err != KErrNone )
+    TBool inviteProceeding = DoInviteL();
+    if ( !inviteProceeding )
         {
-        DismissWaitDialog();
-        MusUiDialogUtil::ShowGlobalErrorDialogL(
-                                R_MUS_LIVE_SHARING_VIEW_NOTE_INVITE_ERROR );
-        if ( ( ++iTriedInvitations < 2 )  && ( err == KErrArgument ) )
-            {
-            MUS_LOG( "mus: [MUSUI ]     CMusUiLiveSharingController::InviteL: iTriedInvitations < 2" );
-            iManualAddressTyped = ETrue;
-            iResourceHandler->RequestKeypadL( ETrue );
-
-            // If the address has to be queried again...:
-            iTranscode = EFalse;
-            
-            MUS_LOG_TDESC( "mus: [MUSUI ]     CMusUiClipSharingController::InviteL: ",
-                       iFileName->Des() )
-                                                 
-            iSendObserver.ManualAddressEntryL( *iRemoteSipAddressProposal );
-            return;
-            }
-        else
-            {
-            MUS_LOG( "mus: [MUSUI ]     CMusUiLiveSharingController::InviteL: ++iTriedInvitations > 1" );
-            DeleteEngineSession();
-            HandleExitL();
-            return;
-            }
-        }
-        
-
+        MUS_LOG( "mus: [MUSUI ]  <- CMusUiClipSharingController::InviteL, invite failed" );
+        return;
+        }      
     if( iTranscode )
         {
         MUS_LOG( "mus: [MUSUI ]     Starting transcode..." );
         iTranscode = EFalse;
-        // Show progress dialog:
-        iClipObserver.ShowTranscodingProgressDialogL();
+      
         // Start transcoding
         iTranscodingGoing = ETrue;
         
@@ -378,25 +348,39 @@ void CMusUiClipSharingController::InviteL( const TDesC& aRecipient )
             {
             MUS_LOG1( "mus: [MUSUI ]     Transcoding failed: %d", err );
             iTranscodingGoing = EFalse;
-            if ( err == KErrNotFound )  // No Video Editor Engine
+            if ( iTranscodeDueUnknownRemoteCapas )
                 {
-                DismissWaitDialog();
+                MUS_LOG( "mus: [MUSUI ]     Retry invite without transcoding" );
+                // Still retry the clip without transcoding as other end might support current codec.
+                iVideoToBeSaved = EFalse;
+                inviteProceeding = DoInviteL();
+                }
+            else if ( err == KErrNotFound )  // No Video Editor Engine
+                {
                 MusUiDialogUtil::ShowGlobalErrorDialogL(
                     R_MUS_LIVE_SHARING_VIEW_NOTE_TRANSCODING_NOT_SUPPORTED );
                 DeleteEngineSession();
                 iVideoToBeSaved = EFalse;
                 HandleExitL();
+                inviteProceeding = EFalse;
                 }
             else
                 {
                 // Unable to convert clip, if transc. leaves.
                 // After note return back to the media gallery.
                 TranscodingFailed();
+                inviteProceeding = EFalse;
                 }
-            return;
+            }
+        else
+            {
+            // Show progress dialog:
+            iClipObserver.ShowTranscodingProgressDialogL();
+            inviteProceeding = EFalse;
             }
         }
-    else
+    
+    if ( inviteProceeding )
         {
         SetConnectionInitialized( ETrue );
         ShowInvitingWaitDialogL();
@@ -405,6 +389,46 @@ void CMusUiClipSharingController::InviteL( const TDesC& aRecipient )
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiClipSharingController::InviteL" );
     }
 
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+TBool CMusUiClipSharingController::DoInviteL()
+    {
+    __ASSERT_ALWAYS( iAddress, User::Leave( KErrNotReady ) );
+    TRAPD( err, iSession->InviteL( *iAddress ) );
+    MUS_LOG( "mus: [MUSUI ]     CMusUiClipSharingController::DoInviteL: After TRAPD" );
+    
+    // If address is in wrong format, Manual Address Entry Dialog
+    // is displayed
+    if ( err != KErrNone )
+        {
+        DismissWaitDialog();
+        MusUiDialogUtil::ShowGlobalErrorDialogL(
+                          R_MUS_LIVE_SHARING_VIEW_NOTE_INVITE_ERROR );
+        if ( ( ++iTriedInvitations < 2 )  && ( err == KErrArgument ) )
+            {
+            MUS_LOG( "mus: [MUSUI ]     CMusUiLiveSharingController::DoInviteL: iTriedInvitations < 2" );
+            iManualAddressTyped = ETrue;
+            iResourceHandler->RequestKeypadL( ETrue );
+            
+            // If the address has to be queried again...:
+            iTranscode = EFalse;
+            
+            MUS_LOG_TDESC( "mus: [MUSUI ]     CMusUiClipSharingController::DoInviteL: ",
+                     iFileName->Des() )
+                                               
+            iSendObserver.ManualAddressEntryL( *iRemoteSipAddressProposal );
+            }
+        else
+            {
+            MUS_LOG( "mus: [MUSUI ]     CMusUiLiveSharingController::DoInviteL: ++iTriedInvitations > 1" );
+            DeleteEngineSession();
+            HandleExitL();
+            }
+        }
+    return ( err == KErrNone );
+    }
 
 // -----------------------------------------------------------------------------
 //
@@ -840,10 +864,12 @@ void CMusUiClipSharingController::EndOfClip()
 //
 // -----------------------------------------------------------------------------
 //
-void CMusUiClipSharingController::TranscodingNeeded()
+void CMusUiClipSharingController::TranscodingNeeded(TBool aDueUnknownRemoteCapabilities)
     {
-    MUS_LOG( "mus: [MUSUI ]  -> CMusUiClipSharingController::TranscodingNeeded" );
+    MUS_LOG1( "mus: [MUSUI ]  -> CMusUiClipSharingController::TranscodingNeeded, %d", 
+               aDueUnknownRemoteCapabilities);
     iTranscode = ETrue;
+    iTranscodeDueUnknownRemoteCapas = aDueUnknownRemoteCapabilities;
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiClipSharingController::TranscodingNeeded" );
     }
 

@@ -386,7 +386,7 @@ void CMusUiReceiveView::SetFullScreenL( TBool aFullScreen )
 //
 // -----------------------------------------------------------------------------
 //
-void CMusUiReceiveView::RefreshView()
+void CMusUiReceiveView::RefreshView( TBool aLayoutChange )
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiReceiveView::RefreshView" );
     

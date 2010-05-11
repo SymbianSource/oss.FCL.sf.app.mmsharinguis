@@ -53,6 +53,7 @@
 
 #include <hlplch.h> // HlpLauncher
 #include <AknUtils.h>
+#include <telmicmutestatuspskeys.h>
 
 using namespace MusSettingsKeys;
 using namespace NMusSessionApi;
@@ -73,6 +74,7 @@ CMusUiEventController::~CMusUiEventController()
     delete iCallbackService;
     delete iMmcMonitor;
     delete iActivityManager;
+    delete iMicMuteStatusPropertyWatch;
     FeatureManager::UnInitializeLib();
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiEventController::~CMusUiEventController" );
     }
@@ -139,6 +141,12 @@ void CMusUiEventController::ConstructL()
     iMmcMonitor = CMusUiMmcMonitor::NewL( *this );
 
     iResourceHandler = CMusUiResourceHandler::NewL( iEventObserver );
+    
+    //Mic mute status property
+    iMicMuteStatusPropertyWatch = CMusUiPropertyWatch::NewL(
+							*this,
+							KPSUidTelMicrophoneMuteStatus,
+							KTelMicrophoneMuteState );
 
     // start monitoring activity
     iActivityManager = CMusUiActivityManager::NewL( KMusBacklightTimeOut );
@@ -182,6 +190,20 @@ void CMusUiEventController::PropertyChanged( const TUint aKey,
               aKey: [%u] aValue: [%d]", aKey, aValue );
     switch( aKey )
         {
+    	case KTelMicrophoneMuteState:
+    		{
+		  if ( aValue ==  EPSTelMicMuteOff)
+			  {
+			  iSharingObserver.ReplaceToolbarCommand( EMusuiCmdToolbarUnmute,
+												   EMusuiCmdToolbarMute,ETrue );
+			  }
+		  else if ( aValue == EPSTelMicMuteOn )
+			  {
+			  iSharingObserver.ReplaceToolbarCommand( EMusuiCmdToolbarMute,
+												 EMusuiCmdToolbarUnmute,ETrue );
+			  }
+			break;
+    		}
         case KStatus:
             {
             TRAP_IGNORE(

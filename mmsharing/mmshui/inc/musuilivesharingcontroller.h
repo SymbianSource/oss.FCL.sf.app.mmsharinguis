@@ -84,7 +84,8 @@ public: // from CMusUiSendController
     virtual void InviteL( const TDesC& aRecipient );
     
     virtual void HandleSliderValueChangeL( TInt aNewLevel );
-    
+
+    virtual void HandleAsyncEventL( TMusUiAsyncEvent aEventId );
     
 public:	// new functions
     
@@ -155,6 +156,7 @@ public:	// from MMusEngSessionObserver
 	
     void InactivityTimeout();
 
+    void AsyncRefreshView();
 
 private:
 

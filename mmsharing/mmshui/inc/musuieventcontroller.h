@@ -436,6 +436,11 @@ private:
     * 
     */
     CMusUiPropertyWatch* iStatusPropertyWatch; 
+    
+    /**
+    * 
+    */  
+    CMusUiPropertyWatch* iMicMuteStatusPropertyWatch;
 
     /**
     * 

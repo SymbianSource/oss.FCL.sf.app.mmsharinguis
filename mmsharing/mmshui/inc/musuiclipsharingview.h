@@ -106,7 +106,7 @@ public: // from MMusUiClipSharingObserver
 
 public: // new functions
 
-    void RefreshView();
+    void RefreshView( TBool aLayoutChange = EFalse );
     
     void CancelTranscodingL();
 

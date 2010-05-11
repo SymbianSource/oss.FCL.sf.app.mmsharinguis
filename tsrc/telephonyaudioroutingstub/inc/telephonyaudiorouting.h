@@ -194,8 +194,8 @@ class CTelephonyAudioRouting
         MTelephonyAudioRoutingObserver& iObserver;
     
         RArray<TAudioOutput> iAvailableOutputs;
-        TAudioOutput iCurrentOutput;
-        TAudioOutput iPreviousOutput;
+        static TAudioOutput iCurrentOutput;
+        static TAudioOutput iPreviousOutput;
     
         TBool iShowNoteMode;
 

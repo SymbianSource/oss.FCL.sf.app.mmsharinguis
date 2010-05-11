@@ -313,11 +313,12 @@ EXPORT_C void CMusEngClipSession::TranscodeL( const TFileName& aFileName )
             }
         }
 
-    file->TranscodeL( aFileName );
-
+    // Set dest file already before transcoding as output file is deleted in failure case
+    iTranscodingDestFileName = aFileName; 
+    TRAPD( err, file->TranscodeL( aFileName ) );    
+    HandleTranscodingFailureL( err );
     iTranscodingOngoing = ETrue;
-    
-    iTranscodingDestFileName = aFileName;
+      
 
     MUS_LOG( "mus: [ENGINE] <- CMusEngClipSession::TranscodeL(...)" )
     }
@@ -341,20 +342,8 @@ EXPORT_C void CMusEngClipSession::CancelTranscodeL()
     // Even if cancel fails, try to delete the partial clip
 
     MUS_LOG( "mus: [ENGINE] - delete the partially converted clip" )
-    RFs fs;
-    User::LeaveIfError( fs.Connect() );
-    CleanupClosePushL( fs );
-
-    CFileMan* fileMan = CFileMan::NewL( fs );    
-    CleanupStack::PushL( fileMan );
-
-    MUS_LOG_TDESC8( "mus: [ENGINE] - trascoding destination filename",
-                    iTranscodingDestFileName )
-    err = fileMan->Delete( iTranscodingDestFileName );
-    MUS_LOG1( "mus: [ENGINE] - file delete result %d", err )
-
-    CleanupStack::PopAndDestroy( fileMan );
-    CleanupStack::PopAndDestroy(); // fs
+    
+    DeleteTranscodingDestinationFileL();
 
     MUS_LOG( "mus: [ENGINE] <- CMusEngClipSession::CancelTranscodeL()" )
     }
@@ -483,6 +472,7 @@ void CMusEngClipSession::EstablishSessionL()
     const RPointerArray<CMceMediaStream>& streams = iSession->Streams();
 
     TBool transcodingRequired = EFalse;
+    TBool transcodingRequiredDueUnknownCaps = EFalse;
     
     if ( iVideoCodecList )
         {
@@ -492,25 +482,31 @@ void CMusEngClipSession::EstablishSessionL()
     CMceVideoStream* videoStream = NULL;
     for ( TInt i = 0; i < streams.Count(); ++i )
         {
-        if ( streams[i]->State() == CMceMediaStream::ETranscodingRequired )
+        videoStream = static_cast<CMceVideoStream*>( streams[i] );
+        
+        if ( iTranscodingRequiredDueMissingOptions )
+            {
+            MUS_LOG( "      -> establish with current codec, remote capa unknown!!!" )
+            TBool ignoreOptionsQueryCodecs( ETrue );
+            AddVideoCodecL( *videoStream, ignoreOptionsQueryCodecs );  
+            }
+        else if ( streams[i]->State() == CMceMediaStream::ETranscodingRequired )
             {
             transcodingRequired = ETrue;
             }
-        else if ( streams[i]->Type() == KMceVideo &&
-                  !IsH264Supported() )
+        else if ( streams[i]->Type() == KMceVideo && !IsH264Supported() )
             {
             MUS_LOG( "                -> video stream found!!!" )
-            videoStream = static_cast<CMceVideoStream*>( streams[i] );
             
             //transcoding of H264 is not needed only if we know explicitly
-            //that the peer supports it (from OPTIONS response)
-                            
+            //that the peer supports it (from OPTIONS response)             
             const RPointerArray<CMceVideoCodec>& codecs = videoStream->Codecs();
             for ( TInt codecIndex = 0; codecIndex < codecs.Count(); ++codecIndex )
                 {
                 if ( codecs[codecIndex]->SdpName() == KMceSDPNameH264() )                     
                     {
                     transcodingRequired = ETrue;
+                    transcodingRequiredDueUnknownCaps = !iVideoCodecList;
                     MUS_LOG( " -> Removing H264 codec from video stream" )
                     videoStream->RemoveCodecL( *codecs[codecIndex] );
                     codecIndex = 0;
@@ -526,9 +522,11 @@ void CMusEngClipSession::EstablishSessionL()
             } 
         }
 
+    iTranscodingRequiredDueMissingOptions = transcodingRequiredDueUnknownCaps;
+    
     if ( transcodingRequired )
         {
-        iClipSessionObserver.TranscodingNeeded();
+        iClipSessionObserver.TranscodingNeeded(iTranscodingRequiredDueMissingOptions);
         }
     else
         {                
@@ -595,18 +593,7 @@ void CMusEngClipSession::StreamStateChanged( CMceMediaStream& aStream,
             // there's no getter for the filename in API.
             iFileName = iTranscodingDestFileName;
         
-            iTranscodingOngoing = EFalse;
-            
-            iClipSessionObserver.TranscodingCompletedInit();  
-                
-            TRAPD( error, EstablishSessionL() )
-            if ( error != KErrNone )
-                {
-                iSessionObserver.SessionFailed();
-                }
-                              
-            // Next call does not return before session establishment
-            iClipSessionObserver.TranscodingCompletedFinalize();                           
+            DoCompleteTranscoding();
             }
         }
     else if ( aStream.State() == CMceMediaStream::ETranscodingRequired &&
@@ -616,6 +603,7 @@ void CMusEngClipSession::StreamStateChanged( CMceMediaStream& aStream,
         
         iClipSessionObserver.TranscodingFailed();
         iTranscodingOngoing = EFalse;
+        iTranscodingRequiredDueMissingOptions = EFalse;
         }
     else if ( HasClipEnded() )
         {
@@ -741,7 +729,8 @@ void CMusEngClipSession::AddAmrCodecL( CMceAudioStream& aAudioStream )
 // otherwise H263 is used.
 // -----------------------------------------------------------------------------
 //
-void CMusEngClipSession::AddVideoCodecL( CMceVideoStream& aVideoStream )
+void CMusEngClipSession::AddVideoCodecL( 
+    CMceVideoStream& aVideoStream, TBool aIgnoreNegotiated )
     {
     MUS_LOG( "mus: [ENGINE] -> CMusEngClipSession::AddVideoCodecL" )
 
@@ -757,8 +746,8 @@ void CMusEngClipSession::AddVideoCodecL( CMceVideoStream& aVideoStream )
 
     CMceVideoCodec* addedCodec = NULL;
     
-    TPtrC8 addedCodecName = 
-            IsH264Supported() ? KMceSDPNameH264() : KMceSDPNameH2632000();
+    TPtrC8 addedCodecName = ( aIgnoreNegotiated || IsH264Supported() ) ? 
+        KMceSDPNameH264() : KMceSDPNameH2632000();
     
     MUS_LOG_TDESC8( "mus: [ENGINE] adding codec : ", addedCodecName ); 
             
@@ -1007,6 +996,67 @@ TBool CMusEngClipSession::IsH264Supported() const
     {
     return ( iVideoCodecList && iVideoCodecList->FindF( KMceSDPNameH264() ) >= 0 );
     }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngClipSession::HandleTranscodingFailureL( TInt aError )
+    {
+    if ( aError == KErrNone )
+        {
+        return;
+        }
+
+    TRAP_IGNORE( DeleteTranscodingDestinationFileL() )
+
+    User::LeaveIfError( aError );
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+TInt CMusEngClipSession::DoCompleteTranscoding()
+    {
+    iTranscodingOngoing = EFalse;
+              
+    iClipSessionObserver.TranscodingCompletedInit();  
+      
+    TRAPD( error, EstablishSessionL() )
+    iTranscodingRequiredDueMissingOptions = EFalse;
+    if ( error != KErrNone )
+        {
+        iSessionObserver.SessionFailed();
+        }
     
+    // Next call does not return before session establishment
+    iClipSessionObserver.TranscodingCompletedFinalize();            
+
+    return error;
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngClipSession::DeleteTranscodingDestinationFileL()
+    {
+    RFs fs;
+    User::LeaveIfError( fs.Connect() );
+    CleanupClosePushL( fs );
+
+    CFileMan* fileMan = CFileMan::NewL( fs );    
+    CleanupStack::PushL( fileMan );
+
+    MUS_LOG_TDESC8( "mus: [ENGINE] - deleting trascoding destination, filename",
+                    iTranscodingDestFileName )
+    TInt err = fileMan->Delete( iTranscodingDestFileName );
+    MUS_LOG1( "mus: [ENGINE] - file delete result %d", err )
+
+    CleanupStack::PopAndDestroy( fileMan );
+    CleanupStack::PopAndDestroy(); // fs
+    }
+
 // End of file
 

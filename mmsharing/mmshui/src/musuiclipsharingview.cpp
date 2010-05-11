@@ -467,7 +467,7 @@ void CMusUiClipSharingView::ReplaceToolbarCommand( TInt aOldCommand,
 //
 // -----------------------------------------------------------------------------
 //
-void CMusUiClipSharingView::RefreshView()
+void CMusUiClipSharingView::RefreshView( TBool aLayoutChange )
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiClipSharingView::RefreshView" );
     
