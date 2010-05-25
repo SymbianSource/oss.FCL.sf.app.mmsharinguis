@@ -46,6 +46,8 @@ public:
     virtual void SetPositionValueL( TInt aPositionValue ) = 0;
 
     virtual void SetDurationVisible() = 0;
+        
+    virtual void InvalidVideoFrame( TBool aInvalid = EFalse ) = 0;
 
     };
 

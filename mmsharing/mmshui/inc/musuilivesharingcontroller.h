@@ -116,6 +116,11 @@ public:	// new functions
     * 
     */
     void RefreshCameraOrientationL();
+    
+    /**
+     * Determines whether Session established or not
+     */
+    TBool IsSessionEstablished();
 
 
 private:	// new functions:
@@ -173,6 +178,8 @@ private:
     TBool iBrightnessSelected;
     
     TBool iDiskFull;
+    
+    TBool iSessionEstablished;
 	
     };
 

@@ -70,6 +70,10 @@ class MMusEngClipSessionObserver
 	    */
         virtual void TranscodingFailed() = 0;
         
+        /**
+	    * Handle specific case that rewinding from end of file.
+	    */
+        virtual void RewindFromEndL() = 0;
     };
 
 #endif

@@ -1542,6 +1542,59 @@ void UT_CMusEngClipSession::UT_EstablishSessionLL()
           
     }
 
+void UT_CMusEngClipSession::UT_IsRewindFromEndL()
+    {
+    // Try before establishing the session
+    EUNIT_ASSERT( !iClipSession->IsRewindFromEnd() )
+    
+    // Try with session, but without video out stream 
+    
+    CSIPProfile* profile = iClipSession->iSipProfileHandler->Profile();
+  
+    iClipSession->iSession = CMceOutSession::NewL( 
+                                    *(iClipSession->iManager),
+                                    *profile,
+                                    KTestRecipientSipUri8() ); 
+    
+    EUNIT_ASSERT( !iClipSession->IsRewindFromEnd() )
+    
+    // Try with video out stream without source...
+    CMceVideoStream* videoOut = CMceVideoStream::NewLC();
+    
+    videoOut->AddSinkL( CMceRtpSink::NewLC() );
+    CleanupStack::Pop();
+     
+    iClipSession->iSession->AddStreamL( videoOut );
+    CleanupStack::Pop( videoOut );
+    
+    EUNIT_ASSERT( !iClipSession->IsRewindFromEnd() )
+    
+    // And with enabled source and stream     
+    videoOut->SetSourceL( CMceFileSource::NewLC( *iClipSession->iManager,
+                                                 iClipSession->iFileName ) );
+    CleanupStack::Pop();
+    
+    EUNIT_ASSERT( !iClipSession->IsRewindFromEnd() )
+    
+    // try with different position and duration
+    (static_cast<CMceFileSource*> (videoOut->Source()))->iPosition = 90;
+    (static_cast<CMceFileSource*> (videoOut->Source()))->iDuration = 111;
+    EUNIT_ASSERT( !iClipSession->IsRewindFromEnd() )
+    
+    // Disapling source
+    (static_cast<CMceFileSource*> (videoOut->Source()))->DisableL();
+    EUNIT_ASSERT( !iClipSession->IsRewindFromEnd() )
+
+    // Disapling stream
+    videoOut->iState = CMceMediaStream::EDisabled;
+    EUNIT_ASSERT( iClipSession->IsRewindFromEnd() )
+       
+    // and finaly try with "real" end of clip 
+    (static_cast<CMceFileSource*> (videoOut->Source()))->iPosition = 0;
+    (static_cast<CMceFileSource*> (videoOut->Source()))->iDuration = 111;
+    
+    EUNIT_ASSERT( !iClipSession->IsRewindFromEnd() )
+    }
 
 //  TEST TABLE
 
@@ -1711,7 +1764,13 @@ EUNIT_TEST(
     "FUNCTIONALITY",
     SetupL, UT_EstablishSessionLL, Teardown)    
 
-        
+EUNIT_TEST(
+    "IsRewindFromEnd - test ",
+    "CMusEngClipSession",
+    "IsRewindFromEnd",
+    "FUNCTIONALITY",
+    SetupL, UT_IsRewindFromEndL, Teardown)
+    
 EUNIT_END_TEST_TABLE
 
 //  END OF FILE

@@ -129,6 +129,8 @@ class CMusEngObserverStub : public CBase,
         void TranscodingCompletedFinalize();
 
         void TranscodingFailed();
+        
+        void RewindFromEndL();
 
 
         // From MMusEngReceiveSessionObserver    
@@ -190,6 +192,7 @@ class CMusEngObserverStub : public CBase,
     	TBool iDiskFullCalled;
     	
     	TBool iEndOfClipCalled;
+    	TBool iRewindFromEnd;
     	TBool iTranscodingNeededCalled;
     	TBool iTranscodingCompletedInitCalled;
     	TBool iTranscodingCompletedFinalizeCalled;

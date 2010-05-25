@@ -577,7 +577,7 @@ void CMusUiLiveSharingView::RefreshView( TBool aLayoutChange )
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiLiveSharingView::RefreshView" );
     if ( iController )
         {
-		if ( aLayoutChange ) 
+		if ( aLayoutChange && iController->IsSessionEstablished() ) 
 			{
 			iController->AsyncRefreshView();
 			}

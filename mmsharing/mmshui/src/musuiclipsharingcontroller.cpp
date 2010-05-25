@@ -1024,6 +1024,7 @@ void CMusUiClipSharingController::SessionFailed()
 void CMusUiClipSharingController::StreamIdle()
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiClipSharingController::StreamIdle" );
+    iClipObserver.InvalidVideoFrame( ETrue );
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiClipSharingController::StreamIdle" );
     }
 
@@ -1035,6 +1036,7 @@ void CMusUiClipSharingController::StreamIdle()
 void CMusUiClipSharingController::StreamStreaming()
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiClipSharingController::StreamStreaming" );
+    iClipObserver.InvalidVideoFrame( EFalse );
     TRAPD( error, StreamStreamingL() );
     if ( error != KErrNone )
         {
@@ -1189,5 +1191,19 @@ TBool CMusUiClipSharingController::DoFastRewindingL( TBool aUseWinding )
     }
     
 
+// -----------------------------------------------------------------------------
+// CMusUiClipSharingController::RewindFromEndL()
+// -----------------------------------------------------------------------------
+//    
+void CMusUiClipSharingController::RewindFromEndL()
+	{
+	MUS_LOG( "mus: [MUSUI ]  -> CMusUiClipSharingController::RewindFromEndL" );
+    PauseL();
+    iEventObserver.ShowNaviPaneIconL( EMusUiNaviIconPause );
+    iSharingObserver.ReplaceToolbarCommand( EMusuiCmdToolbarPause,
+                                            EMusuiCmdToolbarUnPause,
+                                            ETrue );
+    MUS_LOG( "mus: [MUSUI ]  <- CMusUiClipSharingController::RewindFromEndL" );
+	}
 // End of file
 

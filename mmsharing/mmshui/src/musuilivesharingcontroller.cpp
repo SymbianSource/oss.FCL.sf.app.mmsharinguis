@@ -780,6 +780,8 @@ void CMusUiLiveSharingController::SessionEstablished()
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiLiveSharingController::SessionEstablished" );
     
+    iSessionEstablished = ETrue;
+    
     TRAPD( error, iResourceHandler->RequestCameraL( ETrue ) );
     if ( error != KErrNone )
         {
@@ -821,7 +823,8 @@ void CMusUiLiveSharingController::SessionEstablished()
 //
 void CMusUiLiveSharingController::SessionTerminated()
     {
-    MUS_LOG( "mus: [MUSUI ]  -> CMusUiLiveSharingController::SessionTerminated" );
+    MUS_LOG( "mus: [MUSUI ]  -> CMusUiLiveSharingController::SessionTerminated" );    
+    iSessionEstablished = EFalse;
     if ( !ExitOccured() )
         {
         DismissWaitDialog();
@@ -839,6 +842,7 @@ void CMusUiLiveSharingController::SessionTerminated()
 void CMusUiLiveSharingController::SessionConnectionLost()
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiLiveSharingController::SessionConnectionLost" );
+    iSessionEstablished = EFalse;
     DismissWaitDialog();
     if ( !ExitOccured() )
         {
@@ -859,6 +863,7 @@ void CMusUiLiveSharingController::SessionConnectionLost()
 void CMusUiLiveSharingController::SessionFailed()
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiLiveSharingController::SessionFailed" );
+    iSessionEstablished = EFalse;
     if ( !ExitOccured() )
         {
         DismissWaitDialog();
@@ -961,6 +966,14 @@ void CMusUiLiveSharingController::HandleAsyncEventL( TMusUiAsyncEvent aEventId )
     
     }
 
+// -----------------------------------------------------------------------------
+// Determines whether Session established or not
+// -----------------------------------------------------------------------------
+//
+TBool CMusUiLiveSharingController::IsSessionEstablished()
+	{
+	return iSessionEstablished;
+	}
 
 // End of file
 

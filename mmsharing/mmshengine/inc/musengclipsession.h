@@ -199,6 +199,8 @@ class CMusEngClipSession : public CMusEngMceOutSession
         void AddVideoCodecL( CMceVideoStream& aVideoStream, TBool aIgnoreNegotiated = EFalse );
         
         TBool HasClipEnded();
+        
+        TBool IsRewindFromEnd();
 
         /**
         * Returns current position as microseconds.

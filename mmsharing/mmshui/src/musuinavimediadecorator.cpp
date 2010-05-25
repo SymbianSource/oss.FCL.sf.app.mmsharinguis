@@ -489,15 +489,17 @@ void  CMusUiNaviMediaDecorator::ConstructImageL( MAknsSkinInstance* aSkin,
 
     CFbsBitmap* bitmap = NULL;
     CFbsBitmap* mask = NULL;
-
-
-    AknsUtils::CreateIconL(aSkin,
-                           aId,
-                           bitmap,
-                           mask,
-                           parse.FullName(),
-                           aBitmapId,
-                           aMaskId);
+   
+    AknsUtils::CreateColorIconL(aSkin,
+        		                aId,
+        		                KAknsIIDQsnIconColors,
+        		                EAknsCIQsnIconColorsCG13,
+        		                bitmap,
+    							mask,
+    							parse.FullName(),
+    							aBitmapId,
+    							aMaskId,
+    							KRgbBlack);
 
     AknIconUtils::SetSize( bitmap, iImageSize );
     AknIconUtils::SetSize( mask, iImageSize );

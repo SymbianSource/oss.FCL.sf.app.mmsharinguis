@@ -53,6 +53,7 @@ CMusUiSendController::~CMusUiSendController()
     delete iAddress;
     delete iRemoteSipAddress;
     delete iRemoteSipAddressProposal;
+    TRAP_IGNORE( DeleteFileL() );  
     delete iVideoFileName;
     delete iLocalizer;
     
@@ -1032,7 +1033,24 @@ void CMusUiSendController::DeleteVideoL()
         }
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiSendController::DeleteVideoL" );
     }   
-    
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusUiSendController::DeleteFileL()
+    {
+    MUS_LOG( "mus: [MUSUI ]  -> CMusUiSendController::DeleteFileL" );
+    if ( iVideoFileName && 
+    		MusUiFileUtil::FileExists( *iVideoFileName ) && !iVideoToBeSaved ) 
+		{
+        DeleteVideoL();
+		}
+    MUS_LOG( "mus: [MUSUI ]  <- CMusUiSendController::DeleteFileL" );
+    }   
+
+
 
 // -----------------------------------------------------------------------------
 //

@@ -284,7 +284,15 @@ void CMusEngObserverStub::EndOfClip()
     {
     iEndOfClipCalled = ETrue;
     }
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
 
+void CMusEngObserverStub::RewindFromEndL()
+	{
+	iRewindFromEnd= ETrue;
+	}
 
 // -----------------------------------------------------------------------------
 // 
@@ -435,6 +443,7 @@ TBool CMusEngObserverStub::IsReseted()
         	 !iSessionRequestCancelledCalled &&
         	 !iDiskFullCalled &&
         	 !iEndOfClipCalled &&
+        	 !iRewindFromEnd &&
         	 !iTranscodingNeededCalled &&
         	 !iTranscodingCompletedInitCalled &&
         	 !iTranscodingCompletedFinalizeCalled &&
@@ -478,6 +487,7 @@ void CMusEngObserverStub::Reset()
 	iSessionRequestCancelledCalled = EFalse;
 	iDiskFullCalled = EFalse;
 	iEndOfClipCalled = EFalse;
+	iRewindFromEnd = EFalse;
 	iTranscodingNeededCalled = EFalse;
     iTranscodingCompletedInitCalled = EFalse;
     iTranscodingCompletedFinalizeCalled = EFalse;

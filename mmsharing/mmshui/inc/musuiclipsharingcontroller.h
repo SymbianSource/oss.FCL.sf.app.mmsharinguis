@@ -137,6 +137,8 @@ public: // From MMusEngClipSessionObserver
     
     virtual void TranscodingFailed();
     
+    virtual void RewindFromEndL();
+    
 
 public: // from MMusEngOutSessionObserver
 

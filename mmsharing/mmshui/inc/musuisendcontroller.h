@@ -184,6 +184,7 @@ private: // Helpers
 
     void DeleteVideoL();
     
+	void DeleteFileL();
     
 protected:  // Data
 

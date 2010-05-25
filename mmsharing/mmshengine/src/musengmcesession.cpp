@@ -772,7 +772,7 @@ void CMusEngMceSession::StreamStateChanged( CMceMediaStream& aStream )
             }
         case CMceMediaStream::EIdle: // Stream is not receiving RTP
             {
-            // NOP
+            iSessionObserver.StreamIdle();
             break;
             }
         case CMceMediaStream::EStreaming: // Stream is streaming

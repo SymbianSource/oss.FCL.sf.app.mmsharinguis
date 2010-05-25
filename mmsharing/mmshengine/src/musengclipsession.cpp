@@ -614,6 +614,11 @@ void CMusEngClipSession::StreamStateChanged( CMceMediaStream& aStream,
         
         iClipSessionObserver.EndOfClip();
         }
+    else if ( IsRewindFromEnd() )
+    	{
+        TRAP_IGNORE( iClipSessionObserver.RewindFromEndL() );
+    	}
+    
     else
         {
         // Cannot handle, forward to the ancestor class
@@ -1058,5 +1063,60 @@ void CMusEngClipSession::DeleteTranscodingDestinationFileL()
     CleanupStack::PopAndDestroy(); // fs
     }
 
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+TBool CMusEngClipSession::IsRewindFromEnd()
+    {
+    MUS_LOG( "mus: [ENGINE] -> CMusEngClipSession::IsRewindFromEnd()" )
+
+    TBool isRewindFromEnd = EFalse;
+
+    if ( iSession )
+        {
+        
+        CMceVideoStream* videoOut = NULL;
+        
+        TRAPD( error, 
+               videoOut = MusEngMceUtils::GetVideoOutStreamL( *iSession ) );
+        if( error != KErrNone ) 
+            {
+            MUS_LOG1( "mus: [ENGINE]     Error in GetVideoOutStreamL #%d", error )
+            return isRewindFromEnd;
+            }
+
+        CMceFileSource* filesource = NULL;
+        TRAP( error, filesource = MusEngMceUtils::GetFileSourceL( *iSession ) )
+
+        if ( error == KErrNone )
+            {
+            TTimeIntervalMicroSeconds position;
+            TTimeIntervalMicroSeconds duration;
+            TRAP( error, position = filesource->PositionL() );
+            TRAPD( error1, duration = filesource->DurationL() );
+            if ( error != KErrNone || error1 != KErrNone )
+                {
+                return isRewindFromEnd;
+                }
+                
+            MUS_LOG2( "mus: [ENGINE]    position = %Ld, duration = %Ld", 
+                        position.Int64(), 
+                        duration.Int64() )
+                        
+            TRAP( error, isRewindFromEnd = 
+                        ( position.Int64() != 0 && 
+                          !filesource->IsEnabled() && 
+                          videoOut->State() == CMceMediaStream::EDisabled ) )
+            if(  isRewindFromEnd )
+                {
+                MUS_LOG( "mus: [ENGINE]     Rewind from end of clip" )
+                }
+            }
+        }
+
+    MUS_LOG( "mus: [ENGINE] <- CMusEngClipSession::IsRewindFromEnd()" )
+    return isRewindFromEnd;
+    }
 // End of file
 

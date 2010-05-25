@@ -89,6 +89,7 @@ NONSHARABLE_CLASS( UT_CMusEngClipSession ): public CEUnitTestSuiteClass
         void UT_ConstructAudioStructureLL();
         void UT_ConstructAudioStructureL_OperatorVariantL();
         void UT_EstablishSessionLL();
+        void UT_IsRewindFromEndL();
         
     private:    // Data
 

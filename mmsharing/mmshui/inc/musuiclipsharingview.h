@@ -102,8 +102,9 @@ public: // from MMusUiClipSharingObserver
     virtual void ReplaceToolbarCommand( TInt aOldCommand, 
                                         TInt aNewCommand,
                                         TBool aSetNewCommandFocused );
-
-
+    
+    virtual void InvalidVideoFrame( TBool aInvalid = EFalse );
+    
 public: // new functions
 
     void RefreshView( TBool aLayoutChange = EFalse );

@@ -467,7 +467,7 @@ void CMusUiClipSharingView::ReplaceToolbarCommand( TInt aOldCommand,
 //
 // -----------------------------------------------------------------------------
 //
-void CMusUiClipSharingView::RefreshView( TBool aLayoutChange )
+void CMusUiClipSharingView::RefreshView( TBool /*aLayoutChange*/ )
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiClipSharingView::RefreshView" );
     
@@ -649,5 +649,21 @@ void CMusUiClipSharingView::DoDeactivate()
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiClipSharingView::DoDeactivate" );
     }
 
+// -----------------------------------------------------------------------------
+// When Mmc is removed, dimmed the pause icon on toolbar
+// -----------------------------------------------------------------------------
+//
+void CMusUiClipSharingView::InvalidVideoFrame( TBool aInvalid )
+	{
+	MUS_LOG( "mus: [MUSUI ]  -> CMusUiClipSharingView::InvalidVideoFrame" );
+	Toolbar()->SetItemDimmed( iPauseSelected ?
+                                EMusuiCmdToolbarUnPause :
+                                EMusuiCmdToolbarPause,
+	                          aInvalid ?
+			                    ETrue :
+								EFalse,
+	                          ETrue ); 
+	MUS_LOG( "mus: [MUSUI ]  <- CMusUiClipSharingView::InvalidVideoFrame" );
+	}
 
 // end of file
