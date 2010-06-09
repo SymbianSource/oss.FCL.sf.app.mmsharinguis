@@ -125,6 +125,8 @@ public:	// from MMusUiEventObserver
     virtual TBool OrientationCanBeChanged() const;
     
     virtual TInt GetUiVolumeValue();
+    
+    virtual CMusUiResourceHandler* ResourceHandler();
 
 private: // from base class CEikAppUi
 
@@ -193,6 +195,8 @@ private: // data
     TInt iAknNfyServerWgId;
     
     TBool iForeground;
+    
+    CMusUiResourceHandler* iResourceHandler;
 
 	
     };

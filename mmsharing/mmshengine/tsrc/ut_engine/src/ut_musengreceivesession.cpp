@@ -803,7 +803,7 @@ void UT_CMusEngReceiveSession::UT_StreamStateChangedL()
     // Try default behaviors
     videoStream->iState = CMceMediaStream::EIdle;
     iReceiveSession->StreamStateChanged( *videoStream );
-    EUNIT_ASSERT( iObserver->IsReseted() )
+    EUNIT_ASSERT( iObserver->iStreamIdleCalled );
     
     }
 

@@ -172,6 +172,8 @@ public: // from MMusUiActiveTimerObserver
 private:    // new functions:
 
     void StreamStreamingL();
+    
+    void StreamIdleL();
 
     void SessionTimeChangedL( const TTimeIntervalSeconds& aSeconds );
     

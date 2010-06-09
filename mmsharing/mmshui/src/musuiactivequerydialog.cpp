@@ -143,8 +143,10 @@ TInt CMusUiActiveQueryDialog::RunError( TInt aError )
     {
     MUS_LOG1( "mus: [MUSUI ]     -> CMusUiActiveQueryDialog::RunError [%d]", 
               aError );
+    
+    iObserver.HandleQueryError( aError );
               
-    return iObserver.HandleQueryError( aError );
+    return KErrNone;
     }
 
 

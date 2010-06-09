@@ -115,6 +115,7 @@ class CMusEngObserverStub : public CBase,
         // From MMusEngLiveSessionObserver
         
         void DiskFull();
+        void OrientationRefreshEnded();
         
         // From MMusEngClipSessionObserver    
         
@@ -212,6 +213,7 @@ class CMusEngObserverStub : public CBase,
         
         TInt iVolume;
         TBool iDueUnknowCapas;
+        TBool iOrientationRefreshEndedCalled;
     };
 
 

@@ -87,6 +87,12 @@ class CMusEngSessionDurationTimer : public CActive
         * @since S60 v3.2
         */
         void DoCancel();
+        
+		/**
+   		*
+        * @since S60 v3.2
+        */
+        TInt RunError( TInt aError );
 
 
     private: // DATA

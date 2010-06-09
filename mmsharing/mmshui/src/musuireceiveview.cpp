@@ -386,13 +386,19 @@ void CMusUiReceiveView::SetFullScreenL( TBool aFullScreen )
 //
 // -----------------------------------------------------------------------------
 //
-void CMusUiReceiveView::RefreshView( TBool /*aLayoutChange*/ )
+void CMusUiReceiveView::RefreshView()
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiReceiveView::RefreshView" );
+    
+    if ( iBackgroundContainer )
+    	{
+		iBackgroundContainer->SetRect( ClientRect() );
+    	}
     
     if ( iContainer )
         {
         iContainer->SetRect( ClientRect() );
+        iContainer->UpdatePointerCapture();
         }
     
     TRect videoRect( ClientRect().iTl.iX,

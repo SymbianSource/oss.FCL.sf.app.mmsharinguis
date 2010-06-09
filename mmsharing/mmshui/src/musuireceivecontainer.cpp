@@ -315,6 +315,27 @@ void CMusUiReceiveContainer::HandlePointerEventL( const TPointerEvent& )
                 (MusUiView()))->HandleCommandL( EMusuiCmdToolbarFullScreen );
         }
     }
-
-
+	
+	
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusUiReceiveContainer::UpdatePointerCapture()
+	{
+	MUS_LOG( "mus: [MUSUI ]  -> CMusUiReceiveContainer::UpdatePointerCapture" );
+	
+	if ( iFullScreen )
+		{
+		// In order to capture pointer events this container must be visible.
+		// Thus we make it as small as possible.
+		SetRect( TRect( 0, 0, 0, 0 ) );
+		MakeVisible( ETrue );
+		SetGloballyCapturing( ETrue );
+		SetPointerCapture( ETrue );    	
+		}
+	
+	MUS_LOG( "mus: [MUSUI ]  <- CMusUiReceiveContainer::UpdatePointerCapture" );
+	}
+	
 // end of file

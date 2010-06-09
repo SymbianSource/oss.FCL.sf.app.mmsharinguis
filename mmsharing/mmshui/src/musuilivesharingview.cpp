@@ -572,20 +572,12 @@ void CMusUiLiveSharingView::ReplaceToolbarCommand( TInt aOldCommand,
 //
 // -----------------------------------------------------------------------------
 //
-void CMusUiLiveSharingView::RefreshView( TBool aLayoutChange )
+void CMusUiLiveSharingView::RefreshView()
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiLiveSharingView::RefreshView" );
     if ( iController )
         {
-		if ( aLayoutChange && iController->IsSessionEstablished() ) 
-			{
-			iController->AsyncRefreshView();
-			}
-		else
-			{
-			DoRefreshView();
-			} 
-
+        DoRefreshView();
         }
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiLiveSharingView::RefreshView" );
     }
@@ -598,6 +590,12 @@ void CMusUiLiveSharingView::RefreshView( TBool aLayoutChange )
 void CMusUiLiveSharingView::DoRefreshView()
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiLiveSharingView::DoRefreshView" );
+    
+    if ( iBackgroundContainer )
+        {
+        iBackgroundContainer->SetRect(ClientRect());
+        }
+    
     if ( iContainer )
         {
         TRect containerRect( ClientRect().iBr.iX - KMusUiContainerWidth, 
@@ -625,7 +623,6 @@ void CMusUiLiveSharingView::DoRefreshView()
             
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiLiveSharingView::DoRefreshView" );
     } 
-
 
 // -----------------------------------------------------------------------------
 //

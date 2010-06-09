@@ -470,6 +470,18 @@ void CMusUiGeneralView::ReplaceToolbarCommand( TInt aOldCommand,
 //
 // -----------------------------------------------------------------------------
 //
+void CMusUiGeneralView::DismissMenuBar()
+	{
+	 MUS_LOG( "mus: [MUSUI ]  -> CMusUiGeneralView::DismissMenuBar" );
+	 StopDisplayingMenuBar();
+	 MUS_LOG( "mus: [MUSUI ]  <- CMusUiGeneralView::DismissMenuBar" );
+	}
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
 void CMusUiGeneralView::RefreshAudioRoutingToolbarButton()
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiGeneralView::RefreshAudioRoutingToolbarButton" )
@@ -590,7 +602,7 @@ void CMusUiGeneralView::HandleForegroundEventL( TBool aForeground, TBool aExit )
     {
     MUS_LOG1( "mus: [MUSUI ]  -> CMusUiGeneralView::HandleForegroundEventL: %d",
                             aForeground );
-
+    
     SetCurrentFgBgEvent( ( aForeground ? EMusFgEvent : EMusBgEvent ) );
     iCurrentExitSetting = aExit;
         
@@ -598,9 +610,7 @@ void CMusUiGeneralView::HandleForegroundEventL( TBool aForeground, TBool aExit )
         {
         if ( aForeground )
             {
-            MUS_LOG( "mus: [MUSUI ] immediately to fg" );
-            RefreshView();
-            DoForegroundEventL();
+            MUS_LOG( "mus: [MUSUI ] delayed to fg" );
             }
         else
             {
@@ -749,24 +759,18 @@ void CMusUiGeneralView::CompleteForegroundEventL()
     {
     MUS_LOG( "mus: [MUSUI ] -> CMusUiGeneralView::CompleteForegroundEventL()" )
     
-    switch ( iCurrentFgBgEvent )
+    if ( iCurrentFgBgEvent == EMusFgEvent )
         {
-        case EMusFgEvent:
-            {
-            DoForegroundEventL();
-            break;
-            }
-        case EMusBgEvent:
-            {
-            DoBackgroundEventL( iCurrentExitSetting );
-            break;
-            }
-        default:
-            {
-            break;
-            }
+        DoForegroundEventL();
         }
-    
+    else if ( iCurrentFgBgEvent == EMusBgEvent && EventControllerL().IsForeground() )
+        {
+        // Bg handling when already at bg would cause problems in state
+        // restoring phase when coming back to fg. Easiest to deal with that
+        // at this level.
+        DoBackgroundEventL( iCurrentExitSetting );
+        }
+
     SetCurrentFgBgEvent( EMusFgBgEventNone );   
     
     MUS_LOG( "mus: [MUSUI ] <- CMusUiGeneralView::CompleteForegroundEventL()" )
@@ -781,13 +785,8 @@ void CMusUiGeneralView::DoForegroundEventL()
     {
     MUS_LOG( "mus: [MUSUI ] -> CMusUiGeneralView::DoForegroundEventL()" )
     
-    /* if background container exist then draw now. but do not change
-     * the ordinal so that other control preceed in drawing.
-     */
-    if( iBackgroundContainer )
-        {
-        iBackgroundContainer->RefreshView();
-        }
+    RefreshView();
+    
     iSessionEndTimer->Cancel();    
         
     EventControllerL().HandleForegroundEventL( ETrue );

@@ -37,13 +37,11 @@ SOURCEPATH          ../src
 SOURCE              dllmain.cpp
 SOURCE              ut_cmusindicatorapi.cpp
 SOURCE              ut_cmussoundplayer.cpp
-SOURCE              ut_cmusindicatordsa.cpp
 
 // tested classes
 SOURCEPATH          ../../../src
 SOURCE              mussoundplayer.cpp
 SOURCE              musindicatorapi.cpp
-SOURCE              musindicatordsa.cpp
 SOURCE              musresourceutil.cpp
 
 USERINCLUDE         ../inc

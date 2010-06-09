@@ -467,11 +467,15 @@ void CMusUiClipSharingView::ReplaceToolbarCommand( TInt aOldCommand,
 //
 // -----------------------------------------------------------------------------
 //
-void CMusUiClipSharingView::RefreshView( TBool /*aLayoutChange*/ )
+void CMusUiClipSharingView::RefreshView()
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiClipSharingView::RefreshView" );
     
-
+    if ( iBackgroundContainer )
+        {
+        iBackgroundContainer->SetRect( ClientRect() );
+        }
+    
     if ( iContainer )
         {            
         TInt height = MusAppUi()->ApplicationRect().Height();

@@ -21,7 +21,6 @@
 #include "musindicatorapi.h"
 #include "musresourcefinderutil.h"
 #include "muslogger.h"
-#include "musindicatordsa.h"
 #include "mussettings.h"
 #include "mussettingskeys.h"
 #include "mussoundplayer.h"
@@ -82,24 +81,13 @@ CMusIndicatorApi::~CMusIndicatorApi()
     Cancel();
     delete iIndicatorWindow;
     delete iSoundPlayer;
-    if ( !IsSubscriber() )
-        {
-        Indicator( EFalse );
-        }
+
+    Indicator( EFalse );
+
     
     iProperty.Close();
 
     MUS_LOG( "mus: [MUSIND ]  <-  MusIndicatorApi::~CMusIndicatorApi" );
-    }
-
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-TBool CMusIndicatorApi::IsSubscriber() const
-    {
-    return !iObserver;
     }
 
 
@@ -112,8 +100,6 @@ TBool CMusIndicatorApi::IsSubscriber() const
 EXPORT_C void CMusIndicatorApi::IndicateAvailabilityL()
     {
     MUS_LOG( "mus: [MUSIND]  -> CMusIndicatorApi::IndicateAvailabilityL" )
-    __ASSERT_ALWAYS( !IsSubscriber(), User::Leave( KErrArgument ) );
-    
     Indicator( ETrue );
 
     if( MultimediaSharingSettings::AuditoryNotificationSettingL() ==
@@ -136,16 +122,10 @@ void CMusIndicatorApi::RunL()
     {
     MUS_LOG( "mus: [MUSIND]  <- CMusIndicatorApi::RunL" )
     
-    if ( !IsSubscriber() )
-        {
-        MUS_LOG( "mus: [MUSIND ] : publisher" )
-        StartLiveSharingL();
-        }
-    else
-        {
-        MUS_LOG( "mus: [MUSIND ] : subscriber" )
-        ToggleIndicatorL();
-        }
+
+    MUS_LOG( "mus: [MUSIND ] : publisher" )
+    StartLiveSharingL();
+
 
     MUS_LOG( "mus: [MUSIND]  -> CMusIndicatorApi::RunL" )
     }
@@ -172,45 +152,6 @@ void CMusIndicatorApi::StartLiveSharingL()
 
 
 // -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-void CMusIndicatorApi::ToggleIndicatorL()
-    {
-    MUS_LOG( "mus: [MUSIND]  -> CMusIndicatorApi::ToggleIndicatorL" )
-    TInt val;
-    
-
-    
-    User::LeaveIfError( RProperty::Get( KPSUidCoreApplicationUIs,
-                                        KCoreAppUIsVideoSharingIndicator,
-                                        val ) );
-    iProperty.Subscribe( iStatus );
-    SetActive();
-    
-    TBool on = ( val == ECoreAppUIsVideoSharingIndicatorOn );
-    
-    if ( on && !iIndicatorWindow 
-         && MultimediaSharingSettings::OperatorVariantSettingL() ==
-         MusSettingsKeys::EOperatorSpecific )
-        {
-        iIndicatorWindow = CMusIndicatorDsa::NewL();
-        }
-    else if ( !on )
-        {
-        delete iIndicatorWindow;
-        iIndicatorWindow = NULL;
-        }
-    else
-        {
-        //NOP
-        }
-    
-    MUS_LOG( "mus: [MUSIND]  <- CMusIndicatorApi::ToggleIndicatorL" )
-    }
-
-
-// -----------------------------------------------------------------------------
 // From CActive.
 // Cancels an outstanding asynchronous request.
 // -----------------------------------------------------------------------------
@@ -219,10 +160,7 @@ void CMusIndicatorApi::DoCancel()
     {
     MUS_LOG( "mus: [MUSIND]  <- CMusIndicatorApi::DoCancel" )
     
-    if ( IsSubscriber() )
-        {
-        iProperty.Cancel();
-        }
+
     MUS_LOG( "mus: [MUSIND]  -> CMusIndicatorApi::DoCancel" )
     }
 
@@ -282,21 +220,10 @@ void CMusIndicatorApi::ConstructL()
     {
     MUS_LOG( "mus: [MUSIND ]  ->  MusIndicatorApi::ConstructL" )
     
-    if ( IsSubscriber() )
-        {
-        MUS_LOG( "mus: [MUSIND ] :  subscriber (called by aiwprovider)" )
+    
+    MUS_LOG( "mus: [MUSIND ] : publisher (called by manager)" )
+    CActiveScheduler::Add( this );
 
-        User::LeaveIfError( iProperty.Attach( KPSUidCoreApplicationUIs,
-                                              KCoreAppUIsVideoSharingIndicator ) );
-        CActiveScheduler::Add( this );
-        iProperty.Subscribe( iStatus );
-        SetActive();
-        }
-    else
-        {
-        MUS_LOG( "mus: [MUSIND ] : publisher (called by manager)" )
-        CActiveScheduler::Add( this );
-        }
     MUS_LOG( "mus: [MUSIND ]  <-  MusIndicatorApi::ConstructL" )
     }
 

@@ -28,6 +28,7 @@
 #include "mussettings.h"
 #include "mussettingskeys.h"
 #include "musmanagercommon.h"
+#include "musuiresourcehandler.h"
 #include "musui.hrh"
 #include "musuid.hrh"
 #include "muslogger.h" // debug logging
@@ -52,7 +53,11 @@ void CMusUiAppUi::ConstructL()
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiAppUi::ConstructL" );
     BaseConstructL( EAknEnableSkin | EAppOrientationAutomatic | EAknEnableMSK );
-
+    
+    iResourceHandler = CMusUiResourceHandler::NewL( *this );
+    MultimediaSharing::TMusUseCase usecase = MusUiStartController::ReadUseCaseL();
+    iResourceHandler->CheckInitialOrientationL(usecase);
+    
     iForeground = ETrue;
     
     // View for Live Sharing:
@@ -92,7 +97,7 @@ void CMusUiAppUi::ConstructL()
     AknsUtils::SetAvkonSkinEnabledL( ETrue );
 
     // Check use case and set default view
-    switch ( MusUiStartController::ReadUseCaseL() )
+    switch ( usecase )
         {
         case MultimediaSharing::EMusLiveVideo:
             ActivateLocalViewL( liveSharingView->Id() );
@@ -116,7 +121,7 @@ void CMusUiAppUi::ConstructL()
     iOperatorSpecificFunctionality = 
         ( MultimediaSharingSettings::OperatorVariantSettingL() == 
                                                     EOperatorSpecific );
-
+    
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiAppUi::ConstructL" );
     }
 
@@ -128,6 +133,7 @@ void CMusUiAppUi::ConstructL()
 CMusUiAppUi::~CMusUiAppUi()
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiAppUi::~CMusUiAppUi" );
+    delete iResourceHandler;
     delete iConfirmationQuery;
     delete iStatusPaneHandler;
     delete iInterfaceSelector;
@@ -528,7 +534,7 @@ void CMusUiAppUi::HandleResourceChangeL( TInt aResourceChangeType )
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiAppUi::HandleResourceChangeL" );
     CAknAppUi::HandleResourceChangeL( aResourceChangeType );
 
-    if ( aResourceChangeType == KEikDynamicLayoutVariantSwitch )
+    if ( aResourceChangeType == KEikDynamicLayoutVariantSwitch && iView )
         {
         MUS_LOG( "mus: [MUSUI ]  CMusUiAppUi::HandleResourceChangeL:\
                  aResourceChangeType == KEikDynamicLayoutVariantSwitch" );
@@ -545,7 +551,7 @@ void CMusUiAppUi::HandleResourceChangeL( TInt aResourceChangeType )
         
         if ( activatedView )
             {
-            activatedView->RefreshView( ETrue );
+            activatedView->RefreshView();
             }
         }
 
@@ -588,8 +594,10 @@ void CMusUiAppUi::HandleCommandL( TInt aCommand )
         case EAknSoftkeyExit:
         case EEikCmdExit:
             {
-            SetToolbarVisibility( EFalse );
-            HandleExit();
+            CMusUiGeneralView* activatedView =
+                                    static_cast<CMusUiGeneralView*>( iView );
+            activatedView->HandleCommandL( EAknSoftkeyExit );
+
             break;
             }
         default:
@@ -607,6 +615,14 @@ TInt CMusUiAppUi::GetUiVolumeValue()
     return iStatusPaneHandler->GetVolumeControlValue();
     }
 
+// -----------------------------------------------------------------------------
+// CMusUiAppUi::ResourceHandler()
+// -----------------------------------------------------------------------------
+//
+CMusUiResourceHandler* CMusUiAppUi::ResourceHandler()
+    {
+    return iResourceHandler;
+    }
 
 // -----------------------------------------------------------------------------
 // CMusUiAppUi::AppHelpContextL()

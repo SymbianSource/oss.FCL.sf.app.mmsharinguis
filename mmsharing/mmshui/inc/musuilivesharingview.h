@@ -96,13 +96,11 @@ public: // from MMusUiLiveSharingObserver
     void ReplaceToolbarCommand( TInt aOldCommand, 
                                 TInt aNewCommand,
                                 TBool aSetNewCommandFocused );
-
-
+    void DoRefreshView();
+    
 public: // new functions
 
-    void RefreshView( TBool aLayoutChange );
-
-    void DoRefreshView();
+    void RefreshView();
 
     void LevelIndicatorDismissed();
     

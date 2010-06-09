@@ -20,6 +20,7 @@
 #include "musuipropertyobserver.h"
 #include "musresourceproperties.h"
 #include "mussettingskeys.h"
+#include "musmanagercommon.h"
 
 #include <e32base.h>
 
@@ -48,6 +49,8 @@ class CMusUiResourceHandler : public CBase,
         TBool RequestCameraL( TBool aMandatory = EFalse );
         
         TBool RequestVideoPlayerL( TBool aMandatory = EFalse );
+        
+        void CheckInitialOrientationL( MultimediaSharing::TMusUseCase aUsecase );
         
         
     public:	// From MMusUiPropertyObserver

@@ -155,7 +155,7 @@ void UT_CMusEngTelephoneUtils::UT_AudioRoutingCanBeChangedL()
     
     iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
                   CTelephonyAudioRouting::EBTAudioAccessory;
-    EUNIT_ASSERT( !iTelephoneUtils->AudioRoutingCanBeChanged() );
+    EUNIT_ASSERT( iTelephoneUtils->AudioRoutingCanBeChanged() );
     
     iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
                   CTelephonyAudioRouting::ETTY;

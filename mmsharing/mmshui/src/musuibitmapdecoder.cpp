@@ -148,5 +148,19 @@ void CMusUiBitmapDecoder::RunL()
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiBitmapDecoder::RunL" );
     }
 
+// -------------------------------------------------------------------------
+//  If RunL() leaves,It should be handled here.
+// -------------------------------------------------------------------------
+//
+TInt CMusUiBitmapDecoder::RunError( TInt aError )
+    {
+	MUS_LOG( "mus: [MUSUI ]  -> CMusUiBitmapDecoder::RunError" );
+    // Nothing can be done here.
+    aError = KErrNone;
+
+    MUS_LOG( "mus: [MUSUI ]  <- CMusUiBitmapDecoder::RunError" );
+    return aError;
+    }
+
 
 // end of file

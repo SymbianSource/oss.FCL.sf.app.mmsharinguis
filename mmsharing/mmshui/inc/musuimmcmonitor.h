@@ -53,6 +53,7 @@ class CMusUiMmcMonitor : public CActive
     private: // from CActive
 
         void RunL();
+        TInt RunError( TInt aError );
         void DoCancel();
     
     private:    // New functions.

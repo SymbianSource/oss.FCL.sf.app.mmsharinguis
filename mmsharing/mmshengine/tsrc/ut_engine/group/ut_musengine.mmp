@@ -74,6 +74,7 @@ SOURCE                  ut_musengmceutils.cpp
 SOURCE                  ut_musengtelephoneutils.cpp
 SOURCE                  ut_musengsessiondurationtimer.cpp
 SOURCE                  ut_musenguriparser.cpp
+SOURCE                  ut_musengorientationhandler.cpp
 
 // Tested classes
 SOURCEPATH              ../../../src
@@ -88,6 +89,7 @@ SOURCE                  musengtelephoneutils.cpp
 SOURCE                  musengsessiondurationtimer.cpp
 SOURCE                  musengmceutils.cpp
 SOURCE                  musenguriparser.cpp
+SOURCE                  musengorientationhandler.cpp
 
 // Includes
 

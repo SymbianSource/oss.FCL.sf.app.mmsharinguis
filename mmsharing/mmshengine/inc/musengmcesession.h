@@ -218,6 +218,8 @@ class CMusEngMceSession : public CMusEngSession,
         */
         IMPORT_C void UnmuteL();
         
+        void RefreshOrientationL();
+        
 
     protected: // CONSTRUCTORS
 

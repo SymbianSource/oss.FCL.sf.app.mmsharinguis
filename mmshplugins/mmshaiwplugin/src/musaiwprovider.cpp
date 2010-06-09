@@ -27,7 +27,6 @@
 #include "musresourcefinderutil.h"
 #include "mussettings.h"
 #include "mussesseioninformationapi.h"
-#include "musindicatorapi.h"
 
 #include <musresourceproperties.h>
 
@@ -78,9 +77,8 @@ CMusAiwProvider::~CMusAiwProvider()
     {
     MUS_LOG( "mus: [AIWPRO]  -> CMusAiwProvider::~CMusAiwProvider" )
     delete iResourceFileName ;
-    iResourceFileName = NULL ;    
-    delete iIndicator;
-    iIndicator = NULL ;    
+    iResourceFileName = NULL ;  
+
     MUS_LOG( "mus: [AIWPRO]  <- CMusAiwProvider::~CMusAiwProvider" )
     }
 
@@ -211,12 +209,7 @@ void CMusAiwProvider::DoInitializeMenuPaneL(
 void CMusAiwProvider::DoInitialiseL()
     {
     MUS_LOG( "mus: [AIWPRO]  -> CMusAiwProvider::DoInitialiseL")
-    
-    if ( !iIndicator )
-        {
-        MUS_LOG( "mus: [AIWPRO]  :  creating indicator")
-        iIndicator = CMusIndicatorApi::NewL();
-        }
+
     MUS_LOG( "mus: [AIWPRO]  <- CMusAiwProvider::DoInitialiseL")
     }
 

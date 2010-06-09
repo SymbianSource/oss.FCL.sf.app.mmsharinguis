@@ -163,5 +163,19 @@ void CMusUiActivityManager::RunL()
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiActivityManager::RunL" );
     }
 
+// -------------------------------------------------------------------------
+//  If RunL() leaves,It should be handled here.
+// -------------------------------------------------------------------------
+//
+TInt CMusUiActivityManager::RunError( TInt aError )
+    {
+	MUS_LOG( "mus: [MUSUI ]  -> CMusUiActivityManager::RunError" );
+    // Nothing can be done here.
+    aError = KErrNone;
+
+    MUS_LOG( "mus: [MUSUI ]  <- CMusUiActivityManager::RunError" );
+    return aError;
+    }
+
 
 // end of file

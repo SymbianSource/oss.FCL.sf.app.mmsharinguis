@@ -61,6 +61,8 @@ private: // functions from base class CActive
     void DoCancel();
 
     void RunL();
+    
+    TInt RunError( TInt aError );
 
 private:    // Data
 

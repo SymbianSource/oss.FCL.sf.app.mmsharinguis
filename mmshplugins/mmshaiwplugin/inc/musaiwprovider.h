@@ -166,8 +166,6 @@ private: // data
     
     /** To Differentiate Error and Warning Notes */
 	TBool iIsWarning ;
-	
-	CMusIndicatorApi* iIndicator;
     };
 
 

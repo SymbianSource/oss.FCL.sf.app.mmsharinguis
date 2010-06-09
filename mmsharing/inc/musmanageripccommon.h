@@ -27,6 +27,7 @@
 _LIT( KMusManagerServerName,"musmanagerserver" );
 _LIT( KMusManagerServerFilename, "musmanagerserver" );
 _LIT( KMusManagerServerSemaphoreName, "musmanagerserverSemaphore" );
+_LIT( KMusManagerServerClosingSemaphoreName, "musmanagerserverClosingSemaphore" );
 
 const TUid KServerUid3 = { KMusManagerServerUid };
 

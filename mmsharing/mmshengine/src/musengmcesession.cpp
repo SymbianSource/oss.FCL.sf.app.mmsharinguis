@@ -372,6 +372,14 @@ EXPORT_C void CMusEngMceSession::UnmuteL()
     MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::Unmute()" )
     }
 
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::RefreshOrientationL()
+{
+    MUS_LOG( "mus: [ENGINE]  <-> CMusEngMceSession::RefreshOrientationL()" )
+}
 
 // -----------------------------------------------------------------------------
 //

@@ -24,6 +24,7 @@
 #include "musengmceutils.h"
 #include "musenglogger.h"
 #include "mussettings.h"
+#include "musengorientationhandler.h"
 
 // SYSTEM
 #include <mcemanager.h>
@@ -113,6 +114,9 @@ EXPORT_C CMusEngLiveSession* CMusEngLiveSession::NewL(
 CMusEngLiveSession::~CMusEngLiveSession()
     {
     MUS_LOG( "mus: [ENGINE]  -> CMusEngLiveSession::~CMusEngLiveSession()" )
+        
+    delete iOrientationHandler;
+    
     MUS_LOG( "mus: [ENGINE]  <- CMusEngLiveSession::~CMusEngLiveSession()" )
     }
 
@@ -569,6 +573,8 @@ EXPORT_C void CMusEngLiveSession::PlayL()
         {
         MUS_LOG( "mus: [ENGINE]    Camera already enabled, ignore request" )
         }
+    
+    iOrientationHandler->UpdateL();
         
     MUS_LOG( "mus: [ENGINE]  <- CMusEngLiveSession::PlayL()" )
     }
@@ -595,6 +601,8 @@ EXPORT_C void CMusEngLiveSession::PauseL()
         MUS_LOG( "mus: [ENGINE]    Camera already disabled, ignore request" )
         }
 
+    iOrientationHandler->UpdateL();
+    
     MUS_LOG( "mus: [ENGINE]  <- CMusEngLiveSession::PauseL()" )
     }
 
@@ -609,7 +617,29 @@ EXPORT_C TBool CMusEngLiveSession::IsPlayingL()
     
     return ( MusEngMceUtils::GetCameraL( *iSession )->IsEnabled() );
     }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngLiveSession::EnableDisplayL( TBool aEnable )
+{
+    CMusEngMceSession::EnableDisplayL( aEnable );
+    iOrientationHandler->UpdateL();
+}
     
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngLiveSession::RefreshOrientationL()
+    {
+    MUS_LOG( "mus: [ENGINE]  -> CMusEngLiveSession::RefreshOrientationL()" )
+        
+    iOrientationHandler->RefreshOrientationL();
+        
+    MUS_LOG( "mus: [ENGINE]  <- CMusEngLiveSession::RefreshOrientationL()" )
+    }
 
 // -----------------------------------------------------------------------------
 //
@@ -888,6 +918,8 @@ void CMusEngLiveSession::ConstructL( TUint aSipProfileId )
 
     CMusEngMceOutSession::ConstructL( aSipProfileId );
 
+    iOrientationHandler = CMusEngOrientationHandler::NewL( *this, iLiveSessionObserver );
+    
     MUS_LOG( "mus: [ENGINE]  <- CMusEngLiveSession::ConstructL()" )
     }
 

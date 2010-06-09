@@ -910,7 +910,7 @@ void UT_CMusEngClipSession::UT_StreamStateChangedL()
     changedStream->iState = CMceMediaStream::EIdle;
     static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
                                                             *changedStream );
-    EUNIT_ASSERT( iObserver->IsReseted() )
+    EUNIT_ASSERT( iObserver->iStreamIdleCalled )
     
     // EStreaming, stream is streaming
     changedStream->iState = CMceMediaStream::EStreaming;
@@ -1064,7 +1064,7 @@ void UT_CMusEngClipSession::UT_StreamStateChangedWithSourceL()
     changedStream->iState = CMceMediaStream::EIdle;
     static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
                             *changedStream, *changedSource );
-    EUNIT_ASSERT( iObserver->IsReseted() )
+    EUNIT_ASSERT( iObserver->iStreamIdleCalled )
     
     // EStreaming, stream is streaming
     changedStream->iState = CMceMediaStream::EStreaming;
@@ -1134,7 +1134,7 @@ void UT_CMusEngClipSession::UT_StreamStateChangedWithSinkL()
     static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
                                                             *changedStream,
                                                             *changedSink );
-    EUNIT_ASSERT( iObserver->IsReseted() )
+    EUNIT_ASSERT( iObserver->iStreamIdleCalled );
     
     // EStreaming, stream is streaming
     changedStream->iState = CMceMediaStream::EStreaming;
@@ -1587,6 +1587,12 @@ void UT_CMusEngClipSession::UT_IsRewindFromEndL()
 
     // Disapling stream
     videoOut->iState = CMceMediaStream::EDisabled;
+    EUNIT_ASSERT( iClipSession->IsRewindFromEnd() )
+    
+    iClipSession->iPause = ETrue;
+    EUNIT_ASSERT( !iClipSession->IsRewindFromEnd() )
+    
+    iClipSession->iPause = EFalse;
     EUNIT_ASSERT( iClipSession->IsRewindFromEnd() )
        
     // and finaly try with "real" end of clip 

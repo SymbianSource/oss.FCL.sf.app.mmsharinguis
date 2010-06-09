@@ -1164,7 +1164,7 @@ void UT_CMusEngMceSession::UT_CMusEngMceSession_StreamStateChangedL()
     // EIdle, stream is not receiving RTP
     changedStream->iState = CMceMediaStream::EIdle;
     iLiveSession->CMusEngMceSession::StreamStateChanged( *changedStream );
-    EUNIT_ASSERT( iObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->iStreamIdleCalled );
     
     // EStreaming, stream is streaming
     changedStream->iState = CMceMediaStream::EStreaming;
@@ -1241,7 +1241,7 @@ void UT_CMusEngMceSession::UT_CMusEngMceSession_StreamStateChangedWithSourceL()
     // EIdle, stream is not receiving RTP
     changedStream->iState = CMceMediaStream::EIdle;
     iLiveSession->CMusEngMceSession::StreamStateChanged( *changedStream );
-    EUNIT_ASSERT( iObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->iStreamIdleCalled );
     
     // EStreaming, stream is streaming
     changedStream->iState = CMceMediaStream::EStreaming;
@@ -1308,7 +1308,7 @@ void UT_CMusEngMceSession::UT_CMusEngMceSession_StreamStateChangedWithSinkL()
     // EIdle, stream is not receiving RTP
     changedStream->iState = CMceMediaStream::EIdle;
     iLiveSession->CMusEngMceSession::StreamStateChanged( *changedStream );
-    EUNIT_ASSERT( iObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->iStreamIdleCalled );
     
     // EStreaming, stream is streaming
     changedStream->iState = CMceMediaStream::EStreaming;

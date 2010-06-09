@@ -142,8 +142,9 @@ TInt CMusUiCallbackService::RunError( TInt aError )
     {
     MUS_LOG1( "mus: [MUSUI ]        CMusUiCallbackService::RunError [%d]",
                             aError );
+    iCallbackObserver.HandleAsyncError( aError );
                             
-    return iCallbackObserver.HandleAsyncError( aError );
+    return KErrNone;
     }
 
 

@@ -28,11 +28,13 @@
 
 // FORWARD DECLARATIONS
 class MMusEngLiveSessionObserver;
+class CMusEngOrientationHandler;
 
 class CMusEngLiveSession : public CMusEngMceOutSession
     {
     MUS_UNITTEST( UT_CMusEngOutSession )
     MUS_UNITTEST( UT_CMusEngLiveSession )
+    MUS_UNITTEST( UT_CMusEngOrientationHandler )
 
     public:
 
@@ -239,6 +241,10 @@ class CMusEngLiveSession : public CMusEngMceOutSession
         * Tells whether session is paused or not
         */
         IMPORT_C TBool IsPlayingL();
+        
+        void EnableDisplayL( TBool aEnable );
+        
+        void RefreshOrientationL();
 
 
     protected: // inherited from CMusEngMceOutSession
@@ -408,6 +414,8 @@ class CMusEngLiveSession : public CMusEngMceOutSession
         *
         */
         TInt iBigZoomStep;
+        
+        CMusEngOrientationHandler* iOrientationHandler;
         
     };
 

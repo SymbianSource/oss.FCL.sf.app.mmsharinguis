@@ -78,6 +78,8 @@ class MMusUiSharingObserver
         virtual void RefreshAudioRoutingToolbarButton() = 0;
         
         virtual void UpdateSessionTime( const TDesC& aSessionTime ) = 0;
+        
+        virtual void DismissMenuBar() = 0;
                                                     
     };
 

@@ -111,6 +111,20 @@ void CMusUiMmcMonitor::RunL()
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiMmcMonitor::RunL" );
     }
 
+// -------------------------------------------------------------------------
+//  If RunL() leaves,It should be handled here.
+// -------------------------------------------------------------------------
+//
+TInt CMusUiMmcMonitor::RunError( TInt aError )
+    {
+	MUS_LOG( "mus: [MUSUI ]  -> CMusUiMmcMonitor::RunError" );
+    // Nothing can be done here.
+    aError = KErrNone;
+
+    MUS_LOG( "mus: [MUSUI ]  <- CMusUiMmcMonitor::RunError" );
+    return aError;
+    }
+
 
 // -----------------------------------------------------------------------------
 //

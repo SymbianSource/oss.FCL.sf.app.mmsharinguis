@@ -388,7 +388,7 @@ void CMusUiResourceHandler::ConstructL()
     MultimediaSharingSettings::ResourceUsability( iCameraUsability ,
     											  iKeypadUsability,
     											  iVideoplayerUsability);
-    
+        
     // Read the value from cenrep and check whether camera and keypad
     // available dynamically.
     MusSettingsKeys::TAvailability camera,keypad;    
@@ -509,6 +509,32 @@ TBool CMusUiResourceHandler::IsCurrentlyAvailable(
             );
     }
 
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusUiResourceHandler::CheckInitialOrientationL(MultimediaSharing::TMusUseCase aUsecase )
+    {
+    MUS_LOG( "mus: [MUSUI ] -> CMusUiResourceHandler::CheckInitialOrientationL()" )
+    if ( aUsecase != MultimediaSharing::EMusLiveVideo &&
+         aUsecase != MultimediaSharing::EMusClipVideo &&
+         aUsecase != MultimediaSharing::EMusReceive )
+        {
+        return;   
+        }
+    
+    MusSettingsKeys::TUsability usability = ( aUsecase == MultimediaSharing::EMusLiveVideo ) ?
+        iCameraUsability : iVideoplayerUsability;
+    if ( usability == MusSettingsKeys::EUsabilityPortrait )
+        {
+        iObserver.SwitchOrientationL( CAknAppUiBase::EAppUiOrientationPortrait );
+        }
+    else if ( usability == MusSettingsKeys::EUsabilityLandscape )
+        {
+        iObserver.SwitchOrientationL( CAknAppUiBase::EAppUiOrientationLandscape );
+        }
+    MUS_LOG( "mus: [MUSUI ] <- CMusUiResourceHandler::CheckInitialOrientationL()" )
+    }
 
 
 

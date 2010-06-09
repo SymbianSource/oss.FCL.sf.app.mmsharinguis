@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  MUSSettingsPlugin implementation.
-*  Version     : %version: 36 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: be1sipx1#38 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -614,9 +614,16 @@ void CMusSettingsPlugin::SwitchOnOffValueL( TInt aValue )
                             TRAPD( error, iHandler->DisableProfileL() );
                             MUS_LOG1( "[MUSSET]   VS is off (err=%d)", error )
                             //activation disabled = true
-                            //to remove warning :)
-                            enabled = error != KErrNone ? ETrue : ETrue;
                             iModel->SetActivationItem( enabled );
+                            
+                            if ( error == KErrNone )
+                            	{
+								MUS_LOG( "[MUSSET]    Activation setting set off" )
+								//MusSettingsKeys::ENever = 2 can not be used anymore
+								//EActiveInHomeNetworks = 1 is used instead -> off
+								MultimediaSharingSettings::SetActivationSettingL(
+												MusSettingsKeys::EActiveInHomeNetworks );
+								}
                             }
                         else//currently disabled => enable
                             {
@@ -626,7 +633,14 @@ void CMusSettingsPlugin::SwitchOnOffValueL( TInt aValue )
                             enabled = error != KErrNone;
                             //activation disabled = false/true(if failed)
                             iModel->SetActivationItem( enabled );
-                            }
+
+                            if ( error == KErrNone )
+                            	{
+								MUS_LOG( "[MUSSET]    Activation setting set on" )
+								MultimediaSharingSettings::SetActivationSettingL(
+													MusSettingsKeys::EAlwaysActive );
+								}                            
+                            }             
                         }
                     }
                 }

@@ -434,43 +434,50 @@ void  CMusUiNaviMediaDecorator::LoadImagesL()
                      item,
                      EMbmMusuiiconsQgn_indi_video_forw,
                      EMbmMusuiiconsQgn_indi_video_forw_mask,
-                     parse );
+                     parse,
+                     EFalse );
 
     ConstructImageL( skin,
                      item,
                      EMbmMusuiiconsQgn_indi_video_pause,
                      EMbmMusuiiconsQgn_indi_video_pause_mask,
-                     parse );
+                     parse,
+                     EFalse );
 
     ConstructImageL( skin,
                      item,
                      EMbmMusuiiconsQgn_indi_video_play,
                      EMbmMusuiiconsQgn_indi_video_play_mask,
-                     parse );
+                     parse,
+                     ETrue );
 
     ConstructImageL( skin,
                      item,
                      EMbmMusuiiconsQgn_indi_video_record,
                      EMbmMusuiiconsQgn_indi_video_record_mask,
-                     parse );
+                     parse,
+                     ETrue );
 
     ConstructImageL( skin,
                      item,
                      EMbmMusuiiconsQgn_indi_video_record_not,
                      EMbmMusuiiconsQgn_indi_video_record_not_mask,
-                     parse );
+                     parse,
+                     ETrue );
 
     ConstructImageL( skin,
                      item,
                      EMbmMusuiiconsQgn_indi_video_rew,
                      EMbmMusuiiconsQgn_indi_video_rew_mask,
-                     parse );
+                     parse,
+                     EFalse );
 
     ConstructImageL( skin,
                      item,
                      EMbmMusuiiconsQgn_indi_video_stop,
                      EMbmMusuiiconsQgn_indi_video_stop_mask,
-                     parse );
+                     parse,
+                     EFalse );
 
     }
 
@@ -482,7 +489,8 @@ void  CMusUiNaviMediaDecorator::ConstructImageL( MAknsSkinInstance* aSkin,
                                                 const TAknsItemID& aId,
                                                 TInt aBitmapId,
                                                 TInt aMaskId,
-                                                TParse parse )
+                                                TParse parse,
+                                                TBool aIconHasOwnColor )
 
     {
     MUS_LOG( "mus: [MUSUI ] -> CMusUiNaviMediaDecorator::ConstructImageL()" );
@@ -490,16 +498,30 @@ void  CMusUiNaviMediaDecorator::ConstructImageL( MAknsSkinInstance* aSkin,
     CFbsBitmap* bitmap = NULL;
     CFbsBitmap* mask = NULL;
    
-    AknsUtils::CreateColorIconL(aSkin,
+    if (aIconHasOwnColor)
+        {
+   	    AknsUtils::CreateIconL(aSkin,
+                           aId,
+                           bitmap,
+                           mask,
+                           parse.FullName(),
+                           aBitmapId,
+                           aMaskId);
+
+  	    }
+    else
+        {
+        AknsUtils::CreateColorIconL(aSkin,
         		                aId,
         		                KAknsIIDQsnIconColors,
-        		                EAknsCIQsnIconColorsCG13,
+        		                EAknsCIQsnIconColorsCG7,
         		                bitmap,
-    							mask,
-    							parse.FullName(),
-    							aBitmapId,
-    							aMaskId,
-    							KRgbBlack);
+    							          mask,
+    							          parse.FullName(),
+    							          aBitmapId,
+    							          aMaskId,
+    							          KRgbBlack);
+        }
 
     AknIconUtils::SetSize( bitmap, iImageSize );
     AknIconUtils::SetSize( mask, iImageSize );

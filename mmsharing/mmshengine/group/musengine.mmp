@@ -46,6 +46,7 @@ SOURCE      	musengsessiondurationtimer.cpp
 SOURCE          musengclipsession.cpp
 SOURCE          musenguriparser.cpp
 SOURCE          musengmceutils.cpp
+SOURCE			musengorientationhandler.cpp
 
 // SIP API
 SOURCE		    mussipprofilehandler.cpp

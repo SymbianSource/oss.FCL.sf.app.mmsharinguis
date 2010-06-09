@@ -142,8 +142,6 @@ private:
     void PlayToneL();
 
     void StartLiveSharingL();
-    void ToggleIndicatorL();
-    TBool IsSubscriber() const;
     
         
 private: // data

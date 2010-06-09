@@ -124,6 +124,7 @@ class CMusEngTelephoneUtils : public CActive,
    		*
         */
         void RunL();
+        TInt RunError( TInt aError );
         
 		/**
    		* Cancels outstanding request to phone client

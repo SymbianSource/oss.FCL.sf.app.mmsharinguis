@@ -161,6 +161,11 @@ class CMusEngSession : public CBase,
         * and if needed also sent to network.
         */
         virtual void UnmuteL() = 0;
+        
+        /**
+         *
+         */
+        virtual void RefreshOrientationL() = 0;
 
 
 	protected: // INTERNAL 

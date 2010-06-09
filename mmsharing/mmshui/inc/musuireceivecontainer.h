@@ -95,6 +95,8 @@ public:	// new functions
  
 
     void SetFullScreen( TBool aFullScreen, TRect aRect );
+    
+    void UpdatePointerCapture();
 
 
 private: // from base class CCoeControl

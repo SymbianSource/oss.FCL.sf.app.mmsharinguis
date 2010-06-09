@@ -1025,6 +1025,11 @@ void CMusUiClipSharingController::StreamIdle()
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiClipSharingController::StreamIdle" );
     iClipObserver.InvalidVideoFrame( ETrue );
+    TRAPD( error, StreamIdleL() );
+    if ( error != KErrNone )
+        {
+        iEventObserver.HandleError( error );
+        }
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiClipSharingController::StreamIdle" );
     }
 
@@ -1107,6 +1112,21 @@ void CMusUiClipSharingController::StreamStreamingL()
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiClipSharingController::StreamStreamingL" );
     }
 
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusUiClipSharingController::StreamIdleL()
+    {
+    MUS_LOG( "mus: [MUSUI ]  -> CMusUiClipSharingController::StreamIdleL" );
+    
+    if ( ConnectionEstablished() )
+        {    
+        iEventObserver.ShowNaviPaneIconL( EMusUiNaviIconPause );
+        }
+        
+    MUS_LOG( "mus: [MUSUI ]  <- CMusUiClipSharingController::StreamIdleL" );
+    }
 
 // -----------------------------------------------------------------------------
 //

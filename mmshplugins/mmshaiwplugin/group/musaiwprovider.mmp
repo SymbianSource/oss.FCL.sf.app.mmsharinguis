@@ -52,7 +52,6 @@ APP_LAYER_SYSTEMINCLUDE
 
 // MultimediaSharing libraries
 LIBRARY                 musmanagerclient.lib
-LIBRARY                 musindicator.lib
 
 // SymbianOS/Series60 libraries
 LIBRARY                 aknnotify.lib 

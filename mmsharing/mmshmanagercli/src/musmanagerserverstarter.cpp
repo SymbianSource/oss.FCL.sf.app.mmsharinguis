@@ -59,8 +59,15 @@ TBool MusManagerServerStarter::Started()
     TFullName name;
     if (findServer.Next(name) == KErrNone)
         {
-    MUS_LOG( "mus: [MUSCLI]  <- MusManagerServerStarter::Start()" );
-        return ETrue; // Server already running
+        MUS_LOG( "mus: [MUSCLI]  <- MusManagerServerStarter::Start()" );
+    
+        // Server may be running but already doing destruction, report
+        // it as not running in such case.
+        RSemaphore closingSemaphore;
+        TBool closingCurrently( 
+            closingSemaphore.OpenGlobal( KMusManagerServerClosingSemaphoreName ) == KErrNone );
+        closingSemaphore.Close();
+        return !closingCurrently;
         }
     MUS_LOG( "mus: [MUSCLI]  <- MusManagerServerStarter::Start()" );
     return EFalse;
@@ -73,6 +80,17 @@ TBool MusManagerServerStarter::Started()
 TInt MusManagerServerStarter::CreateServerProcess( RSemaphore& aSemaphore )
     {
     TInt err = KErrNone;
+    
+    RSemaphore closingSemaphore;
+    if ( closingSemaphore.OpenGlobal( KMusManagerServerClosingSemaphoreName ) == KErrNone )
+        {
+        MUS_LOG( "mus: [MUSCLI]     Server is currently closing, wait" );
+        // Don't wait forever if server is somehow horribly jammed
+        const TInt KMusServerClosingWaitTimeoutInMicrosecs = 20000000; // 20 secs
+        closingSemaphore.Wait(KMusServerClosingWaitTimeoutInMicrosecs);
+        }
+    closingSemaphore.Close();
+    
     const TUidType serverUid( KNullUid, KNullUid, KServerUid3 );
     RProcess server;
     err = server.Create( KMusManagerServerName, KNullDesC() ,serverUid );

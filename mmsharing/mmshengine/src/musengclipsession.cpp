@@ -362,7 +362,7 @@ EXPORT_C void CMusEngClipSession::PlayL()
                      iFRWDStartTime.Int64() == 0, 
                      User::Leave( KErrNotReady ) );                     
 
-    
+    iPause = EFalse;
     CMceFileSource* file = MusEngMceUtils::GetFileSourceL( *iSession );
 
     if ( !file->IsEnabled() )
@@ -395,6 +395,7 @@ EXPORT_C void CMusEngClipSession::PauseL()
                      User::Leave( KErrNotReady ) );  
 
     
+    iPause = ETrue;
     CMceFileSource* file = MusEngMceUtils::GetFileSourceL( *iSession );
     
     if ( file->IsEnabled() )
@@ -1107,7 +1108,8 @@ TBool CMusEngClipSession::IsRewindFromEnd()
             TRAP( error, isRewindFromEnd = 
                         ( position.Int64() != 0 && 
                           !filesource->IsEnabled() && 
-                          videoOut->State() == CMceMediaStream::EDisabled ) )
+                          videoOut->State() == CMceMediaStream::EDisabled &&
+                          !iPause ) )
             if(  isRewindFromEnd )
                 {
                 MUS_LOG( "mus: [ENGINE]     Rewind from end of clip" )

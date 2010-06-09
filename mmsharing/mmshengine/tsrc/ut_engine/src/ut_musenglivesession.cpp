@@ -1036,7 +1036,7 @@ void UT_CMusEngLiveSession::UT_StreamStateChangedL()
     changedStream->iState = CMceMediaStream::EIdle;
     static_cast<MMceStreamObserver*>(iLiveSession)->StreamStateChanged( 
                                                             *changedStream );
-    EUNIT_ASSERT( iObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->iStreamIdleCalled );
     
     // EStreaming, stream is streaming
     changedStream->iState = CMceMediaStream::EStreaming;
@@ -1115,7 +1115,7 @@ void UT_CMusEngLiveSession::UT_StreamStateChangedWithSourceL()
     changedStream->iState = CMceMediaStream::EIdle;
     static_cast<MMceStreamObserver*>(iLiveSession)->StreamStateChanged( 
                             *changedStream, *changedSource );
-    EUNIT_ASSERT( iObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->iStreamIdleCalled );
     
     // EStreaming, stream is streaming
     changedStream->iState = CMceMediaStream::EStreaming;
@@ -1239,7 +1239,7 @@ void UT_CMusEngLiveSession::UT_StreamStateChangedWithSinkL()
     // EIdle, stream is not receiving RTP
     changedStream->iState = CMceMediaStream::EIdle;
     iLiveSession->StreamStateChanged( *changedStream, *changedSink );
-    EUNIT_ASSERT( iObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->iStreamIdleCalled );
     
     // EStreaming, stream is streaming
     changedStream->iState = CMceMediaStream::EStreaming;

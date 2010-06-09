@@ -250,6 +250,7 @@ class CMusEngClipSession : public CMusEngMceOutSession
         TFileName iTranscodingDestFileName;
         TBool iRewindedToBeginning;
         TBool iTranscodingRequiredDueMissingOptions;
+        TBool iPause;
         
     };
 

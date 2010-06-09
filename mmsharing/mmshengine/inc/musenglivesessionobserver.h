@@ -36,6 +36,11 @@ class MMusEngLiveSessionObserver
     	* Indicates that disk has run out of space during recording.
     	*/
     	virtual void DiskFull() = 0;
+    	
+    	/**
+    	 * Orientation refresh ended.
+    	 */
+    	virtual void OrientationRefreshEnded() = 0;
 		
     };
 

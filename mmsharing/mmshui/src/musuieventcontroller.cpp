@@ -65,7 +65,6 @@ using namespace NMusSessionApi;
 CMusUiEventController::~CMusUiEventController()
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiEventController::~CMusUiEventController" );
-    delete iResourceHandler;
     delete iStatusPropertyWatch;    
     delete iContactName;
     delete iTelNumber;
@@ -140,7 +139,8 @@ void CMusUiEventController::ConstructL()
 
     iMmcMonitor = CMusUiMmcMonitor::NewL( *this );
 
-    iResourceHandler = CMusUiResourceHandler::NewL( iEventObserver );
+    iResourceHandler = iEventObserver.ResourceHandler();
+    __ASSERT_ALWAYS( iResourceHandler, User::Leave( KErrNotFound ) );
     
     //Mic mute status property
     iMicMuteStatusPropertyWatch = CMusUiPropertyWatch::NewL(
@@ -603,6 +603,8 @@ void CMusUiEventController::ExitProcedureL( TBool aUserAcceptance )
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiEventController::ExitProcedureL" );
     
+    iSharingObserver.DismissMenuBar();
+    
     switch ( iShutdownState )
         {
         case EMusUiShutdownStarted: 
@@ -692,6 +694,11 @@ void CMusUiEventController::SetConnectionInitialized(
         aConnectionInitialized );
     
     iConnectionInitialized = aConnectionInitialized;
+    
+    if ( !iForeground && !ExitOccured() )
+        {
+        TRAP_IGNORE( EnableDisplayL(EFalse) )
+        }
     }
     
 // -----------------------------------------------------------------------------
@@ -847,6 +854,14 @@ void CMusUiEventController::HandleForegroundEventL( TBool aForeground )
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiEventController::HandleForegroundEventL" );
     }
 
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+TBool CMusUiEventController::IsForeground() const
+    {
+    return iForeground;
+    }
 
 // -----------------------------------------------------------------------------
 //

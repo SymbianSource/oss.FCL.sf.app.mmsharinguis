@@ -116,15 +116,29 @@ void CMusUiActiveTimer::DoCancel()
 void CMusUiActiveTimer::RunL()
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiActiveTimer::RunL" );
-    if (iStatus == KErrNone)
+    if (iObserver && iStatus == KErrNone)
         {
         iObserver->TimerComplete( this );
         }
     else
         {
-        User::Leave(iStatus.Int());
+        User::LeaveIfError(iStatus.Int());
         }
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiActiveTimer::RunL" );
+    }
+
+// -------------------------------------------------------------------------
+//  If RunL() leaves,It should be handled here.
+// -------------------------------------------------------------------------
+//
+TInt CMusUiActiveTimer::RunError( TInt aError )
+    {
+	MUS_LOG( "mus: [MUSUI ]  -> CMusUiActiveTimer::RunError" );
+    // Nothing can be done here.
+    aError = KErrNone;
+
+    MUS_LOG( "mus: [MUSUI ]  <- CMusUiActiveTimer::RunError" );
+    return aError;
     }
 
 

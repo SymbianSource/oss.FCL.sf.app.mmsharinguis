@@ -31,6 +31,7 @@
 #include "mussettingskeys.h"
 #include "muslogger.h" // debug logging
 #include "musuigeneralview.h"
+#include "musuiactivetimer.h"
 
 #include <musui.rsg>
 #include <avkon.hrh>
@@ -41,8 +42,8 @@
 using namespace NMusResourceApi;
 using namespace MusSettingsKeys;
 
+const TInt KMusUiPauseResumeGuardPeriod = 500000;
 
-const TInt KMusUiIntervalToPlay = 5000000;
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -74,6 +75,7 @@ CMusUiLiveSharingController::~CMusUiLiveSharingController()
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiLiveSharingController::~CMusUiLiveSharingController" );
     delete iSession;
+    delete iPauseResumeGuardTimer;
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiLiveSharingController::~CMusUiLiveSharingController" );
     }
 
@@ -122,6 +124,8 @@ void CMusUiLiveSharingController::ConstructL( const TRect& aRect )
         {
         iSession->SetSupportedVideoCodecListL( *iVideoCodec );
         }
+    
+    iPauseResumeGuardTimer = CMusUiActiveTimer::NewL( NULL );
         
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiLiveSharingController::ConstructL" );
     }
@@ -151,34 +155,15 @@ void CMusUiLiveSharingController::PlayL()
 void CMusUiLiveSharingController::RefreshCameraOrientationL()
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiLiveSharingController::RefreshCameraOrientationL" );
-    if ( IsPlayingL() )
-         {
-         MUS_LOG( "mus: [MUSUI ]  -> Playing, pause/stop to restart camera" );
-         TTimeIntervalMicroSeconds32 interval( KMusUiIntervalToPlay ); 
-         PauseL();
-         EnableDisplayL(false);
-         EnableDisplayL(true);
-         PlayL();
-         } 
-     else
-         {
-         MUS_LOG( "mus: [MUSUI ]  -> Not Playing, try display to restart camera");
-         if ( IsDisplayEnabledL() )
-             {
-             //Disabling of display will cause disabling of viewfinder and in its 
-             //turn releasing of camera, enabling of display will recreate a camera
-             //with new orientation
-             MUS_LOG( "mus: [MUSUI ]  -> display is enabled, disable/enable it");
-             EnableDisplayL(false);
-             EnableDisplayL(true);
-             }
-         else
-             {
-             MUS_LOG( "mus: [MUSUI ]  -> Not refreshing ");
-             }
-         }
+
+    if ( EngineSession() ){
+        EngineSession()->RefreshOrientationL();
+    }
+    
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiLiveSharingController::RefreshCameraOrientationL" );
     }
+
+// -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
@@ -318,18 +303,14 @@ void CMusUiLiveSharingController::OfferToolbarEventL( TInt aCommand )
         case EMusuiCmdToolbarPauseLive:
             {
             HandleCommandL( EMusuiCmdViewPause );
-            iSharingObserver.ReplaceToolbarCommand( EMusuiCmdToolbarPauseLive,
-                                                    EMusuiCmdToolbarUnPauseLive,
-                                                    ETrue );
+            HandlePauseResumeInToolbar();
             break;
             }
             
         case EMusuiCmdToolbarUnPauseLive:
             {
             HandleCommandL( EMusuiCmdViewContinue );
-            iSharingObserver.ReplaceToolbarCommand( EMusuiCmdToolbarUnPauseLive,
-                                                    EMusuiCmdToolbarPauseLive,
-                                                    ETrue );
+            HandlePauseResumeInToolbar();
             break;
             }
         case EMusuiCmdToolbarZoom:
@@ -393,13 +374,12 @@ void CMusUiLiveSharingController::HandleCommandL( TInt aCommand )
         {
         case EMusuiCmdViewPause:
             {            
-            PauseL();
-            iEventObserver.ShowNaviPaneIconL( EMusUiNaviIconPause );
+            UserInitiatedCameraStateChangeL(EFalse);
             break;
             }
         case EMusuiCmdViewContinue:
             {
-            PlayL();
+            UserInitiatedCameraStateChangeL(ETrue);
             break;
             }
 
@@ -770,7 +750,17 @@ void CMusUiLiveSharingController::DiskFull()
     TRAP_IGNORE( MusUiDialogUtil::ShowGlobalErrorDialogL( R_MUS_VIEW_NOTE_MEMORY_LOW ) ) );
     iDiskFull = ETrue;
     }
-    
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusUiLiveSharingController::OrientationRefreshEnded()  
+    {
+    MUS_LOG( "mus: [MUSUI ]  -> CMusUiLiveSharingController::OrientationRefreshEnded" );
+    iLiveObserver.DoRefreshView();
+    MUS_LOG( "mus: [MUSUI ]  <- CMusUiLiveSharingController::OrientationRefreshEnded" );
+    }
     
 // -----------------------------------------------------------------------------
 //
@@ -932,40 +922,6 @@ void CMusUiLiveSharingController::InactivityTimeout()
     MUS_LOG( "mus: [MUSUI ] <- CMusUiLiveSharingController::InactivityTimeout" );
     }
 
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void CMusUiLiveSharingController::AsyncRefreshView()
-    {
-    TRAP_IGNORE( iCallbackService->AsyncEventL( EMusUiAsyncRefreshView ) );
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void CMusUiLiveSharingController::HandleAsyncEventL( TMusUiAsyncEvent aEventId )
-    {
-    MUS_LOG( "mus: [MUSUI ]  -> CMusUiLiveSharingController::HandleAsyncEventL" );
-    switch ( aEventId )
-        {
-        case EMusUiAsyncRefreshView:
-            {
-            iLiveObserver.DoRefreshView();
-            break;
-            }
-        default:
-            {
-            // Not live sharing specific, let the base class handle
-            CMusUiSendController::HandleAsyncEventL( aEventId );
-            }
-        }
-    MUS_LOG( "mus: [MUSUI ]  <- CMusUiLiveSharingController::HandleAsyncEventL" );
-    
-    }
-
 // -----------------------------------------------------------------------------
 // Determines whether Session established or not
 // -----------------------------------------------------------------------------
@@ -974,6 +930,59 @@ TBool CMusUiLiveSharingController::IsSessionEstablished()
 	{
 	return iSessionEstablished;
 	}
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
+void CMusUiLiveSharingController::HandlePauseResumeInToolbar()
+    {
+    TBool isPlaying( EFalse );
+    TRAP_IGNORE( isPlaying = IsPlayingL() )
+    if ( isPlaying )
+        {
+        iSharingObserver.ReplaceToolbarCommand( EMusuiCmdToolbarUnPauseLive,
+                                                EMusuiCmdToolbarPauseLive,
+                                                ETrue );
+        }
+    else
+        {
+        iSharingObserver.ReplaceToolbarCommand( EMusuiCmdToolbarPauseLive,
+                                                EMusuiCmdToolbarUnPauseLive,
+                                                ETrue );
+        }
+    }
+
+// -----------------------------------------------------------------------------
+// Workaround for problem at lower level (encoder side) which causes crash
+// if several sequential pause/resumes are done too rapidly. Discard state change
+// attempt if it occurs too quickly after previous state change.
+// -----------------------------------------------------------------------------
+//
+void CMusUiLiveSharingController::UserInitiatedCameraStateChangeL( TBool aEnable )
+    {
+    MUS_LOG1( "mus: [MUSUI ]  -> CMusUiLiveSharingController::UserInitiatedCameraStateChangeL, enable:", 
+              aEnable );
+    
+    if ( iPauseResumeGuardTimer->IsActive() ){
+        MUS_LOG( "mus: [MUSUI ]  <- State change ignored as guard timer is running!" );
+        return;
+    }
+    
+    if ( aEnable )
+        {
+        PlayL();
+        }
+    else
+        {
+        PauseL();
+        }
+    
+    iPauseResumeGuardTimer->After( KMusUiPauseResumeGuardPeriod );
+    
+    MUS_LOG( "mus: [MUSUI ]  <- CMusUiLiveSharingController::UserInitiatedCameraStateChangeL" );
+    }
+
 
 // End of file
 

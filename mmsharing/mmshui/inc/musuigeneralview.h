@@ -78,7 +78,7 @@ public: // new functions
      * to landscape or vice versa.  This is a virtual function that must be 
      * implemented by all concrete MUS UI views.
      */
-    virtual void RefreshView( TBool aLayoutChange = EFalse ) = 0;
+    virtual void RefreshView() = 0;
     
     virtual void HandleToolbarCommandL( TInt aCommand ) = 0;
     
@@ -166,7 +166,9 @@ public: // from MMusUiSharingObserver
     */
     virtual void RefreshAudioRoutingToolbarButton();
     
-    virtual void UpdateSessionTime( const TDesC& aSessionTime );                                  
+    virtual void UpdateSessionTime( const TDesC& aSessionTime );  
+        
+    virtual void DismissMenuBar();
                                         
                                         
 public: // from base class CAknView
@@ -252,6 +254,8 @@ protected: // data
         
     TBool iToolbarItemSelected;
     
+    CMusUiBackgroundViewContainer* iBackgroundContainer; // skin background drawer
+    
 private: // data
     
     CAknIncallBubble* iIncallBubble;
@@ -263,8 +267,6 @@ private: // data
     TMusFgBgEventType iCurrentFgBgEvent;
     
     TBool iCurrentExitSetting;
-    
-    CMusUiBackgroundViewContainer* iBackgroundContainer; // skin background drawer
     
     };
 

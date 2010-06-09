@@ -128,7 +128,8 @@ class CMusUiNaviMediaDecorator : public CCoeControl,
                                                 const TAknsItemID& aId,
                                                 TInt aBitmapId,
                                                 TInt aMaskId,
-                                                TParse parse );
+                                                TParse parse,
+                                                TBool aIconHasOwnColor = ETrue);
 
 
 	private: // DATA

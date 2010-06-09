@@ -28,6 +28,7 @@
 
 class MMusUiLiveSharingObserver;
 class CMusEngLiveSession;
+class CMusUiActiveTimer;
 
 /**
  *
@@ -84,8 +85,6 @@ public: // from CMusUiSendController
     virtual void InviteL( const TDesC& aRecipient );
     
     virtual void HandleSliderValueChangeL( TInt aNewLevel );
-
-    virtual void HandleAsyncEventL( TMusUiAsyncEvent aEventId );
     
 public:	// new functions
     
@@ -141,7 +140,8 @@ private:	// new functions:
 public: // From MMusEngLiveSessionObserver
 
 	void DiskFull();
-
+	
+    void OrientationRefreshEnded();
 	    
 public:	// from MMusEngSessionObserver
 
@@ -160,8 +160,10 @@ public:	// from MMusEngSessionObserver
 	void SessionTimeChanged( const TTimeIntervalSeconds& aSeconds );
 	
     void InactivityTimeout();
-
-    void AsyncRefreshView();
+    
+    void HandlePauseResumeInToolbar();
+    
+    void UserInitiatedCameraStateChangeL(TBool aEnable);
 
 private:
 
@@ -180,6 +182,8 @@ private:
     TBool iDiskFull;
     
     TBool iSessionEstablished;
+    
+    CMusUiActiveTimer* iPauseResumeGuardTimer;
 	
     };
 

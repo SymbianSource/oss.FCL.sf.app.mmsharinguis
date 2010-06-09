@@ -284,6 +284,11 @@ public:	// New functions
     /**
     * 
     */
+    virtual TBool IsForeground() const;
+    
+    /**
+    * 
+    */
     virtual void OfferToolbarEventL( TInt aCommand );
     
     /**

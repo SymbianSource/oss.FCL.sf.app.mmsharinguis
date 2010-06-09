@@ -27,6 +27,8 @@
 #include <aknappui.h>
 #include <cntdef.h>
 
+class CMusUiResourceHandler;
+
 class MMusUiEventObserver
 	{
 	
@@ -66,6 +68,8 @@ public:
     virtual TBool OrientationCanBeChanged() const = 0;
     
     virtual TInt GetUiVolumeValue() = 0;
+    
+    virtual CMusUiResourceHandler* ResourceHandler() = 0;
 	};
 
 #endif // MUSUIEVENTOBSERVER_H

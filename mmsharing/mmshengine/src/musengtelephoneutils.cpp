@@ -100,8 +100,6 @@ TBool CMusEngTelephoneUtils::AudioRoutingCanBeChanged()
     TBool retValue = ( iTelephonyAudioRouting->Output() !=
                        CTelephonyAudioRouting::EWiredAudioAccessory &&
                        iTelephonyAudioRouting->Output() !=
-                       CTelephonyAudioRouting::EBTAudioAccessory &&
-                       iTelephonyAudioRouting->Output() !=
                        CTelephonyAudioRouting::ETTY );
     
     MUS_LOG1( "mus: [ENGINE]  <- CMusEngTelephoneUtils::AudioRoutingCanBeChanged: %d",
@@ -123,7 +121,9 @@ void CMusEngTelephoneUtils::LoudspeakerL( TBool aEnable, TBool aShowDialog )
     if ( aEnable )
         {
         if ( iTelephonyAudioRouting->Output() == 
-             CTelephonyAudioRouting::EHandset )
+             CTelephonyAudioRouting::EHandset || 
+             iTelephonyAudioRouting->Output() == 
+             CTelephonyAudioRouting::EBTAudioAccessory )  
             {
             // Disable note shown by audiorouting api as it causes
             // application going to background for a while. Instead, display
@@ -302,6 +302,22 @@ void CMusEngTelephoneUtils::RunL()
              iStatus.Int() )
 
     MUS_LOG( "mus: [ENGINE]  <- CMusEngTelephoneUtils::RunL()" )
+    }
+
+// -------------------------------------------------------------------------
+//  If RunL() leaves,It should be handled here.
+// -------------------------------------------------------------------------
+//
+TInt CMusEngTelephoneUtils::RunError( TInt aError )
+    {
+    MUS_LOG1( "mus: [ENGINE]     -> CMusEngTelephoneUtils::\
+              RunError() return #%d", aError )
+    
+    // Nothing can be done here.
+    aError = KErrNone;
+
+    MUS_LOG( "mus: [ENGINE]  <- CMusEngTelephoneUtils::RunError()" )
+    return aError;
     }
 
 

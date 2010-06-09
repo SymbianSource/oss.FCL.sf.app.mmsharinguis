@@ -270,7 +270,14 @@ void CMusEngObserverStub::DiskFull()
     iDiskFullCalled = ETrue;
     }
 
-
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
+void CMusEngObserverStub::OrientationRefreshEnded()
+    {
+    iOrientationRefreshEndedCalled = ETrue;    
+    }
 
 
 // ---- FUNCTIONS OF MMusEngClipSessionObserver ----------------------------------
@@ -504,6 +511,7 @@ void CMusEngObserverStub::Reset()
     iAudioRouteChangeAllowed = ETrue;
     iVolume = 0;
     iDueUnknowCapas = EFalse;
+    iOrientationRefreshEndedCalled = EFalse;
     }
 
 

@@ -153,17 +153,7 @@ void UT_CMusIndicatorApi::UT_CMusIndicatorApi_RunLL()
     iIndicatorApi->Cancel();
     iIndicatorApi->iStatus = KErrNone;
     iIndicatorApi->RunL();
-    EUNIT_ASSERT( iStartLiveSharingLCalled );    
-    
-    EUNIT_ASSERT( !iIndicatorApi->IsSubscriber() );
-    
-    iIndicatorApi->iObserver = NULL;
-    EUNIT_ASSERT( iIndicatorApi->IsSubscriber() );
-    iIndicatorApi->Indicator( ETrue );
-    
-    iIndicatorApi->Cancel();
-    
-    iIndicatorApi->RunL();
+    EUNIT_ASSERT( iStartLiveSharingLCalled ); 
     
     }
 
