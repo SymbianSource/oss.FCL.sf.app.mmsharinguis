@@ -1,0 +1,8 @@
+EXPORTS
+	_ZN13LcViewManager16terminateSessionEv @ 1 NONAME
+	_ZN13LcViewManagerC1ERK7QStringS2_ @ 2 NONAME
+	_ZN13LcViewManagerC2ERK7QStringS2_ @ 3 NONAME
+	_ZN13LcViewManagerD0Ev @ 4 NONAME
+	_ZN13LcViewManagerD1Ev @ 5 NONAME
+	_ZN13LcViewManagerD2Ev @ 6 NONAME
+

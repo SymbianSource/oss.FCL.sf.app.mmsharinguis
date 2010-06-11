@@ -1,0 +1,28 @@
+/*
+* Copyright (c) 2005-2006 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:  enumerations and UID constants
+*
+*/
+
+
+#ifndef MUSSIPCRPLUGIN_HRH
+#define MUSSIPCRPLUGIN_HRH
+
+// the uid of the the binary
+#define KMusSipCrPluginImplementationUid       0x1028238A
+
+// the uid of sip plugin type
+#define KSipClientInterfaceUid                  0x102010DD
+
+#endif // MUSSIPCRPLUGIN_HRH

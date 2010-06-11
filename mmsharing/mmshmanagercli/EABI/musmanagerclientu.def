@@ -1,0 +1,18 @@
+EXPORTS
+	_ZN11CMusManager13AvailabilityLEv @ 1 NONAME
+	_ZN11CMusManager14HandleCommandLEN17MultimediaSharing12TCommandTypeE @ 2 NONAME
+	_ZN11CMusManager16StopApplicationLEv @ 3 NONAME
+	_ZN11CMusManager17HandleSipRequestLENS_12TRequestTypeE @ 4 NONAME
+	_ZN11CMusManager17StartApplicationLEN17MultimediaSharing11TMusUseCaseE @ 5 NONAME
+	_ZN11CMusManager20ExamineAvailabilityLEv @ 6 NONAME
+	_ZN11CMusManager4NewLEv @ 7 NONAME
+	_ZN11CMusManager5NewLCEv @ 8 NONAME
+	_ZTI11CMusManager @ 9 NONAME ; #<TI>#
+	_ZTI15CMusManagerImpl @ 10 NONAME ; #<TI>#
+	_ZTV11CMusManager @ 11 NONAME ; #<VT>#
+	_ZTV15CMusManagerImpl @ 12 NONAME ; #<VT>#
+	_ZN11CMusManager4NewLEP24MMusAvailabilityObserver @ 13 NONAME
+	_ZN11CMusManager5NewLCEP24MMusAvailabilityObserver @ 14 NONAME
+	_ZTIN15CMusManagerImpl23CMusManagerImplListenerE @ 15 NONAME ; #<TI>#
+	_ZTVN15CMusManagerImpl23CMusManagerImplListenerE @ 16 NONAME ; #<VT>#
+

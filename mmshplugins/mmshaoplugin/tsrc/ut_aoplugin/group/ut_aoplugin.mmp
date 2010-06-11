@@ -1,0 +1,104 @@
+/*
+* Copyright (c) 2004 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+
+
+#include <platform_paths.hrh>
+#include<eunitcaps.h>
+
+TARGET                  ut_aoplugin.dll
+TARGETTYPE              dll
+EPOCALLOWDLLDATA
+TARGETPATH              /DigiaEUnit/Tests
+UID                     0x1000af5a 0x01700a21
+
+CAPABILITY      EUNIT_CAPS
+VENDORID                VID_DEFAULT
+
+MACRO                   UNIT_TESTING
+SOURCEPATH              ../src
+SOURCE                  ut_aopluginDllMain.cpp
+SOURCE                  ut_musaoplugin.cpp
+SOURCE                  ut_muspropertymonitor.cpp
+SOURCE                  ut_muspttcallmonitor.cpp
+SOURCE                  ut_muscallconferencemonitor.cpp
+SOURCE                  ut_muscallstatusmonitor.cpp
+SOURCE                  ut_muscalleventmonitor.cpp
+SOURCE                  ut_muscallmonitor.cpp
+SOURCE                  ut_mustsypropertymonitor.cpp
+SOURCE                  ut_musresourcefinderutil.cpp
+SOURCE                  ut_muscallconferenceeventmonitor.cpp
+SOURCE                  ut_muscallmonitorbase.cpp
+SOURCE                  ut_musfactorysettings.cpp
+
+// STUBs for telephonyservice and serviceprovidersettings
+SOURCEPATH              ../Stubs/src
+SOURCE                  ccallinfoiter_stub.cpp 
+SOURCE                  ccallinformation_stub.cpp 
+SOURCE                  spentry_stub.cpp 
+SOURCE                  spsettings_stub.cpp
+
+
+SOURCEPATH              ../../../src
+SOURCE                  musaopluginmain.cpp
+SOURCE                  musaoplugin.cpp
+SOURCE                  muspropertymonitor.cpp
+SOURCE                  muspttcallmonitor.cpp
+SOURCE                  mustsypropertymonitor.cpp
+SOURCE                  muscallmonitor.cpp
+SOURCE                  muscallmonitorbase.cpp
+SOURCE                  muscalleventmonitor.cpp
+SOURCE                  muscallstatusmonitor.cpp
+SOURCE                  muscallconferencemonitor.cpp
+SOURCE                  muscallconferenceeventmonitor.cpp
+SOURCE                  musvoipcallmonitor.cpp
+
+SOURCEPATH              ../../../../../tsrc/etelstub/src
+SOURCE                  etelstub.cpp
+SOURCEPATH              ../../../../../tsrc/propertystub/src
+SOURCE                  e32property.cpp
+SOURCEPATH              ../../../../../tsrc/centralrepositorystub/src
+SOURCE                  centralrepositorystub.cpp
+SOURCEPATH              ../../../../../tsrc/musmanagerstub/src
+SOURCE    				musmanagerstub.cpp
+
+USERINCLUDE               ../inc
+USERINCLUDE               ../../../inc
+USERINCLUDE               ../Stubs/inc
+USERINCLUDE               ../../../../../tsrc/propertystub/inc
+USERINCLUDE               ../../../../../tsrc/etelstub/inc
+USERINCLUDE               ../../../../../tsrc/centralrepositorystub/inc
+USERINCLUDE               ../../../../../tsrc/musmanagerstub/inc
+
+SYSTEMINCLUDE             ../../../inc
+SYSTEMINCLUDE             ../../../../../inc
+SYSTEMINCLUDE             ../../../../../tsrc/etelstub/inc
+SYSTEMINCLUDE             ../../../../../tsrc/propertystub/inc
+SYSTEMINCLUDE             ../../../../../tsrc/centralrepositorystub/inc
+SYSTEMINCLUDE		      ../../../../../tsrc/musmanagerstub/inc
+SYSTEMINCLUDE             /epoc32/include/platform/digia/eunit
+
+APP_LAYER_SYSTEMINCLUDE
+
+LIBRARY                 connmon.lib           
+LIBRARY                 ecom.lib                
+LIBRARY                 eunit.lib
+LIBRARY                 euser.lib 
+LIBRARY                 bafl.lib
+LIBRARY                 efsrv.lib
+LIBRARY                 charconv.lib
+
+// End of file

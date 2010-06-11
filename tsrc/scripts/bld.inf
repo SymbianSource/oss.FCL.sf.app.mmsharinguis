@@ -1,0 +1,42 @@
+/*
+* Copyright (c) 2005-2006 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:  project specification
+*
+*/
+
+
+
+PRJ_PLATFORMS
+DEFAULT
+
+PRJ_MMPFILES
+../../src/internal/stubs/mceclientstub/group/mceclientstub.mmp
+../../src/internal/stubs/musmanagerstub/group/musmanagerstub.mmp
+
+PRJ_TESTMMPFILES
+
+../../src/availability/internal/test/group/ut_availability.mmp
+../../src/plugins/aoplugin/internal/test/group/ut_aoplugin.mmp
+../../src/plugins/sipcrplugin/internal/test/group/ut_sipcrplugin.mmp
+../../src/plugins/aiwplugin/internal/test/group/ut_musaiwprovider.mmp
+../../src/plugins/wpadapterplugin/internal/test/group/ut_muswpadapter.mmp
+../../src/manager/client/internal/test/group/ut_musmanagerclient.mmp
+../../src/manager/server/internal/test/group/ut_musmanagerserver.mmp
+../../src/engine/internal/test/group/ut_musengine.mmp
+../../src/common/internal/test/group/ut_muscommon.mmp
+../../src/manager/indicator/internal/test/group/ut_musindicator.mmp
+
+
+
+

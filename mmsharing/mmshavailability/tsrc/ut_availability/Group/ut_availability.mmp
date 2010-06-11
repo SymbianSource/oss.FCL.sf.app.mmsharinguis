@@ -1,0 +1,209 @@
+/*
+* Copyright (c) 2004 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+
+#include <platform_paths.hrh>
+#include <eunitcaps.h>
+
+TARGET          ut_availability.dll
+TARGETTYPE      dll
+EPOCALLOWDLLDATA
+TARGETPATH      /DigiaEUnit/Tests
+UID             0x1000af5a 0x01700000
+
+MACRO                   UNIT_TESTING
+//epocallowdlldata 
+
+
+CAPABILITY              EUNIT_CAPS
+VENDORID                VID_DEFAULT
+
+// Test sources
+
+SOURCEPATH              ../src
+SOURCE                  UT_availabilityDllMain.cpp
+SOURCE                  UT_CMusAvaDefaultImp.cpp
+SOURCE                  UT_CMusAvaContactAvailability.cpp
+SOURCE                  UT_CMusAvaConnectionMonitor.cpp
+SOURCE                  UT_CMusAvaSip.cpp
+SOURCE                  UT_CMusAvaSipObserver.cpp
+SOURCE                  UT_CMusAvaSipConnectionObserver.cpp
+SOURCE                  UT_CMusAvaRegisterAvailability.cpp
+SOURCE                  UT_CMusAvaInviteResponder.cpp
+SOURCE                  UT_CMusAvaSharedObject.cpp
+SOURCE                  UT_CMusAvaConnectionAvailability.cpp
+SOURCE                  UT_CMusAvaNetworkRegistrationStatus.cpp
+SOURCE                  UT_CMusAvaNetworkModeStatus.cpp
+SOURCE                  UT_CMusAvaInviteHandler.cpp
+SOURCE                  UT_CMusAvaOptionHandler.cpp
+SOURCE                  UT_CMusAvaSettingsImp.cpp
+SOURCE                  UT_CMusAvaCapabilityExchange.cpp
+SOURCE                  UT_CMusAvaCapability.cpp
+SOURCE                  UT_CMusAvaTerminal.cpp
+SOURCE                  UT_CMusAvaCapabilitySipAgent.cpp
+SOURCE                  UT_CMusAvaCapabilityQuery.cpp
+SOURCE                  UT_CMusAvaDefaultOptionHandler.cpp
+SOURCE                  UT_CMusAvaSipprofileAvailability.cpp
+SOURCE                  UT_CMusAvaSipProfileRegistryObserver.cpp
+SOURCE                  UT_CMusAvaNetworkAvailability.cpp
+SOURCE                  UT_CMusAvaSettingAvailability.cpp
+SOURCE					UT_CMusAvaCallEventMonitor.cpp    
+SOURCE                  UT_CMusAvaSipheaderUtil.cpp
+SOURCE                  ut_cmusavaclientresolverutil.cpp  
+SOURCE                  musavacapabilitytesthelper.cpp
+
+
+// Tested sources 
+
+SOURCEPATH              ../../../src
+SOURCE                  musavaconnectionmonitor.cpp
+SOURCE                  musavacontactavailability.cpp
+SOURCE                  musavainvitehandler.cpp
+SOURCE                  musavaoptionhandler.cpp
+SOURCE                  musavainviteresponder.cpp
+SOURCE                  musavanetworkavailability.cpp
+SOURCE                  musavaproxy.cpp
+SOURCE                  musavaregisteravailability.cpp
+SOURCE                  musavadefaultimp.cpp
+SOURCE                  musavasettingsimp.cpp
+SOURCE                  musavasharedobject.cpp
+SOURCE                  musavasip.cpp
+SOURCE                  musavasipconnectionobserver.cpp
+SOURCE                  musavasipobserver.cpp
+SOURCE                  musavasipprofileregistryobserver.cpp
+SOURCE                  musavaconnectionavailability.cpp
+SOURCE                  musavatelephonystatusbase.cpp
+SOURCE                  musavanetworkregistrationstatus.cpp
+SOURCE                  musavanetworkmodestatus.cpp
+SOURCE                  musavamain.cpp
+SOURCE                  musavacapabilityexchange.cpp
+SOURCE                  musavacapability.cpp
+SOURCE                  musavacapabilitysipagent.cpp
+SOURCE                  musavaterminal.cpp
+SOURCE                  musavacapabilitycontext.cpp
+SOURCE                  musavacalleventmonitor.cpp
+SOURCE                  musavacapabilitytimer.cpp
+SOURCE                  musavacapabilityquery.cpp
+SOURCE                  musavacapabilityquerybase.cpp
+SOURCE                  musavadefaultoptionhandler.cpp
+SOURCE                  musavasipprofileavailability.cpp
+SOURCE                  musavasettingavailability.cpp
+SOURCE                  musavasipheaderutil.cpp
+SOURCE                  musavaclientresolverutil.cpp
+
+
+// Stubs
+
+SOURCEPATH              ../Stubs/src
+SOURCE                  Csipconnection.cpp
+SOURCE                  CSipSseTestTls.cpp
+SOURCE                  musavaobserverimp.cpp
+SOURCE                  RConnMon.cpp
+SOURCE                  musavatimer.cpp
+SOURCE                  musavaconnectionMonitorobserverimp.cpp
+SOURCE                  musavatelephonystatusobserverimp.cpp
+SOURCE                  mm_phone.cpp
+SOURCE                  musavasettingsobserverimp.cpp
+SOURCE                  musavaInviteresponderobserverimp.cpp
+SOURCE                  csipclienttransaction.cpp
+SOURCE                  Csipservertransaction.cpp
+SOURCE                  CMusAvaAvailabilityObserverImp.cpp
+SOURCE                  musavacapabilityqueryobserverimp.cpp
+SOURCE                  musavasipadapterimp.cpp
+SOURCE                  musavaprofileregistryadapterstub.cpp
+SOURCE                  centralrepositorystub.cpp
+SOURCE                  sipprofileregistrystub.cpp
+SOURCE                  sipprofilestub.cpp
+SOURCE					csipcontactheaderstub.cpp
+SOURCE					musavacallmonitorobserver.cpp
+SOURCE                  muscallmonitorstub.cpp
+
+SOURCEPATH              ../../../../../tsrc/sipprofilestub/src
+SOURCE                  sipstub.cpp
+SOURCE                  sipprofileregistrybasestub.cpp
+SOURCE                  sipmanagedprofileregistrystub.cpp
+SOURCE                  sipmanagedprofilestub.cpp
+
+SOURCEPATH              ../../../../../tsrc/sipclientstub/src
+SOURCE                  CSIPResponseElements.cpp
+SOURCE                  CSIPRequestElements.cpp
+SOURCE                  Csiptransactionbase.cpp
+SOURCE                  CSIPMessageElements.cpp
+
+SOURCEPATH              ../../../../../tsrc/musavaailabilitystub/src
+SOURCE		            musavaailabilitystub.cpp
+
+SOURCEPATH              ../../../../../mmshplugins/mmshaoplugin/src
+SOURCE                  muscalleventmonitor.cpp
+SOURCE                  muscallmonitor.cpp
+
+//SOURCE                  musconferencecallmonitor.cpp
+// Using RProperty Stubs
+SOURCEPATH              ../../../../../tsrc/propertystub/src
+SOURCE		            e32property.cpp
+
+MACRO                   CAPABILITY_UNIT_TESTING
+
+// INCLUDE PATHS
+
+USERINCLUDE             ../inc
+USERINCLUDE             ../Stubs/inc
+USERINCLUDE             ../../../inc
+USERINCLUDE             ../../../../mmshshared/inc
+USERINCLUDE             ../../../../inc
+USERINCLUDE             ../../../../../inc
+USERINCLUDE             ../../../../cenrep
+USERINCLUDE             ../../../../../mmshplugins/mmshaoplugin/inc
+USERINCLUDE             ../../../../../tsrc/propertystub/inc
+USERINCLUDE             ../../../../../tsrc/sipclientstub/inc
+USERINCLUDE             ../../../../../tsrc/musavaailabilitystub/inc
+USERINCLUDE             ../../../../../tsrc/centralrepositorystub/inc
+USERINCLUDE             ../../../../../tsrc/sipprofilestub/inc
+
+SYSTEMINCLUDE           ../../../../../tsrc/sipprofilestub/inc
+SYSTEMINCLUDE           ../../../../../tsrc/sipclientstub/inc
+SYSTEMINCLUDE           ../../../../../tsrc/musavaailabilitystub/inc
+SYSTEMINCLUDE           ../../../../../tsrc/centralrepositorystub/inc
+SYSTEMINCLUDE           ../../../../../tsrc/propertystub/inc
+SYSTEMINCLUDE           /epoc32/include/platform/digia/eunit
+
+APP_LAYER_SYSTEMINCLUDE
+
+// LIBRARIES
+
+LIBRARY                 EUnit.lib
+LIBRARY                 euser.lib
+LIBRARY                 ECom.lib
+LIBRARY                 inetprotutil.lib
+LIBRARY                 apgrfx.lib
+LIBRARY                 apparc.lib
+LIBRARY                 bafl.lib
+LIBRARY                 charconv.lib
+LIBRARY                 commdb.lib
+LIBRARY                 cntmodel.lib 
+LIBRARY                 etel3rdparty.lib 
+LIBRARY                 esock.lib
+LIBRARY                 insock.lib
+LIBRARY                 sdpcodec.lib
+LIBRARY                 sipcodec.lib
+LIBRARY                 connmon.lib
+LIBRARY                 etelmm.lib
+LIBRARY                 etel.lib
+LIBRARY                 estor.lib
+DEBUGLIBRARY            flogger.lib
+
+//EXPORTUNFROZEN
+// End of file

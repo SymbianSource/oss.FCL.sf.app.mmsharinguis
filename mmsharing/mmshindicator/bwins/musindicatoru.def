@@ -1,0 +1,7 @@
+EXPORTS
+	?ConfirmationQueryL@CMusIndicatorApi@@SAHW4TVsPopupQuery@1@@Z @ 1 NONAME ; int CMusIndicatorApi::ConfirmationQueryL(enum CMusIndicatorApi::TVsPopupQuery)
+	?IndicateAvailabilityL@CMusIndicatorApi@@QAEXXZ @ 2 NONAME ; void CMusIndicatorApi::IndicateAvailabilityL(void)
+	?NewL@CMusIndicatorApi@@SAPAV1@AAVMMusIndicatorObserver@@@Z @ 3 NONAME ; class CMusIndicatorApi * CMusIndicatorApi::NewL(class MMusIndicatorObserver &)
+	?NewLC@CMusIndicatorApi@@SAPAV1@AAVMMusIndicatorObserver@@@Z @ 4 NONAME ; class CMusIndicatorApi * CMusIndicatorApi::NewLC(class MMusIndicatorObserver &)
+	?NewL@CMusIndicatorApi@@SAPAV1@XZ @ 5 NONAME ; class CMusIndicatorApi * CMusIndicatorApi::NewL(void)
+

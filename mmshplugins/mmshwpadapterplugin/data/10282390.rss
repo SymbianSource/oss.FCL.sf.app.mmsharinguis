@@ -1,0 +1,57 @@
+/*
+* Copyright (c) 2006 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:  project specification
+*
+*/
+
+
+
+#include "muswpadapteruids.h"
+#include "../../../inc/musversionnumbers.h"
+#include <ecom/registryinfo.rh>
+
+
+
+
+// -----------------------------------------------------------------------------
+// Resource defining the ProvisioningAdapter plugin.
+// -----------------------------------------------------------------------------
+//
+RESOURCE REGISTRY_INFO theInfo
+    {
+    dll_uid = KMUSWPADAPTERDLLUID3;
+    interfaces = 
+        {
+        INTERFACE_INFO
+            {
+            interface_uid = KPROVISIONINGADAPTERINTERFACE;
+            implementations = 
+                {
+                IMPLEMENTATION_INFO
+                    {
+                    // In this case implementation UID is the same as DLL UID
+                    implementation_uid = KMUSWPADAPTERDLLUID3; 
+                    version_no = KMusEcomVersionNumber;
+                    display_name = "Multimedia Sharing provisioning||Implements a MUS Provisioning Adapter||Copyright © 2006 Nokia.";
+                    default_data = "";
+                    // opaque_data field determines priority order of dependent 
+                    // adapters. Mus is dependent on SIP Adapter and thus uses 
+                    // randomly chosen value bigger than SIP Adapter's 10.
+                    opaque_data = "15"; // 15 is 
+                    }
+
+                };
+            }
+        };
+    }

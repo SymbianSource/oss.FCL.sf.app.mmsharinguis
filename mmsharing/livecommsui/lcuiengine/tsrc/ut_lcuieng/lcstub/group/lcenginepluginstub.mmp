@@ -1,0 +1,55 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description: 
+*
+*/
+
+
+
+#include <platform_paths.hrh>
+
+TARGET         lcenginepluginstub.dll
+TARGETTYPE     PLUGIN
+UID         0x10009d8d 0x10203399
+VENDORID       VID_DEFAULT
+CAPABILITY     CAP_ECOM_PLUGIN
+
+
+SOURCEPATH     ../data
+START RESOURCE 10203399.rss
+TARGET         lcenginepluginstub.rsc
+END
+  
+SOURCEPATH	../src
+SOURCE		dllentry.cpp
+SOURCE 		lcvideoplayerstub.cpp
+SOURCE		lcenginestub.cpp 
+SOURCE		lcsessionstub.cpp
+
+USERINCLUDE 	../inc
+USERINCLUDE     ../../../../../../mmsharing/inc
+USERINCLUDE     ../../../../../../inc
+
+
+
+APP_LAYER_SYSTEMINCLUDE
+SYSTEMINCLUDE 	/epoc32/include/ecom
+
+LIBRARY		euser.lib
+LIBRARY		ecom.lib
+LIBRARY		insock.lib
+
+
+
+

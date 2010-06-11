@@ -1,0 +1,75 @@
+/*
+* Copyright (c) 2005-2006 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:  Subsystem's project specification.
+*
+*/
+
+
+#include <platform_paths.hrh>
+#include <data_caging_paths.hrh>
+#include "../../../inc/musuid.hrh"
+
+TARGET                  musaiwprovider.dll
+TARGETTYPE              PLUGIN
+UID                     0x10009D8D KMusAiwProviderUid
+VENDORID                VID_DEFAULT
+CAPABILITY              CAP_ECOM_PLUGIN
+
+SOURCEPATH              ../data
+
+START RESOURCE          10282389.rss
+TARGET                  musaiwprovider.rsc
+END
+
+// Published to /resource
+START RESOURCE          musaiwprovider.rss
+HEADER
+TARGET                  musaiwproviderui.rsc
+TARGETPATH              RESOURCE_FILES_DIR
+LANGUAGE_IDS
+END
+
+
+SOURCEPATH              ../src
+SOURCE                  musaiwprovider.cpp
+SOURCE                  musaiwprovidermain.cpp
+
+USERINCLUDE             ../inc
+USERINCLUDE             ../../../inc
+
+APP_LAYER_SYSTEMINCLUDE
+
+// MultimediaSharing libraries
+LIBRARY                 musmanagerclient.lib
+LIBRARY                 musindicator.lib
+
+// SymbianOS/Series60 libraries
+LIBRARY                 aknnotify.lib 
+LIBRARY                 eiksrv.lib 
+LIBRARY                 euser.lib
+LIBRARY                 apgrfx.lib         // Application Architecture
+LIBRARY                 apparc.lib
+LIBRARY                 bafl.lib           // Basic Application Framework Library
+LIBRARY                 cone.lib
+LIBRARY                 ecom.lib
+LIBRARY                 efsrv.lib
+LIBRARY                 servicehandler.lib // AIW Consumer API
+LIBRARY                 commonengine.lib
+LIBRARY                 charconv.lib
+LIBRARY                 ws32.lib
+LIBRARY                 featmgr.lib        // Feature Manager
+LIBRARY                 centralrepository.lib
+DEBUGLIBRARY            flogger.lib        // file logger
+
+PAGED

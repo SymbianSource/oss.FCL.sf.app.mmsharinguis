@@ -1,0 +1,92 @@
+/*
+* Copyright (c) 2002-2005 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:  
+*
+*/
+
+// To get the APP_LAYER_SYSTEMINCLUDE-definition
+#include <platform_paths.hrh>
+
+#include <bldvariant.hrh>
+#include <data_caging_paths.hrh>
+
+TARGET          musTestApp.exe
+TARGETTYPE      exe
+
+UID             0x100039CE  0x1028239B
+VENDORID        VID_DEFAULT
+CAPABILITY      CAP_APPLICATION
+
+EPOCSTACKSIZE   0xF000
+
+
+
+SOURCEPATH              ../../../common/src
+SOURCE                  muscallmonitor.cpp
+SOURCE                  muscalleventmonitor.cpp
+SOURCE                  musconferencecallmonitor.cpp
+
+SOURCEPATH      ../src
+SOURCE          AiwTestAppApp.cpp 
+SOURCE          AiwTestAppAppUi.cpp
+SOURCE          AiwTestAppContainer.cpp
+SOURCE          AiwTestAppDocument.cpp
+
+
+START RESOURCE  ../data/musTestApp.rss
+HEADER
+TARGETPATH      APP_RESOURCE_DIR
+END
+
+START RESOURCE  ../data/musTestApp_reg.rss
+DEPENDS mustestapp.rsg
+TARGETPATH      /private/10003a3f/apps
+END
+
+
+
+LANG            SC
+
+USERINCLUDE     ../inc
+USERINCLUDE     ../../../common/inc
+
+// Default system include paths for application layer modules.
+APP_LAYER_SYSTEMINCLUDE SYSTEMINCLUDE
+SYSTEMINCLUDE   /epoc32/include/ecom
+
+//SOURCEPATH    ../data
+//DOCUMENT      AIWTestApp.rss
+//DOCUMENT      AIWTestApp_caption.rss
+
+LIBRARY         apparc.lib
+LIBRARY         avkon.lib
+LIBRARY         bafl.lib
+LIBRARY         cone.lib
+LIBRARY         ecom.lib
+LIBRARY         eikcoctl.lib
+LIBRARY         eikcore.lib 
+LIBRARY         euser.lib
+LIBRARY         fbscli.lib
+LIBRARY         efsrv.lib    
+LIBRARY         aknskins.lib            // for skin background
+LIBRARY         CdlEngine.lib           // for scalable ui
+LIBRARY         ServiceHandler.lib
+LIBRARY         flogger.lib
+LIBRARY         centralrepository.lib 
+LIBRARY                 etel.lib                
+LIBRARY                 etelmm.lib     
+
+LIBRARY         musmanagerclient.lib
+
+// End of File

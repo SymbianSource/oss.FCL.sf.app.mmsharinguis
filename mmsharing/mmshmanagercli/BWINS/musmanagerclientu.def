@@ -1,0 +1,12 @@
+EXPORTS
+	?AvailabilityL@CMusManager@@QAE?AW4TMusAvailabilityStatus@MultimediaSharing@@XZ @ 1 NONAME ; enum MultimediaSharing::TMusAvailabilityStatus CMusManager::AvailabilityL(void)
+	?ExamineAvailabilityL@CMusManager@@QAEXXZ @ 2 NONAME ; void CMusManager::ExamineAvailabilityL(void)
+	?HandleCommandL@CMusManager@@QAEXW4TCommandType@MultimediaSharing@@@Z @ 3 NONAME ; void CMusManager::HandleCommandL(enum MultimediaSharing::TCommandType)
+	?HandleSipRequestL@CMusManager@@QAEXW4TRequestType@1@@Z @ 4 NONAME ; void CMusManager::HandleSipRequestL(enum CMusManager::TRequestType)
+	?NewL@CMusManager@@SAPAV1@XZ @ 5 NONAME ; class CMusManager * CMusManager::NewL(void)
+	?NewLC@CMusManager@@SAPAV1@XZ @ 6 NONAME ; class CMusManager * CMusManager::NewLC(void)
+	?StartApplicationL@CMusManager@@QAEXW4TMusUseCase@MultimediaSharing@@@Z @ 7 NONAME ; void CMusManager::StartApplicationL(enum MultimediaSharing::TMusUseCase)
+	?StopApplicationL@CMusManager@@QAEXXZ @ 8 NONAME ; void CMusManager::StopApplicationL(void)
+	?NewL@CMusManager@@SAPAV1@PAVMMusAvailabilityObserver@@@Z @ 9 NONAME ; class CMusManager * CMusManager::NewL(class MMusAvailabilityObserver *)
+	?NewLC@CMusManager@@SAPAV1@PAVMMusAvailabilityObserver@@@Z @ 10 NONAME ; class CMusManager * CMusManager::NewLC(class MMusAvailabilityObserver *)
+

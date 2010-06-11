@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1 Tiny//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11-tiny.dtd">
+<svg width="64" height="46" viewBox="-0.272 -0.169 64 46">
+<linearGradient id="_4" gradientUnits="userSpaceOnUse" x1="31.73" y1="4.97" x2="31.73" y2="41.45">
+<stop stop-color="#7D9CAD" offset="0"/>
+<stop stop-color="#576F96" offset="0.73"/>
+<stop stop-color="#4F6691" offset="1"/>
+</linearGradient>
+<path d="M53.468,3.831H9.986c-1.245,0-2.259,1.014-2.259,2.259v33.481c0,1.246,1.014,2.26,2.259,2.26 h43.481c1.246,0,2.26-1.014,2.26-2.26V6.09C55.728,4.845,54.714,3.831,53.468,3.831z M54.728,39.571 c0,0.694-0.565,1.26-1.26,1.26H9.986c-0.694,0-1.259-0.565-1.259-1.26V6.09c0-0.694,0.564-1.259,1.259-1.259h43.481 c0.694,0,1.26,0.564,1.26,1.259V39.571z" fill="url(#_4)"/>
+<g fill-opacity="0.7" stroke-opacity="0.7">
+<linearGradient id="_5" gradientUnits="userSpaceOnUse" x1="31.73" y1="46.08" x2="31.73" y2="3.33">
+<stop stop-color="#ADB5A8" offset="0.03"/>
+<stop stop-color="#C7D9D9" offset="0.26"/>
+<stop stop-color="#FFFFFF" offset="0.72"/>
+</linearGradient>
+<path d="M53.468,4.831H9.986c-0.694,0-1.259,0.564-1.259,1.259v33.481c0,0.694,0.564,1.26,1.259,1.26 h43.481c0.694,0,1.26-0.565,1.26-1.26V6.09C54.728,5.396,54.162,4.831,53.468,4.831z" fill="url(#_5)"/>
+</g>
+<path d="M54.346,5.208c-0.243-0.252-0.529-0.377-0.878-0.377H9.986c-0.694,0-1.259,0.564-1.259,1.259v33.481 c0,0.346,0.143,0.652,0.372,0.873c0.003,0.013,0.628-0.628,0.628-0.628V5.831h43.999L54.346,5.208z" fill="#FFFFFF"/>
+<linearGradient id="_6" gradientUnits="userSpaceOnUse" x1="31.92" y1="9.71" x2="31.92" y2="47.08">
+<stop stop-color="#CADCEC" offset="0"/>
+<stop stop-color="#809CB3" offset="1"/>
+</linearGradient>
+<path d="M9.109,40.453c0.243,0.252,0.529,0.377,0.878,0.377h43.481c0.694,0,1.259-0.564,1.259-1.259V6.09 c0-0.346-0.143-0.652-0.372-0.873c-0.003-0.013-0.628,0.628-0.628,0.628s0,33.206,0,33.985c-0.738,0-43.999,0-43.999,0 L9.109,40.453z" fill="url(#_6)"/>
+<rect height="13.538" width="13.537" x="24.959" y="16.062"/>
+</svg>

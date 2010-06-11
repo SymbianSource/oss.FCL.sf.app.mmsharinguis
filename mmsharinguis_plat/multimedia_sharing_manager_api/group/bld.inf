@@ -1,0 +1,32 @@
+/*
+* Copyright (c) 2006 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:  File that exports the files belonging to 
+:                Multimedia Sharing Manager API
+*
+*/
+
+
+#include <platform_paths.hrh>
+
+PRJ_PLATFORMS
+DEFAULT
+
+PRJ_EXPORTS
+
+../inc/musdomainpskeys.h    APP_LAYER_PLATFORM_EXPORT_PATH(musdomainpskeys.h)
+../inc/musmanager.h     	APP_LAYER_PLATFORM_EXPORT_PATH(musmanager.h)
+../inc/musmanagercommon.h   APP_LAYER_PLATFORM_EXPORT_PATH(musmanagercommon.h)
+../inc/musavailabilityobserver.h    APP_LAYER_PLATFORM_EXPORT_PATH(musavailabilityobserver.h)
+
+PRJ_TESTMMPFILES

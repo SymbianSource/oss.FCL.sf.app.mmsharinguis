@@ -1,0 +1,70 @@
+/*
+* Copyright (c) 2007 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:  Project definition file for project MuS Settings UI test
+*
+*/
+
+
+#include <platform_paths.hrh>
+#include <data_caging_paths.hrh>
+#include "../../../inc/musuid.hrh"
+
+TARGET                  musindicator.dll
+TARGETTYPE              dll
+TARGETPATH              /sys/bin
+UID                     0x0 KMusIndicatorUid
+
+CAPABILITY              CAP_GENERAL_DLL
+VENDORID                VID_DEFAULT
+
+SOURCEPATH              ../data
+START RESOURCE          musindicator.rss
+HEADER
+LANGUAGE_IDS
+TARGETPATH              RESOURCE_FILES_DIR
+END // RESOURCE
+
+SOURCEPATH              ../src
+SOURCE                  musindicatorapi.cpp
+SOURCE                  mussoundplayer.cpp
+SOURCE                  musindicatordsa.cpp
+SOURCE                  musresourceutil.cpp
+
+USERINCLUDE             ../inc
+USERINCLUDE             ../../mmshshared/inc
+USERINCLUDE             ../../inc
+USERINCLUDE             ../../../inc
+
+APP_LAYER_SYSTEMINCLUDE
+
+LIBRARY                 euser.lib
+LIBRARY                 bafl.lib
+LIBRARY                 aknnotify.lib
+LIBRARY                 eiksrv.lib
+LIBRARY                 flogger.lib // RFileLogger
+LIBRARY		        	centralrepository.lib
+LIBRARY                 commonengine.lib // RConeResourceLoader
+LIBRARY                 efsrv.lib
+LIBRARY                 mediaclientaudio.lib
+LIBRARY                 ws32.lib          // Window server
+LIBRARY                 bitgdi.lib        //
+LIBRARY                 gdi.lib           // Font
+LIBRARY                 fntstr.lib
+LIBRARY                 fbscli.lib           // Font and bitmap server
+LIBRARY                 cone.lib            
+LIBRARY                 aknskins.lib            // Avkon Skins Utils
+LIBRARY                 avkon.lib               // Avkon Utils
+LIBRARY                 eikcore.lib             // Eikon core controls API
+
+PAGED
