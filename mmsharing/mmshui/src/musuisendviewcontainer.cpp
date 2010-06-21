@@ -46,9 +46,12 @@ CMusUiSendViewContainer::CMusUiSendViewContainer()
 //
 void CMusUiSendViewContainer::ConstructL( CMusUiGeneralView* aView,
                                           const TRect& aRect,
-                                          TAknOrientation aIndicatorLayout )
+                                          TAknOrientation aIndicatorLayout,
+                                          TBool aContainerVisible,
+                                          TBool aIndicatorVisible )
     {
-    MUS_LOG( "mus: [MUSUI ]  -> CMusUiSendViewContainer::ConstructL" );
+    MUS_LOG2( "mus: [MUSUI ]  -> CMusUiSendViewContainer::ConstructL, visibilty:%d,%d",
+        aContainerVisible, aIndicatorVisible );
     
     CreateWindowL();
     iView = aView;
@@ -70,8 +73,13 @@ void CMusUiSendViewContainer::ConstructL( CMusUiGeneralView* aView,
     SetRect( aRect );
     
     iIndicator->SetRect( Rect() );
+    
+    if ( aContainerVisible && !aIndicatorVisible )
+        {
+        iIndicator->MakeVisible( aIndicatorVisible );
+        }
 
-    MakeVisible( EFalse );
+    MakeVisible( aContainerVisible );
     ActivateL();
     
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiSendViewContainer::ConstructL" );

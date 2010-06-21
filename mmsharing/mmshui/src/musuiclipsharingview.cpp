@@ -471,10 +471,7 @@ void CMusUiClipSharingView::RefreshView()
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiClipSharingView::RefreshView" );
     
-    if ( iBackgroundContainer )
-        {
-        iBackgroundContainer->SetRect( ClientRect() );
-        }
+    RefreshBackgroundContainer();
     
     if ( iContainer )
         {            

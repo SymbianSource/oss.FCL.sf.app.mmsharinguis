@@ -79,7 +79,6 @@ CMusIndicatorApi::~CMusIndicatorApi()
     MUS_LOG( "mus: [MUSIND ]  ->  MusIndicatorApi::~CMusIndicatorApi" );
     
     Cancel();
-    delete iIndicatorWindow;
     delete iSoundPlayer;
 
     Indicator( EFalse );

@@ -244,6 +244,7 @@ protected:
     TInt ToolbarPlaceHolderHeight() const;
     TInt ToolbarPlaceHolderWidth() const;
     void UpdateBackgroundOrdinalPosition( TBool aUp );  
+    void RefreshBackgroundContainer();
 
 protected: // data
 

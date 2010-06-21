@@ -77,10 +77,14 @@ protected: // constructors
      * @param aView         Parent view of container.
      * @param aRect         Frame rectangle for container.
      * @param aInputParams  Packaged data.
+     * @param aContainerVisible
+     * @param aIndicatorVisible
      */
     void ConstructL( CMusUiGeneralView* aView, 
                      const TRect& aRect,
-                     TAknOrientation aIndicatorLayout );
+                     TAknOrientation aIndicatorLayout,
+                     TBool aContainerVisible = EFalse,
+                     TBool aIndicatorVisible = EFalse );
 
 
 private: // from base class CCoeControl

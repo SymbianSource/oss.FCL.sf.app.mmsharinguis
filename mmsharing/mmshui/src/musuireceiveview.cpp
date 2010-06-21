@@ -390,10 +390,7 @@ void CMusUiReceiveView::RefreshView()
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiReceiveView::RefreshView" );
     
-    if ( iBackgroundContainer )
-    	{
-		iBackgroundContainer->SetRect( ClientRect() );
-    	}
+    RefreshBackgroundContainer();
     
     if ( iContainer )
         {

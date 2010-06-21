@@ -328,6 +328,11 @@ EXPORT_C void CMusEngMceSession::EnableDisplayL( TBool aEnable )
 EXPORT_C TBool CMusEngMceSession::IsDisplayEnabledL()
     {
     __ASSERT_ALWAYS( iSession, User::Leave( KErrNotReady ) );
+    if ( iSession->State() == CMceSession::ETerminated || 
+         iSession->State() == CMceSession::EIdle )
+        {
+        return EFalse;   
+        }
     CMceDisplaySink* display = MusEngMceUtils::GetDisplayL( *iSession );
     return display->IsEnabled();
     }

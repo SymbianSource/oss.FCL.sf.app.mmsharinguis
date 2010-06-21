@@ -111,6 +111,14 @@ private: // from base class CCoeControl
      * @return           Handle to wanted control
      */
     CCoeControl* ComponentControl( TInt aIndex ) const;
+    
+    /**
+    * Gets called by the application framework when drawing is
+    * needed.
+    *
+    * @param aRect The rectangle that needs to be drawn.
+    */
+    void Draw( const TRect& aRect ) const;
 
     /**
      * Handles key events.

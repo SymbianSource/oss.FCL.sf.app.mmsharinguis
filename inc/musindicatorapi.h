@@ -29,7 +29,7 @@
 #include <e32property.h>
 
 
-class CMusIndicatorDsa;
+
 class CAknGlobalMsgQuery;
 class CMusSoundPlayer;
 
@@ -146,11 +146,6 @@ private:
         
 private: // data
 
-    /**
-     * Pointer to indicator window
-     * Own.
-     */
-    CMusIndicatorDsa* iIndicatorWindow;
 
     /**
      * Sound player.

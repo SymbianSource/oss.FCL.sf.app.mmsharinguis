@@ -237,6 +237,13 @@ void UT_CMusEngMceSession::UT_CMusEngMceSession_IsDisplayEnabledLL()
     //Disable
     display->iIsEnabled = EFalse;
     EUNIT_ASSERT( !iLiveSession->IsDisplayEnabledL() );
+    
+    // Display is reported as disabled when session state is terminated or idle
+    iLiveSession->iSession->iState = CMceSession::ETerminated;
+    display->iIsEnabled = ETrue;
+    EUNIT_ASSERT( !iLiveSession->IsDisplayEnabledL() );
+    iLiveSession->iSession->iState = CMceSession::EIdle;
+    EUNIT_ASSERT( !iLiveSession->IsDisplayEnabledL() );
     }
 	
 	

@@ -591,10 +591,9 @@ void CMusUiLiveSharingView::DoRefreshView()
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiLiveSharingView::DoRefreshView" );
     
-    if ( iBackgroundContainer )
-        {
-        iBackgroundContainer->SetRect(ClientRect());
-        }
+    // Refresh background container before and after as display status
+    // may change due async orientation change handling.
+    RefreshBackgroundContainer();
     
     if ( iContainer )
         {
@@ -620,6 +619,8 @@ void CMusUiLiveSharingView::DoRefreshView()
             }                        
         iController->SetRect( videoRect );
         }
+    
+    RefreshBackgroundContainer();
             
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiLiveSharingView::DoRefreshView" );
     } 

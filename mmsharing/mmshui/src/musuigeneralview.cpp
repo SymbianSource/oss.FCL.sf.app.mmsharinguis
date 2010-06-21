@@ -893,8 +893,34 @@ void CMusUiGeneralView::UpdateBackgroundOrdinalPosition( TBool aUp )
     if ( iBackgroundContainer )
         {
         iBackgroundContainer->UpdateOrdinalPositionValue( aUp );              
-        }    
+        }
     }
+
+// -----------------------------------------------------------------------------
+// Do refresh for background container only if display is disabled.
+// Refreshing if display is enabled would cause bg container
+// to draw itself on top of display area, making it invisible.
+// -----------------------------------------------------------------------------
+//
+void CMusUiGeneralView::RefreshBackgroundContainer()
+    {
+    if ( !iBackgroundContainer )
+        {
+        return;
+        }  
+    TBool displayEnabled( EFalse );
+    if ( EventController() )
+        {
+        TRAP_IGNORE( displayEnabled = EventController()->IsDisplayEnabledL() )
+        }
+
+    if ( !displayEnabled )
+        {
+        MUS_LOG( "mus: [MUSUI ] <-> CMusUiGeneralView::RefreshBackgroundContainer()" )
+        iBackgroundContainer->SetRect( ClientRect() );
+        }
+    }
+
 // end of file
 
 

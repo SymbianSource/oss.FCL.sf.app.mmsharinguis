@@ -48,7 +48,9 @@ void CMusUiClipSharingViewContainer::ConstructL( CMusUiGeneralView* aView,
     
     CMusUiSendViewContainer::ConstructL( aView, 
                                          aRect,
-                                         EAknOrientationHorizontal );
+                                         EAknOrientationHorizontal,
+                                         ETrue,
+                                         EFalse );
     // check if operator specific functionality is needed  
     iOperatorSpecificFunctionality = 
         ( MultimediaSharingSettings::OperatorVariantSettingL() == 
@@ -247,7 +249,7 @@ void CMusUiClipSharingViewContainer::SetPositionValueL( TInt aPositionValue )
 void CMusUiClipSharingViewContainer::SetDurationIndicatorVisible( TBool aVisible )
     {
     iIndicator->SetIndicatorType(EMusUiIndicatorTypeDuration);
-    MakeVisible( aVisible );
+    iIndicator->MakeVisible( aVisible );
     }
     
 
@@ -309,6 +311,24 @@ CCoeControl* CMusUiClipSharingViewContainer::ComponentControl( TInt aIndex ) con
     return control;
     }
 
+// -----------------------------------------------------------------------------
+// Called by framework to redraw the screen area.
+// -----------------------------------------------------------------------------
+//
+void CMusUiClipSharingViewContainer::Draw( const TRect& aRect ) const
+    {
+    CWindowGc& gc = SystemGc();
+
+    MAknsSkinInstance* skin = AknsUtils::SkinInstance();
+    MAknsControlContext* cc = AknsDrawUtils::ControlContext( this );
+    if(!AknsDrawUtils::Background( skin, cc,this,gc,aRect,KAknsDrawParamDefault ))
+        {
+        MUS_LOG( "mus: [MUSUI ]     Skin not valid or not found" );
+        gc.SetBrushColor( iEikonEnv->ControlColor( EColorWindowBackground, *this ) );
+        gc.SetBrushStyle( CGraphicsContext::ESolidBrush );
+        gc.Clear( aRect );
+        }
+    }
 
 // -----------------------------------------------------------------------------
 // Called by framework to act on key events if required.

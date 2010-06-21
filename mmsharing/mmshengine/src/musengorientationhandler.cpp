@@ -24,7 +24,7 @@
 
 // SYSTEM
 
-const TInt KMusEngDelayedResume = 300000; // 300 ms
+const TInt KMusEngDelayedResume = 500000; // 500 ms
 
 // -----------------------------------------------------------------------------
 //
