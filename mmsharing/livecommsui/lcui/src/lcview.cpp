@@ -74,11 +74,11 @@ LcView::LcView(LcUiEngine& engine, LcUiComponentRepository& repository)
    mReceivedVideoEffectOverlay(0),
    mSharedVideoEffectOverlay(0),
    mEffectHandler(0),
-   mItemContextMenu(0),
-   mLandscapeTimer(0),
+   mItemContextMenu(0),   
    mIsOptionMenuOpen(false),
    mSoftKeyBackAction(0),
-   mDialpad(0)
+   mDialpad(0),
+   timerId(0)
 {
     LC_QDEBUG( "livecomms [UI] -> LcView::LcView()" )
     
@@ -105,8 +105,7 @@ LcView::~LcView()
     // Un-subscribe to the gesture events.
     ungrabGesture(Qt::TapGesture);        
 
-    delete mEffectHandler;
-    delete mLandscapeTimer;
+    delete mEffectHandler;    
     delete mNotSupportedNote;
 
     LC_QDEBUG( "livecomms [UI] <- LcView::~LcView()" )
@@ -172,26 +171,34 @@ void LcView::init()
         mReceivedVideoEffectOverlay->show();
     }
 
+    // swap
     mEffectHandler = new LcEffectHandler( mEngine,
             mSharedVideoWidget, mSharedVideoEffectOverlay, 
             mReceivedVideoWidget, mReceivedVideoEffectOverlay);
     connect( mEffectHandler, SIGNAL(swapCompleted()), this, SLOT(updateVideoRects()) );
-
     connect( mEffectHandler, SIGNAL(loadSwapLayout()), this, SLOT(updateSwapLayout()) );
     
-    mLandscapeTimer = new QTimer();
-    connect( mLandscapeTimer, SIGNAL(timeout()), this, SLOT(landscapeTimerTimeout()) );
-
-    updateUiElements();
-
+    // menu
     if ( menu()) {
         connect( menu(), SIGNAL(aboutToShow()), this, SLOT(menuAboutToShow()) );
-        connect( menu(), SIGNAL(aboutToHide()), this, SLOT(menuAboutToHide()) );
-    }
-     
+        connect( menu(), SIGNAL(aboutToHide()), this, SLOT(watchInactivity()) );        
+    }     
     mSoftKeyBackAction = new HbAction(Hb::BackNaviAction, this);    
     connect(mSoftKeyBackAction, SIGNAL(triggered()), SLOT(back()));
+    
+    // dialpad
+    mDialpad = static_cast<Dialpad*> ( mRepository.findWidget("lc_label_dialpad") );
+    connect( mDialpad, SIGNAL(aboutToClose()), SLOT(dialpadClosed()) );
+    connect( mDialpad, SIGNAL(aboutToOpen()), SLOT(dialpadOpened()) );
+    connect( &mDialpad->editor(), SIGNAL( contentsChanged() ), SLOT( dialpadEditorTextChanged() ) );
         
+    // inactivity
+    timerId = this->startTimer( inActivityTimeout );    
+    connect( this, SIGNAL( contentFullScreenChanged() ), SLOT( watchInactivity() ) ) ;
+    
+    // activate fullscreen at beginning if inactivity timesout
+    toFullScreen( true );
+    
     LC_QDEBUG( "livecomms [UI] <- LcView::init()" )
 }
 
@@ -254,32 +261,7 @@ void LcView::swap()
 void LcView::updateSwapLayout()
 {
     mRepository.loadLayout( currentLayout() );
-
-    if ( isLandscapeOrientation() ){
-        if ( mEngine.fullScreenMode() ){
-            hideControl();
-        } else {
-            showControl();
-        }
-    }
-}
-
-// -----------------------------------------------------------------------------
-// LcView::updateUiElements
-// -----------------------------------------------------------------------------
-//
-void LcView::updateUiElements() 
-{
-    LC_QDEBUG( "livecomms [UI] -> LcView::updateUiElements()" )
-
-    if ( isLandscapeOrientation() ) {
-        setContentFullScreen( true );
-        deActivateFullScreen();
-    } else {
-        setContentFullScreen( false );
-        activatePortrait();
-    }
-    LC_QDEBUG( "livecomms [UI] <- LcView::updateUiElements()" )
+    toFullScreen( true );
 }
 
 // -----------------------------------------------------------------------------
@@ -416,7 +398,7 @@ void LcView::notSupported()
     LC_QDEBUG( "livecomms [UI] -> LcView::notSupported()" )
     
     mNotSupportedNote->show();
-    resetLandscapeTimer();
+    toFullScreen( false );
     
     LC_QDEBUG( "livecomms [UI] <- LcView::notSupported()" )
 }
@@ -433,24 +415,6 @@ void LcView::shareImage()
     mEngine.shareImage(fileName);
     LC_QDEBUG( "livecomms [UI] <- LcView::shareImage()" )
 }
-
-// -----------------------------------------------------------------------------
-// LcView::changeOrientation_Temporary
-// -----------------------------------------------------------------------------
-//
-void LcView::changeOrientation_Temporary()
-{
-    LC_QDEBUG( "livecomms [UI] -> LcView::changeOrientation_Temporary()" )
-
-    if ( isLandscapeOrientation() ) {
-        HbInstance::instance()->allMainWindows().at(0)->setOrientation( Qt::Vertical ); 
-    } else {
-        HbInstance::instance()->allMainWindows().at(0)->setOrientation( Qt::Horizontal );
-    }
-
-    LC_QDEBUG( "livecomms [UI] <- LcView::changeOrientation_Temporary()" )
-}
-
 
 // -----------------------------------------------------------------------------
 // LcView::endVideoSession
@@ -476,7 +440,7 @@ void LcView::disableCamera()
  
     mEffectHandler->setDissappearEffect( LcEffectHandler::NormalDissappear );
     mEngine.toggleDisableCamera();
-    resetLandscapeTimer();
+    toFullScreen( false );
     
     LC_QDEBUG( "livecomms [UI] <- LcView::disableCamera()" ) 
 }
@@ -490,7 +454,7 @@ void LcView::mute()
     LC_QDEBUG( "livecomms [UI] -> LcView::mute()" )
     
     mEngine.toggleMute();
-    resetLandscapeTimer();
+    toFullScreen( false );
     
     LC_QDEBUG( "livecomms [UI] <- LcView::mute()" )
 }
@@ -505,7 +469,7 @@ void LcView::changeCamera()
    
     mEffectHandler->setDissappearEffect( LcEffectHandler::DissappearToFlip );
     mEngine.toggleCamera();
-    resetLandscapeTimer();
+    toFullScreen( false );
         
     LC_QDEBUG( "livecomms [UI] <- LcView::changeCamera()" )
 }
@@ -532,7 +496,7 @@ void LcView::speaker()
     LC_QDEBUG( "livecomms [UI] -> LcView::speaker()" )
 
     mEngine.toggleSpeaker();
-    resetLandscapeTimer();
+    toFullScreen( false );
     
     LC_QDEBUG( "livecomms [UI] <- LcView::speaker()" )    
 }
@@ -713,11 +677,9 @@ void LcView::enableControls()
 void LcView::gestureEvent(QGestureEvent *event)
 {
     LC_QDEBUG( "livecomms [UI] -> LcView::gestureEvent()" )
-    if(HbTapGesture *tap = static_cast<HbTapGesture *>(event->gesture(Qt::TapGesture))) {
-    
+    if(HbTapGesture *tap = static_cast<HbTapGesture *>(event->gesture(Qt::TapGesture))) {        
         if ((tap->state() == Qt::GestureUpdated) &&
-            (tap->tapStyleHint() == HbTapGesture::TapAndHold)) {
-          
+            (tap->tapStyleHint() == HbTapGesture::TapAndHold)) {            
             gestureLongPress(translatePointForOrientation(tap->position()));
         } 
         
@@ -725,7 +687,7 @@ void LcView::gestureEvent(QGestureEvent *event)
                 ( tap->tapStyleHint() == HbTapGesture::Tap)) {
         
             gestureShortPress();
-        }
+        }        
     }
     LC_QDEBUG( "livecomms [UI] <- LcView::gestureEvent()" )
 }
@@ -768,26 +730,9 @@ void LcView::gestureLongPress(QPointF coords)
 //
 void LcView::gestureShortPress()
 {
-    if ( isLandscapeOrientation() ) {    
-        if ( mEngine.fullScreenMode() ) {
-            deActivateFullScreen();
-        } else {
-            activateFullScreen();
-        }
-    }
-}
-
-
-// -----------------------------------------------------------------------------
-// LcView::landscapeTimerTimeout
-// -----------------------------------------------------------------------------
-//
-void LcView::landscapeTimerTimeout()
-{
-    LC_QDEBUG( "livecomms [UI] -> LcView::landscapeTimerTimeout()" )
-    if (!mIsOptionMenuOpen && isLandscapeOrientation() )
-        activateFullScreen();
-    LC_QDEBUG( "livecomms [UI] <- LcView::landscapeTimerTimeout()" )
+    LC_QDEBUG( "livecomms [UI] -> LcView::gestureShortPress()" )
+    toFullScreen( !mEngine.fullScreenMode() );
+    LC_QDEBUG( "livecomms [UI] <- LcView::gestureShortPress()" )
 }
 
 // -----------------------------------------------------------------------------
@@ -826,97 +771,6 @@ void LcView::createContextMenu()
     
     LC_QDEBUG( "livecomms [UI] <- LcView::createContextMenu()" )
 }
-
-// -----------------------------------------------------------------------------
-// LcView::activateFullScreen
-// -----------------------------------------------------------------------------
-//
-void LcView::activateFullScreen()
-    {
-    LC_QDEBUG( "livecomms [UI] -> LcView::activateFullScreen()" )
-
-    if ( mLandscapeTimer ) {
-        mLandscapeTimer->stop();
-        mEngine.setFullScreenMode(true);
-        hideControl();
-    }
-        
-    LC_QDEBUG( "livecomms [UI] <- LcView::activateFullScreen()" )
-}
-
-
-// -----------------------------------------------------------------------------
-// LcView::deActivateFullScreen
-// -----------------------------------------------------------------------------
-//
-void LcView::deActivateFullScreen()
-{
-    LC_QDEBUG( "livecomms [UI] -> LcView::deActivateFullScreen()" )
-
-    if ( mLandscapeTimer ) {
-        mLandscapeTimer->stop();
-    
-        mEngine.setFullScreenMode(false);
-        
-        showControl();
-        mLandscapeTimer->start( inActivityTimeout );
-    }
-    LC_QDEBUG( "livecomms [UI] <- LcView::deActivateFullScreen()" )
-}
-
-// -----------------------------------------------------------------------------
-// LcView::activateFullScreen
-// -----------------------------------------------------------------------------
-//
-void LcView::activatePortrait()
-{
-    LC_QDEBUG( "livecomms [UI] -> LcView::activatePortrait()" )
-
-    if ( mLandscapeTimer ) {
-        mLandscapeTimer->stop();    
-        mEngine.setFullScreenMode(false);
-        showControl();
-    }
-    
-    LC_QDEBUG( "livecomms [UI] <- LcView::activatePortrait()" )
-}
-
-
-// -----------------------------------------------------------------------------
-// LcView::hideControl
-// -----------------------------------------------------------------------------
-//
-void LcView::hideControl()
-{
-    if( mDialpad && mDialpad->isOpen()) {
-        return;
-    }
-    toolBar()->hide();
-    setTitleBarVisible(false);
-    setVisibility(mEndCallButton, false);
-    setVisibility(mBrandIcon, false);
-    setVisibility(mDuration, false);
-    setVisibility(mRecipient, false);
-}
-
-
-// -----------------------------------------------------------------------------
-// LcView::showControl
-// -----------------------------------------------------------------------------
-//
-void LcView::showControl()
-{    
-    if( mDialpad && mDialpad->isOpen()) {
-        return;
-    }
-    setTitleBarVisible(true);
-    toolBar()->show();
-    setVisibility(mEndCallButton, true);
-    setVisibility(mBrandIcon, true);
-    setVisibility(mDuration, true);
-    setVisibility(mRecipient, true);
-}
-
     
 // -----------------------------------------------------------------------------
 // LcView::currentLayout
@@ -959,25 +813,8 @@ QString LcView::currentLayout()
 void LcView::menuAboutToShow()
 {
     LC_QDEBUG( "livecomms [UI] -> LcView::menuAboutToShow()" )
-    mIsOptionMenuOpen  = true;
-    if( mLandscapeTimer ){
-        mLandscapeTimer->stop();
-    }    
+    toFullScreen( false );
     LC_QDEBUG( "livecomms [UI] <- LcView::menuAboutToShow()" )
-}
-
-// -----------------------------------------------------------------------------
-// LcView::menuAboutToHide
-// -----------------------------------------------------------------------------
-//
-void LcView::menuAboutToHide()
-{
-    LC_QDEBUG( "livecomms [UI] -> LcView::menuAboutToHide()" )
-    mIsOptionMenuOpen  = false;
-    if( mLandscapeTimer ){
-        mLandscapeTimer->start( inActivityTimeout );
-    }    
-    LC_QDEBUG( "livecomms [UI] <- LcView::menuAboutToHide()" )
 }
 
 // -----------------------------------------------------------------------------
@@ -1055,14 +892,6 @@ void LcView::setVisibility( QGraphicsItem* item, bool visible )
 //
 // -----------------------------------------------------------------------------
 //
-void LcView::resetLandscapeTimer()
-{
-    if ( mLandscapeTimer && mLandscapeTimer->isActive() ) {
-        mLandscapeTimer->stop();
-        mLandscapeTimer->start( inActivityTimeout );
-    }
-}
-
 void LcView::addOptionsMenuActions()
 {
     HbAction* swapAction = static_cast<HbAction*>(
@@ -1081,30 +910,11 @@ void LcView::addOptionsMenuActions()
 void LcView::openDialpad()
 {    
     LC_QDEBUG("livecomms [UI] -> LcView::openDialpad()")
-    // stop the auto full screen timer.
-    if( mLandscapeTimer ){
-        mLandscapeTimer->stop();
-    }
-    mEngine.setFullScreenMode( false );
-    
-    // load dialpad layout
-    mRepository.loadLayout( lcLayoutLandscapeDialpadId );
-    updateVideoRects();
-
-    // construct dialpad and connect signals.
-    mDialpad = static_cast<Dialpad*> ( mRepository.findWidget("lc_label_dialpad") );
-    connect( mDialpad, SIGNAL(aboutToClose()), SLOT(dialpadClosed()) );
-    connect( mDialpad, SIGNAL(aboutToOpen()), SLOT(dialpadOpened()) );
-    connect( &mDialpad->editor(), SIGNAL( contentsChanged() ), this,
-            SLOT( dialpadEditorTextChanged() ) );
-    // open dialpad
+    mRepository.loadLayout( lcLayoutLandscapeDialpadId ); 
+    if ( mEffectHandler )mEffectHandler->startEffects();    
     mDialpad->openDialpad();
-
-    menu()->clearActions();
-    
-    if ( mEffectHandler ){
-        mEffectHandler->startEffects();
-    }
+    mDialpad->setCallButtonEnabled(false);
+    menu()->clearActions();    
     LC_QDEBUG("livecomms [UI] <- LcView::openDialpad()")
 }
 
@@ -1114,7 +924,9 @@ void LcView::openDialpad()
 //
 void LcView::dialpadOpened()
 {
-    LC_QDEBUG("livecomms [UI] <-> LcView::dialpadOpened()")    
+    LC_QDEBUG("livecomms [UI] <-> LcView::dialpadOpened()")   
+    toolBar()->setVisible( false );
+    setTitleBarVisible( true );
 }
 
 // -----------------------------------------------------------------------------
@@ -1123,16 +935,8 @@ void LcView::dialpadOpened()
 //
 void LcView::dialpadClosed()
 {
-    LC_QDEBUG("livecomms [UI] -> LcView::dialpadClosed()")
-    disconnect( &mDialpad->editor(), SIGNAL( contentsChanged() ), this,
-            SLOT( dialpadEditorTextChanged() ) );
-    disconnect( mDialpad, SIGNAL(aboutToClose()), this, SLOT(dialpadClosed()) );
-    disconnect( mDialpad, SIGNAL(aboutToOpen()), this, SLOT(dialpadOpened()) );
-    
-    mDialpad = 0; // do not delete it since it is not owned.
-    
-    addOptionsMenuActions();
-    
+    LC_QDEBUG("livecomms [UI] -> LcView::dialpadClosed()")    
+    addOptionsMenuActions();    
     // switch back to the previous layout
     QString pLayout = mRepository.previousLayout();
     QString layout;
@@ -1149,20 +953,12 @@ void LcView::dialpadClosed()
     else {
         layout = ( isSwapped ) ? lcLayoutPortraitSwappedId 
                                : lcLayoutPortraitDefaultId;
-    }
-    // load the layout
+    }    
     mRepository.loadLayout( layout );    
-    // update the videoplayer hole           
-    updateVideoRects();
-    // now do some effects
     if ( mEffectHandler ){
         mEffectHandler->startEffects();
     }
-    // deactivate full screen untill inactivity timeout happens.
-    if ( isLandscape ){
-        deActivateFullScreen();
-    }
-        
+    toFullScreen(false);
     LC_QDEBUG("livecomms [UI] <- LcView::dialpadClosed()")
 }
 
@@ -1176,16 +972,6 @@ void LcView::dialpadEditorTextChanged()
     LC_QDEBUG_2("livecomms [UI] -> Last Dialled Charcter ", mDialpad->editor().text().right(1));
     bool dialPadStatus = mEngine.SendDialTone(mDialpad->editor().text().right(1).at(0));
     LC_QDEBUG_2("livecomms [UI] -> Dialpad Send Tone Status ",dialPadStatus)
-}
-
-// -----------------------------------------------------------------------------
-// LcView::enableDialpadCallButton()
-// -----------------------------------------------------------------------------
-//
-void LcView::enableDialpadCallButton( bool enable )
-{   
-    LC_QDEBUG_2("livecomms [UI] -> Enable callbutton, emergency call ",enable)    
-    mDialpad->setCallButtonEnabled( enable );
 }
 
 // -----------------------------------------------------------------------------
@@ -1205,4 +991,47 @@ void LcView::back()
     LC_QDEBUG("livecomms [UI] <- LcView::back()")
 }
 
+// -----------------------------------------------------------------------------
+// LcView::timerEvent
+// -----------------------------------------------------------------------------
+//
+void LcView::timerEvent( QTimerEvent * event )
+{    
+    if ( event->timerId() == timerId ){
+        LC_QDEBUG("livecomms [UI] -> LcView::timerEvent() inActivity Timeout")
+        killTimer( timerId );
+        toFullScreen(true);
+    }    
+}
+
+// -----------------------------------------------------------------------------
+// LcView::watchInactivity
+// -----------------------------------------------------------------------------
+//
+void LcView::watchInactivity()
+{    
+    if( !mEngine.fullScreenMode()){
+        LC_QDEBUG("livecomms [UI] - LcView::watchInactivity() start watching inactivity") 
+        killTimer( timerId );
+        timerId = startTimer( inActivityTimeout );
+    }    
+}
+
+// -----------------------------------------------------------------------------
+// LcView::toFullScreen utility function
+// -----------------------------------------------------------------------------
+//
+void LcView::toFullScreen( bool fullscreen )
+{
+    LC_QDEBUG_2("livecomms [UI] - LcView::toFullScreen(),",fullscreen)
+    if( menu()->isVisible() || mDialpad && mDialpad->isOpen() ) return;
+    mEngine.setFullScreenMode( fullscreen );    
+    setTitleBarVisible( !fullscreen );
+    toolBar()->setVisible( !fullscreen );
+    setVisibility( mEndCallButton, !fullscreen );
+    setVisibility( mBrandIcon, !fullscreen );
+    setVisibility( mDuration, !fullscreen );
+    setVisibility( mRecipient, !fullscreen );
+    emit contentFullScreenChanged();
+}
 // End of file

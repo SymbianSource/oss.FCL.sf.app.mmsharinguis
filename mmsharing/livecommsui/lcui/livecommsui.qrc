@@ -1,57 +1,20 @@
 <!DOCTYPE RCC><RCC version="1.0">
-	<qresource prefix="/">
-		<file alias="pause.svg" >resources/graphics/qgn_indi_tb_pause_send_video.svg</file>
-		<file alias="play.svg" >resources/graphics/qgn_indi_tb_play.svg</file>		
-		<file alias="handset.svg" >resources/graphics/qgn_indi_tb_ihf_off.svg</file>
-		<file alias="loudspeaker.svg" >resources/graphics/qgn_indi_tb_ihf_on.svg</file>
-		<file alias="enable_camera.svg" >resources/graphics/qgn_indi_tb_video.svg</file>
-		<file alias="disable_camera.svg" >resources/graphics/qgn_indi_tb_video_disable.svg</file>
-		<file alias="main_camera.svg" >resources/graphics/qgn_indi_tb_camera_main.svg</file>
-		<file alias="secondary_camera.svg" >resources/graphics/qgn_indi_tb_camera_secondary.svg</file>
-		<file alias="mute_mic.svg" >resources/graphics/qgn_indi_tb_microphone_mute.svg</file>
-		<file alias="unmute_mic.svg" >resources/graphics/qgn_indi_tb_microphone_unmute.svg</file>
-		<file alias="gallery.svg" >resources/graphics/qgn_indi_tb_gallery.svg</file>
-		<file alias="stop_sharing.svg" >resources/graphics/qgn_indi_mp_button_stop.svg</file>
-		<file alias="qtg_large_video_call" >resources/graphics/qtg_large_video_call.svg</file>
-		<file alias="qtg_mono_end_call" >resources/graphics/qtg_mono_end_call.svg</file>
-		<file alias="qtg_fr_btn_red_normal_tl" >resources/graphics/qtg_fr_btn_red_normal_tl.svg</file>
-		<file alias="qtg_fr_btn_red_normal_tr" >resources/graphics/qtg_fr_btn_red_normal_tr.svg</file>
-		<file alias="qtg_fr_btn_red_normal_r" >resources/graphics/qtg_fr_btn_red_normal_r.svg</file>
-		<file alias="qtg_fr_btn_red_normal_l" >resources/graphics/qtg_fr_btn_red_normal_l.svg</file>
-		<file alias="qtg_fr_btn_red_normal_br" >resources/graphics/qtg_fr_btn_red_normal_br.svg</file>
-		<file alias="qtg_fr_btn_red_normal_bl" >resources/graphics/qtg_fr_btn_red_normal_bl.svg</file>
-		<file alias="qtg_fr_btn_red_normal_c" >resources/graphics/qtg_fr_btn_red_normal_c.svg</file>
-		<file alias="qtg_fr_btn_red_normal_b" >resources/graphics/qtg_fr_btn_red_normal_b.svg</file>
-		<file alias="qtg_fr_btn_red_normal_t" >resources/graphics/qtg_fr_btn_red_normal_t.svg</file>
-		<file alias="qtg_fr_btn_red_pressed_tl" >resources/graphics/qtg_fr_btn_red_pressed_tl.svg</file>
-		<file alias="qtg_fr_btn_red_pressed_tr" >resources/graphics/qtg_fr_btn_red_pressed_tr.svg</file>
-		<file alias="qtg_fr_btn_red_pressed_r" >resources/graphics/qtg_fr_btn_red_pressed_r.svg</file>
-		<file alias="qtg_fr_btn_red_pressed_l" >resources/graphics/qtg_fr_btn_red_pressed_l.svg</file>
-		<file alias="qtg_fr_btn_red_pressed_br" >resources/graphics/qtg_fr_btn_red_pressed_br.svg</file>
-		<file alias="qtg_fr_btn_red_pressed_bl" >resources/graphics/qtg_fr_btn_red_pressed_bl.svg</file>
-		<file alias="qtg_fr_btn_red_pressed_c" >resources/graphics/qtg_fr_btn_red_pressed_c.svg</file>
-		<file alias="qtg_fr_btn_red_pressed_b" >resources/graphics/qtg_fr_btn_red_pressed_b.svg</file>
-		<file alias="qtg_fr_btn_red_pressed_t" >resources/graphics/qtg_fr_btn_red_pressed_t.svg</file>
-		<file alias="black_win.bmp" >resources/graphics/qgn_indi_tb_black_win.bmp</file>
-		<file alias="hbpushbutton_color.css">resources/hbpushbutton_color.css</file>
-	</qresource>
-  <qresource prefix="/xml" >
-    <file alias="lcidleview.docml">resources/lcviews/lcidleview.docml</file>
-    <file alias="lcreceiveview.docml">resources/lcviews/lcreceiveview.docml</file>
-    <file alias="lcreceiveonlyview.docml">resources/lcviews/lcreceiveonlyview.docml</file>
-    <file alias="lcsendview.docml">resources/lcviews/lcsendview.docml</file>
-    <file alias="lctwowayview.docml">resources/lcviews/lctwowayview.docml</file>
-    <file alias="lcvtview.docml">resources/lcviews/lcvtview.docml</file>
-  </qresource>
-  <qresource prefix="/translations" >
-    <file alias="livecommsui_en_GB">livecommsui_en_GB.qm</file>
-  </qresource>
-  <qresource prefix="/" >
-		<file alias="win_appear.fxml" >resources/win_appear.fxml</file>
-		<file alias="win_disappear.fxml" >resources/win_disappear.fxml</file>
-		<file alias="win_flip.fxml" >resources/win_flip.fxml</file>
-		<file alias="win_swap_down.fxml" >resources/win_swap_down.fxml</file>		
-		<file alias="win_swap_up.fxml" >resources/win_swap_up.fxml</file>		
-  </qresource>
-    
+    <qresource prefix="/">
+        <file alias="hbpushbutton_color.css">resources/hbpushbutton_color.css</file>
+    </qresource>
+    <qresource prefix="/xml" >
+        <file alias="lcidleview.docml">resources/lcviews/lcidleview.docml</file>
+        <file alias="lcreceiveview.docml">resources/lcviews/lcreceiveview.docml</file>
+        <file alias="lcreceiveonlyview.docml">resources/lcviews/lcreceiveonlyview.docml</file>
+        <file alias="lcsendview.docml">resources/lcviews/lcsendview.docml</file>
+        <file alias="lctwowayview.docml">resources/lcviews/lctwowayview.docml</file>
+        <file alias="lcvtview.docml">resources/lcviews/lcvtview.docml</file>
+    </qresource>
+    <qresource prefix="/" >
+        <file alias="win_appear.fxml" >resources/win_appear.fxml</file>
+        <file alias="win_disappear.fxml" >resources/win_disappear.fxml</file>
+        <file alias="win_flip.fxml" >resources/win_flip.fxml</file>
+        <file alias="win_swap_down.fxml" >resources/win_swap_down.fxml</file>       
+        <file alias="win_swap_up.fxml" >resources/win_swap_up.fxml</file>       
+    </qresource>
 </RCC>

@@ -76,7 +76,6 @@ LcUiEnginePrivate::LcUiEnginePrivate(LcUiEngine& uiEngine,
       mUiEngine( uiEngine ),
       mIsMinimized(false),
       mFirstForegroundSwitch(true),
-      mViewReadySimulationTimerId(0),
       mCurrentView(0),
       mActivityManager(0)
 {
@@ -562,11 +561,9 @@ void LcUiEnginePrivate::timerEvent(QTimerEvent *event)
         curr = curr.addSecs( 
                 mSessionDurationStartTime.secsTo( QTime::currentTime() ) );
         emit mUiEngine.sessionDurationChanged(curr.toString());
-    } else if ( event->timerId() == mViewReadySimulationTimerId ){
-        LC_QDEBUG( "livecomms [UI] -> LcUiEnginePrivate::timerEvent(), viewReady simulation" )
-        handleEngineForegroundStatus();
     }
 }
+
 // -----------------------------------------------------------------------------
 // LcUiEnginePrivate::startReceiving
 // -----------------------------------------------------------------------------
@@ -1373,7 +1370,9 @@ void LcUiEnginePrivate::handleEngineForegroundStatus()
 {
     bool foreground = !mIsMinimized;
     LC_QDEBUG_2( "livecomms [UI] -> LcUiEnginePrivate::handleEngineForegroundStatus(), fg:", 
-                 foreground ) 
+                 foreground )
+    HbMainWindow *mainWindow = HbInstance::instance()->allMainWindows().at(0);
+
     if ( mLiveCommsEngine ){
         bool setStatusToEngine(true);
         if ( foreground && mFirstForegroundSwitch ){
@@ -1382,11 +1381,9 @@ void LcUiEnginePrivate::handleEngineForegroundStatus()
             // TODO: wk8 does not yet have viewReady signal so simulate it
             // by using timer. Timer can be removed later.
             if ( mCurrentView ){
-                LC_QDEBUG( "livecomms [UI]  Wait for first paint" ) 
-                connect( mCurrentView, SIGNAL(viewReady()), 
+                LC_QDEBUG( "livecomms [UI]  Wait for first paint" )
+                connect( mainWindow, SIGNAL(viewReady()), 
                          this, SLOT(handleEngineForegroundStatus()) );
-                const int viewReadySimulationInMs = 2000;
-                mViewReadySimulationTimerId = startTimer( viewReadySimulationInMs );
                 setStatusToEngine = false;
             }
             
@@ -1394,11 +1391,8 @@ void LcUiEnginePrivate::handleEngineForegroundStatus()
         if ( setStatusToEngine ) {
             LC_QDEBUG( "livecomms [UI]  Set fg status to engine plugin" ) 
             session().SetForegroundStatus(foreground);
-        
-            disconnect( mCurrentView, SIGNAL(viewReady()), 
+            disconnect( mainWindow, SIGNAL(viewReady()), 
                         this, SLOT(handleEngineForegroundStatus()) );
-            killTimer( mViewReadySimulationTimerId );
-            mViewReadySimulationTimerId = 0;
         }
         mFirstForegroundSwitch = false;
     }

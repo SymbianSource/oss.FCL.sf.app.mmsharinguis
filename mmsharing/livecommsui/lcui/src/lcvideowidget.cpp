@@ -31,6 +31,7 @@ LcVideoWidget::LcVideoWidget(QGraphicsItem *parent, bool showVideo) :
     HbTransparentWindow(parent),
     mShowVideo(showVideo)
 {
+    setFlag(QGraphicsItem::ItemUsesExtendedStyleOption, true);
 }
 
 // -----------------------------------------------------------------------------
@@ -50,6 +51,7 @@ void LcVideoWidget::paint(
 {
     Q_UNUSED(widget)
     
+    painter->save();
     if ( mShowVideo ){
 
         QPainter::CompositionMode origCompositionMode = painter->compositionMode();
@@ -64,6 +66,7 @@ void LcVideoWidget::paint(
         painter->drawRoundedRect( option->exposedRect, 
             lcVideoWidgetCornerRounding, lcVideoWidgetCornerRounding);
     }
+    painter->restore();
 }
 
 // -----------------------------------------------------------------------------

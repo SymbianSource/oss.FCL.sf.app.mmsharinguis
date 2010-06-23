@@ -187,7 +187,6 @@ private: // Data
     LcUiEngine& mUiEngine;
     bool mIsMinimized;
     bool mFirstForegroundSwitch;
-    int mViewReadySimulationTimerId;
     HbView* mCurrentView; // Not owned
     TRect mLocalRect;
     TRect mRemoteRect;

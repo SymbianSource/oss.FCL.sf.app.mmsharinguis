@@ -79,11 +79,16 @@
             <widget name="lc_widget_sendvideo2" type="HbTransparentWindow">
                 <real name="z" value="13"/>
             </widget>
+            <widget name="lc_label_dialpad" type="HbWidget">
+                <real name="z" value="18"/>
+                <sizehint height="44un" type="FIXED" width="44un"/>
+                <bool name="visible" value="FALSE"/>
+            </widget>
             <layout type="anchor">
                 <anchoritem dst="lc_content" dstEdge="LEFT" spacing="var(hb-param-margin-gene-screen)" src="" srcEdge="LEFT"/>
                 <anchoritem dst="lc_content" dstEdge="RIGHT" spacing="var(hb-param-margin-gene-screen)" src="" srcEdge="RIGHT"/>
                 <anchoritem dst="lc_content" dstEdge="TOP" spacing="var(hb-param-margin-gene-screen)" src="" srcEdge="TOP"/>
-                <anchoritem dst="lc_content" dstEdge="BOTTOM" spacing="var(hb-param-margin-gene-screen)" src="" srcEdge="BOTTOM"/>
+                <anchoritem dst="lc_content" dstEdge="BOTTOM" spacing="var(hb-param-margin-gene-screen)" src="" srcEdge="BOTTOM"/>								
             </layout>
         </widget>
         <widget name="lc_menu" role="HbView:menu" type="HbMenu">
@@ -197,6 +202,8 @@
                 <anchoritem dst="lc_button_endCall" dstEdge="LEFT" spacing="4un" src="lc_widget_sendvideo" srcEdge="LEFT"/>
                 <anchoritem dst="lc_button_endCall" dstEdge="RIGHT" spacing="-4un" src="lc_widget_sendvideo" srcEdge="RIGHT"/>
                 <anchoritem dst="lc_button_endCall" dstEdge="BOTTOM" spacing="-1.5un" src="lc_widget_sendvideo" srcEdge="BOTTOM"/>
+                <anchoritem dst="lc_label_dialpad" dstEdge="RIGHT" spacing="0un" src="" srcEdge="RIGHT"/>
+                <anchoritem dst="lc_label_dialpad" dstEdge="TOP" spacing="0un" src="" srcEdge="TOP"/>
             </layout>
         </widget>
         <widget name="lc_widget_sendvideo2" type="HbTransparentWindow">
@@ -261,6 +268,8 @@
                 <anchoritem dst="lc_button_endCall" dstEdge="LEFT" spacing="4un" src="lc_widget_recvvideo" srcEdge="LEFT"/>
                 <anchoritem dst="lc_button_endCall" dstEdge="RIGHT" spacing="-4un" src="lc_widget_recvvideo" srcEdge="RIGHT"/>
                 <anchoritem dst="lc_button_endCall" dstEdge="BOTTOM" spacing="-1.5un" src="lc_widget_recvvideo" srcEdge="BOTTOM"/>
+                <anchoritem dst="lc_label_dialpad" dstEdge="RIGHT" spacing="0un" src="" srcEdge="RIGHT"/>
+                <anchoritem dst="lc_label_dialpad" dstEdge="TOP" spacing="0un" src="" srcEdge="TOP"/>
             </layout>
         </widget>
         <widget name="lc_widget_sendvideo2" type="HbTransparentWindow">
@@ -352,40 +361,42 @@
             </widget>
             <widget name="lc_icon_brand" type="HbLabel">
                 <bool name="visible" value="FALSE"/>
-            </widget>            
-            <widget name="lc_label_dialpad" type="HbWidget">
-                <real name="z" value="18"/>
-                <sizehint height="44un" type="MAXIMUM" width="44un"/>
-                <bool name="visible" value="TRUE"/>
-            </widget>
+            </widget>                        
             <layout type="anchor">
-                <anchoritem dst="lc_label_dialpad" dstEdge="RIGHT" spacing="0un" src="" srcEdge="RIGHT"/>
+            		<anchoritem dst="lc_label_dialpad" dstEdge="RIGHT" spacing="0un" src="" srcEdge="RIGHT"/>
                 <anchoritem dst="lc_label_dialpad" dstEdge="TOP" spacing="0un" src="" srcEdge="TOP"/>
-                <anchoritem dst="lc_widget_recvvideo" dstEdge="LEFT" spacing="var(hb-param-margin-gene-screen)" src="" srcEdge="LEFT"/>
-                <anchoritem dst="lc_widget_recvvideo" dstEdge="TOP" spacing="1.5un" src="" srcEdge="TOP"/>
-                <anchoritem dst="lc_widget_recvvideo2" dstEdge="LEFT" spacing="var(hb-param-margin-gene-screen)" src="" srcEdge="LEFT"/>
-                <anchoritem dst="lc_widget_recvvideo2" dstEdge="TOP" spacing="1.5un" src="" srcEdge="TOP"/>
+                <anchoritem dst="lc_widget_recvvideo" dstEdge="LEFT" spacing="var(hb-param-margin-gene-screen)" src="" srcEdge="LEFT"/>                
+                <anchoritem dst="lc_widget_recvvideo" dstEdge="TOP" spacing="var(hb-param-margin-gene-screen)" src="" srcEdge="TOP"/>
+                <anchoritem dst="lc_widget_recvvideo2" dstEdge="LEFT" spacing="var(hb-param-margin-gene-screen)" src="" srcEdge="LEFT"/>                
+                <anchoritem dst="lc_widget_recvvideo2" dstEdge="TOP" spacing="var(hb-param-margin-gene-screen)" src="" srcEdge="TOP"/>
+                <anchoritem dst="lc_widget_sendvideo" dstEdge="LEFT" spacing="0un" src="" srcEdge="LEFT"/>
+                <anchoritem dst="lc_widget_sendvideo" dstEdge="TOP" spacing="0un" src="" srcEdge="TOP"/>
+                <anchoritem dst="lc_widget_sendvideo2" dstEdge="LEFT" spacing="0un" src="" srcEdge="LEFT"/>
+                <anchoritem dst="lc_widget_sendvideo2" dstEdge="TOP" spacing="0un" src="" srcEdge="TOP"/>
             </layout>
         </widget>
         <widget name="lc_toolbar" role="HbView:toolBar" type="HbToolBar">
             <bool name="visible" value="FALSE"/>
         </widget>
         <widget name="lc_widget_sendvideo" type="HbTransparentWindow">						
-						<sizehint height="0" type="FIXED" width="0"/>
-						<bool name="visible" value="FALSE"/>
-				</widget>
-        <widget name="lc_widget_sendvideo2" type="HbTransparentWindow">            
-            <sizehint height="0" type="FIXED" width="0"/>
-            <bool name="visible" value="FALSE"/>
-        </widget>  
+						<sizehint height="0" type="FIXED" width="0"/>		
+						<bool name="visible" value="FALSE"/>				
+				</widget>        
         <widget name="lc_widget_recvvideo" type="HbTransparentWindow">
             <sizepolicy horizontalPolicy="Fixed" horizontalStretch="0" verticalPolicy="Fixed" verticalStretch="0"/>
-            <sizehint height="288" type="FIXED" width="352"/>
-        </widget>
+            <sizehint height="39.00un" type="FIXED" width="47.58un"/>
+        </widget>        
         <widget name="lc_widget_recvvideo2" type="HbTransparentWindow">
             <sizepolicy horizontalPolicy="Fixed" horizontalStretch="0" verticalPolicy="Fixed" verticalStretch="0"/>
-            <sizehint height="288" type="FIXED" width="352"/>
+            <sizehint height="39.00un" type="FIXED" width="47.58un"/>
         </widget>
+        <widget name="lc_widget_sendvideo2" type="HbTransparentWindow">            
+            <sizehint height="0" type="FIXED" width="0"/> 
+            <bool name="visible" value="FALSE"/>           
+        </widget>  
+        <widget name="lc_label_dialpad" type="HbWidget">                
+            <bool name="visible" value="TRUE"/>
+				</widget>
     </section>
     <metadata activeUIState="landscape" display="NHD-3.2-inch_landscape" unit="un">
         <uistate name="Common ui state" sections="#common"/>

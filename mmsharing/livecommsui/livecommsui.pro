@@ -91,6 +91,5 @@ symbian: {
     :BLD_INF_RULES.prj_exports += "$$DOCML_DIR/lctwowayview.docml z:/data/others/lctwowayview.docml"
     :BLD_INF_RULES.prj_exports += "$$DOCML_DIR/lcvtview.docml z:/data/others/lcvtview.docml"
     :BLD_INF_RULES.prj_exports += "$$DOCML_DIR/lcreceiveonlyView.docml z:/data/others/lcreceiveonlyview.docml"
-    :BLD_INF_RULES.prj_exports += "$$LCUI_DIR/livecommsui_en_GB.qm z:/data/others/livecommsui_en_GB.qm"
 }
 

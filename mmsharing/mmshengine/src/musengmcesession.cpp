@@ -538,10 +538,9 @@ void CMusEngMceSession::UpdateLcSessionL()
 // From MLcSession
 // -----------------------------------------------------------------------------
 //
-TBool CMusEngMceSession::SendDialTone( TChar aKey)
+TBool CMusEngMceSession::SendDialTone( TChar /*aKey*/)
     {
-    MUS_LOG1( "mus: [ENGINE]     -> CMusEngMceSession::SendDialTone() %c", 
-                 aKey )
+    // Handle Key once implemented
     return ETrue;
     }
 

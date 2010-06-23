@@ -54,13 +54,8 @@ public:
     void init();
     void activated();
     void deactivated();
-    void showControl();
-    void hideControl();
     QString currentLayout();
-    void deActivateFullScreen();
-    void activatePortrait();
-    void updateUiElements();
-
+    
 public slots:
 
     void endVideoSession();    
@@ -69,19 +64,15 @@ public slots:
     void changeCamera();    
     void switchToVoiceCall();    
     void speaker();
-    void showZoom();
-    void activateFullScreen();
+    void showZoom();    
     void updateVideoRects();
     void swap();
     void shareImage();
     void updateSwapLayout();
-    void menuAboutToShow();
-    void menuAboutToHide();
+    void menuAboutToShow();    
     void back();
 //temp
     void notSupported();
-    void changeOrientation_Temporary();
-
 
 private slots:
 
@@ -94,8 +85,8 @@ private slots:
     void setCameraActionToDisable();
     void setCameraActionToEnable();
     void disableControls();
-    void enableControls();
-    void landscapeTimerTimeout();
+    void enableControls();    
+    void watchInactivity();
 
 protected: // From HbView
     
@@ -109,7 +100,10 @@ protected slots:
     
 protected:
     void setDialpadPosition();
-    void enableDialpadCallButton( bool enable );
+    
+private: // fullscreen
+    void timerEvent( QTimerEvent * event );
+    void toFullScreen( bool fullscreen );
     
 private:
     void createNotSupportedNote();
@@ -117,8 +111,7 @@ private:
     bool isLandscapeOrientation();
     QRectF translateRectForOrientation(const QRectF& origRect);
     QPointF translatePointForOrientation(const QPointF& origPoint);
-    void setVisibility( QGraphicsItem* item, bool visible );
-    void resetLandscapeTimer();
+    void setVisibility( QGraphicsItem* item, bool visible );    
     void addOptionsMenuActions();
     void gestureLongPress( QPointF coords );
     void gestureShortPress();
@@ -148,11 +141,11 @@ private://not owned
 
 private:
 
-    HbMenu* mItemContextMenu;
-    QTimer* mLandscapeTimer;
+    HbMenu* mItemContextMenu;    
     bool mIsOptionMenuOpen;
     HbAction* mSoftKeyBackAction;
     Dialpad* mDialpad; // Not owned
+    int timerId;
 };
 
 

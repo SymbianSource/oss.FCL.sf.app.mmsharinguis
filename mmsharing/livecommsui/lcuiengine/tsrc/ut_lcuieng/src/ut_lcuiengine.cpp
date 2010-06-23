@@ -1178,22 +1178,21 @@ void UT_LcUiEngine::testHandleForegroundStatus()
     QtHighwayStubHelper::reset();
     
     // First time to foreground, engine is not set to foreground until viewReady signal
-    // or simulation timeout occurs
     HbView currView;
     mEngine->d->setCurrentView(&currView);
-    QVERIFY( mEngine->d->mViewReadySimulationTimerId == 0 );
+    QVERIFY( mEngine->d->mFirstForegroundSwitch );
     QVERIFY( !mEngine->d->mActivityManager->isActivitySimulationEnabled() );
+    
     mEngine->d->HandleForegroundStatus(ETrue);
     QVERIFY( mEngine->d->mActivityManager->isActivitySimulationEnabled() );
     QVERIFY( !mEngine->d->session().IsBackgroundStartup() ); // Stub returns fg status in this
     QVERIFY( !QtHighwayStubHelper::isAtBg() );
-    QVERIFY( mEngine->d->mViewReadySimulationTimerId != 0 );
-    //  Simulate timeout
-    QTimerEvent viewReadySimulationEvent(mEngine->d->mViewReadySimulationTimerId);
-    mEngine->d->timerEvent(&viewReadySimulationEvent);
+    QVERIFY( !mEngine->d->mFirstForegroundSwitch );
+    
+    //Simulate viewReady signal happens, funciton will be called again.
+    mEngine->d->HandleForegroundStatus(ETrue);
     QVERIFY( mEngine->d->session().IsBackgroundStartup() ); // Stub returns fg status in this
     QVERIFY( !mEngine->d->mFirstForegroundSwitch );
-    QVERIFY( mEngine->d->mViewReadySimulationTimerId == 0 );
        
     // Bg switch
     QtHighwayStubHelper::reset();

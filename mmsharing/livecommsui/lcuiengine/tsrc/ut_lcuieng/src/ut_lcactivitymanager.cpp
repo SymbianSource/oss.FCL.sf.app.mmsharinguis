@@ -118,12 +118,10 @@ void UT_LcActivityManager::testEnableActivitySimulation()
     QVERIFY( User::InactivityTime().Int() == 1 );
     
     // Starting activity simulation again, user inactivity reached threshold
-    int prevTimerID = mActivityManager->mTimerId;
     utInactivityInterval = mActivityManager->mInactivityTimeout = 5;
     QVERIFY( User::InactivityTime().Int() == 5 );
     mActivityManager->enableActivitySimulation(true);
     QVERIFY( mActivityManager->mTimerId > 0 );
-    QVERIFY( mActivityManager->mTimerId != prevTimerID );
     QVERIFY( User::InactivityTime().Int() == 0 );
 
     // Disabling ongoing activity simulation

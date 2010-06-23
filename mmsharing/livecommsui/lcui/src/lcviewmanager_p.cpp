@@ -28,6 +28,9 @@
 #include <hbdialog.h>
 #include <hbaction.h>
 #include <qcoreapplication.h>
+#include <hbactivitymanager.h>
+#include <hbapplication.h>
+#include <hbapplication.h>
 
 // CONSTANTS
 #define LC_VIEWMANAGER_SLOT_ACTIVATE_CURRENT_VIEW "activateCurrentView" 
@@ -140,7 +143,7 @@ void LcViewManagerPrivate::updateLayout()
         LcView* currentView = static_cast<LcView*>( mMainWindow.currentView() );
         QString layout = currentView->currentLayout();
         mRepository->loadLayout( layout );
-        currentView->updateUiElements();
+        currentView->setContentFullScreen( true );        
         currentView->updateVideoRects();
     }
     

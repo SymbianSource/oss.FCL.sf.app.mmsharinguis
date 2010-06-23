@@ -77,7 +77,7 @@ LcUiComponentRepository::LcUiComponentRepository(LcUiEngine& engine)
     mSlots->insert( lcActSwapViewsId, SLOT( swap() ) );
     mSlots->insert( lcActZoomId, SLOT( notSupported() ) );
     mSlots->insert( lcActSwitchToVoiceCallId, SLOT( switchToVoiceCall() ) );    
-    mSlots->insert( lcActOpenKeypadId, SLOT( notSupported() ) );
+    mSlots->insert( lcActOpenKeypadId, SLOT( openDialpad() ) );
     mSlots->insert( lcActDisableCameraId, SLOT( disableCamera() ) );
     mSlots->insert( lcActSpeakerId, SLOT( speaker() ) );
 
@@ -166,7 +166,10 @@ QObject* LcUiComponentRepository::createObject(
         HbStyleLoader::registerFilePath(":/hbpushbutton_color.css");
     }
     else if ( name == lcWidgetDialpad ){
-        object = new Dialpad();
+      HbMainWindow* pWindow = HbInstance::instance()->allMainWindows().at(0);
+        if( pWindow ){
+            object = new Dialpad( *pWindow );
+        }
     }
     else {
         object = HbDocumentLoader::createObject( type, name );
@@ -567,13 +570,14 @@ bool LcUiComponentRepository::loadLayout( const QString& layoutName )
     if ( mLastLoadedView.length() > 0) {
         LC_QDEBUG_4( "layout = ", layoutName, ", view =",  mLastLoadedView )
 
-        load( mLastLoadedView, layoutName, &ok );
+        QObjectList objects = load( mLastLoadedView, layoutName, &ok );
         if (!ok) {
             LC_QCRITICAL( "! loading of XML failed !" )
         }
         else{
             mPreviousLayout = mLayout; 
             mLayout = layoutName;
+            setObjectTree( objects );
         }
     } else {
         LC_QCRITICAL( "! not loading layout, since view is not loaded!" )

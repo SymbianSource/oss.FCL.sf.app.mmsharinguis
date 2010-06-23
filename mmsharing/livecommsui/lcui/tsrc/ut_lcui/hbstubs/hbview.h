@@ -45,6 +45,9 @@ public:
     HbAction *navigationAction() const;
     void setNavigationAction(HbAction *action);
 
+signals:
+     void contentFullScreenChanged();
+     
 public slots:
     void setTitle(const QString &title);
     

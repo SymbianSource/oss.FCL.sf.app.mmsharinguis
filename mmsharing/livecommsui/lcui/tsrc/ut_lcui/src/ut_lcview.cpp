@@ -270,27 +270,19 @@ void UT_LcView::testEndVideoSession()
 }
 
 void UT_LcView::testMute()
-{
-    QVERIFY( !mView->mLandscapeTimer );
-    mView->mLandscapeTimer = new QTimer();
-    mView->mLandscapeTimer->start();
-    int oldTimerId = mView->mLandscapeTimer->timerId();
+{    
     mView->mute();
     QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_mute ) );
-    QVERIFY( mView->mLandscapeTimer->isActive() );
-    QVERIFY( oldTimerId != mView->mLandscapeTimer->timerId() );
+    QVERIFY( !mView->timerId );
+    QVERIFY( !mEngine->fullScreenMode());
 }
 
 void UT_LcView::testChangeCamera()
 {
-    mView->init();
-    QVERIFY( mView->mLandscapeTimer );
-    QVERIFY( mView->mLandscapeTimer->isActive() );
-    int oldTimerId = mView->mLandscapeTimer->timerId();
+    mView->init();    
     mView->changeCamera();
-    QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_toggleCamera ) );
-    QVERIFY( mView->mLandscapeTimer->isActive() );
-    QVERIFY( oldTimerId != mView->mLandscapeTimer->timerId() );
+    QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_toggleCamera ) );    
+    QVERIFY( !mEngine->fullScreenMode() );
 }
 
 void UT_LcView::testSwitchToVoiceCall()
@@ -301,26 +293,18 @@ void UT_LcView::testSwitchToVoiceCall()
 
 void UT_LcView::testDisableCamera()
 {
-    mView->init();
-    QVERIFY( mView->mLandscapeTimer );
-    QVERIFY( mView->mLandscapeTimer->isActive() );
-    int oldTimerId = mView->mLandscapeTimer->timerId();
+    mView->init();   
     mView->disableCamera();
-    QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_disableCamera ) );
-    QVERIFY( mView->mLandscapeTimer->isActive() );
-    QVERIFY( oldTimerId != mView->mLandscapeTimer->timerId() );
+    QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_disableCamera ) );    
+    QVERIFY( !mEngine->fullScreenMode() );
 }
 
 void UT_LcView::testSpeaker()
-{
-    QVERIFY( !mView->mLandscapeTimer );
-    mView->mLandscapeTimer = new QTimer();
-    mView->mLandscapeTimer->start();
-    int oldTimerId = mView->mLandscapeTimer->timerId();
+{   
+    mView->init();   
     mView->speaker();
-    QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_speaker ) );
-    QVERIFY( mView->mLandscapeTimer->isActive() );
-    QVERIFY( oldTimerId != mView->mLandscapeTimer->timerId() );
+    QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_speaker ) );    
+    QVERIFY( !mEngine->fullScreenMode() );
 }
 
 void UT_LcView::testSwap()
@@ -404,8 +388,8 @@ void UT_LcView::testUpdateVideoRects()
     mView->mReceivedVideoWidget = receivedVideoWidget;
     sharedVideoWidget->hide();
     receivedVideoWidget->hide();
-		lcutStub_LcUiEngine_setLocalPlaying( false );
-		lcutStub_LcUiEngine_setRemotePlaying( false );
+    lcutStub_LcUiEngine_setLocalPlaying( false );
+    lcutStub_LcUiEngine_setRemotePlaying( false );
     mView->updateVideoRects();
     QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_updateSession, 0 ) );
     QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_setOrientation, 1 ) );
@@ -415,15 +399,12 @@ void UT_LcView::testUpdateVideoRects()
 
     sharedVideoWidget->hide();
     receivedVideoWidget->hide();
-		lcutStub_LcUiEngine_setLocalPlaying( true );
-		lcutStub_LcUiEngine_setRemotePlaying( true );
+    lcutStub_LcUiEngine_setLocalPlaying( true );
+    lcutStub_LcUiEngine_setRemotePlaying( true );
     mView->updateVideoRects();
     QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_updateSession, 0 ) );
     QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_setOrientation, 1 ) );
-    QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_setContentAreas, 2 ) );
-    // TODO: effecthandler->setvisibility temporarily NOP
-    /*QVERIFY( sharedVideoWidget->isVisible() );
-    QVERIFY( receivedVideoWidget->isVisible() );*/
+    QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_setContentAreas, 2 ) );  
 }
 
 void UT_LcView::testCurrentLayout()
@@ -487,71 +468,70 @@ void UT_LcView::testCurrentLayout()
 }
 
 
-void UT_LcView::testActivateFullScreen()
+void UT_LcView::testToFullScreen()
 {
     QString layout;
     UT_SET_ORIENTATION( Qt::Horizontal );
 
-    // Test1: Initial Layout is Vertical
-    mEngine->setFullScreenMode(false);
-    mView->activateFullScreen();
-    QVERIFY( !mEngine->fullScreenMode());
-
+    // Test1: to full screen
     mView->init();
-    mView->mEndCallButton = mEndCallButton;
-    mEngine->setFullScreenMode(false);
-    mView->activateFullScreen();
-    QVERIFY( mEngine->fullScreenMode());
-
-    QVERIFY( !mView->isItemVisible(Hb::TitleBarItem ) );
-    QVERIFY( !mView->isItemVisible(Hb::DockWidgetItem ) );
+    mView->menu()->setVisible( false );
+    mView->toFullScreen( true );
+    QVERIFY( mEngine->fullScreenMode() );
+    QVERIFY( !mView->isTitleBarVisible() );
+    QVERIFY( !mView->toolBar()->isVisible() );    
     QVERIFY( !mView->mEndCallButton->isVisible());
-
-    layout = mView->currentLayout();
-    QVERIFY( layout == lcLayoutLandscapeDefaultId );
+    QVERIFY( !mView->mDuration->isVisible());
+    QVERIFY( !mView->mRecipient->isVisible());
+    QVERIFY( !mView->mBrandIcon->isVisible());    
     
-    
-    // Test2: Retry Full Screen if already Enabled.
-    QVERIFY( mEngine->fullScreenMode());
-    layout = mView->currentLayout();
-    QVERIFY( layout == lcLayoutLandscapeDefaultId );
-    
-}
-
-void UT_LcView::testDeactivateFullScreen()
-{
+    // Test2 : not in full screen
     mView->init();
-    mView->mEndCallButton = mEndCallButton;
-    QString layout;
-    UT_SET_ORIENTATION( Qt::Horizontal );
-    layout = mView->currentLayout();
-    
-    // Test2: Deactivate from Full Screen Mode
-    mEngine->setFullScreenMode(true);
-    mView->deActivateFullScreen();
-
+    mView->menu()->setVisible( false );
+    mView->toFullScreen( false );
     QVERIFY( !mEngine->fullScreenMode());
     QVERIFY( mView->isTitleBarVisible() );
-    QVERIFY( !mView->isItemVisible(Hb::DockWidgetItem ) );
+    QVERIFY( mView->toolBar()->isVisible() );    
     QVERIFY( mView->mEndCallButton->isVisible());
-
-    QVERIFY( layout == lcLayoutLandscapeDefaultId );
-
-    // Test2: Trying to Deactivate full sceeen 
-    // when its not full screen
-    mEngine->setFullScreenMode(false);
-    mView->deActivateFullScreen();
+    QVERIFY( mView->mDuration->isVisible());
+    QVERIFY( mView->mRecipient->isVisible());
+    QVERIFY( mView->mBrandIcon->isVisible());
+    QVERIFY( mView->timerId );
     
+    // Test3 : menu visible
+    mView->init();
+    mView->menu()->setVisible( false );
+    mView->toFullScreen( false );
+    mView->menu()->setVisible( true );
+    mView->toFullScreen( true );
+    QVERIFY( !mEngine->fullScreenMode());
     QVERIFY( mView->isTitleBarVisible() );
-    QVERIFY( !mView->isItemVisible(Hb::DockWidgetItem ) );
+    QVERIFY( mView->toolBar()->isVisible() );    
     QVERIFY( mView->mEndCallButton->isVisible());
-    QVERIFY( layout == lcLayoutLandscapeDefaultId );
+    QVERIFY( mView->mDuration->isVisible());
+    QVERIFY( mView->mRecipient->isVisible());
+    QVERIFY( mView->mBrandIcon->isVisible());
+    QVERIFY( mView->timerId );
+    
+    // Test3 : dialpad visible
+    mView->init();
+    delete mView->mDialpad;
+    mView->mDialpad = new Dialpad();
+    mView->toFullScreen( true );
+    QVERIFY( !mEngine->fullScreenMode());
+    QVERIFY( mView->isTitleBarVisible() );
+    QVERIFY( mView->toolBar()->isVisible() );    
+    QVERIFY( mView->mEndCallButton->isVisible());
+    QVERIFY( mView->mDuration->isVisible());
+    QVERIFY( mView->mRecipient->isVisible());
+    QVERIFY( mView->mBrandIcon->isVisible());
+    QVERIFY( mView->timerId );
 }
-
 
 void UT_LcView::testGestureEvent()
 {
     mView->init();
+    mView->menu()->setVisible(false);    
     UT_SET_ORIENTATION( Qt::Horizontal );
     mView->mItemContextMenu = 0;
     mView->mSharedVideoWidget->setGeometry(QRectF(5,50, 100, 100));
@@ -671,6 +651,7 @@ void UT_LcView::testGestureLongPress()
 void UT_LcView::testGestureShortPress()
 {
     mView->init();
+    mView->menu()->setVisible(false);
     mView->mSharedVideoWidget->setGeometry(QRectF(5,50, 100, 100));
     mView->mReceivedVideoWidget->setGeometry(QRectF(5,200, 200, 400));
  
@@ -682,83 +663,38 @@ void UT_LcView::testGestureShortPress()
     // toggled
     mView->gestureShortPress();
     QVERIFY( mEngine->fullScreenMode());
-
-    // no action if its not landscape.
-    UT_SET_ORIENTATION( Qt::Vertical );
-    mView->gestureShortPress();
-    QVERIFY( mEngine->fullScreenMode());
 }
 
 
-
-void UT_LcView::testActivatePortrait()
+void UT_LcView::testTimerEvent()
 {
-
-    mView->activatePortrait();
-
     mView->init();
-    mView->mEndCallButton = mEndCallButton;
-    mView->activateFullScreen();
+    // timer time out
+    QTimerEvent* event = new QTimerEvent( mView->timerId );
+    mView->menu()->setVisible(false);
+    mView->timerEvent( event );
     QVERIFY( mEngine->fullScreenMode());
     QVERIFY( !mView->isTitleBarVisible() );
-    QVERIFY( !mView->isItemVisible(Hb::DockWidgetItem ) );
+    QVERIFY( !mView->toolBar()->isVisible() );    
     QVERIFY( !mView->mEndCallButton->isVisible());
-
-    mView->activatePortrait();
-    QVERIFY( !mEngine->fullScreenMode());
+    QVERIFY( !mView->mDuration->isVisible());
+    QVERIFY( !mView->mRecipient->isVisible());
+    QVERIFY( !mView->mBrandIcon->isVisible());    
+    delete event;
+    
+    // not a timer we want
+    mView->toFullScreen( false );
+    event = new QTimerEvent( 22222 ); // some number
+    mView->timerEvent( event );
+    QVERIFY( !mEngine->fullScreenMode() );
     QVERIFY( mView->isTitleBarVisible() );
-    QVERIFY( !mView->isItemVisible(Hb::DockWidgetItem ) );
+    QVERIFY( mView->toolBar()->isVisible() );    
     QVERIFY( mView->mEndCallButton->isVisible());
-
-}
-
-void UT_LcView::testUpdateUiElements()
-{
-    mView->init();
-    UT_SET_ORIENTATION( Qt::Horizontal );
-    mView->updateUiElements();
-    QVERIFY( !mEngine->fullScreenMode());
-    QVERIFY( mView->isTitleBarVisible() );
-    QVERIFY( !mView->isItemVisible(Hb::DockWidgetItem ) );
-
-    UT_SET_ORIENTATION( Qt::Vertical );
-    mView->updateUiElements();
-    QVERIFY( !mEngine->fullScreenMode());
-    QVERIFY( mView->isTitleBarVisible() );
-    QVERIFY( !mView->isItemVisible(Hb::DockWidgetItem ) );
-}
-
-void UT_LcView::testLandscapeTimerTimeout()
-{
-    mView->init();
-    mView->deActivateFullScreen();
-
-    // No effect as in vertical zontal mode
-    UT_SET_ORIENTATION(Qt::Vertical);
-    QVERIFY( !mEngine->fullScreenMode());
-    QVERIFY( mView->isTitleBarVisible() );
-    QVERIFY( !mView->isItemVisible(Hb::DockWidgetItem ) );
-
-    mView->landscapeTimerTimeout();
-    QVERIFY( !mEngine->fullScreenMode());
-    QVERIFY( mView->isTitleBarVisible() );
-    QVERIFY( !mView->isItemVisible(Hb::DockWidgetItem ) );
-    
-    // Effective in horizontal mode
-    UT_SET_ORIENTATION(Qt::Horizontal);
-    mView->landscapeTimerTimeout();
-    
-    QVERIFY( mEngine->fullScreenMode());
-    QVERIFY( !mView->isTitleBarVisible() );
-    QVERIFY( !mView->isItemVisible(Hb::DockWidgetItem ) );
-
-    // Test: If menu is open than it should not go into full screen mode.
-    mView->deActivateFullScreen();
-    mView->mIsOptionMenuOpen = true;
-    mView->landscapeTimerTimeout();
-    QVERIFY( !mEngine->fullScreenMode());
-    QVERIFY( mView->isTitleBarVisible() );
-    QVERIFY( !mView->isItemVisible(Hb::DockWidgetItem ) );
+    QVERIFY( mView->mDuration->isVisible());
+    QVERIFY( mView->mRecipient->isVisible());
+    QVERIFY( mView->mBrandIcon->isVisible());
+    QVERIFY( mView->timerId);
+    delete event;
 }
 
 void UT_LcView::testShareImage()
@@ -768,64 +704,38 @@ void UT_LcView::testShareImage()
     //QVERIFY( lcutStub_LcUiEngine_isImageShared() );
 }
 
-
-void UT_LcView::testShowControl()
-{
-    mView->showControl();
-    QVERIFY( mView->isTitleBarVisible() );
-    QVERIFY( mView->toolBar()->isVisible() );
-    QVERIFY( !mView->isItemVisible(Hb::DockWidgetItem ) );
-    QVERIFY( mView->mEndCallButton->isVisible());
-    QVERIFY( mView->mRecipient->isVisible());
-}
-
-void UT_LcView::testHideControl()
-{
-    mView->hideControl();
-    QVERIFY( !mView->isTitleBarVisible() );
-    QVERIFY( !mView->toolBar()->isVisible() );
-    QVERIFY( !mView->isItemVisible(Hb::DockWidgetItem ) );
-    QVERIFY( !mView->mEndCallButton->isVisible());
-    QVERIFY( !mView->mRecipient->isVisible());
-}
-
 void UT_LcView::testUpdateSwapLayout()
-{
-    //Test1: In Full Screen Mode controls Should be hidden.
+{    
     mView->init();
+    mView->menu()->setVisible(false);
     mView->mEndCallButton = mEndCallButton;
     UT_SET_ORIENTATION( Qt::Horizontal );
     mEngine->setFullScreenMode(true);
-
     mView->updateSwapLayout();
-    QVERIFY( !mView->isItemVisible(Hb::TitleBarItem ) );
+    QVERIFY( mEngine->fullScreenMode());
+    QVERIFY( !mView->isTitleBarVisible() );
     QVERIFY( !mView->isItemVisible(Hb::DockWidgetItem ) );
     QVERIFY( !mView->mEndCallButton->isVisible());
-
-    // Test2: If its not full screen show the controls
-    mEngine->setFullScreenMode(false);
-    mView->updateSwapLayout();
-    QVERIFY( mView->isTitleBarVisible() );
-    QVERIFY( !mView->isItemVisible(Hb::DockWidgetItem ) );
-    QVERIFY( mView->mEndCallButton->isVisible());
+    QVERIFY( !mView->mDuration->isVisible());
+    QVERIFY( !mView->mRecipient->isVisible());
+    QVERIFY( !mView->mBrandIcon->isVisible());
 }
 
 void UT_LcView::testMenuAboutToShow()
 {
     mView->init();
-    QVERIFY( !mView->mIsOptionMenuOpen  );
+    mView->menu()->setVisible(false);
+    mView->toFullScreen( true );
     mView->menuAboutToShow();
-    QVERIFY( mView->mIsOptionMenuOpen  );
-    QVERIFY( !mView->mLandscapeTimer->isActive());
+    QVERIFY( !mEngine->fullScreenMode());
+    QVERIFY( mView->isTitleBarVisible() );
+    QVERIFY( mView->toolBar()->isVisible() );    
+    QVERIFY( mView->mEndCallButton->isVisible());
+    QVERIFY( mView->mDuration->isVisible());
+    QVERIFY( mView->mRecipient->isVisible());
+    QVERIFY( mView->mBrandIcon->isVisible());
+    QVERIFY( mView->timerId);
 
-}
-
-void UT_LcView::testMenuAboutToHide()
-{
-    mView->init();
-    mView->menuAboutToHide();
-    QVERIFY( !mView->mIsOptionMenuOpen  );
-    QVERIFY( mView->mLandscapeTimer->isActive());
 }
 
 void UT_LcView::testTranslateRectForOrientation()
@@ -855,27 +765,6 @@ void UT_LcView::testTranslatePointForOrientation()
     QVERIFY( origPoint != modPoint );
 }
 
-void UT_LcView::testResetLandscapeTimer()
-{
-    // No timer
-    QVERIFY( !mView->mLandscapeTimer );
-    mView->resetLandscapeTimer();
-    QVERIFY( !mView->mLandscapeTimer );
-    
-    // Timer not acitve
-    mView->mLandscapeTimer = new QTimer();
-    QVERIFY( !mView->mLandscapeTimer->isActive() );
-    mView->resetLandscapeTimer();
-    QVERIFY( !mView->mLandscapeTimer->isActive() );
-
-    // Timer is active
-    mView->mLandscapeTimer->start();
-    int oldTimerId = mView->mLandscapeTimer->timerId();
-    mView->resetLandscapeTimer();
-    QVERIFY( mView->mLandscapeTimer->isActive() );
-    QVERIFY( oldTimerId != mView->mLandscapeTimer->timerId() );
-}
-
 void  UT_LcView::testOpenDialpad()
 {
     delete mView;
@@ -891,10 +780,10 @@ void  UT_LcView::testOpenDialpad()
     mView->openDialpad();
     
     QVERIFY(mView->mDialpad->isOpen());   
+    QVERIFY(!mView->mDialpad->mIsCallButtonEnabled);
     QVERIFY(mView->mRepository.mLayoutSection == lcLayoutLandscapeDialpadId);    
     QVERIFY(mView->isTitleBarVisible());
-    QCOMPARE(mView->menu()->actions().size(), 0);
-    QVERIFY(!mView->mLandscapeTimer->isActive());
+    QCOMPARE(mView->menu()->actions().size(), 0);    
     QVERIFY(!mView->mEngine.fullScreenMode());
 }
 
@@ -920,8 +809,7 @@ void  UT_LcView::testDialpadClosed()
     QVERIFY(mView->mEndCallButton->isVisible());
     QVERIFY(mView->mRecipient->isVisible());
     QVERIFY(mView->mDuration->isVisible());    
-    QVERIFY(mView->menu()->isVisible());
-    QVERIFY(mView->mLandscapeTimer->isActive());
+    QVERIFY(mView->menu()->isVisible());    
     QVERIFY(!mView->mEngine.fullScreenMode());
     
     // test : swapped,fullscreen,landscape,open and close dialpad scenario
@@ -933,8 +821,7 @@ void  UT_LcView::testDialpadClosed()
     // check titlebar invisible
     QVERIFY( mView->isTitleBarVisible() );
     // check toolbar invisible
-    QVERIFY( mView->toolBar()->isVisible() );
-    QVERIFY(mView->mLandscapeTimer->isActive());
+    QVERIFY( mView->toolBar()->isVisible() );    
     QVERIFY(!mView->mEngine.fullScreenMode());
     
     // test : orientation to portrait 
@@ -948,8 +835,7 @@ void  UT_LcView::testDialpadClosed()
     // check titlebar visible
     QVERIFY( mView->isTitleBarVisible() );
     // check toolbar visible
-    QVERIFY( mView->toolBar()->isVisible() );
-    QVERIFY(!mView->mLandscapeTimer->isActive());
+    QVERIFY( mView->toolBar()->isVisible() );    
     QVERIFY(!mView->mEngine.fullScreenMode());
     
 }
@@ -990,4 +876,16 @@ void UT_LcView::testAddOptionsMenuActions()
     mView->addOptionsMenuActions();
     //TODO: stub implementation of void QGraphicsWidget::addAction(QAction *action);
     //QCOMPARE(mView->menu()->actions().size(), 2);
+}
+
+void UT_LcView::testWatchInactivity()
+{
+    int tid = mView->timerId ;
+    mView->mEngine.setFullScreenMode( true );
+    mView->watchInactivity();
+    QVERIFY( tid==mView->timerId );
+    
+    mView->mEngine.setFullScreenMode( false );
+    mView->watchInactivity();
+    QVERIFY( tid!=mView->timerId );
 }

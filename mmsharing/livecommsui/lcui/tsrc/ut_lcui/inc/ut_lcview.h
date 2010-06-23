@@ -77,31 +77,25 @@ private slots: //test methods
     void testDisableControls();
     void testEnableControls();
     void testUpdateVideoRects();
-    void testCurrentLayout();
-    void testActivateFullScreen();
-    void testDeactivateFullScreen();
+    void testCurrentLayout();    
     void testGestureEvent();
     void testContextMenu();
     void testGestureLongPress();
-    void testGestureShortPress();
-    void testActivatePortrait();
-    void testUpdateUiElements();
-    void testLandscapeTimerTimeout();
-    void testShareImage();
-    void testShowControl();
-    void testHideControl();
+    void testGestureShortPress();    
+    void testShareImage();    
     void testUpdateSwapLayout();
-    void testMenuAboutToShow();
-    void testMenuAboutToHide();
+    void testMenuAboutToShow();    
     void testTranslateRectForOrientation();
-    void testTranslatePointForOrientation();
-    void testResetLandscapeTimer();
+    void testTranslatePointForOrientation();    
     void testOpenDialpad();
     void testDialpadOpened();
     void testDialpadClosed();
     void testDialpadEditorTextChanged();
     void testBack();
     void testAddOptionsMenuActions();
+    void testToFullScreen();
+    void testWatchInactivity();
+    void testTimerEvent();
 
 private:
  

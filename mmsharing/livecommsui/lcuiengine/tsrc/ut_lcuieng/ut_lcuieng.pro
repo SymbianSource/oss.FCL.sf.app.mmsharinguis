@@ -60,6 +60,6 @@ symbian: {
     TARGET.UID2 = 0x100039CE
     TARGET.UID3 = 0xEfa329b2
     TARGET.CAPABILITY = ALL -TCB
-    LIBS += -lecom -lflogger -lws32 -lbafl -lxqservice -lxqserviceutil
+    LIBS += -lecom -lflogger -lws32 -lbafl -lxqservice -lxqserviceutil -lcone
     TARGET.EPOCALLOWDLLDATA = 1
 }

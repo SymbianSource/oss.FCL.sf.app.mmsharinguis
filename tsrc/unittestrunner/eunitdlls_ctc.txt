@@ -22,16 +22,16 @@ mmsharinguis/mmshplugins/mmshwpadapterplugin/tsrc/ut_wpadapterplugin/group
 ut_muswpadapter.dll
 0
 
-mmsharinguis/mmsharing/mmshindicator/tsrc/ut_indicator/group
-ut_musindicator.dll
-0
-
 mmsharinguis/mmsharing/mmshmanagercli/tsrc/ut_managercli/group
 ut_musmanagerclient.dll
 0
 
 mmsharinguis/mmsharing/mmshmanagersrv/tsrc/ut_managersrv/group
 ut_musmanagerserver.dll
+0
+
+mmsharinguis/mmsharing/mmshindicator/tsrc/ut_indicator/group
+ut_musindicator.dll
 0
 
 mmsharinguis/mmshplugins/mmcctranscoder/tsrc/ut_transcoder/group

@@ -18,6 +18,8 @@
 #include <QtTest/QtTest>
 #include <hbmainwindow.h>
 #include <hbview.h>
+#include <hbactivitymanager.h>
+#include <HbApplication>
 #include "ut_lcviewmanager.h"         
 #include "lcviewmanager.h" 
 #include "lcviewmanager_p.h" 
@@ -194,4 +196,4 @@ void UT_LcUiViewManager::testMainWindowEvent()
      QVERIFY( spy2.count() == 1 );
 }
 
-
+// end of file
