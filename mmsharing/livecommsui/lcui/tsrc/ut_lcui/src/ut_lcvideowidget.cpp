@@ -66,6 +66,7 @@ void UT_LcVideoWidget::testPaint()
 {
     QPainter painter;
     QStyleOptionGraphicsItem style;
+    mVideoWidget->setPos(QPointF(10,100));
     mVideoWidget->paint(&painter,&style,0);
     mVideoWidget2->paint(&painter,&style,0);
 }

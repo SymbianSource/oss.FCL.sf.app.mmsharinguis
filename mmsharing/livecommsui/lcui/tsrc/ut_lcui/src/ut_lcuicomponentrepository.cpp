@@ -31,7 +31,6 @@
 #include <hbdialog.h>
 #include <hbaction.h>
 #include <hbinstance.h>
-#include <hbzoomsliderpopup.h>
 #include <hbprogressdialog.h>
 
 #define UT_SET_ORIENTATION(orient) \
@@ -71,16 +70,14 @@ void UT_LcUiComponentRepository::testConstructor()
     QVERIFY( !mRepository->mInvitingNote );
     QVERIFY( !mRepository->mWaitingNote );
     QVERIFY( !mRepository->mRecipientQuery );
-    QVERIFY( !mRepository->mZoomSlider );
     
 }
 
 void UT_LcUiComponentRepository::testIdleView()
 {
     // View not yet loaded
-    // Portrait layout
-    UT_SET_ORIENTATION( Qt::Vertical );
-	QVERIFY( !mRepository->mIdleView );
+    UT_SET_ORIENTATION( Qt::Horizontal );
+    QVERIFY( !mRepository->mIdleView );
     LcView* view = mRepository->idleView();
     QVERIFY( mRepository->mIdleView );
     QCOMPARE( view->objectName(), QString( lcViewIdleId ) );
@@ -149,23 +146,15 @@ void UT_LcUiComponentRepository::testSendView()
 void UT_LcUiComponentRepository::testAllInOneView()
 {  
     // View not yet loaded
-    UT_SET_ORIENTATION( Qt::Vertical );
+    UT_SET_ORIENTATION( Qt::Horizontal );
     QVERIFY( !mRepository->mAllInOneView );    
     LcView* view = mRepository->allInOneView();
     QVERIFY( mRepository->mAllInOneView );
     QCOMPARE( view->objectName(), QString( lcViewAllInOneId ) );    
-    QCOMPARE(  mRepository->mLayoutSection, QString( lcLayoutPortraitDefaultId ) );
+    QCOMPARE(  mRepository->mLayoutSection, QString( lcLayoutLandscapeDefaultId ) );
     // View loaded
     LcView* view2 = mRepository->allInOneView();
     QVERIFY( view == view2 );
-    
-    // Try fresh loading in landscape orientation
-    UT_SET_ORIENTATION( Qt::Horizontal );
-    mRepository->mAllInOneView = 0;
-    view = mRepository->allInOneView();
-    QVERIFY( mRepository->mAllInOneView );
-    QCOMPARE( view->objectName(), QString( lcViewAllInOneId ) );    
-    QCOMPARE(  mRepository->mLayoutSection, QString( lcLayoutLandscapeDefaultId ) );
 }
 
 void UT_LcUiComponentRepository::testAcceptQuery()
@@ -242,24 +231,6 @@ void UT_LcUiComponentRepository::testShareOwnVideoQuery()
     QVERIFY( query2 == query ); 
 }
 
-void UT_LcUiComponentRepository::testZoomSlider()
-{    
-    int sliderTimeout = 3000; // 3 Seconds Timeout
-    // slider created and returned
-    QVERIFY( !mRepository->mZoomSlider );
-    HbDialog* slider = mRepository->zoomSlider();
-    QVERIFY( mRepository->mZoomSlider );
-    //QCOMPARE( slider, mRepository->mZoomSlider );
-    QVERIFY( slider == mRepository->mZoomSlider );
-    QVERIFY( !slider->isVisible() );
-    QCOMPARE( sliderTimeout, slider->timeout() );
-
-    // Existing slider returned
-    HbDialog* slider2 = mRepository->zoomSlider();
-    QVERIFY( slider2 == slider );
-    
-}
-
 void UT_LcUiComponentRepository::testSharedVideoContextMenu()
 {
     HbMenu* menu = new HbMenu();
@@ -270,18 +241,18 @@ void UT_LcUiComponentRepository::testSharedVideoContextMenu()
     QVERIFY( mRepository->mAllInOneView );
     QCOMPARE( view->objectName(), QString( lcViewAllInOneId ) );
 
-    HbAction zoom( lcActZoomId );
     HbAction changeCamera( lcActChangeCameraId );
     HbAction disableCam( lcActMenuDisableCameraId );
+    HbAction enableCam( lcActEnableCameraId );
     HbAction changeCam( lcActMenuChangeCameraId );
 
-    mRepository->mActions.append( &zoom );
     mRepository->mActions.append( &changeCamera );
     mRepository->mActions.append( &disableCam );
+    mRepository->mActions.append( &enableCam );
     mRepository->mActions.append( &changeCam );
     
     mRepository->sharedVideoContextMenuActions( menu, *view );
-    //TBD stub implementation of void QGraphicsWidget::addAction(QAction *action);
+    //TODO: stub implementation of void QGraphicsWidget::addAction(QAction *action);
     //QVERIFY( !menu->isEmpty() );    
 }
 
@@ -316,16 +287,18 @@ void UT_LcUiComponentRepository::testLoadLayout()
     
     // View not yet loaded
     QVERIFY( mRepository->mLastLoadedView.length() == 0 );
-    ok = mRepository->loadLayout( lcLayoutPortraitDefaultId );
+    ok = mRepository->loadLayout( lcLayoutLandscapeDefaultId );
     QVERIFY( !ok );
     
     // View is loaded
     mRepository->mLastLoadedView = lcIdleViewFile;
-    ok = mRepository->loadLayout( lcLayoutPortraitDefaultId );
+    ok = mRepository->loadLayout( lcLayoutLandscapeDefaultId );
     QVERIFY( ok );
     
     // Changing layout
-    ok = mRepository->loadLayout( lcLayoutLandscapeDefaultId );
+    ok = mRepository->loadLayout( lcLayoutLandscapeSwappedId );
+    QVERIFY( ok );
+    ok = mRepository->loadLayout( lcLayoutFullscreenId );
     QVERIFY( ok );
     
     // Loading non-existing section

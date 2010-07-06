@@ -269,6 +269,7 @@ void LcUiEnginePrivate::setContentAreas( const QRectF& sharedContent,
 
 // -----------------------------------------------------------------------------
 // LcUiEnginePrivate::setOrientation
+// Currently the only supported orientation is landscape.
 // -----------------------------------------------------------------------------
 //
 bool LcUiEnginePrivate::setOrientation( Qt::Orientation orientation )
@@ -279,16 +280,13 @@ bool LcUiEnginePrivate::setOrientation( Qt::Orientation orientation )
     MLcVideoPlayer* localPlayer = session().LocalVideoPlayer();
     MLcVideoPlayer* remotePlayer = session().RemoteVideoPlayer();
   
-    MLcWindow::TLcWindowOrientation newOrientation( MLcWindow::EPortrait );
-    if ( orientation == Qt::Horizontal ) {
-        newOrientation = MLcWindow::ELandscape;
-    }
+    Q_UNUSED(orientation);
     
     if ( localPlayer && localPlayer->LcWindow() ) {
-        TRAP(error1, localPlayer->LcWindow()->SetLcWindowOrientationL( newOrientation ) );
+        TRAP(error1, localPlayer->LcWindow()->SetLcWindowOrientationL( MLcWindow::ELandscape ) );
     }
     if ( remotePlayer && remotePlayer->LcWindow() ) {
-        TRAP(error2, remotePlayer->LcWindow()->SetLcWindowOrientationL( newOrientation ));
+        TRAP(error2, remotePlayer->LcWindow()->SetLcWindowOrientationL( MLcWindow::ELandscape ));
     }
   
     if ( (error1 == KErrNone) && (error2 == KErrNone) ) {
@@ -1436,9 +1434,10 @@ void LcUiEnginePrivate::stopLocalVideo()
 {
     LC_QDEBUG( "livecomms [UI] -> LcUiEnginePrivate::stopLocalVideo()" )
     MLcVideoPlayer* localPlayer = session().LocalVideoPlayer();
-    if( localPlayer ){
+    if( localPlayer ) {
         pause( localPlayer );
-        enableWindow( localPlayer, false );        
+        enableWindow( localPlayer, false );
+        completeAction( lcEngSignalNameCameraDisabled );
     }
     LC_QDEBUG( "livecomms [UI] <- LcUiEnginePrivate::stopLocalVideo()" )
 }
@@ -1453,7 +1452,7 @@ void LcUiEnginePrivate::startLocalVideo()
     MLcVideoPlayer* localPlayer = session().LocalVideoPlayer();
     if( localPlayer ){
         play( localPlayer );
-        enableWindow( localPlayer, true );        
+        enableWindow( localPlayer, true );
     }
     LC_QDEBUG( "livecomms [UI] <- LcUiEnginePrivate::startLocalVideo()" )
 }

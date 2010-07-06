@@ -60,11 +60,11 @@ private slots: //test methods
     void testEndVideoSession();
     void testMute();
     void testChangeCamera();    
-    void testSwitchToVoiceCall();    
-    void testDisableCamera();    
+    void testSwitchToVoiceCall();
+    void testDisableCameraWhenOnFullScreenMode();
+    void testDisableCameraWhenNotOnFullScreenMode();
     void testSpeaker();
     void testSwap();
-    void testShowZoom();
     void testNotSupported();
     void testSetCameraActionToMain();
     void testSetCameraActionToSecondary();
@@ -96,6 +96,8 @@ private slots: //test methods
     void testToFullScreen();
     void testWatchInactivity();
     void testTimerEvent();
+    void testIsVideoPositionedCorrectly();
+    void testIsPositioned();
 
 private:
  

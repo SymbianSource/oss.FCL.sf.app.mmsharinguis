@@ -87,7 +87,6 @@ const char lcViewAllInOneId[] = "lc_view_allinone";
 
 //widget ids
 const char lcIconContactId[] = "lc_icon_contact";
-const char lcIconBrandId[] = "lc_icon_brand";
 const char lcLabelRecipientId[] = "lc_label_recipient";
 const char lcLabelDurationId[] = "lc_label_duration";
 const char lcWidgetRecvVideoId[] = "lc_widget_recvvideo";
@@ -111,7 +110,6 @@ const char lcActMenuChangeCameraId[] = "lc_act_menu_changecamera";
 const char lcActAdjustVideoId[] = "lc_act_adjustvideo";
 const char lcActShareImageId[] = "lc_act_shareimage";
 const char lcActSwapViewsId[] = "lc_act_swapviews";
-const char lcActZoomId[] = "lc_act_zoom";
 const char lcActSwitchToVoiceCallId[] = "lc_act_switchtovoicecall";
 const char lcActDisableCameraId[] = "lc_act_disablecamera";
 const char lcActMenuDisableCameraId[] = "lc_act_menu_disablecamera";
@@ -120,10 +118,8 @@ const char lcActOpenKeypadId[] = "lc_act_openkeypad";
 
 
 //layouts ids
-const char lcLayoutPortraitDefaultId[] = "portrait";   //Main window - received content
 const char lcLayoutLandscapeDefaultId[] = "landscape"; //Main window - received content
 const char lcLayoutFullscreenId[] = "fullscreen";
-const char lcLayoutPortraitSwappedId[] = "lc_layout_portrait_swapped";  //Main window - sent content
 const char lcLayoutLandscapeSwappedId[] = "lc_layout_landscape_swapped";//Main window - sent content
 const char lcLayoutLandscapeDialpadId[] = "lc_layout_landscape_dialpad"; // Dialpad layout
 
@@ -161,6 +157,5 @@ const char lcEffectWinSwapDownId[] = "swapDown";
 const char lcEffectWinSwapUpId[] = "swapUp";
 
 const char lcEffectWinDefaultCallback[] = "windowDisappearComplete";
-
 
 #endif /* LCUIDEFS_H_ */

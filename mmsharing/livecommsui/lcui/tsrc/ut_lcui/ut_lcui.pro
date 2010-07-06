@@ -53,11 +53,13 @@ HEADERS += inc/ut_lcvideowidget.h
 HEADERS += $$LCUI_DIR/inc/lcvideowidget.h
 HEADERS += $$LCUIENGINE_DIR/inc/lcuiengine.h
 HEADERS += ./hbstubs/dialpad.h
+HEADERS += ./hbstubs/dialpadvtkeyhandler.h
 HEADERS += ./hbstubs/hblineedit.h
 
 SOURCES += src/main.cpp
 SOURCES += hbstubs/hbstubs.cpp
 SOURCES += hbstubs/dialpad_stub.cpp
+SOURCES += hbstubs/dialpadvtkeyhandler_stub.cpp
 SOURCES += src/ut_lcviewmanager.cpp
 SOURCES += $$LCUI_DIR/src/lcviewmanager.cpp
 SOURCES += $$LCUI_DIR/src/lcviewmanager_p.cpp

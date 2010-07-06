@@ -34,6 +34,26 @@ public:
         MessageTypeQuestion,
         MessageTypeWarning
     };
+
+   enum StandardButton {
+        NoButton           = 0x00000000,
+        Ok                 = 0x00000400,
+        Save               = 0x00000800,
+        Open               = 0x00001000,
+        Yes                = 0x00002000,
+        Continue           = 0x00004000,
+        Delete             = 0x00008000,
+        No                 = 0x00010000,
+        Retry              = 0x00020000,
+        Close              = 0x00040000,
+        Cancel             = 0x00080000,
+        Help               = 0x00100000,
+        Apply              = 0x00200000,
+        Reset              = 0x00400000
+    };   
+
+    Q_DECLARE_FLAGS(StandardButtons, StandardButton)
+
     explicit HbMessageBox(MessageBoxType type=MessageTypeInformation,QGraphicsItem *parent = 0);
     explicit HbMessageBox(const QString &text,MessageBoxType type =MessageTypeInformation, QGraphicsItem *parent = 0);
     virtual ~HbMessageBox();
@@ -49,6 +69,9 @@ public:
 
     enum { Type = Hb::ItemType_MessageBox };
     int type() const { return Type; }
+
+    void setStandardButtons(int buttons);
+    int standardButtons() const;
 
 public:
     static bool launchQuestionMessageBox(const QString &questionText,

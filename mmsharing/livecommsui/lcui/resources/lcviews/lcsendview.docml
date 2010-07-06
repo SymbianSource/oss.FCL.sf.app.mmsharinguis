@@ -27,9 +27,6 @@
     <object name="lc_act_adjustvideo" type="HbAction">
         <string locid="txt_lcomms_opt_adjust_video" name="text"/>
     </object>
-    <object name="lc_act_zoom" type="HbAction">
-        <string locid="txt_lcomms_opt_zoom" name="text"/>
-    </object>
     <object name="lc_act_disablecamera" type="HbAction">
         <string locid="txt_lcomms_opt_disable_camera" name="text"/>
         <string locid="txt_lcomms_tooltip_disable_camera" name="toolTip"/>
@@ -79,7 +76,6 @@
         <widget name="lc_menu" role="HbView:menu" type="HbMenu">
             <ref object="lc_act_fullscreen" role="HbMenu:addAction"/>
             <ref object="lc_act_adjustvideo" role="HbMenu:addAction"/>
-            <ref object="lc_act_zoom" role="HbMenu:addAction"/>
             <ref object="lc_act_dialer" role="HbMenu:addAction"/>
             <ref object="lc_act_endactivecall" role="HbMenu:addAction"/>
         </widget>

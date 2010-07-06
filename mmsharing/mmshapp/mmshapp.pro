@@ -31,4 +31,5 @@ symbian: {
     TARGET.UID2 = 0x100039CE
     TARGET.UID3 = 0x10282391
     TARGET.CAPABILITY = CAP_APPLICATION NetworkControl SwEvent Location MultimediaDD
+    RSS_RULES += "hidden = KAppIsHidden;"
 }

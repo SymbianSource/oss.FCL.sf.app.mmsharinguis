@@ -28,6 +28,8 @@ class HbStubHelper
         static void reset();
         static void setGestureState(int state);
         static void setGestureStyleHint(int style);
+        static bool isTitleBarVisible();
+        static bool isStatusBarVisible();
 };
 
 #endif

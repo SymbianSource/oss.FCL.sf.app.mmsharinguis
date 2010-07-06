@@ -33,13 +33,13 @@
 #include <hbpushbutton.h>
 #include <hbtoolbar.h>
 #include <hbinstance.h>
-#include <hbzoomsliderpopup.h>
 #include <hbeffect.h>
 #include <qgraphicssceneevent.h>
 #include <qtimer.h>
 #include <hblineedit.h>
 #include <dialpad.h>
 #include <HbTapGesture>
+#include <DialpadVtKeyHandler.h>
 
 
 
@@ -59,8 +59,7 @@ LcView::LcView(LcUiEngine& engine, LcUiComponentRepository& repository)
    mRepository(repository),
    mRecipient(0),
    mDuration(0),
-   mContactIcon(0),
-   mBrandIcon(0),
+   mContactIcon(0),   
    mSharedVideoWidget(0),
    mReceivedVideoWidget(0),
    mChangeCameraAction(0),
@@ -69,16 +68,16 @@ LcView::LcView(LcUiEngine& engine, LcUiComponentRepository& repository)
    mDisableCameraAction(0),
    mDisableCameraMenuAction(0),
    mNotSupportedNote(0),
-   mZoomSlider(0),
    mEndCallButton(0),
    mReceivedVideoEffectOverlay(0),
    mSharedVideoEffectOverlay(0),
    mEffectHandler(0),
    mItemContextMenu(0),   
    mIsOptionMenuOpen(false),
-   mSoftKeyBackAction(0),
    mDialpad(0),
-   timerId(0)
+   timerId(0),
+   mDialpadVtKeyHandler(0),
+   isViewReady(0)
 {
     LC_QDEBUG( "livecomms [UI] -> LcView::LcView()" )
     
@@ -88,7 +87,7 @@ LcView::LcView(LcUiEngine& engine, LcUiComponentRepository& repository)
     hideItems(Hb::DockWidgetItem);
     
     //Subscribe to the gesture events.
-    grabGesture(Qt::TapGesture);        
+    grabGesture(Qt::TapGesture,Qt::DontStartGestureOnChildren);        
 
     LC_QDEBUG( "livecomms [UI] <- LcView::LcView()" )
 }
@@ -107,6 +106,7 @@ LcView::~LcView()
 
     delete mEffectHandler;    
     delete mNotSupportedNote;
+    delete mDialpadVtKeyHandler;
 
     LC_QDEBUG( "livecomms [UI] <- LcView::~LcView()" )
 }
@@ -127,9 +127,7 @@ void LcView::init()
     mDuration = 
         static_cast<HbLabel*>( mRepository.findWidget( lcLabelDurationId ) );
     mContactIcon = 
-        static_cast<HbLabel*>( mRepository.findWidget( lcIconContactId ) );
-    mBrandIcon = 
-        static_cast<HbLabel*>( mRepository.findWidget( lcIconBrandId ) );
+        static_cast<HbLabel*>( mRepository.findWidget( lcIconContactId ) );   
     mSharedVideoWidget = 
         static_cast<LcVideoWidget*>( 
                 mRepository.findWidget( lcWidgetSendVideoId ) );
@@ -152,11 +150,10 @@ void LcView::init()
             static_cast<HbPushButton*>( mRepository.findObject( lcButtonEndCall ) );
     
     if ( mEndCallButton ) {
-        connect( mEndCallButton, SIGNAL(clicked()), SLOT(endVideoSession()));
+        connect( mEndCallButton, SIGNAL(clicked()), this, SLOT(endVideoSession()));
     }
 
     if ( mSharedVideoWidget ) {
-        mZoomSlider = mRepository.zoomSlider();
         mSharedVideoEffectOverlay = static_cast<LcVideoWidget*>( 
                 mRepository.findWidget( lcWidgetSendVideoId2 ) );
         if ( mSharedVideoEffectOverlay ) {
@@ -183,21 +180,40 @@ void LcView::init()
         connect( menu(), SIGNAL(aboutToShow()), this, SLOT(menuAboutToShow()) );
         connect( menu(), SIGNAL(aboutToHide()), this, SLOT(watchInactivity()) );        
     }     
-    mSoftKeyBackAction = new HbAction(Hb::BackNaviAction, this);    
-    connect(mSoftKeyBackAction, SIGNAL(triggered()), SLOT(back()));
+
+    // Set up navigation action.
+    setNavigationAction(new HbAction(Hb::BackNaviAction, this));
+    connect(navigationAction(), SIGNAL(triggered()), this, 
+            SLOT(back()));
     
     // dialpad
     mDialpad = static_cast<Dialpad*> ( mRepository.findWidget("lc_label_dialpad") );
-    connect( mDialpad, SIGNAL(aboutToClose()), SLOT(dialpadClosed()) );
-    connect( mDialpad, SIGNAL(aboutToOpen()), SLOT(dialpadOpened()) );
-    connect( &mDialpad->editor(), SIGNAL( contentsChanged() ), SLOT( dialpadEditorTextChanged() ) );
-        
-    // inactivity
-    timerId = this->startTimer( inActivityTimeout );    
-    connect( this, SIGNAL( contentFullScreenChanged() ), SLOT( watchInactivity() ) ) ;
+    connect( mDialpad, SIGNAL(aboutToClose()), this, SLOT(dialpadClosed()) );
+    connect( mDialpad, SIGNAL(aboutToOpen()), this, SLOT(dialpadOpened()) );
+    connect( &mDialpad->editor(), SIGNAL( contentsChanged() ), this, SLOT( dialpadEditorTextChanged() ) );
+    HbMainWindow* pWindow = HbInstance::instance()->allMainWindows().at(0);
+    if( pWindow && mDialpad ){        
+        mDialpadVtKeyHandler = new DialpadVtKeyHandler( mDialpad,*pWindow );
+    }    
     
-    // activate fullscreen at beginning if inactivity timesout
-    toFullScreen( true );
+    // inactivity      
+    connect( this, SIGNAL( contentFullScreenChanged() ), this, SLOT( watchInactivity() ) ) ;
+    
+    // deactivate fullscreen and it inturn starts inactivity timeout
+    toFullScreen( false );
+
+    if ( mSharedVideoWidget ) { 
+        connect( mSharedVideoWidget, SIGNAL( xChanged() ), this, 
+                SLOT( updateVideoRects() ), Qt::QueuedConnection );
+        connect( mSharedVideoWidget, SIGNAL( yChanged() ), this, 
+                SLOT( updateVideoRects() ) , Qt::QueuedConnection);
+    }
+    if ( mReceivedVideoWidget ) {
+        connect( mReceivedVideoWidget, SIGNAL( xChanged() ), this, 
+            SLOT( updateVideoRects() ), Qt::QueuedConnection );
+        connect( mReceivedVideoWidget, SIGNAL( yChanged() ), this, 
+            SLOT( updateVideoRects() ), Qt::QueuedConnection );
+    }
     
     LC_QDEBUG( "livecomms [UI] <- LcView::init()" )
 }
@@ -214,28 +230,33 @@ void LcView::updateVideoRects()
     QRectF sharedContentRect;
     QRectF receivedContentRect;
 
-    if ( mSharedVideoWidget ) {
-        sharedContentRect = mSharedVideoWidget->geometry();  
-        sharedContentRect.moveTop(
-                sharedContentRect.y() + mapToParent(scenePos()).y());
-        sharedContentRect = translateRectForOrientation(sharedContentRect);
-        mEffectHandler->setVisibility(
-                mSharedVideoWidget, mEngine.isLocalPlayerPlaying());
+    //Workaround: widgets positioning takes time, do not inform to the 
+    //engine for rendering if co-ordinates of the videos are incorrect.
+    
+    if ( isPositioned() ) {
+    
+        if ( mSharedVideoWidget ) {
+            sharedContentRect = mSharedVideoWidget->geometry();  
+            sharedContentRect.moveTop(
+                    sharedContentRect.y() + mapToParent(scenePos()).y());
+            sharedContentRect = translateRectForOrientation(sharedContentRect);
+            mEffectHandler->setVisibility(
+                    mSharedVideoWidget, mEngine.isLocalPlayerPlaying());
+        }
+        
+        if ( mReceivedVideoWidget ) {
+            receivedContentRect = mReceivedVideoWidget->geometry();
+            receivedContentRect.moveTop(
+                    receivedContentRect.y() + mapToParent(scenePos()).y());
+            receivedContentRect = translateRectForOrientation(receivedContentRect);
+            mEffectHandler->setVisibility(
+                    mReceivedVideoWidget, mEngine.isRemotePlayerPlaying());
+        }
+        
+        mEngine.setContentAreas( sharedContentRect, receivedContentRect );
+        mEngine.setOrientation( HbInstance::instance()->allMainWindows().at(0)->orientation() );
+        mEngine.updateSession();
     }
-    
-    if ( mReceivedVideoWidget ) {
-        receivedContentRect = mReceivedVideoWidget->geometry();
-        receivedContentRect.moveTop(
-                receivedContentRect.y() + mapToParent(scenePos()).y());
-        receivedContentRect = translateRectForOrientation(receivedContentRect);
-        mEffectHandler->setVisibility(
-                mReceivedVideoWidget, mEngine.isRemotePlayerPlaying());
-    }
-    
-    mEngine.setContentAreas( sharedContentRect, receivedContentRect );
-    mEngine.setOrientation( HbInstance::instance()->allMainWindows().at(0)->orientation() );
-    mEngine.updateSession();
-    
     LC_QDEBUG( "livecomms [UI] <- LcView::updateVideoRects()" )
 }
 
@@ -271,11 +292,6 @@ void LcView::updateSwapLayout()
 void LcView::activated()
 {
     LC_QDEBUG( "livecomms [UI] -> LcView::activated()" )
-		
-    if ( navigationAction() != mSoftKeyBackAction ) {
-        setNavigationAction(mSoftKeyBackAction);
-    }
-
     updateVideoRects();
 
     //synchronize with engine
@@ -440,7 +456,7 @@ void LcView::disableCamera()
  
     mEffectHandler->setDissappearEffect( LcEffectHandler::NormalDissappear );
     mEngine.toggleDisableCamera();
-    toFullScreen( false );
+    toFullScreen( mEngine.fullScreenMode() );
     
     LC_QDEBUG( "livecomms [UI] <- LcView::disableCamera()" ) 
 }
@@ -499,32 +515,6 @@ void LcView::speaker()
     toFullScreen( false );
     
     LC_QDEBUG( "livecomms [UI] <- LcView::speaker()" )    
-}
-
-// -----------------------------------------------------------------------------
-// LcView::showZoom
-// -----------------------------------------------------------------------------
-//
-void LcView::showZoom()
-{
-    LC_QDEBUG("livecomms [UI] -> LcView::showZoom()")
-
-    if ( !mZoomSlider ) {
-        return;
-    }
-        
-    LcControlValues values;
-    mEngine.zoomValues(values);
-    LC_QDEBUG_2("livecomms [UI]    MinValue: ", values.mMinValue)
-    LC_QDEBUG_2("livecomms [UI]    MaxValue: ", values.mMaxValue)
-    LC_QDEBUG_2("livecomms [UI]    CurrentValue: ", values.mValue)
-    
-    mZoomSlider->setRange(values.mMinValue, values.mMaxValue);
-    mZoomSlider->setValue(values.mValue);
-    mZoomSlider->setSingleStep(1);
-    mZoomSlider->setVisible(true);
-        
-    LC_QDEBUG("livecomms [UI] <- LcView::showZoom()")    
 }
 
 // -----------------------------------------------------------------------------
@@ -778,29 +768,16 @@ void LcView::createContextMenu()
 //
 QString LcView::currentLayout()
 {
-    QString layout( lcLayoutPortraitDefaultId );
+    QString layout( lcLayoutLandscapeDefaultId );
 
-    if ( !isLandscapeOrientation() ) {
-        if ( mEffectHandler->isSwapInProgress() &&
-             mSharedVideoWidget &&
-             mReceivedVideoWidget &&
-             mSharedVideoWidget->geometry().top() > mReceivedVideoWidget->geometry().top() ) {
-
-            layout = lcLayoutPortraitSwappedId;
-        } else {
-            layout = lcLayoutPortraitDefaultId;
-        }
-    } else {
-        if ( mEffectHandler->isSwapInProgress() &&
-             mSharedVideoWidget &&
-             mReceivedVideoWidget &&
-             mSharedVideoWidget->geometry().left() > mReceivedVideoWidget->geometry().left() ) {
-
-            layout = lcLayoutLandscapeSwappedId;
-        } else {
-            layout = lcLayoutLandscapeDefaultId;
-        }
+    if ( mEffectHandler->isSwapInProgress() &&
+        mSharedVideoWidget &&
+        mReceivedVideoWidget &&
+        mSharedVideoWidget->geometry().left() > mReceivedVideoWidget->geometry().left() ) {
+        
+        layout = lcLayoutLandscapeSwappedId;
     }
+
     LC_QDEBUG_2( "livecomms [UI] -> LcView::currentLayout()", layout )
     return layout;
 }
@@ -818,16 +795,6 @@ void LcView::menuAboutToShow()
 }
 
 // -----------------------------------------------------------------------------
-// LcView::isLandscapeOrientation
-// -----------------------------------------------------------------------------
-//
-bool LcView::isLandscapeOrientation()
-{
-    return ( !HbInstance::instance()->allMainWindows().isEmpty() && 
-             HbInstance::instance()->allMainWindows().at(0)->orientation() == Qt::Horizontal );
-}
-
-// -----------------------------------------------------------------------------
 // LcView::translateRectForOrientation
 // Video windows at engine side do not change their coordinate system
 // when orientation at orbit UI changes. Therefore we need to convert video
@@ -837,9 +804,6 @@ bool LcView::isLandscapeOrientation()
 //
 QRectF LcView::translateRectForOrientation(const QRectF& origRect)
 {
-    if ( !isLandscapeOrientation() ){
-        return origRect;
-    }
     QRectF newRect = origRect;
     QMatrix m;
 #if ( defined __WINSCW__ ) || ( defined __WINS__ ) 
@@ -860,9 +824,6 @@ QRectF LcView::translateRectForOrientation(const QRectF& origRect)
 //
 QPointF LcView::translatePointForOrientation(const QPointF& origPoint)
 {
-    if ( !isLandscapeOrientation() ) {
-        return origPoint;
-    }
     QPointF newPoint = origPoint;
     QMatrix m;
 #if ( defined __WINSCW__ ) || ( defined __WINS__ ) 
@@ -935,25 +896,17 @@ void LcView::dialpadOpened()
 //
 void LcView::dialpadClosed()
 {
-    LC_QDEBUG("livecomms [UI] -> LcView::dialpadClosed()")    
+    LC_QDEBUG("livecomms [UI] -> LcView::dialpadClosed()")
+    mDialpad->editor().setText(QString());
     addOptionsMenuActions();    
     // switch back to the previous layout
     QString pLayout = mRepository.previousLayout();
     QString layout;
-    bool isSwapped = ( pLayout == lcLayoutPortraitDefaultId || 
-                       pLayout == lcLayoutLandscapeDefaultId )
+    bool isSwapped = (pLayout == lcLayoutLandscapeDefaultId)
                      ? false : true;
-    // take care orientation changes
-    bool isLandscape = isLandscapeOrientation();
-    if ( isLandscape ){
-        layout = ( isSwapped ) ? lcLayoutLandscapeSwappedId 
-                               : lcLayoutLandscapeDefaultId;
-        
-    }
-    else {
-        layout = ( isSwapped ) ? lcLayoutPortraitSwappedId 
-                               : lcLayoutPortraitDefaultId;
-    }    
+    layout = (isSwapped) ? 
+        lcLayoutLandscapeSwappedId : lcLayoutLandscapeDefaultId;
+
     mRepository.loadLayout( layout );    
     if ( mEffectHandler ){
         mEffectHandler->startEffects();
@@ -969,9 +922,12 @@ void LcView::dialpadClosed()
 void LcView::dialpadEditorTextChanged()
 {   
     LC_QDEBUG_2("livecomms [UI] -> Dial Pad Field ", mDialpad->editor().text());
-    LC_QDEBUG_2("livecomms [UI] -> Last Dialled Charcter ", mDialpad->editor().text().right(1));
-    bool dialPadStatus = mEngine.SendDialTone(mDialpad->editor().text().right(1).at(0));
-    LC_QDEBUG_2("livecomms [UI] -> Dialpad Send Tone Status ",dialPadStatus)
+    
+    if ( mDialpad->editor().text().length() > 0 ) {
+        LC_QDEBUG_2("livecomms [UI] -> Last Dialled Charcter ", mDialpad->editor().text().right(1));
+        bool dialPadStatus = mEngine.SendDialTone(mDialpad->editor().text().right(1).at(0));
+        LC_QDEBUG_2("livecomms [UI] -> Dialpad Send Tone Status ",dialPadStatus)
+    }
 }
 
 // -----------------------------------------------------------------------------
@@ -1010,7 +966,7 @@ void LcView::timerEvent( QTimerEvent * event )
 //
 void LcView::watchInactivity()
 {    
-    if( !mEngine.fullScreenMode()){
+    if( !mEngine.fullScreenMode() &&  !( mDialpad && mDialpad->isOpen() ) ){
         LC_QDEBUG("livecomms [UI] - LcView::watchInactivity() start watching inactivity") 
         killTimer( timerId );
         timerId = startTimer( inActivityTimeout );
@@ -1024,14 +980,62 @@ void LcView::watchInactivity()
 void LcView::toFullScreen( bool fullscreen )
 {
     LC_QDEBUG_2("livecomms [UI] - LcView::toFullScreen(),",fullscreen)
-    if( menu()->isVisible() || mDialpad && mDialpad->isOpen() ) return;
+    if( menu()->isVisible() || ( mDialpad && mDialpad->isOpen() ) ) return;
     mEngine.setFullScreenMode( fullscreen );    
     setTitleBarVisible( !fullscreen );
+    setStatusBarVisible( !fullscreen );
     toolBar()->setVisible( !fullscreen );
-    setVisibility( mEndCallButton, !fullscreen );
-    setVisibility( mBrandIcon, !fullscreen );
+    setVisibility( mEndCallButton, !fullscreen );    
     setVisibility( mDuration, !fullscreen );
     setVisibility( mRecipient, !fullscreen );
     emit contentFullScreenChanged();
+}
+
+
+// -----------------------------------------------------------------------------
+// LcView::isVideoPositionedCorrectly utility function
+// -----------------------------------------------------------------------------
+//
+bool LcView::isVideoPositionedCorrectly( LcVideoWidget* mVideoWidget )
+{
+    LC_QDEBUG("livecomms [UI] -> LcView::isVideoPositionedCorrectly()")
+    LC_QDEBUG("livecomms [UI] <- LcView::isVideoPositionedCorrectly()")
+    QPointF initialPosition(0,0);
+    return ( !mVideoWidget || 
+            (( mVideoWidget ) && ( mVideoWidget->pos()!= initialPosition )));
+}
+
+// -----------------------------------------------------------------------------
+// LcView::isPositioned utility function
+// hack style since orbit give viewready much earlier and widgets do not have
+// proper co-ordinates.
+// -----------------------------------------------------------------------------
+//
+bool LcView::isPositioned()
+{
+    LC_QDEBUG("livecomms [UI] -> LcView::isPositioned()")   
+    // at first time check for video positions if they are not ready
+    // wait for x or y changed event and recheck position. 
+    // After firsttime it will work.
+    if( !isViewReady ){
+        isViewReady =  isVideoPositionedCorrectly( mSharedVideoWidget ) && 
+                       isVideoPositionedCorrectly( mReceivedVideoWidget );
+        if( isViewReady ){
+            if ( mSharedVideoWidget ) { 
+            disconnect( mSharedVideoWidget, SIGNAL( xChanged() ), this, 
+                   SLOT( updateVideoRects() ) );
+            disconnect( mSharedVideoWidget, SIGNAL( yChanged() ), this, 
+                   SLOT( updateVideoRects() ) );
+            }
+            if ( mReceivedVideoWidget ) {
+            disconnect( mReceivedVideoWidget, SIGNAL( xChanged() ), this, 
+                   SLOT( updateVideoRects() ) );
+            disconnect( mReceivedVideoWidget, SIGNAL( yChanged() ), this, 
+                   SLOT( updateVideoRects() ) );
+            }
+       }
+    }    
+    LC_QDEBUG_2("livecomms [UI] - LcView::isPositioned(),",isViewReady)
+    return isViewReady;    
 }
 // End of file

@@ -32,7 +32,6 @@
 #include <hbprogressdialog.h>
 #include <hblabel.h>
 #include <hbinstance.h>
-#include <hbzoomsliderpopup.h>
 #include <hbdialog.h>
 #include <hbpushbutton.h>
 #include <hbframedrawer.h>
@@ -57,7 +56,6 @@ LcUiComponentRepository::LcUiComponentRepository(LcUiEngine& engine)
       mInvitingNote(0),
       mWaitingNote(0),
       mRecipientQuery(0),
-      mZoomSlider(0),
       mShareOwnVideoQuery(0)
 {
     LC_QDEBUG( "livecomms [UI] -> LcUiComponentRepository::LcUiComponentRepository()" )
@@ -75,7 +73,6 @@ LcUiComponentRepository::LcUiComponentRepository(LcUiEngine& engine)
     mSlots->insert( lcActAdjustVideoId, SLOT( notSupported() ) );
     mSlots->insert( lcActShareImageId, SLOT( notSupported() ) );
     mSlots->insert( lcActSwapViewsId, SLOT( swap() ) );
-    mSlots->insert( lcActZoomId, SLOT( notSupported() ) );
     mSlots->insert( lcActSwitchToVoiceCallId, SLOT( switchToVoiceCall() ) );    
     mSlots->insert( lcActOpenKeypadId, SLOT( openDialpad() ) );
     mSlots->insert( lcActDisableCameraId, SLOT( disableCamera() ) );
@@ -108,7 +105,6 @@ LcUiComponentRepository::~LcUiComponentRepository()
     delete mInvitingNote;
     delete mWaitingNote;
     delete mRecipientQuery;
-    delete mZoomSlider;
     delete mShareOwnVideoQuery;
  
     LC_QDEBUG( "livecomms [UI] <- LcUiComponentRepository::~LcUiComponentRepository()" )
@@ -390,6 +386,7 @@ HbDialog* LcUiComponentRepository::shareOwnVideoQuery()
 
     if ( !mShareOwnVideoQuery ) {
         mShareOwnVideoQuery = new HbMessageBox( HbMessageBox::MessageTypeQuestion );
+        mShareOwnVideoQuery->setStandardButtons( HbMessageBox::Yes | HbMessageBox::No );
         mShareOwnVideoQuery->setText( hbTrId( "txt_vt_info_allow_own_image_to_be_sent" ));
         mShareOwnVideoQuery->setZValue(LC_NOTE_ON_TOP);
         mShareOwnVideoQuery->setTimeout( HbDialog::NoTimeout );
@@ -398,28 +395,6 @@ HbDialog* LcUiComponentRepository::shareOwnVideoQuery()
     }
     LC_QDEBUG( "livecomms [UI] <- LcUiComponentRepository::shareOwnVideoQuery()" );
     return mShareOwnVideoQuery;
-}
-
-// -----------------------------------------------------------------------------
-// LcUiComponentRepository::zoomSlider
-// -----------------------------------------------------------------------------
-//
-HbZoomSliderPopup* LcUiComponentRepository::zoomSlider()
-{
-    LC_QDEBUG( "livecomms [UI] -> LcUiComponentRepository::zoomSlider()" );
-    
-    if ( !mZoomSlider ) {
-        mZoomSlider = new HbZoomSliderPopup();
-        mZoomSlider->setDismissPolicy(HbDialog::TapOutside);
-        mZoomSlider->setTimeout(HbDialog::StandardTimeout);
-        mZoomSlider->hide();
-        QObject::connect( mZoomSlider, SIGNAL(valueChanged(int)), 
-                          &mEngine, SLOT(zoom(int)) );
-        
-    }
-    
-    LC_QDEBUG( "livecomms [UI] <- LcUiComponentRepository::zoomSlider()" );
-    return mZoomSlider;
 }
 
 // -----------------------------------------------------------------------------
@@ -436,27 +411,32 @@ void LcUiComponentRepository::sharedVideoContextMenuActions( HbMenu* menu, LcVie
     //due stubs in unit tests, qobject_cast cannot be used. 
     //Using static_cast instead
     HbAction* swap = static_cast<HbAction*>( findObject( lcActSwapViewsId ) );
-    HbAction* zoom = static_cast<HbAction*>( findObject( lcActZoomId ) );
     HbAction* changeCamera = 
         static_cast<HbAction*>( findObject( lcActMenuChangeCameraId ) );
+    
     HbAction* disableCamera = 
         static_cast<HbAction*>( findObject( lcActMenuDisableCameraId ) );
+    HbAction* enableCamera = 
+            static_cast<HbAction*>( findObject( lcActEnableCameraId ) );
               
     if ( swap ) {
         LC_QDEBUG_2( "Adding ", swap->text() );
         menu->addAction( swap );
     }
-    if ( zoom ) {
-        LC_QDEBUG_2( "Adding ", zoom->text() );
-        menu->addAction( zoom );
-    }
     if ( changeCamera ) {
         LC_QDEBUG_2( "Adding ", changeCamera->text() );
         menu->addAction( changeCamera );
     }
-    if ( disableCamera ) {
-        LC_QDEBUG_2( "Adding ", disableCamera->text() );
-        menu->addAction( disableCamera );
+    if ( mEngine.isLocalPlayerPlaying() ) {
+        if ( disableCamera ) {
+            LC_QDEBUG_2( "Adding ", disableCamera->text() );
+            menu->addAction( disableCamera );
+        }    
+    } else {
+        if ( enableCamera ) {
+            LC_QDEBUG_2( "Adding ", enableCamera->text() );
+            menu->addAction( enableCamera );
+        }        
     }
 
   
@@ -473,7 +453,7 @@ LcView* LcUiComponentRepository::loadView( QObjectList& components,
                                            const QString& xmlFile )
 {
     LC_QDEBUG( "livecomms [UI] -> LcUiComponentRepository::loadView()" );
-    
+
     LcView* view = 0;
     bool ok( false );
     // Load the XML file
@@ -481,32 +461,27 @@ LcView* LcUiComponentRepository::loadView( QObjectList& components,
 
     if ( !ok ) {
         LC_QCRITICAL_3( "! loading of XML file ", xmlFile , " failed !" )
-        return 0;    		
+        return 0;
     }
+    
     mLastLoadedView = xmlFile;
 
-    // Load default layout for the current device orientation    
-    if ( !HbInstance::instance()->allMainWindows().isEmpty() && 
-         HbInstance::instance()->allMainWindows().at(0)->orientation() == Qt::Horizontal ) {  
-        ok = loadLayout( lcLayoutLandscapeDefaultId );
-        
-    } else {
-        ok = loadLayout( lcLayoutPortraitDefaultId );
-    }        
+    ok = loadLayout( lcLayoutLandscapeDefaultId );
     if ( !ok ) {
          LC_QCRITICAL( "! loading of layout failed !" )
-         return 0;           
-     }      
+         return 0;
+     }
 
     view = qobject_cast<LcView*>( findWidget( viewId ) );
     if ( view ) {
-    	connectActions( *view );
-    	view->init(); 
-    } 
+        connectActions( *view );
+        view->init();
+    }
     
     LC_QDEBUG( "livecomms [UI] <- LcUiComponentRepository::loadView()" );
     return view;
 }
+
     
 // -----------------------------------------------------------------------------
 // LcUiComponentRepository::connectActions
@@ -526,12 +501,17 @@ void LcUiComponentRepository::connectActions( LcView& view ) const
         static_cast<HbAction*>( findObject( lcActMenuChangeCameraId ) );
     HbAction* disableCamera = 
         static_cast<HbAction*>( findObject( lcActMenuDisableCameraId ) );
+    HbAction* enableCamera = 
+        static_cast<HbAction*>( findObject( lcActEnableCameraId ) );
 
     QObject::connect( changeCamera, SIGNAL(triggered()), 
       &view, SLOT(notSupported()) );
 
     QObject::connect( disableCamera, SIGNAL(triggered()), 
       &view, SLOT(disableCamera()) );
+    
+    QObject::connect( enableCamera, SIGNAL(triggered()), 
+          &view, SLOT(disableCamera()) );
     
     LC_QDEBUG( "livecomms [UI] <- LcUiComponentRepository::connectActions()" )  
 }
@@ -577,7 +557,6 @@ bool LcUiComponentRepository::loadLayout( const QString& layoutName )
         else{
             mPreviousLayout = mLayout; 
             mLayout = layoutName;
-            setObjectTree( objects );
         }
     } else {
         LC_QCRITICAL( "! not loading layout, since view is not loaded!" )

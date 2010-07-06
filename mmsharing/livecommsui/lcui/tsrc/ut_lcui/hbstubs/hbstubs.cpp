@@ -26,8 +26,6 @@
 #include <hbicon.h>
 #include <hbmessagebox.h>
 #include <hbprogressdialog.h>
-#include <hbzoomsliderpopup.h>
-#include <hbsliderpopup.h>
 #include <hbpushbutton.h>
 #include <hbabstractbutton.h>
 #include <hbaction.h>
@@ -62,10 +60,12 @@ bool HbEffect::mRunning;
 // No Gesture default state.    
 Qt::GestureState testState = Qt::NoGesture;
 
+HbTapGesture::TapStyleHint testStyleHint = HbTapGesture::Tap;
 
-HbTapGesture::TapStyleHint testStyleHint = HbTapGesture::Tap; 
+// Title Bar and Status Bar Flags
+bool titlebarVisible = true;
+bool statusBarVisible = true;
 
-    
 // -----------------------------------------------------------------------------
 // QCoreApplication::quit
 // -----------------------------------------------------------------------------
@@ -680,112 +680,6 @@ void HbProgressDialog::setText(const QString &text)
     Q_UNUSED(text)
 }
 
-// HbSliderPopup
-// -----------------------------------------------------------------------------
-// HbSliderPopup::HbSliderPopup
-// -----------------------------------------------------------------------------
-//
-
-HbSliderPopup::HbSliderPopup(QGraphicsItem *parent) 
-    : HbDialog(parent)
-    
-{
-
-}
-
-// -----------------------------------------------------------------------------
-// HbSliderPopup::~HbSliderPopup
-// -----------------------------------------------------------------------------
-//
-HbSliderPopup::~HbSliderPopup()
-{
-}
-
-// -----------------------------------------------------------------------------
-// HbSliderPopup::setRange
-// -----------------------------------------------------------------------------
-//
-void HbSliderPopup::setRange(int min,int max)
-{
-    mMinValue = min;
-    mMaxValue = max;
-}
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-int HbSliderPopup::minimum() const
-{
-    return mMinValue;
-}
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-int HbSliderPopup::maximum() const
-{
-    return mMaxValue;
-}
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-int HbSliderPopup::value() const
-{
-    return mValue;
-}
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-int HbSliderPopup::singleStep() const
-{
-    return mSingleStep;
-}
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-void HbSliderPopup::setSingleStep(int step)
-    {
-    mSingleStep = step;
-    }
-
-// -----------------------------------------------------------------------------
-// HbSliderPopup::setValue
-// -----------------------------------------------------------------------------
-//
-void HbSliderPopup::setValue(int value)
-{
-    mValue = value;
-}
-
-
-
-// HbZoomSliderPopup
-
-// -----------------------------------------------------------------------------
-// HbZoomSliderPopup::HbZoomSliderPopup
-// -----------------------------------------------------------------------------
-//
-HbZoomSliderPopup::HbZoomSliderPopup( ) : HbSliderPopup()
-{
-}
-
-// -----------------------------------------------------------------------------
-// HbZoomSliderPopup::~HbZoomSliderPopup
-// -----------------------------------------------------------------------------
-//
-HbZoomSliderPopup::~HbZoomSliderPopup()
-{
-}
-
-
 // -----------------------------------------------------------------------------
 // HbToolBar::HbToolBar
 // -----------------------------------------------------------------------------
@@ -813,7 +707,6 @@ HbView::HbView(QGraphicsItem *parent) : HbWidget(parent)
 {
     mMenu = new HbMenu(this);
     mToolBar = new HbToolBar(this);
-    mTitlebarVisible = true;
     mDockWidgetVisible = true;
 }
 
@@ -893,17 +786,19 @@ bool HbView::isItemVisible(Hb::SceneItem items)  const
 //
 void HbView::setTitleBarVisible(bool visible)
 {
-    mTitlebarVisible = visible;
+    titlebarVisible = visible;
 }
 
+
 // -----------------------------------------------------------------------------
-// HbView::isTitleBarVisible
+// HbView::setStatusBarVisible
 // -----------------------------------------------------------------------------
 //
-bool HbView::isTitleBarVisible()
+void HbView::setStatusBarVisible(bool visible)
 {
-    return mTitlebarVisible;
+    statusBarVisible = visible;
 }
+
 
 // -----------------------------------------------------------------------------
 // HbView::setContentFullScreen
@@ -965,9 +860,7 @@ QObjectList HbDocumentLoader::load( const QString &fileName,
         const QString &section , bool *ok )
 {
     Q_UNUSED(fileName)
-    if ( section == lcLayoutPortraitDefaultId ||
-         section == lcLayoutPortraitSwappedId ||
-         section == lcLayoutLandscapeDefaultId ||
+    if ( section == lcLayoutLandscapeDefaultId ||
          section == lcLayoutLandscapeSwappedId ||
          section == lcLayoutFullscreenId ||
          section == lcLayoutLandscapeDialpadId ) {
@@ -1005,8 +898,7 @@ QGraphicsWidget* HbDocumentLoader::findWidget(const QString &name)
 	}
 	if (name == lcLabelRecipientId ||
 	    name == lcLabelDurationId ||
-	    name == lcIconContactId ||
-	    name == lcIconBrandId ||
+	    name == lcIconContactId ||	    
 	    name == lcWidgetSendVideoId2 ||
 	    name == lcWidgetRecvVideoId2 ) {
 		return mLabel;
@@ -1015,6 +907,7 @@ QGraphicsWidget* HbDocumentLoader::findWidget(const QString &name)
 	QGraphicsWidget* createdWidget = 
 		static_cast<QGraphicsWidget*>(createObject(dummy,name));
     if (createdWidget) {
+        createdWidget->setPos(QPointF(10,20));
         mWidgets.append(createdWidget);
     }
     return createdWidget;
@@ -1355,7 +1248,23 @@ HbTapGesture::TapStyleHint HbTapGesture::tapStyleHint() const
     return testStyleHint;
 }
 
+// -----------------------------------------------------------------------------
+// HbMessageBox::setStandardButtons
+// -----------------------------------------------------------------------------
+//
+void HbMessageBox::setStandardButtons(int buttons)
+{
+    Q_UNUSED(buttons);
+}
 
+// -----------------------------------------------------------------------------
+// HbMessageBox::standardButtons
+// -----------------------------------------------------------------------------
+//
+int HbMessageBox::standardButtons() const
+{
+   return HbMessageBox::NoButton;
+}
 
 // -----------------------------------------------------------------------------
 // Stub Helper
@@ -1376,5 +1285,16 @@ void HbStubHelper::reset()
 {
     testState = Qt::NoGesture;
 }
+
+bool HbStubHelper::isTitleBarVisible()
+{
+    return titlebarVisible;
+}
+
+bool HbStubHelper::isStatusBarVisible()
+{
+    return statusBarVisible;
+}
+
 
 // end of file

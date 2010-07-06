@@ -594,8 +594,6 @@ void UT_LcUiEngine::testSetOrientation()
     //1. setting landscape
     QVERIFY( LC_SESSION( mEngine )->iLocalPlayer );
     QVERIFY( LC_SESSION( mEngine )->iRemotePlayer );
-    QVERIFY( LC_SESSION( mEngine )->iLocalPlayer->iOrientation == MLcWindow::EPortrait );
-    QVERIFY( LC_SESSION( mEngine )->iRemotePlayer->iOrientation == MLcWindow::EPortrait );
 
     ok = mEngine->d->setOrientation( Qt::Horizontal );
     QVERIFY( ok );
@@ -603,16 +601,7 @@ void UT_LcUiEngine::testSetOrientation()
     QVERIFY( LC_SESSION( mEngine )->iLocalPlayer->iOrientation == MLcWindow::ELandscape );
     QVERIFY( LC_SESSION( mEngine )->iRemotePlayer->iOrientation == MLcWindow::ELandscape );
 
-    
-    //2. setting portrait
-    lcutStub_LcPlayer_reset();
-    ok = mEngine->d->setOrientation( Qt::Vertical );
-    QVERIFY( ok );
-    QVERIFY( lcutStub_LcPlayer_expectCall( lcutStub_LcPlayer_SetLcWindowOrientationL ) );
-    QVERIFY( LC_SESSION( mEngine )->iLocalPlayer->iOrientation == MLcWindow::EPortrait );
-    QVERIFY( LC_SESSION( mEngine )->iRemotePlayer->iOrientation == MLcWindow::EPortrait );
-    
-    //3. setting layout failed
+    //2. setting layout failed
     // Leave
     lcutStub_LcEngine_setFailure( -1 );
     lcutStub_LcPlayer_reset();
@@ -620,7 +609,7 @@ void UT_LcUiEngine::testSetOrientation()
     QVERIFY( !ok );
     QVERIFY( lcutStub_LcPlayer_expectCall( lcutStub_LcPlayer_NoCall ) );
     
-    //4. setting layout with no players
+    //3. setting layout with no players
     lcutStub_LcEngine_reset();
     lcutStub_LcPlayer_reset();
     delete LC_SESSION( mEngine )->iLocalPlayer;
@@ -632,6 +621,7 @@ void UT_LcUiEngine::testSetOrientation()
     QVERIFY( ok );
     QVERIFY( lcutStub_LcPlayer_expectCall( lcutStub_LcPlayer_NoCall ) );    
 }
+
 
 void UT_LcUiEngine::testToggleMute()
 {

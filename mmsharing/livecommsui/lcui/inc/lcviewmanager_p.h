@@ -67,7 +67,6 @@ public:
 public slots:
     void changeView();
     //for layout switch
-    void updateLayout();
     void prepareOrientationChange();
     
 private slots:

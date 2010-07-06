@@ -67,7 +67,7 @@ void CMusEngSessionManager::ConstructL()
     //iMsgSender = CMccDataSender::NewL();
     MUS_LOG( "mus: [ENGINE]  MsgQueue2 setup complete" )
     iSession = CMusEngTwoWaySession::NewL();
-    iSession->SetRemoteL( _L("WHAT") );
+    iSession->SetRemoteL( _L("Homer Simpson") );
     MUS_LOG( "mus: [ENGINE]  <- CMusEngSessionManager::ConstructL()" )
     }
 

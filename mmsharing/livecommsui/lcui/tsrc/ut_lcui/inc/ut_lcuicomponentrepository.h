@@ -62,7 +62,6 @@ private slots: //test methods
     void testWaitingNote();
     void testRecipientQuery();
     void testShareOwnVideoQuery();
-    void testZoomSlider();
     void testSharedVideoContextMenu();
     void testLoadView_FileNotFound();
     void testConnect();

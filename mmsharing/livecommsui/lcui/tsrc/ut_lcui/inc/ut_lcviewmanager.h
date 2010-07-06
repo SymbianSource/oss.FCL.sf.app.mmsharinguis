@@ -50,7 +50,6 @@ private slots: //test methods
      
     void testConstructor();
     void testChangeView();
-    void testUpdateLayout();
     void testTerminateSession();
     void testPrepareOrientationChange();
     void testMainWindowEvent();

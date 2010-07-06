@@ -27,7 +27,6 @@ class QAction;
 class HbProgressDialog;
 class HbDialog;
 class LcUiEngine;
-class HbZoomSliderPopup;
 class HbMenu;
 class HbMessageBox;
 
@@ -54,7 +53,6 @@ public:
     HbProgressDialog* waitingNote();
     HbDialog* recipientQuery();
     HbDialog* shareOwnVideoQuery();
-    HbZoomSliderPopup* zoomSlider();
     void sharedVideoContextMenuActions( HbMenu* menu, LcView& view );
     bool loadLayout( const QString& layoutName );
     // returns the currently loaded layout name
@@ -100,7 +98,6 @@ private:
     HbProgressDialog* mInvitingNote;
     HbProgressDialog* mWaitingNote;
     HbDialog* mRecipientQuery;
-    HbZoomSliderPopup* mZoomSlider;
     HbMessageBox* mShareOwnVideoQuery;
     
     QString mLayout;

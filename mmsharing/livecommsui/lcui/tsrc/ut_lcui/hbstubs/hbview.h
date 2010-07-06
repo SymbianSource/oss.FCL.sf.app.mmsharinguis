@@ -37,9 +37,8 @@ public:
     void showItems(Hb::SceneItems items);
     void hideItems(Hb::SceneItems items);
     bool isItemVisible(Hb::SceneItem item)  const;
-
     void setTitleBarVisible(bool visible);
-    bool isTitleBarVisible();
+    void setStatusBarVisible(bool visible);
     
     void setContentFullScreen(bool enable = true);
     HbAction *navigationAction() const;
@@ -55,7 +54,6 @@ private: // Data added for the unit testing stub
     HbMenu* mMenu;
     HbToolBar* mToolBar;
     bool mDockWidgetVisible;
-    bool mTitlebarVisible;
 };
 
 #endif // HBVIEW_H

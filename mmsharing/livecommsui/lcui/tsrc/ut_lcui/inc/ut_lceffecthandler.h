@@ -58,7 +58,6 @@ private slots: //test methods
     void testHideReceiveWindow();    
     void testEffectComplete();
     void testStartEffect();
-    void testSelectSwapEffect();
 
     void testSetVisibility();
     void testSetDissappearEffect();

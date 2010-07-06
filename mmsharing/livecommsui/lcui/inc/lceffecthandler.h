@@ -74,7 +74,6 @@ public slots:
     
 private:
     void startEffect( HbWidget* widget, const char *effectId, const char *callBack = "" );
-    const char* selectSwapEffect( HbWidget* widget );
     bool isSharedVideoAtTop() const;
     bool videosSideBySide() const;
     void handleSwapCompletion();

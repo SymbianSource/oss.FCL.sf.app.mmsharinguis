@@ -87,14 +87,6 @@ LcViewManagerPrivate::LcViewManagerPrivate(
     mEngine = new LcUiEngine( engineName, applicationDisplayName );
     mRepository = new LcUiComponentRepository( *mEngine );
     setCurrentView( true );
-
-    // TODO: ignore orientation change at the moment, enable later
-    /*connect( &mMainWindow, SIGNAL( orientationChanged(Qt::Orientation) ), 
-            this, SLOT( updateLayout() ) );    
-
-    connect( &mMainWindow, SIGNAL( aboutToChangeOrientation() ), 
-            this, SLOT( prepareOrientationChange() ) );
-    */
         
     connect(&mMainWindow, SIGNAL(appFocusGained()), mEngine, SLOT(maximize()));
     connect(&mMainWindow, SIGNAL(appFocusLost()), mEngine, SLOT(minimize()));
@@ -131,24 +123,6 @@ void LcViewManagerPrivate::terminateSession()
     LC_QDEBUG( "livecomms [UI] <- LcViewManagerPrivate::terminateSession" )
 }
 
-// -----------------------------------------------------------------------------
-// LcViewManagerPrivate::updateLayout
-// -----------------------------------------------------------------------------
-//
-void LcViewManagerPrivate::updateLayout()
-{
-    LC_QDEBUG( "livecomms [UI] -> LcViewManagerPrivate::updateLayout()" )
-		
-    if ( mMainWindow.currentView() ) {
-        LcView* currentView = static_cast<LcView*>( mMainWindow.currentView() );
-        QString layout = currentView->currentLayout();
-        mRepository->loadLayout( layout );
-        currentView->setContentFullScreen( true );        
-        currentView->updateVideoRects();
-    }
-    
-    LC_QDEBUG( "livecomms [UI] <- LcViewManagerPrivate::updateLayout()" )
-}
 
 // -----------------------------------------------------------------------------
 // LcViewManagerPrivate::prepareOrientationChange

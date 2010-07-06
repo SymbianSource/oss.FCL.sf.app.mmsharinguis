@@ -31,12 +31,12 @@ class HbLabel;
 class HbMessageBox;
 class HbAction;
 class HbPushButton;
-class HbZoomSliderPopup;
 class HbTransparentWindow;
 class HbMenu;
 class LcVideoWidget;
 class LcEffectHandler;
 class Dialpad;
+class DialpadVtKeyHandler;
 
 class LcView : public HbView    
 {
@@ -64,7 +64,6 @@ public slots:
     void changeCamera();    
     void switchToVoiceCall();    
     void speaker();
-    void showZoom();    
     void updateVideoRects();
     void swap();
     void shareImage();
@@ -108,13 +107,14 @@ private: // fullscreen
 private:
     void createNotSupportedNote();
     void createContextMenu();
-    bool isLandscapeOrientation();
     QRectF translateRectForOrientation(const QRectF& origRect);
     QPointF translatePointForOrientation(const QPointF& origPoint);
     void setVisibility( QGraphicsItem* item, bool visible );    
     void addOptionsMenuActions();
     void gestureLongPress( QPointF coords );
     void gestureShortPress();
+    bool isVideoPositionedCorrectly( LcVideoWidget* mVideoWidget );
+    bool isPositioned();
 
 private://not owned
     
@@ -122,8 +122,7 @@ private://not owned
     LcUiComponentRepository& mRepository;
     HbLabel* mRecipient;
     HbLabel* mDuration;
-    HbLabel* mContactIcon;
-    HbLabel* mBrandIcon;
+    HbLabel* mContactIcon;    
     LcVideoWidget* mSharedVideoWidget;
     LcVideoWidget* mReceivedVideoWidget;
     HbAction* mChangeCameraAction;
@@ -132,7 +131,6 @@ private://not owned
     HbAction* mDisableCameraAction;
     HbAction* mDisableCameraMenuAction;
     HbMessageBox* mNotSupportedNote;
-    HbZoomSliderPopup* mZoomSlider;
     HbPushButton* mEndCallButton; 
 
     LcVideoWidget* mReceivedVideoEffectOverlay;
@@ -143,9 +141,10 @@ private:
 
     HbMenu* mItemContextMenu;    
     bool mIsOptionMenuOpen;
-    HbAction* mSoftKeyBackAction;
     Dialpad* mDialpad; // Not owned
+    DialpadVtKeyHandler* mDialpadVtKeyHandler; 
     int timerId;
+    bool isViewReady;
 };
 
 

@@ -181,8 +181,6 @@ void LcEffectHandler::swap()
     LC_QDEBUG( "livecomms [UI] <- LcEffectHandler::swap()" )
 }
 
-
-
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -194,51 +192,14 @@ void LcEffectHandler::startEffects()
          mSwapSharedCompleted = false;
          mSwapReceivedCompleted = false;
      
-         const char* effect = selectSwapEffect( mSharedVideo );
-         startEffect( mSharedVideoOverlay, effect, "windowSwapSharedComplete" );
-
-         effect = selectSwapEffect( mReceivedVideo );
-         startEffect( mReceivedVideoOverlay, effect, "windowSwapReceivedComplete" );
+         startEffect( mSharedVideoOverlay, lcEffectWinDisappearId, "windowSwapSharedComplete" );
+         startEffect( mReceivedVideoOverlay, lcEffectWinDisappearId, "windowSwapReceivedComplete" );
              
          mSharedVideo->hide();
          mReceivedVideo->hide();
      }
     
 }    
-
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-const char* LcEffectHandler::selectSwapEffect( HbWidget* widget )
-{
-    LC_QDEBUG("livecomms [UI] -> LcEffectHandler::selectSwapEffect()")
-    const char* effect = lcEffectWinDisappearId;
-
-    if ( mSharedVideo && 
-         mReceivedVideo && 
-         HbInstance::instance()->allMainWindows().at(0)->orientation() == Qt::Vertical &&
-         !videosSideBySide() ) {        
-        if( widget == mSharedVideo ) {
-            if ( isSharedVideoAtTop() ) {
-                effect = lcEffectWinSwapDownId;
-            } else {
-                effect = lcEffectWinSwapUpId;
-            }         
-            LC_QDEBUG_2("livecomms [UI] shared video effect:", effect)    
-        } else if( widget == mReceivedVideo ) {
-            if ( isSharedVideoAtTop() ) {
-                effect = lcEffectWinSwapUpId;
-            } else {
-                effect = lcEffectWinSwapDownId;
-            }
-            LC_QDEBUG_2("livecomms [UI] received video effect:", effect)
-        }
-    } 
-    LC_QDEBUG("livecomms [UI] <- LcEffectHandler::selectSwapEffect()")
-    return effect;
-}
 
 // -----------------------------------------------------------------------------
 //
@@ -257,7 +218,6 @@ void LcEffectHandler::startEffect(
     }
     LC_QDEBUG( "livecomms [UI] <- LcEffectHandler::startEffect()" )
 }
-
 
 // -----------------------------------------------------------------------------
 //

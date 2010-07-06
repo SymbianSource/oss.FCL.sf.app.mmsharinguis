@@ -34,12 +34,12 @@
 #include <hbinstance.h>
 #include <hblineedit.h>
 #include <hbpushbutton.h>
-#include <hbzoomsliderpopup.h>
 #include <hbtransparentwindow.h>
 #include <qgraphicssceneevent.h>
 #include <qgraphicsitem.h>
 #include <QGesture.h>
 #include <dialpad.h>
+#include <dialpadvtkeyhandler.h>
 #include <HbTapGesture.h>
 
 // Stub Helper
@@ -95,6 +95,7 @@ void UT_LcView::testConstructor()
 
 void UT_LcView::testActivated()
 {
+    mView->init();
     lcutStub_LcUiEngine_reset();
     QVERIFY( lcutStub_LcUiEngine_getCurrentView() == 0 );
     mView->activated();
@@ -130,14 +131,22 @@ void UT_LcView::testInit()
     mView->init();
     QVERIFY( mView->mRecipient );
     QVERIFY( !mView->mSharedVideoWidget );
-    QVERIFY( !mView->mZoomSlider );
+    QVERIFY( mView->mDialpad );
+    QVERIFY( mView->mDialpadVtKeyHandler );
     
     mRepository->mReturnSendVideo = true;
     mView->init();
     QVERIFY( mView->mRecipient );
     QVERIFY( mView->mSharedVideoWidget );
-    QVERIFY( mView->mZoomSlider );
     QVERIFY( mView->menu());
+    QVERIFY( mView->mDialpad );
+    QVERIFY( mView->mDialpadVtKeyHandler );
+    
+    // emergency call     
+    mView->mDialpadVtKeyHandler->contentChanged("112");
+    QVERIFY( mView->mDialpad->mIsCallButtonEnabled );
+    mView->mDialpadVtKeyHandler->contentChanged("100");
+    QVERIFY( !mView->mDialpad->mIsCallButtonEnabled );
 }
 
 void UT_LcView::testDeactivated()
@@ -291,9 +300,19 @@ void UT_LcView::testSwitchToVoiceCall()
     QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_stop ) );
 }
 
-void UT_LcView::testDisableCamera()
+void UT_LcView::testDisableCameraWhenOnFullScreenMode()
 {
-    mView->init();   
+    mView->init();
+    mEngine->setFullScreenMode(true);
+    mView->disableCamera();
+    QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_disableCamera ) );    
+    QVERIFY( mEngine->fullScreenMode() );
+}
+
+void UT_LcView::testDisableCameraWhenNotOnFullScreenMode()
+{
+    mView->init();
+    mEngine->setFullScreenMode(false);
     mView->disableCamera();
     QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_disableCamera ) );    
     QVERIFY( !mEngine->fullScreenMode() );
@@ -319,34 +338,6 @@ void UT_LcView::testSwap()
     mView->swap();
     QVERIFY( lcutStub_LcUiEngine_expectCall( lcutNoCall ) );
 }
-
-void UT_LcView::testShowZoom()
-{
-    QVERIFY( !mView->mSharedVideoWidget );
-    QVERIFY( !mView->mZoomSlider );
-    mView->showZoom();
-    QVERIFY( !mView->mZoomSlider );
-    QVERIFY( !mView->mSharedVideoWidget );
-
-    LcVideoWidget sendVideo;
-    mView->mSharedVideoWidget = &sendVideo;
-    HbZoomSliderPopup zoomSlider;
-    mView->mZoomSlider = &zoomSlider;
-    
-    QVERIFY( mView->mSharedVideoWidget );
-    QVERIFY( mView->mZoomSlider );
-    mView->showZoom();
-    QVERIFY( mView->mSharedVideoWidget );
-    QVERIFY( mView->mZoomSlider );
-    QVERIFY( mView->mZoomSlider->isVisible() );
-    LcControlValues values;
-    mEngine->zoomValues( values );
-    QCOMPARE( mView->mZoomSlider->value(), values.mValue );
-    QCOMPARE( mView->mZoomSlider->minimum(), values.mMinValue );
-    QCOMPARE( mView->mZoomSlider->maximum(), values.mMaxValue );
-    
-}
-
 
 void UT_LcView::testNotSupported()
 {
@@ -404,29 +395,60 @@ void UT_LcView::testUpdateVideoRects()
     mView->updateVideoRects();
     QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_updateSession, 0 ) );
     QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_setOrientation, 1 ) );
-    QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_setContentAreas, 2 ) );  
+    QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_setContentAreas, 2 ) );
+    
+    //Test: Shared video widgets and received video wigts are positioned at (0,0)
+    //It does not update.
+    lcutStub_LcUiEngine_reset();
+    mView->isViewReady = false;
+    mView->mSharedVideoWidget = sharedVideoWidget;
+    mView->mSharedVideoWidget->setPos(QPointF(0,0));
+    mView->mReceivedVideoWidget = receivedVideoWidget;
+    mView->mReceivedVideoWidget->setPos(QPointF(0,0));
+    mView->updateVideoRects();
+    QVERIFY( !lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_updateSession, 0 ) );
+    QVERIFY( !lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_setOrientation, 1 ) );
+    QVERIFY( !lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_setContentAreas, 2 ) );
+    
+    
+    //Test2: Shared video widgets positioned at (0,0) and other widgets is null
+    //It does not update.
+    lcutStub_LcUiEngine_reset();
+    mView->mSharedVideoWidget = sharedVideoWidget;
+    mView->mSharedVideoWidget->setPos(QPointF(0,0));
+    mView->mReceivedVideoWidget = 0;
+    mView->isViewReady = false;
+    mView->updateVideoRects();
+    QVERIFY( !lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_updateSession, 0 ) );
+    QVERIFY( !lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_setOrientation, 1 ) );
+    QVERIFY( !lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_setContentAreas, 2 ) );
+
+    //Test3: Shared video widgets positioned correctly  and other widgets is null
+    //It update.
+    lcutStub_LcUiEngine_reset();
+    mView->mSharedVideoWidget = sharedVideoWidget;
+    mView->mSharedVideoWidget->setPos(QPointF(10,10));
+    mView->mReceivedVideoWidget = 0;
+    mView->isViewReady = false;
+    mView->updateVideoRects();
+    QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_updateSession, 0 ) );
+    QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_setOrientation, 1 ) );
+    QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_setContentAreas, 2 ) );
 }
 
 void UT_LcView::testCurrentLayout()
 {
     mView->init();
     QString layout;
-    
-    //1. Portrait layout
-    UT_SET_ORIENTATION( Qt::Vertical );
-    layout = mView->currentLayout();
-    QVERIFY( layout == lcLayoutPortraitDefaultId );
 
-    //2. Landscape layout
+    //1. Landscape layout
     UT_SET_ORIENTATION( Qt::Horizontal );
     layout = mView->currentLayout();
     QVERIFY( layout == lcLayoutLandscapeDefaultId );    
 
-    //3. Landscape Swaped lcLayoutPortraitSwappedId
-    
-    // Shared window x cordintate is higher 
-    // than Received windows x Cordinate.
-    
+    //2. Landscape swapped layout    
+    // Shared window x coordinate is higher than Received windows x coordinate.
+
     QRectF pos1 = QRectF(100,300, 400, 400);
     QRectF pos2 = QRectF(5,100, 200, 200);
 
@@ -438,33 +460,11 @@ void UT_LcView::testCurrentLayout()
     layout = mView->currentLayout();
     QVERIFY( layout == lcLayoutLandscapeSwappedId );
 
-    //4. If Its already Swaped Change to the normal Landscape Mode
+    //3. If it's already swapped, change to the normal landscape mode
     mView->mSharedVideoWidget->setGeometry(pos2);
     mView->mReceivedVideoWidget->setGeometry(pos1);
     layout = mView->currentLayout();
     QVERIFY( layout == lcLayoutLandscapeDefaultId );
-
-
-    //5. Portrait Swaped lcLayoutPortraitSwappedId
-
-    // Shared window y cordintate is higher 
-    // than Received windows y Cordinate.
-
-    UT_SET_ORIENTATION( Qt::Vertical );
-    mView->mEffectHandler->mSwapInProgress = true;
-    mView->mSharedVideoWidget->setGeometry(pos1);
-    mView->mReceivedVideoWidget->setGeometry(pos2);
-
-    layout = mView->currentLayout();
-    QVERIFY( layout == lcLayoutPortraitSwappedId );
-
-    //6. If its swaped in portait mode switch not normal portrait mode
-    mView->mEffectHandler->mSwapInProgress = true;
-    mView->mSharedVideoWidget->setGeometry(pos2);
-    mView->mReceivedVideoWidget->setGeometry(pos1);
-    layout = mView->currentLayout();
-    QVERIFY( layout == lcLayoutPortraitDefaultId );
-
 }
 
 
@@ -478,25 +478,28 @@ void UT_LcView::testToFullScreen()
     mView->menu()->setVisible( false );
     mView->toFullScreen( true );
     QVERIFY( mEngine->fullScreenMode() );
-    QVERIFY( !mView->isTitleBarVisible() );
+    // Use the helper function do not invent new one 
+    QVERIFY( !HbStubHelper::isTitleBarVisible() );
+    QVERIFY( !HbStubHelper::isStatusBarVisible() );
     QVERIFY( !mView->toolBar()->isVisible() );    
-    QVERIFY( !mView->mEndCallButton->isVisible());
-    QVERIFY( !mView->mDuration->isVisible());
-    QVERIFY( !mView->mRecipient->isVisible());
-    QVERIFY( !mView->mBrandIcon->isVisible());    
+    QVERIFY( !mView->mEndCallButton->isVisible() );
+    QVERIFY( !mView->mDuration->isVisible() );
+    QVERIFY( !mView->mRecipient->isVisible() );    
     
     // Test2 : not in full screen
     mView->init();
     mView->menu()->setVisible( false );
     mView->toFullScreen( false );
-    QVERIFY( !mEngine->fullScreenMode());
-    QVERIFY( mView->isTitleBarVisible() );
+    QVERIFY( !mEngine->fullScreenMode() );
+    QVERIFY( HbStubHelper::isTitleBarVisible() );
+    QVERIFY( HbStubHelper::isStatusBarVisible() );
     QVERIFY( mView->toolBar()->isVisible() );    
-    QVERIFY( mView->mEndCallButton->isVisible());
-    QVERIFY( mView->mDuration->isVisible());
-    QVERIFY( mView->mRecipient->isVisible());
-    QVERIFY( mView->mBrandIcon->isVisible());
-    QVERIFY( mView->timerId );
+    QVERIFY( mView->mEndCallButton->isVisible() );
+    QVERIFY( mView->mDuration->isVisible() );
+    QVERIFY( mView->mRecipient->isVisible() );
+    int tId = mView->timerId;
+    mView->watchInactivity();    
+    QVERIFY( mView->timerId != tId );
     
     // Test3 : menu visible
     mView->init();
@@ -504,28 +507,32 @@ void UT_LcView::testToFullScreen()
     mView->toFullScreen( false );
     mView->menu()->setVisible( true );
     mView->toFullScreen( true );
-    QVERIFY( !mEngine->fullScreenMode());
-    QVERIFY( mView->isTitleBarVisible() );
+    QVERIFY( !mEngine->fullScreenMode() );
+    QVERIFY( HbStubHelper::isTitleBarVisible() );
+    QVERIFY( HbStubHelper::isStatusBarVisible() );
     QVERIFY( mView->toolBar()->isVisible() );    
-    QVERIFY( mView->mEndCallButton->isVisible());
-    QVERIFY( mView->mDuration->isVisible());
-    QVERIFY( mView->mRecipient->isVisible());
-    QVERIFY( mView->mBrandIcon->isVisible());
-    QVERIFY( mView->timerId );
+    QVERIFY( mView->mEndCallButton->isVisible() );
+    QVERIFY( mView->mDuration->isVisible() );
+    QVERIFY( mView->mRecipient->isVisible() );    
+    tId = mView->timerId;
+    mView->watchInactivity();    
+    QVERIFY( mView->timerId != tId );
     
     // Test3 : dialpad visible
     mView->init();
     delete mView->mDialpad;
     mView->mDialpad = new Dialpad();
     mView->toFullScreen( true );
-    QVERIFY( !mEngine->fullScreenMode());
-    QVERIFY( mView->isTitleBarVisible() );
+    QVERIFY( !mEngine->fullScreenMode() );
+    QVERIFY( HbStubHelper::isTitleBarVisible() );
+    QVERIFY( HbStubHelper::isStatusBarVisible() );
     QVERIFY( mView->toolBar()->isVisible() );    
-    QVERIFY( mView->mEndCallButton->isVisible());
-    QVERIFY( mView->mDuration->isVisible());
-    QVERIFY( mView->mRecipient->isVisible());
-    QVERIFY( mView->mBrandIcon->isVisible());
-    QVERIFY( mView->timerId );
+    QVERIFY( mView->mEndCallButton->isVisible() );
+    QVERIFY( mView->mDuration->isVisible() );
+    QVERIFY( mView->mRecipient->isVisible() );    
+    tId = mView->timerId;
+    mView->watchInactivity();    
+    QVERIFY( mView->timerId == tId );
 }
 
 void UT_LcView::testGestureEvent()
@@ -533,12 +540,12 @@ void UT_LcView::testGestureEvent()
     mView->init();
     mView->menu()->setVisible(false);    
     UT_SET_ORIENTATION( Qt::Horizontal );
-    mView->mItemContextMenu = 0;
+
     mView->mSharedVideoWidget->setGeometry(QRectF(5,50, 100, 100));
     mView->mReceivedVideoWidget->setGeometry(QRectF(5,200, 200, 400));
     QList<QGesture*> list;
-    
-    // Test1: Short tap Event anywhere on screen
+
+    // Test1: Short tap Event toggle the full screen mode
     mEngine->setFullScreenMode(true);
     QPointF sharedVideoPos(10,60);
     QTapGesture *tapGesture = new QTapGesture();
@@ -549,30 +556,9 @@ void UT_LcView::testGestureEvent()
     QGestureEvent event1(list);
     mView->gestureEvent(&event1);
     QVERIFY( !mEngine->fullScreenMode());
-    // no contet menu
-    QVERIFY( !mView->mItemContextMenu );
-    mView->mItemContextMenu = 0;
     list.clear();
     
-    // Test2: Long tap event on Shared Video Widget.
-    UT_SET_ORIENTATION( Qt::Vertical );
-    QTapGesture *tapGesture1 = new QTapGesture();
-    tapGesture1->setPosition(sharedVideoPos);
-    HbStubHelper::setGestureState(Qt::GestureUpdated);
-    HbStubHelper::setGestureStyleHint(HbTapGesture::TapAndHold);
-    list.append(tapGesture1);
-    QGestureEvent event2(list);
-    mEngine->setFullScreenMode(true);
-    mView->gestureEvent(&event2);
-    // No affect to the full screen mode it remains same  
-    QVERIFY( mEngine->fullScreenMode());
-    // Ensure context menu is created
-    QVERIFY( mView->mItemContextMenu );
-    list.clear();
-    mView->mItemContextMenu = 0;
-    
-    // Test3: Long tap event on Received Video Widget
-    UT_SET_ORIENTATION( Qt::Vertical );
+    // Test2: Long tap event does not affect full screen mode.
     QTapGesture *tapGesture2 = new QTapGesture();
     QPointF receivedVideoPos(10,210);
     tapGesture2->setPosition(receivedVideoPos);
@@ -584,18 +570,16 @@ void UT_LcView::testGestureEvent()
     mView->gestureEvent(&event3);
     // Ensure it does not affect full screen mode.
     QVERIFY( mEngine->fullScreenMode());
-    QVERIFY( !mView->mItemContextMenu );
     
-    //Test4: Not Handled States.
+    //Test3: Not Handled States.
     HbStubHelper::setGestureState(Qt::GestureStarted);
     mEngine->setFullScreenMode(true);
     mView->gestureEvent(&event3);
     // Ensure its not handled everything remains same
     QVERIFY( mEngine->fullScreenMode());
-    QVERIFY( !mView->mItemContextMenu );
     list.clear();
     
-    //Test5: Not Handled Event
+    //Test4: Not Handled Event
     QSwipeGesture *swipeGesture = new QSwipeGesture();
     list.append(swipeGesture);
     QGestureEvent event4(list);
@@ -603,8 +587,6 @@ void UT_LcView::testGestureEvent()
     mView->gestureEvent(&event4);
     // Ensure it does not affect full screen mode.
     QVERIFY( mEngine->fullScreenMode());
-    QVERIFY( !mView->mItemContextMenu );
-
 }
 
 void UT_LcView::testContextMenu()
@@ -674,12 +656,12 @@ void UT_LcView::testTimerEvent()
     mView->menu()->setVisible(false);
     mView->timerEvent( event );
     QVERIFY( mEngine->fullScreenMode());
-    QVERIFY( !mView->isTitleBarVisible() );
+    QVERIFY( !HbStubHelper::isTitleBarVisible() );
+    QVERIFY( !HbStubHelper::isStatusBarVisible() );
     QVERIFY( !mView->toolBar()->isVisible() );    
     QVERIFY( !mView->mEndCallButton->isVisible());
     QVERIFY( !mView->mDuration->isVisible());
-    QVERIFY( !mView->mRecipient->isVisible());
-    QVERIFY( !mView->mBrandIcon->isVisible());    
+    QVERIFY( !mView->mRecipient->isVisible());    
     delete event;
     
     // not a timer we want
@@ -687,13 +669,12 @@ void UT_LcView::testTimerEvent()
     event = new QTimerEvent( 22222 ); // some number
     mView->timerEvent( event );
     QVERIFY( !mEngine->fullScreenMode() );
-    QVERIFY( mView->isTitleBarVisible() );
+    QVERIFY( HbStubHelper::isTitleBarVisible() );
+    QVERIFY( HbStubHelper::isStatusBarVisible() );
     QVERIFY( mView->toolBar()->isVisible() );    
     QVERIFY( mView->mEndCallButton->isVisible());
     QVERIFY( mView->mDuration->isVisible());
     QVERIFY( mView->mRecipient->isVisible());
-    QVERIFY( mView->mBrandIcon->isVisible());
-    QVERIFY( mView->timerId);
     delete event;
 }
 
@@ -713,12 +694,12 @@ void UT_LcView::testUpdateSwapLayout()
     mEngine->setFullScreenMode(true);
     mView->updateSwapLayout();
     QVERIFY( mEngine->fullScreenMode());
-    QVERIFY( !mView->isTitleBarVisible() );
+    QVERIFY( !HbStubHelper::isTitleBarVisible() );
+    QVERIFY( !HbStubHelper::isStatusBarVisible() );
     QVERIFY( !mView->isItemVisible(Hb::DockWidgetItem ) );
     QVERIFY( !mView->mEndCallButton->isVisible());
     QVERIFY( !mView->mDuration->isVisible());
-    QVERIFY( !mView->mRecipient->isVisible());
-    QVERIFY( !mView->mBrandIcon->isVisible());
+    QVERIFY( !mView->mRecipient->isVisible());    
 }
 
 void UT_LcView::testMenuAboutToShow()
@@ -728,40 +709,32 @@ void UT_LcView::testMenuAboutToShow()
     mView->toFullScreen( true );
     mView->menuAboutToShow();
     QVERIFY( !mEngine->fullScreenMode());
-    QVERIFY( mView->isTitleBarVisible() );
+    QVERIFY( HbStubHelper::isTitleBarVisible() );
+    QVERIFY( HbStubHelper::isStatusBarVisible() );
     QVERIFY( mView->toolBar()->isVisible() );    
     QVERIFY( mView->mEndCallButton->isVisible());
     QVERIFY( mView->mDuration->isVisible());
     QVERIFY( mView->mRecipient->isVisible());
-    QVERIFY( mView->mBrandIcon->isVisible());
-    QVERIFY( mView->timerId);
+    int tId = mView->timerId;
+    mView->watchInactivity();    
+    QVERIFY( mView->timerId != tId );
 
 }
 
 void UT_LcView::testTranslateRectForOrientation()
 {
-    UT_SET_ORIENTATION( Qt::Vertical );
-    QRectF origRect( 10, 10, 100, 200 );
-    
-    QRectF modRect = mView->translateRectForOrientation(origRect);
-    QVERIFY( origRect == modRect );
-    
     UT_SET_ORIENTATION( Qt::Horizontal );
-    modRect = mView->translateRectForOrientation(origRect);
+    QRectF origRect( 10, 10, 100, 200 );
+    QRectF modRect = mView->translateRectForOrientation(origRect);
     QVERIFY( modRect.height() == origRect.width() );
     QVERIFY( modRect.width() == origRect.height() );
 }
 
 void UT_LcView::testTranslatePointForOrientation()
 {
-    UT_SET_ORIENTATION( Qt::Vertical );
-    QPointF origPoint( 10, 20 );
-    
-    QPointF modPoint = mView->translatePointForOrientation(origPoint);
-    QVERIFY( origPoint == modPoint );
-    
     UT_SET_ORIENTATION( Qt::Horizontal );
-    modPoint = mView->translatePointForOrientation(origPoint);
+    QPointF origPoint( 10, 20 );
+    QPointF modPoint = mView->translatePointForOrientation(origPoint);
     QVERIFY( origPoint != modPoint );
 }
 
@@ -782,7 +755,8 @@ void  UT_LcView::testOpenDialpad()
     QVERIFY(mView->mDialpad->isOpen());   
     QVERIFY(!mView->mDialpad->mIsCallButtonEnabled);
     QVERIFY(mView->mRepository.mLayoutSection == lcLayoutLandscapeDialpadId);    
-    QVERIFY(mView->isTitleBarVisible());
+    QVERIFY( HbStubHelper::isTitleBarVisible() );
+    QVERIFY( HbStubHelper::isStatusBarVisible() );
     QCOMPARE(mView->menu()->actions().size(), 0);    
     QVERIFY(!mView->mEngine.fullScreenMode());
 }
@@ -801,10 +775,19 @@ void  UT_LcView::testDialpadClosed()
     HbMainWindow& window = *(HbInstance::instance()->allMainWindows().at(0));  
     window.setOrientation( Qt::Horizontal );
     mView->openDialpad();    
+    
+    // Enter some dummy text
+    mView->mDialpad->editor().setText( QString("1") );
     mView->dialpadClosed();
+    // Ensure text is cleared.
+    
+    QCOMPARE(mView->mDialpad->editor().text(), QString::fromAscii(""));
+    QVERIFY(!mView->mDialpad->editor().text().length());
+    
     // check that layout has changed
     QVERIFY(mView->mRepository.layout()!= lcLayoutLandscapeDialpadId);
-    QVERIFY(mView->isTitleBarVisible());
+    QVERIFY( HbStubHelper::isTitleBarVisible() );
+    QVERIFY( HbStubHelper::isStatusBarVisible() );
     QVERIFY(mView->toolBar()->isVisible());
     QVERIFY(mView->mEndCallButton->isVisible());
     QVERIFY(mView->mRecipient->isVisible());
@@ -819,25 +802,12 @@ void  UT_LcView::testDialpadClosed()
     // check for swapped view appears
     QVERIFY( mView->mRepository.layout()== lcLayoutLandscapeSwappedId );   
     // check titlebar invisible
-    QVERIFY( mView->isTitleBarVisible() );
+    QVERIFY( HbStubHelper::isTitleBarVisible() );
+    QVERIFY( HbStubHelper::isStatusBarVisible() );
     // check toolbar invisible
     QVERIFY( mView->toolBar()->isVisible() );    
     QVERIFY(!mView->mEngine.fullScreenMode());
-    
-    // test : orientation to portrait 
-    //        swapped,fullscreen,landscape,open and close dialpad scenario
-    mView->mRepository.loadLayout( lcLayoutLandscapeSwappedId );    
-    mView->openDialpad();
-    window.setOrientation( Qt::Vertical );
-    mView->dialpadClosed();
-    // check for swapped view appears
-    QVERIFY( mView->mRepository.layout()== lcLayoutPortraitSwappedId );
-    // check titlebar visible
-    QVERIFY( mView->isTitleBarVisible() );
-    // check toolbar visible
-    QVERIFY( mView->toolBar()->isVisible() );    
-    QVERIFY(!mView->mEngine.fullScreenMode());
-    
+
 }
 
 
@@ -879,13 +849,70 @@ void UT_LcView::testAddOptionsMenuActions()
 }
 
 void UT_LcView::testWatchInactivity()
-{
+{       
+    mView->init();
+    
+    // test : in fullscreen mode already, dont start timer again
     int tid = mView->timerId ;
-    mView->mEngine.setFullScreenMode( true );
+    mView->mEngine.setFullScreenMode( true );    
     mView->watchInactivity();
     QVERIFY( tid==mView->timerId );
-    
+  
+    // test : not in full screen but dialpad view. dont start timer
     mView->mEngine.setFullScreenMode( false );
+    QVERIFY( mView->mDialpad );
+    mView->openDialpad();
+    mView->watchInactivity();
+    QVERIFY( tid==mView->timerId );    
+    
+    // test : not in full screen and no dialpad , start timer
+    mView->mEngine.setFullScreenMode( false );
+    QVERIFY( mView->mDialpad );
+    mView->mDialpad->closeDialpad();
     mView->watchInactivity();
     QVERIFY( tid!=mView->timerId );
+    
+}
+
+
+
+void UT_LcView::testIsVideoPositionedCorrectly()
+{
+    //Test1: Null video Widget returns true
+    mRepository->mReturnSendVideo = false;
+    mView->init();
+    QVERIFY( !mView->mSharedVideoWidget );
+    QVERIFY(mView->isVideoPositionedCorrectly(mView->mSharedVideoWidget));
+    
+    //Test2: Valid Video widgets with correct position returns true:
+    mRepository->mReturnSendVideo = true;
+    mView->init();
+    QVERIFY( mView->mSharedVideoWidget );
+    QVERIFY( mView->isVideoPositionedCorrectly(mView->mSharedVideoWidget ));
+    
+    //Test3: Vaild video widgets withi co-ordinates returns false.
+    mView->mSharedVideoWidget->setPos(QPointF(0,0));
+    QVERIFY( mView->mSharedVideoWidget );
+    QVERIFY( !mView->isVideoPositionedCorrectly(mView->mSharedVideoWidget ));
+}
+
+
+void UT_LcView::testIsPositioned()
+{   
+    //Test: isViewReady is true and proper co-ordinates        
+    mRepository->mReturnSendVideo = true;
+    mView->init();
+    QVERIFY( !mView->isViewReady );        
+    QVERIFY( mView->mSharedVideoWidget );
+    QVERIFY( mView->isVideoPositionedCorrectly(mView->mSharedVideoWidget ));
+    mView->isPositioned();
+    QVERIFY( mView->isViewReady );
+    
+    //Test: isViewReady is false and its first time and co ordinates are 0,0
+    mView->isViewReady = false;    
+    mView->mSharedVideoWidget->setPos(QPointF(0,0));
+    QVERIFY( mView->mSharedVideoWidget );
+    QVERIFY( !mView->isVideoPositionedCorrectly(mView->mSharedVideoWidget ));
+    mView->isPositioned();
+    QVERIFY( !mView->isViewReady );
 }

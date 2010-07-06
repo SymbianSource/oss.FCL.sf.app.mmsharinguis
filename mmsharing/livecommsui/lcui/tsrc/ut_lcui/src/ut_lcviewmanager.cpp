@@ -143,21 +143,6 @@ void UT_LcUiViewManager::testChangeView()
     
 }
 
-void UT_LcUiViewManager::testUpdateLayout()
-{
-    QVERIFY( mViewManager->mMainWindow.viewCount() == 1 );
-    mViewManager->updateLayout();
-    QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_updateSession, 0 ) );
-    QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_setOrientation, 1 ) );
-    QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_setContentAreas, 2 ) );
-    lcutStub_LcUiEngine_reset();
-    
-    // No active view
-    mViewManager->mMainWindow.setCurrentView( 0 );
-    mViewManager->updateLayout();
-    QVERIFY( lcutStub_LcUiEngine_expectCall( lcutNoCall ) );   
-}
-
 void UT_LcUiViewManager::testTerminateSession()
 {
     QVERIFY( lcutStub_LcUiEngine_expectCall( lcutNoCall ) );
