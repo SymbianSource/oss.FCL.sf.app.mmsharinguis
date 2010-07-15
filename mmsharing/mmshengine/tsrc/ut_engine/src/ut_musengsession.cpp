@@ -208,6 +208,43 @@ void UT_CMusEngSession::UT_AudioRoutingCanBeChangedL()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
+//	
+void UT_CMusEngSession::UT_AudioOutputIsBTL()
+    {
+    iLiveSession->iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
+                  CTelephonyAudioRouting::EBTAudioAccessory;
+	EUNIT_ASSERT( iLiveSession->AudioOutputIsBT() );
+    
+    iLiveSession->iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
+                  CTelephonyAudioRouting::ENotActive;
+    EUNIT_ASSERT( !iLiveSession->AudioOutputIsBT());
+    
+    iLiveSession->iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
+                  CTelephonyAudioRouting::ENone;
+    EUNIT_ASSERT( !iLiveSession->AudioOutputIsBT());
+    
+    iLiveSession->iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
+                  CTelephonyAudioRouting::EHandset;
+    EUNIT_ASSERT( !iLiveSession->AudioOutputIsBT());
+    
+    iLiveSession->iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
+                  CTelephonyAudioRouting::ELoudspeaker;
+    EUNIT_ASSERT( !iLiveSession->AudioOutputIsBT());
+    
+    iLiveSession->iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
+                  CTelephonyAudioRouting::EWiredAudioAccessory;
+    EUNIT_ASSERT( !iLiveSession->AudioOutputIsBT());
+    
+    iLiveSession->iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
+                  CTelephonyAudioRouting::ETTY;
+    EUNIT_ASSERT( !iLiveSession->AudioOutputIsBT());
+    
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
 //        
 void UT_CMusEngSession::UT_EnableLoudspeakerLL()
     {
@@ -484,6 +521,13 @@ EUNIT_TEST(
     "FUNCTIONALITY",
     SetupL, UT_AudioRoutingCanBeChangedL, Teardown)
 
+EUNIT_TEST(
+    "AudioOutputIsBT - test ",
+    "CMusEngSession",
+    "AudioOutputIsBT",
+    "FUNCTIONALITY",
+    SetupL, UT_AudioOutputIsBTL, Teardown)
+    
 EUNIT_TEST(
     "EnableLoudspeakerL - test ",
     "CMusEngSession",

@@ -80,8 +80,15 @@ class CMusEngSession : public CBase,
         * 
         * @return ETrue if audio routing can be changed using EnableLoudspeakerL
         */
-        IMPORT_C TBool AudioRoutingCanBeChanged();
+        IMPORT_C TBool AudioRoutingCanBeChanged() const;
         
+        /**
+		* Checks if audio output is BT
+		* 
+		* @return ETrue if audio routing is BT
+		*/
+        IMPORT_C TBool AudioOutputIsBT() const;
+		
         /**
         * Activates/deactivates loadspeaker
         *

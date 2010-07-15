@@ -115,7 +115,7 @@ void CMusUiLiveSharingController::ConstructL( const TRect& aRect )
     iSession->SetAudioRoutingObserver( this );
     iSession->SetVolumeChangeObserver( this );
         
-    if ( iSession->AudioRoutingCanBeChanged() )
+    if ( iSession->AudioRoutingCanBeChanged() && !iSession->AudioOutputIsBT() )
         {
         iSession->EnableLoudspeakerL( ELoudspeakerEnabled, ETrue );
         }

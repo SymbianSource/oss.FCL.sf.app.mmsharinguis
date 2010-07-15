@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Application's UI class.
-*  Version     : %version:  be1sipx1#75.1.13 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version:  be1sipx1#75.1.14 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -673,7 +673,7 @@ void CMusUiReceiveController::InvitationAcceptedL()
     
     // Enable loud speaker already before answering but disable it immediately
     // if accepting fails for some reason
-    if ( iSession->AudioRoutingCanBeChanged() )
+    if ( iSession->AudioRoutingCanBeChanged() && !iSession->AudioOutputIsBT() )
         {
         iSession->EnableLoudspeakerL( ELoudspeakerEnabled, ETrue );
         }

@@ -167,6 +167,43 @@ void UT_CMusEngTelephoneUtils::UT_AudioRoutingCanBeChangedL()
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
+//	   
+void UT_CMusEngTelephoneUtils::UT_AudioOutputIsBTL()
+    {
+    iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
+                  CTelephonyAudioRouting::EBTAudioAccessory;
+    EUNIT_ASSERT( iTelephoneUtils->AudioOutputIsBT());
+    
+    iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
+                  CTelephonyAudioRouting::ENotActive;
+    EUNIT_ASSERT( !iTelephoneUtils->AudioOutputIsBT() );
+       
+    iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
+                  CTelephonyAudioRouting::ENone;
+    EUNIT_ASSERT( !iTelephoneUtils->AudioOutputIsBT() );
+    
+    iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
+                  CTelephonyAudioRouting::EHandset;
+    EUNIT_ASSERT( !iTelephoneUtils->AudioOutputIsBT() );
+    
+    iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
+                  CTelephonyAudioRouting::ELoudspeaker;
+    EUNIT_ASSERT( !iTelephoneUtils->AudioOutputIsBT() );
+    
+    iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
+                  CTelephonyAudioRouting::EWiredAudioAccessory;
+    EUNIT_ASSERT( !iTelephoneUtils->AudioOutputIsBT() );
+    
+    iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
+                  CTelephonyAudioRouting::ETTY;
+    EUNIT_ASSERT( !iTelephoneUtils->AudioOutputIsBT() );
+            
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
 //
 void UT_CMusEngTelephoneUtils::UT_LoudspeakerLL()
     {
@@ -580,6 +617,13 @@ EUNIT_TEST(
     "FUNCTIONALITY",
     SetupL, UT_AudioRoutingCanBeChangedL, Teardown)
 
+EUNIT_TEST(
+    "AudioOutputIsBT - test ",
+    "CMusEngTelephoneUtils",
+    "AudioOutputIsBT",
+    "FUNCTIONALITY",
+    SetupL, UT_AudioOutputIsBTL, Teardown)
+    
 EUNIT_TEST(
     "LoudspeakerL - test ",
     "CMusEngTelephoneUtils",

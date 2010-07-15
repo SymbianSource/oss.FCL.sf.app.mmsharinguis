@@ -93,7 +93,7 @@ CMusEngTelephoneUtils::~CMusEngTelephoneUtils()
 //
 // -----------------------------------------------------------------------------
 //
-TBool CMusEngTelephoneUtils::AudioRoutingCanBeChanged()
+TBool CMusEngTelephoneUtils::AudioRoutingCanBeChanged() const
     {
     MUS_LOG( "mus: [ENGINE]  -> CMusEngTelephoneUtils::AudioRoutingCanBeChanged" )
     
@@ -105,6 +105,24 @@ TBool CMusEngTelephoneUtils::AudioRoutingCanBeChanged()
     MUS_LOG1( "mus: [ENGINE]  <- CMusEngTelephoneUtils::AudioRoutingCanBeChanged: %d",
               retValue )
               
+    return retValue;
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+TBool CMusEngTelephoneUtils::AudioOutputIsBT() const
+    {
+    MUS_LOG( "mus: [ENGINE]  -> CMusEngTelephoneUtils::AudioOutputIsBT" )
+	    
+    TBool retValue = ( iTelephonyAudioRouting->Output() ==
+                       CTelephonyAudioRouting::EBTAudioAccessory );
+	    
+    MUS_LOG1( "mus: [ENGINE]  <- CMusEngTelephoneUtils::AudioOutputIsBT: %d",
+               retValue )
+	              
     return retValue;
     }
 

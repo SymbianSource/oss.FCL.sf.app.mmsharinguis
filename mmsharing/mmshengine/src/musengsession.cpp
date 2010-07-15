@@ -65,9 +65,19 @@ EXPORT_C void CMusEngSession::SetRectL( const TRect& aRect )
 //
 // -----------------------------------------------------------------------------
 //
-EXPORT_C TBool CMusEngSession::AudioRoutingCanBeChanged()
+EXPORT_C TBool CMusEngSession::AudioRoutingCanBeChanged() const
     {
     return iTelephoneUtils->AudioRoutingCanBeChanged();
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+EXPORT_C TBool CMusEngSession::AudioOutputIsBT() const
+    {
+    return iTelephoneUtils->AudioOutputIsBT();
     }
 
 
