@@ -1,0 +1,3 @@
+ut_lcuieng -noprompt,ut_lcui_lcUiEngine.xml,ut_lcui_lcactivitymanager.xml
+ut_lcui -noprompt,ut_lcui_LcViewManager.xml,ut_lcui_LcUiComponentRepository.xml,ut_lcui_LcView.xml,ut_lcui_LcEffectHandler.xml,ut_lcui_LcVideoWidget.xml
+ut_mmshapp -noprompt,ut_lcapplication.xml

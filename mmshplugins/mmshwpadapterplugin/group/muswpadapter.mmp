@@ -1,0 +1,67 @@
+/*
+* Copyright (c) 2006 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:  project specification
+*
+*/
+
+
+#include <platform_paths.hrh>
+#include <data_caging_paths.hrh>
+
+#include "../inc/muswpadapteruids.h"
+
+
+TARGET                  muswpadapter.dll
+TARGETTYPE              PLUGIN
+UID                     KMUSWPADAPTERDLLUID2 KMUSWPADAPTERDLLUID3
+VENDORID                VID_DEFAULT
+CAPABILITY              CAP_ECOM_PLUGIN
+LANG                    SC
+
+
+SOURCEPATH      ../data
+
+//ECOM resource definition
+START RESOURCE      10282390.rss
+TARGET              muswpadapter.rsc
+TARGETPATH          ECOM_RESOURCE_DIR   
+END //ECOM resource definition
+
+//MUS resources
+START RESOURCE      muswpadapterresource.rss
+HEADER
+TARGET              muswpadapterresource.rsc
+TARGETPATH          RESOURCE_FILES_DIR
+LANGUAGE_IDS
+END // MUS resources
+
+SOURCEPATH              ../src
+SOURCE                  muswpadapter.cpp
+SOURCE                  muswpitem.cpp
+SOURCE                  muswpadaptergroupproxy.cpp
+
+USERINCLUDE             ../inc
+USERINCLUDE             ../../../inc
+
+APP_LAYER_SYSTEMINCLUDE
+
+LIBRARY                 euser.lib 
+LIBRARY                 provisioningengine.lib
+LIBRARY                 centralrepository.lib
+LIBRARY                 sipprofilecli.lib
+LIBRARY                 charconv.lib
+LIBRARY                 bafl.lib
+DEBUGLIBRARY            flogger.lib
+
+PAGED

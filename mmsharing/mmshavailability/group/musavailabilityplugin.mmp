@@ -1,0 +1,107 @@
+/*
+* Copyright (c) 2005-2007 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:  Project file for ECom MusAvailability plug-in
+*
+*/
+
+
+#include <platform_paths.hrh>
+
+TARGET                  musavailabilityplugin.dll
+TARGETTYPE              PLUGIN
+UID                     0x10009D8D 0x1028238E
+
+CAPABILITY              CAP_ECOM_PLUGIN
+VENDORID                VID_DEFAULT
+
+epocallowdlldata 
+
+SOURCEPATH              ../src
+SOURCE                  musavaconnectionmonitor.cpp
+SOURCE                  musavacontactavailability.cpp
+SOURCE                  musavainvitehandler.cpp
+SOURCE                  musavainviteresponder.cpp
+SOURCE                  musavamain.cpp
+SOURCE                  musavaoptionhandler.cpp
+SOURCE                  musavadefaultoptionhandler.cpp
+SOURCE                  musavanetworkavailability.cpp
+SOURCE                  musavaproxy.cpp
+SOURCE                  musavaregisteravailability.cpp
+SOURCE                  musavadefaultimp.cpp
+SOURCE                  musavasettingsimp.cpp
+SOURCE                  musavasharedobject.cpp
+SOURCE                  musavasip.cpp
+SOURCE                  musavasipconnectionobserver.cpp
+SOURCE                  musavasipobserver.cpp
+SOURCE                  musavasipprofileregistryobserver.cpp
+SOURCE                  musavaconnectionavailability.cpp
+SOURCE                  musavatelephonystatusbase.cpp
+SOURCE                  musavanetworkregistrationstatus.cpp
+SOURCE                  musavanetworkmodestatus.cpp
+SOURCE                  musavacapabilityexchange.cpp
+SOURCE                  musavacapability.cpp
+SOURCE                  musavacapabilitysipagent.cpp
+SOURCE                  musavaterminal.cpp
+SOURCE                  musavacapabilitycontext.cpp
+SOURCE                  musavacalleventmonitor.cpp
+SOURCE                  musavacapabilityquerybase.cpp
+SOURCE                  musavacapabilityquery.cpp
+SOURCE                  musavacapabilitytimer.cpp
+SOURCE                  musavasipprofileavailability.cpp
+SOURCE                  musavasettingavailability.cpp
+SOURCE                  musavasipheaderutil.cpp
+SOURCE                  musavaclientresolverutil.cpp
+
+
+SOURCEPATH      ../data
+
+START RESOURCE  1028238E.rss
+TARGET          musavailabilityplugin.rsc
+END
+
+/*
+START RESOURCE          1028238E.rss
+#ifdef SYMBIAN_SECURE_ECOM
+TARGET                  musavailabilityplugin.rsc
+#endif
+END*/
+
+USERINCLUDE             ../inc
+USERINCLUDE             ../../mmshshared/inc
+USERINCLUDE             ../../inc
+USERINCLUDE             ../../../inc
+USERINCLUDE             ../../cenrep
+
+APP_LAYER_SYSTEMINCLUDE
+
+LIBRARY                 euser.lib
+LIBRARY                 ecom.lib
+LIBRARY                 sipclient.lib
+LIBRARY                 sipprofile.lib
+LIBRARY                 sipprofilecli.lib
+LIBRARY                 centralrepository.lib
+LIBRARY                 cntmodel.lib            // Contact Model
+LIBRARY                 sipcodec.lib
+LIBRARY                 sdpcodec.lib            // SDP Codec
+LIBRARY                 bafl.lib
+LIBRARY                 etelmm.lib
+LIBRARY                 etel.lib
+LIBRARY                 connmon.lib
+LIBRARY                 charconv.lib
+LIBRARY                 inetprotutil.lib
+LIBRARY                 estor.lib
+DEBUGLIBRARY            flogger.lib
+LIBRARY                 insock.lib 
+
+PAGED

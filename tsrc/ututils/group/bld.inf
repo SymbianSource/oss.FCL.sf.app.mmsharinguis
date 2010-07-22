@@ -1,0 +1,30 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+
+PRJ_TESTMMPFILES
+../../mceclientstub/group/mceclientstub.mmp
+
+../../../mmsharing/mmshengine/tsrc/ut_engine/group/ut_musengine.mmp
+../../../mmsharing/mmshavailability/tsrc/ut_availability/group/ut_availability.mmp
+../../../mmshplugins/mmshaoplugin/tsrc/ut_aoplugin/group/ut_aoplugin.mmp
+../../../mmshplugins/mmshsipcrplugin/tsrc/ut_sipcrplugin/group/ut_sipcrplugin.mmp
+../../../mmshplugins/mmshaiwplugin/tsrc/ut_aiwplugin/group/ut_musaiwprovider.mmp
+../../../mmshplugins/mmshwpadapterplugin/tsrc/ut_wpadapterplugin/group/ut_muswpadapter.mmp
+../../../mmsharing/mmshmanagercli/tsrc/ut_managercli/group/ut_musmanagerclient.mmp
+../../../mmsharing/mmshmanagersrv/tsrc/ut_managersrv/group/ut_musmanagerserver.mmp
+../../../mmshplugins/mmcctranscoder/tsrc/ut_transcoder/group/ut_transcoder.mmp
+../../../mmsharing/mmshindicator/tsrc/ut_indicator/group/ut_musindicator.mmp

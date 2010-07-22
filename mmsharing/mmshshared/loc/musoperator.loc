@@ -1,0 +1,91 @@
+/*
+* Copyright (c) 2000 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description: 
+*     This file contains the operator specific localised strings for 
+*     Mulitmediasharing application.
+*
+*   %version: 4.1.4 %, %date_modified: Tue Nov 03 10:00:14 2009 % by %derived_by: gurina %
+*
+*/
+
+
+//  LOCALISATION STRINGS
+
+//
+// NOTE: Exact layout information syntax for logical names has not been
+//       decided/approved yet.
+//
+
+// d:Softkey command in Share View.
+// l:control_pane_t3/opt7
+// r:3.2
+//
+#define qtn_msh_msk_ihf_off			            "Speaker Off"
+
+// d:Softkey command in Share View.
+// l:control_pane_t3/opt7
+// r:3.2
+//
+#define qtn_msh_msk_ihf_on			            "Speaker On"
+
+// d:Softkey command in Share View.
+// l:control_pane_t3/opt7
+// r:3.2
+//
+#define qtn_msh_msk_ok                          "Ok"
+
+// d:Text to inform readiness of video sharing.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_vsready                     "Video Share Ready"
+
+// d:Asks if user wants to start sharing live video.
+// d:Poput to inform that recipient's terminal is VS capable.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_capability                  "Do you want to share live video?"
+
+// d:Text of a list item in video sharing settings view
+// d:Capability popup note setting title
+// l:list_setting_pane_t1
+// r:3.2
+//
+#define qtn_msh_set_autorecord_title             "Autorecord"
+
+// d:Text of a list item in video sharing settings view
+// d:Autorecording setting title
+// l:list_setting_pane_t1
+// r:3.2
+//
+#define qtn_msh_set_note_title                   "Alerts"
+
+// d:Text of a list item in video sharing settings view
+// d:Capability popup note setting: off
+// l:list_set_graphic_pane_t1
+// r:3.2
+//
+#define qtn_msh_set_note_off                     "Off"
+
+// d:Text of a list item in video sharing settings view
+// d:Capability popup note setting: on
+// l:list_set_graphic_pane_t1
+// r:3.2
+//
+#define qtn_msh_set_note_on                      "On"
+
+// End of File
+
+

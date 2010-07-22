@@ -1,0 +1,820 @@
+/*
+* Copyright (c) 2005-2007 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:  Localization strings for project MuS
+*
+*/
+
+
+
+/*
+  The syntax of a logical name entry in this file is the following:
+
+  // d:context description (line 1)
+  // d:context description (line N)
+  // l:layout id
+  // w:
+  // r:release information
+  //
+  #define qtn_<?feature_or_application>_?freetext "?text"
+
+  where
+      "qtn_" starts a logical name.  Note: "text_" has been used in
+           old logical names, but is deprecated.
+      "?feature/application" is 2-5 lower-case characters and/or numbers
+           identifying the larger context of the display text.
+      "?freetext" is the free text portion of the logical name.
+           It may contain only lower-case letters ('a' to 'z'), numbers
+           ('0' to '9'), and the underscore ('_').  The total length of
+           the logical name does must not exceed 50 characters.
+      "d:" Starts a description line clarifying the entry's context with
+           information like:
+           - Is a word a verb in imperative or is it a noun?  (For instance,
+             what does "Set" mean?)
+           - What will replace %U (unicode text parameter) or %N (number
+             parameter) included in texts?  (For instance, is it a phone
+             number or an e-mail address?)
+      "l:" Starts a layout id information (one line).
+           "P" and "No" are symbols in LAF's information table
+                - "P" is parent pane or current pane
+                - "No" is reference number in table
+      "r:" Starts a release information: one line indicating in which
+           S60 release the text was used for the first time.
+
+  Refer to the S60 localization instructions for more information.
+
+  Examples:
+
+// d:Command in options list in short term memories.
+// d:Opens the call list view that is focused.
+// l:list_single_pane_t1_cp2
+// r:3.2
+//
+#define text_logs_stm_cmd_open "Open"
+
+// d:Title pane text in converter main state.
+// l:title_pane_t2/opt9
+// r:3.0
+//
+#define qtn_cnv_title "Converter"
+
+// d:Prompt text for currency data query in converter.
+// l:popup_query_data_window
+// r:4.0
+//
+#define qtn_cnv_edit_name_prompt "Currency name"
+
+// d:Active call is terminated and a held call becomes active.
+// d:Operation is confirmed with this info note.
+// d:%U stands for the call identification of the activated call.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_multc_unhold_done_note "%U active"
+
+*/
+
+// IN-CALL STRINGS START ///////////////////////////////////////////////////
+// d:Menu item for video sharing, contains submenu options.
+// l:list_single_pane_t1_cp2/opt3
+// r:3.2
+//
+#define qtn_incal_share_video                    "Video sharing"
+
+// d:Submenu option to start live sharing from camera.
+// l:list_single_popup_submenu_pane_t1
+// r:3.2
+//
+#define qtn_incal_live_video                     "Live"
+
+// d:Submenu option to start sharing recorded clip.
+// l:list_single_popup_submenu_pane_t1
+// r:3.2
+//
+#define qtn_incal_video_clip                     "Clip"
+
+// d:Menu option to return to sharing that is already running.
+// l:list_single_pane_t1_cp2
+// r:3.2
+//
+#define qtn_incal_continue_sharing               "Continue video sharing"
+
+// IN-CALL STRINGS END //////////////////////////////////////////////////////
+
+// GENERAL STRINGS START ////////////////////////////////////////////////////
+
+// d:Application title.
+// d:Title of the application shown in grid mode.
+// d:Note! Though not visible in app shell, needed
+// d:when UI framework is asked for app's name.
+// l:cell_app_pane_t1
+// r:3.2
+//
+#define qtn_apps_msh_grid                        "Video sharing"
+
+// d:Application title.
+// d:Title of the application shown in list mode.
+// d:Note! Though not visible in app shell, needed
+// d:when UI framework is asked for app's name.
+// l:list_single_large_graphic_pane_t1
+// r:3.2
+//
+#define qtn_apps_msh_list                        "Video sharing"
+
+// d:Error note text.
+// d:Shown when a connection is lost.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_connection_lost             "Video Sharing connection lost"
+
+// d:Error note text.
+// d:Shown when a connection timeout has occured.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_timeout_expired             "Connection timeout"
+
+// d:Error note text.
+// d:Shown when service is currently unavailable.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_service_n_a                 "Service temporarily unavailable"
+
+// d:Information note text.
+// d:Shown when an invitation is cancelled.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_invitation_cancelled        "Invitation cancelled"
+
+// d:Information note text
+// d:Shown when terminal is out of network coverage.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_network_n_a                 "No network coverage"
+
+// d:Error note text.
+// d:Shown when a severe application error condition occurs.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_error_app_general           "Application error"
+
+// d:Error note text.
+// d:Shown when sip registration fails.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_no_reg                      "Unable to register to network"
+
+// d:Error note text.
+// d:Popup to inform user there was a catastrophic failure at startup.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_startup_failed              "Start-up failed. Reinstall 'Video sharing' application."
+
+// d:Error note text.
+// d:Popup to inform user that application-related settings are
+// d:incorrect/corrupt.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_bad_startup_settings        "Start-up failed. Check settings."
+
+// d:Error note text.
+// d:Popup to inform user that video transcoding has failed.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_transcoding_failed          "Unable to convert clip"
+
+// d:Information note text.
+// d:Popup to inform user that the phone has to be physically manipulated so the
+// d:main camera can be used.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_change_camera_mode          "Unable to share video. Activate the main camera."
+
+// d:Information note text.
+// d:Popup to inform user that the phone has to be physically manipulated so the
+// d:keypad can be used.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_change_keypad_mode          "Unable to edit. Activate keypad first."
+
+// d:Information note text.
+// d:Popup to inform user of an incoming request from another user to share video.
+// d:%U is the name or phone number of that other user.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_incoming_video_request      "Accept sharing request from %U[35]?"
+
+// d:Information note text.
+// d:Popup query to: a) inform the user the VS has been disabled in settings
+// d:b) query whether the user would like to enable VS for duration of ongoing CS call.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_manual_activation           "Video Sharing has been disabled in settings. Do you want to enable it for this call?"
+
+// d:Information note text.
+// d:Poput to inform that VS is not possible during a conference call.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_mshstarter_note_conference_call      "Video Sharing cannot be started from conference call."
+
+// d:Information note text.
+// d:Poput to inform that VS is possible only in 3G network.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_mshstarter_note_network_incompatible "Video Sharing is supported only in 3G network."
+
+// d:Information note text.
+// d:Poput to inform that VS is possible while the CS call is on hold.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_mshstarter_note_on_hold              "Video Sharing cannot be started while call is on hold."
+
+// d:Information note text.
+// d:Poput to inform that recipient's terminal does not support VS.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_mshstarter_note_recipient_incapable	 "Recipient's terminal does not support Video Sharing."
+
+
+
+// GENERAL STRINGS END //////////////////////////////////////////////////////
+
+// INVITE VIEW RELATED STRINGS START ////////////////////////////////////////
+
+// d:Header text for Select Address list query.
+// l:heading_pane_t1
+// r:3.2
+//
+#define qtn_msh_inviteview_select_query_hdr_txt  "Select address:"
+
+// d:Header text for manual SIP address entry dialog.
+// l:popup_query_data_window
+// r:3.2
+//
+#define qtn_msh_inviteview_enter_sip             "Enter address:"
+
+// d:Wait note text in invite view.
+// d:Shown when an invitation is sent out. This string will have the
+// d:recipients name added to it in run-time.
+// l:popup_note_wait_window
+// r:3.2
+//
+#define qtn_msh_note_inviting                    "Sending invitation to %U"
+
+// d:Information note text in invite view.
+// d:Indicates user B already has some exclusive session ongoing.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_recipient_busy              "Recipient already sharing video. Unable to establish connection."
+
+// d:Information note text in invite view.
+// d:Indicates user B has declined user A's invitation.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_connection_rejected         "Invitation rejected by recipient"
+
+// d:Error note text in invite view.
+// d:Shown when error occurs in sending invite.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_invite_error                "Unable to send invitation"
+
+// d:Error note text in invite view.
+// d:Shown if the invited user is not registered to the
+// d:network.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_recipient_not_found         "Unable to find recipient"
+
+// d:Error note text in invite view.
+// d:Shown if terminal B doesn't have MuS application
+// d:available.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_app_n_a                     "Recipient does not have 'Video sharing' application"
+
+// d:Error note text in invite view.
+// d:Shown if user B cannot be reached for some reason.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_recipient_n_a               "Recipient busy. Try again later."
+
+// d:Error note text in invite view.
+// d:Shown if user B invitation times out.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_no_response                 "No response received to invitation"
+
+// d:Error note text in invite view.
+// d:Shown if recipient address is somehow malformed.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_wrong_address               "Recipient not found. Check the address."
+
+// d:Progress note text in invite view.
+// d:Shown while transcoding operation is going on.
+// l:popup_note_wait_window
+// r:3.2
+//
+#define qtn_msh_note_transcoding_video           "Converting video"
+
+// d:Informational note text in invite view.
+// d:Shown when transcoding has completed.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_transcoding_complete        "Clip conversion complete"
+
+// INVITE VIEW RELATED STRINGS END //////////////////////////////////////////
+
+// SHARE VIEW RELATED STRINGS START /////////////////////////////////////////
+// d:Title for MuS sharing view, if name or telephone number cannot be displayed.
+// l:title_pane_t2/opt9
+// r:3.2
+//
+#define qtn_msh_shareview_title                  "Video sharing"
+
+// d:Softkey in Share View.
+// d:Labels command which resumes local recording of
+// d:paused clip record.
+// l:control_pane_t1/opt7
+// r:3.2
+//
+#define qtn_msh_shareview_softk_continue         "Continue"
+
+// d:Softkey command in Share View.
+// d:Labels command to replay clip and stream.
+// l:control_pane_t1/opt7
+// r:3.2
+//
+#define qtn_msh_shareview_softk_replay           "Replay"
+
+// d:Right softkey command.
+// d:Right Softkey label for stopping the app.
+// l:control_pane_t1/opt7
+// r:3.2
+//
+#define qtn_msh_softkey_stop                    "Stop"
+
+// d:Label in confirmation note.
+// d:Shown when user is ending sharing.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_query_save_clip                  "Save shared video clip?"
+
+// d:Label in confirmation note.
+// d:Shown when sharing ends and contact info is not in Phonebook.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_query_save_contact               "Save address to contacts?"
+
+// d:Label in wait note.
+// d:Shown when user accepts remote stream.
+// l:popup_note_wait_window
+// r:3.2
+//
+#define qtn_msh_note_waiting_for_stream          "Waiting for shared video from %U"
+
+// d:Label in global note.
+// d:Shown when media sharing has been terminated.
+// l:popup_preview_text_window_t1
+// r:3.2
+//
+#define qtn_msh_note_sharing_ended               "Video sharing ended"
+
+// d:Label in confirmation note.
+// d:Shown when media sharing has been terminated by recipient.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_sharing_ended_record        "Video sharing ended. Continue recording?"
+
+// d:Label in global error note.
+// d:Shown when media initialization fails.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_error_mediainit             "Unable to share video. Required resource cannot be used."
+
+// d:Label in global error note.
+// d:Shown when clip is not in shareable format and cannot be transcoded.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_transcoding_not_supported 	 "Clip is not in correct format. Unable to share."
+
+
+// d:Label in global error note.
+// d:Shown when file cannot be read.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_error_filelock              "Unable to read file"
+
+// d:Label in global error note.
+// d:Shown when an unspecified file system error occurs.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_error_genericfile           "File error"
+
+// d:Label in global error note.
+// d:Shown when memory runs out while sharing.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_memory_low                  "Memory low. Recording stopped."
+
+// d:Label in information note.
+// d:Shown when memory card is not accessible (e.g. corrupted, write protected).
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_memorycard_problem          "Memory card is not accessible. Phone memory will be used instead."
+
+// d:Label in global error note.
+// d:Shown when an unspecified file system error occurs.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_resource_n_a                "Application not available"
+
+// d:Label in wait note.
+// d:Shown when waiting for SIP registration during early activation
+// l:popup_note_wait_window
+// r:3.2
+#define qtn_msh_note_registration_pending        "Registering to SIP server"
+
+// d:File name of saved video clip
+// d:Localizable portion of a recorded file's name.
+// l:title_pane_t2/opt9
+// r:3.2
+//
+#define qtn_msh_set_saving_filename              "SharedVideo"
+
+// d:Label in information note.
+// d:Shown when user has decided to save shared clip and operation succeeds.
+// d:First %U is filename, second %U is folder where saved.
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_note_video_saved                 "File %0U saved to folder %1U"
+
+// d:Command in options list in live video sharing.
+// d:Starts recording the video.
+// l:list_single_pane_t1_cp2
+// r:3.2
+//
+#define qtn_msh_options_rec_start                "Start recording"
+
+// d:Command in options list in video sharing.
+// d:Stops recording the video.
+// l:list_single_pane_t1_cp2
+// r:3.2
+//
+#define qtn_msh_options_rec_stop                 "Stop recording"
+
+
+// d:Command in options list in receiving sharing video.
+// l:list_single_pane_t1_cp2
+// r:3.2
+//
+#define qtn_msh_options_fullscreen               "View in full screen"
+
+// d:Command in options list in live video sharing.
+// d:Activates zoom control live indicator
+// l:list_single_pane_t1_cp2
+// r:3.2
+//
+#define qtn_msh_options_zoom                     "Zoom"
+
+// d:Command in options list in live video sharing.
+// d:Activates brightness control live indicator
+// l:list_single_pane_t1_cp2
+// r:3.2
+//
+#define qtn_msh_options_brightness               "Brightness"
+
+// d:Command in options list in video sharing.
+// d:Zooms the videwfinder in.
+// l:list_single_pane_t1_cp2
+// r:3.2
+//
+#define qtn_msh_options_zoom_in                  "Zoom in"
+
+// d:Command in options list in live video sharing.
+// d:Zooms the videwfinder out.
+// l:list_single_pane_t1_cp2
+// r:3.2
+//
+#define qtn_msh_options_zoom_out                 "Zoom out"
+
+// d:Command in options list in image and video clip sharing.
+// d:Shown in clip/image sharing.
+// l:list_single_pane_t1_cp2
+// r:3.2
+//
+#define qtn_msh_options_gen_sharelive            "Share live video"
+
+// d:Command in options list.
+// d:Shown in live/clip/image sharing.
+// l:list_single_pane_t1_cp2
+// r:3.2
+//
+#define qtn_msh_options_gen_shareimage           "Share image"
+
+// d:Command in options list in image and video clip sharing.
+// d:Shown in live/clip/image sharing.
+// l:list_single_pane_t1_cp2
+// r:3.2
+//
+#define qtn_msh_options_gen_shareclip            "Share video clip"
+
+// d:Command in options list in image and video clip sharing.
+// d:Shown in clip sharing.
+// l:list_single_pane_t1_cp2
+// r:3.2
+//
+#define qtn_msh_options_clip_audio               "Clip audio"
+
+// d:Subcommand in options list under Clip audio.
+// d:Shown in clip sharing.
+// l:list_single_popup_submenu_pane_t1
+// r:3.2
+//
+#define qtn_msh_options_clip_audio_mute          "Mute clip audio"
+
+// d:Subcommand in options list under Clip audio.
+// d:Shown in clip sharing.
+// l:list_single_popup_submenu_pane_t1
+// r:3.2
+//
+#define qtn_msh_options_clip_audio_normal        "Play clip audio"
+
+// d:Toolbar tooltip text
+// l:popup_preview_text_window_t1
+// r:3.2
+//
+#define qtn_msh_tooltip_volume                   "Adjust call volume"
+
+// d:Toolbar tooltip text
+// l:popup_preview_text_window_t1
+// r:3.2
+//
+#define qtn_msh_tooltip_fullscreen               "View in full screen mode"
+
+// d:Toolbar tooltip text
+// l:popup_preview_text_window_t1
+// r:3.2
+//
+#define qtn_msh_tooltip_pause_live               "Pause sharing"
+
+// d:Toolbar tooltip text
+// l:popup_preview_text_window_t1
+// r:3.2
+//
+#define qtn_msh_tooltip_unpause_live             "Resume sharing"
+
+// d:Toolbar tooltip text
+// l:popup_preview_text_window_t1
+// r:3.2
+//
+#define qtn_msh_tooltip_ffrev                    "Fast forward or rewind clip"
+
+// d:Toolbar tooltip text
+// l:popup_preview_text_window_t1
+// r:3.2
+//
+#define qtn_msh_tooltip_zoom                     "Adjust zoom"
+
+// d:Toolbar tooltip text
+// l:popup_preview_text_window_t1
+// r:3.2
+//
+#define qtn_msh_tooltip_brightness               "Adjust brightness"
+
+// d:Toolbar tooltip text
+// l:popup_preview_text_window_t1
+// r:3.2
+//
+#define qtn_msh_tooltip_mute                     "Mute Microphone"
+
+// d:Toolbar tooltip text
+// l:popup_preview_text_window_t1
+// r:3.2
+//
+#define qtn_msh_tooltip_unmute                   "Unmute Microphone"
+
+// d:Toolbar tooltip text
+// l:popup_preview_text_window_t1
+// r:3.2
+//
+#define qtn_msh_tooltip_ihf_off                  "Loudspeaker off"
+
+// d:Toolbar tooltip text
+// l:popup_preview_text_window_t1
+// r:3.2
+//
+#define qtn_msh_tooltip_ihf_on                   "Loudspeaker on"
+
+// SHARE VIEW RELATED STRINGS END ///////////////////////////////////////////
+
+// SETTINGS RELATED STRINGS START ///////////////////////////////////////////
+
+// d:Video Sharing settings title in General Settings
+// l:list_single_large_graphic_pane_t1
+// r:3.2
+//
+#define qtn_set_folder_video_sharing             "Video Sharing"
+
+//d:Title in Video Sharing settings
+//l:title_pane_t2/opt9
+// r:3.2
+//
+#define qtn_msh_set_title                        "Video Sharing"
+
+// d:Text of a list item in video sharing settings view
+// d:Activation setting title
+// l:list_setting_pane_t1
+// r:3.2
+//
+#define qtn_msh_set_activation_title             "Activation"
+
+// d:Text of a list item in video sharing settings view
+// d:Activation setting: always automatic
+// l:list_set_graphic_pane_t1
+// r:3.2
+//
+#define qtn_msh_set_activation_always            "Always automatic"
+
+// d:Text of a list item in video sharing settings view
+// d:Activation setting: automatic in home network
+// l:list_set_graphic_pane_t1
+// r:3.2
+//
+#define qtn_msh_set_activation_homentw           "Automatic in home network"
+
+// d:Text of a list item in video sharing settings view
+// d:Activation setting: off
+// l:list_set_graphic_pane_t1
+// r:3.2
+//
+#define qtn_msh_set_activation_off               "Off"
+
+// d:Text of a list item in video sharing settings view
+// d:Capability auditory note setting title
+// l:list_setting_pane_t1
+// r:3.2
+//
+#define qtn_msh_set_audio_title                  "Capability auditory note"
+
+// d:Text of a list item in video sharing settings view
+// d:Capability auditory note setting: off
+// l:list_set_graphic_pane_t1
+// r:3.2
+//
+#define qtn_msh_set_audio_off                    "Off"
+
+// d:Text of a list item in video sharing settings view
+// d:Capability auditory note setting: on
+// l:list_set_graphic_pane_t1
+// r:3.2
+//
+#define qtn_msh_set_audio_on                     "On"
+
+// d:Text of a list item in video sharing settings view
+// d:SIP profile setting title
+// l:list_setting_pane_t1
+// r:3.2
+//
+#define qtn_msh_set_profile_title                "SIP profile"
+
+// d:Text of a list item in video sharing settings view
+// d:SIP profile setting: default profile
+// l:list_set_graphic_pane_t1
+// r:3.2
+//
+#define qtn_msh_set_profile_default              "Default profile"
+
+// d:Text of a list item in video sharing settings view
+// d:SIP profile setting: select from list
+// l:list_set_graphic_pane_t1
+// r:3.2
+//
+#define qtn_msh_set_profile_select               "Select from list"
+
+// d:Text of a list item in video sharing settings view
+// d:SIP profile setting: title of "select from list"
+// l:list_setting_pane_t1
+// r:3.2
+//
+#define qtn_msh_set_profile_select_title        "Select SIP profile"
+
+// d:Text of a list item in video sharing settings view
+// d:SIP profile setting: No profiles
+// l:popup_note_window/opt2
+// r:3.2
+//
+#define qtn_msh_set_profile_empty                "No SIP profiles defined"
+
+// d:Text of a list item in video sharing settings view
+// d:SIP profile setting: No profile selected
+// l:list_set_graphic_pane_t1
+// r:3.2
+//
+#define qtn_msh_set_profile_not_selected         "No profile selected"
+
+// d:Text of a list item in video sharing settings view
+// d:Pupup informing that change of SIP profile will not be active until next CS call
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_msh_set_profile_note                 "Profile change will be active from next call"
+
+// d:Text of a list item in video sharing settings view
+// d:Autorecording setting title
+// l:list_setting_pane_t1
+// r:3.2
+//
+#define qtn_msh_set_saving_title                 "Autorecord"
+
+// d:Text of a list item in video sharing settings view
+// d:Auto record setting: on
+// l:list_set_graphic_pane_t1
+// r:3.2
+//
+#define qtn_msh_set_saving_auto                  "On"
+
+// d:Text of a list item in video sharing settings view
+// d:Auto record setting: off
+// l:list_set_graphic_pane_t1
+// r:3.2
+//
+#define qtn_msh_set_saving_off                   "Off"
+
+// d:Text of a list item in video sharing settings view
+// d:Preferred storage setting title
+// l:list_setting_pane_t1
+// r:3.2
+//
+#define qtn_msh_set_storage_title                "Preferred storage"
+
+// d:Text of a list item in video sharing settings view
+// d:Preferred storage setting: Memory card
+// l:list_set_graphic_pane_t1
+// r:3.2
+//
+#define qtn_msh_set_storage_card                 "Memory card"
+
+// d:Text of a list item in video sharing settings view
+// d:Preferred storage setting: Phone memory
+// l:list_set_graphic_pane_t1
+// r:3.2
+//
+#define qtn_msh_set_storage_phone                "Phone memory"
+
+// d:Shown when video is stored
+// l:popup_note_window
+// r:3.2
+//
+#define qtn_apps_mg_gs                "My stuff"
+
+// SETTINGS RELATED STRINGS END /////////////////////////////////////////////
+

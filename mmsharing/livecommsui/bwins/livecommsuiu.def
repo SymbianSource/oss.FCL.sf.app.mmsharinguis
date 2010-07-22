@@ -1,0 +1,5 @@
+EXPORTS
+	?terminateSession@LcViewManager@@QAEXXZ @ 1 NONAME ; void LcViewManager::terminateSession(void)
+	??1LcViewManager@@UAE@XZ @ 2 NONAME ; LcViewManager::~LcViewManager(void)
+	??0LcViewManager@@QAE@ABVQString@@0@Z @ 3 NONAME ; LcViewManager::LcViewManager(class QString const &, class QString const &)
+

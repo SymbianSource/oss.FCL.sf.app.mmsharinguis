@@ -1,0 +1,35 @@
+<layers>
+<visual>
+
+    <param name="translation_y" type="anim">
+      <duration>5.0</duration>
+      <style>linear</style>
+      </param>
+      <param name="translation_origin_x" ref="visual.left">
+      </param>
+      <param name="translation_origin_y" ref="visual.top">
+      </param>
+      <param name="translation_endpoint_x" ref="visual.left">
+      </param>
+      <param name="translation_endpoint_y" ref="">
+      245
+    </param>
+
+    <param name="scale_x" type="anim">
+      <duration>5.0</duration>      
+      <keyframe at="0.0">1.0</keyframe>
+      <keyframe at="0.2">0.2</keyframe>
+      <keyframe at="0.8">0.2</keyframe>
+      <keyframe at="1.0">2.0</keyframe>
+    </param>
+
+    <param name="scale_y" type="anim">
+      <duration>5.0</duration>      
+      <keyframe at="0.0">1.0</keyframe>
+      <keyframe at="0.2">0.2</keyframe>
+      <keyframe at="0.8">0.2</keyframe>
+      <keyframe at="1.0">2.0</keyframe>
+    </param> 
+
+</visual>
+</layers>

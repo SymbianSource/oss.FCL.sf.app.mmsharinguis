@@ -1,0 +1,40 @@
+/*
+* Copyright (c) 2006 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:  The exported files for Live Comms plug-in API               
+*
+*/
+
+
+#include <platform_paths.hrh>
+
+PRJ_PLATFORMS
+DEFAULT
+
+PRJ_EXPORTS
+
+../inc/lcaudiocontrol.h APP_LAYER_PLATFORM_EXPORT_PATH(lcaudiocontrol.h)
+../inc/lcbrightnesscontrol.h APP_LAYER_PLATFORM_EXPORT_PATH(lcbrightnesscontrol.h)
+../inc/lccameracontrol.h APP_LAYER_PLATFORM_EXPORT_PATH(lccameracontrol.h)
+../inc/lcdestinationfilecontrol.h APP_LAYER_PLATFORM_EXPORT_PATH(lcdestinationfilecontrol.h)
+../inc/lcengine.h APP_LAYER_PLATFORM_EXPORT_PATH(lcengine.h)
+../inc/lcengine.inl APP_LAYER_PLATFORM_EXPORT_PATH(lcengine.inl)
+../inc/lcsession.h APP_LAYER_PLATFORM_EXPORT_PATH(lcsession.h)
+../inc/lcsessionobserver.h APP_LAYER_PLATFORM_EXPORT_PATH(lcsessionobserver.h)
+../inc/lcsourcefilecontrol.h APP_LAYER_PLATFORM_EXPORT_PATH(lcsourcefilecontrol.h)
+../inc/lcuiprovider.h APP_LAYER_PLATFORM_EXPORT_PATH(lcuiprovider.h)
+../inc/lcvideoplayer.h APP_LAYER_PLATFORM_EXPORT_PATH(lcvideoplayer.h)
+../inc/lcwindow.h APP_LAYER_PLATFORM_EXPORT_PATH(lcwindow.h)
+../inc/lczoomcontrol.h APP_LAYER_PLATFORM_EXPORT_PATH(lczoomcontrol.h)
+
+PRJ_TESTMMPFILES

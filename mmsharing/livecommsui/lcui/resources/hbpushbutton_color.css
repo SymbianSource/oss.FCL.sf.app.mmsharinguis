@@ -1,0 +1,10 @@
+/* For End Call button */
+HbPushButton[state = "normal"]::icon
+{
+    color: var(qtc_callhandling_reject_normal);
+}
+
+HbPushButton[state = "pressed"]::icon
+{
+    color: var(qtc_callhandling_reject_pressed);
+}
