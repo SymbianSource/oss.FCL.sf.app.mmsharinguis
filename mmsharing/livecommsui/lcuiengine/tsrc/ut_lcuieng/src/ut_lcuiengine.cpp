@@ -37,6 +37,10 @@
 #include <QSignalSpy>
 #include <hbview.h>
 
+#include <xqsettingsmanager.h>
+#include <xqsettingskey.h>
+#include <settingsinternalcrkeys.h>
+
 const char lcutMultimediaSharingEng[] = "MultimediaSharing";
 const char lcutVideotelephonyEng[] = "Videotelephony";
 
@@ -1202,3 +1206,57 @@ void UT_LcUiEngine::testSendDialTone()
 }
 
 
+void UT_LcUiEngine::testVtVideoSendingSetting() 
+{
+    int settingsKeyValueDoNotShow = 1;
+    if (!setVtVideoSendingSetting(settingsKeyValueDoNotShow))
+        QFAIL("Writing test key to central repository failed.");
+    QCOMPARE(mEngine->d->vtVideoSendingSetting(), settingsKeyValueDoNotShow);
+}
+
+
+void UT_LcUiEngine::testShareVideoIsAllowedShownAutomatically() 
+{
+    mShareOwnVideoQuery->hide();
+    mEngine->d->setUiComponents(mInvitingNote,mWaitingNote,mAcceptQuery,mRecipientQuery,mShareOwnVideoQuery);
+    int settingsKeyValueShowAutomatically = 2;
+    if (!setVtVideoSendingSetting(settingsKeyValueShowAutomatically))
+        QFAIL("Writing test key to central repository failed.");
+    QVERIFY(mEngine->d->isAllowedToShareVideo());
+    QVERIFY(mEngine->d->mShareOwnVideoQuery && !mEngine->d->mShareOwnVideoQuery->isVisible());
+}
+
+
+void UT_LcUiEngine::testShareVideoIsNotAllowedShown() 
+{
+    mShareOwnVideoQuery->hide();
+    mEngine->d->setUiComponents(mInvitingNote,mWaitingNote,mAcceptQuery,mRecipientQuery,mShareOwnVideoQuery);
+    int settingsKeyValueDoNotShow = 1;
+    if (!setVtVideoSendingSetting(settingsKeyValueDoNotShow))
+        QFAIL("Writing test key to central repository failed.");
+    QVERIFY(!mEngine->d->isAllowedToShareVideo());
+    QVERIFY(mEngine->d->mShareOwnVideoQuery && !mEngine->d->mShareOwnVideoQuery->isVisible());    
+}
+
+
+void UT_LcUiEngine::testShareVideoPermissionAskedAlways() 
+{
+    mShareOwnVideoQuery->hide();
+    mEngine->d->setUiComponents(mInvitingNote,mWaitingNote,mAcceptQuery,mRecipientQuery,mShareOwnVideoQuery);
+    int settingsKeyValueAlwaysAsk = 0;
+    if (!setVtVideoSendingSetting(settingsKeyValueAlwaysAsk))
+        QFAIL("Writing test key to central repository failed.");
+    QVERIFY(!mEngine->d->isAllowedToShareVideo());
+    QVERIFY(mEngine->d->mShareOwnVideoQuery && mEngine->d->mShareOwnVideoQuery->isVisible());
+}
+
+
+bool UT_LcUiEngine::setVtVideoSendingSetting(int key)
+{
+    QVariant settingsKeyValue(key);  
+    XQSettingsManager settings;
+    XQSettingsKey settingsKey(XQSettingsKey::TargetCentralRepository, 
+                              KCRUidTelephonySettings.iUid, 
+                              KSettingsVTVideoSending);
+    return settings.writeItemValue(settingsKey, settingsKeyValue);
+}

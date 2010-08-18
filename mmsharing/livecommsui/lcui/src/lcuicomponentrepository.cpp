@@ -550,7 +550,7 @@ bool LcUiComponentRepository::loadLayout( const QString& layoutName )
     if ( mLastLoadedView.length() > 0) {
         LC_QDEBUG_4( "layout = ", layoutName, ", view =",  mLastLoadedView )
 
-        QObjectList objects = load( mLastLoadedView, layoutName, &ok );
+        load( mLastLoadedView, layoutName, &ok );
         if (!ok) {
             LC_QCRITICAL( "! loading of XML failed !" )
         }

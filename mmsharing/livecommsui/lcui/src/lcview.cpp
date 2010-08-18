@@ -667,15 +667,14 @@ void LcView::enableControls()
 void LcView::gestureEvent(QGestureEvent *event)
 {
     LC_QDEBUG( "livecomms [UI] -> LcView::gestureEvent()" )
-    if(HbTapGesture *tap = static_cast<HbTapGesture *>(event->gesture(Qt::TapGesture))) {        
-        if ((tap->state() == Qt::GestureUpdated) &&
-            (tap->tapStyleHint() == HbTapGesture::TapAndHold)) {            
+    if( event ){
+        // unsafe typecast but no other way to access tapstylehint from orbit
+        HbTapGesture *tap = static_cast<HbTapGesture *>(event->gesture(Qt::TapGesture));
+        Qt::GestureState tapState = tap->state();
+        HbTapGesture::TapStyleHint hint = tap->tapStyleHint();
+        if ( tapState == Qt::GestureUpdated && hint == HbTapGesture::TapAndHold ) {            
             gestureLongPress(translatePointForOrientation(tap->position()));
-        } 
-        
-        else if ( (tap->state() == Qt::GestureFinished ) &&
-                ( tap->tapStyleHint() == HbTapGesture::Tap)) {
-        
+        } else if ( tapState == Qt::GestureFinished  && hint == HbTapGesture::Tap ) {
             gestureShortPress();
         }        
     }
@@ -755,8 +754,8 @@ void LcView::createContextMenu()
 
     // mItemContextMenu is destroyed upon close 
     mItemContextMenu = new HbMenu();
-    mItemContextMenu->setDismissPolicy(HbDialog::TapOutside);
-    mItemContextMenu->setTimeout(HbDialog::ContextMenuTimeout);
+    mItemContextMenu->setDismissPolicy(HbMenu::TapAnywhere);
+    mItemContextMenu->setTimeout(HbMenu::ContextMenuTimeout);
     mItemContextMenu->setAttribute(Qt::WA_DeleteOnClose);
     
     LC_QDEBUG( "livecomms [UI] <- LcView::createContextMenu()" )

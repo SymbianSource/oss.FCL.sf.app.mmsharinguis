@@ -74,7 +74,8 @@ symbian: {
         -lcone \
         -lcentralrepository \
         -lxqserviceutil \
-        -ldialpad
+        -ldialpad \
+        -lxqsettingsmanager
     
     defFiles = "$${LITERAL_HASH}ifdef WINS" \
         "DEFFILE bwins/livecommsui.def" \

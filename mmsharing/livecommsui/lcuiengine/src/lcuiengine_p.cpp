@@ -48,6 +48,10 @@
 #include <lcsession.h>
 #include <lczoomcontrol.h>
 #include <lccameracontrol.h>
+#include <xqsettingsmanager.h>
+#include <xqsettingskey.h>
+#include <settingsinternalcrkeys.h>
+
 
 
 #define LC_VTPLUGIN_NAME "Videotelephony";
@@ -1417,13 +1421,38 @@ bool  LcUiEnginePrivate::SendDialTone(const QChar  aKey)
 //
 bool LcUiEnginePrivate::isAllowedToShareVideo()
 {
-    LC_QDEBUG( "livecomms [UI] -> LcUiEnginePrivate::isAllowedToShareVideo()" )    
-    if( featureSupported( CLcEngine::ELcSendVideoQuery ) && mShareOwnVideoQuery ){
-        mShareOwnVideoQuery->show();
-        return false;
-    }    
+    LC_QDEBUG( "livecomms [UI] -> LcUiEnginePrivate::isAllowedToShareVideo()" )
+    if (!featureSupported( CLcEngine::ELcSendVideoQuery )) //outgoing videocall
+        return true;
+    else { //incoming videocall
+        int ownVtVideoSendingSetting = vtVideoSendingSetting();
+        if (VTSETTING_SHOW_AUTOMATICALLY == ownVtVideoSendingSetting)
+            return true;
+        else if (VTSETTING_DO_NOT_SHOW == ownVtVideoSendingSetting)
+            return false;
+        else {
+            if (mShareOwnVideoQuery)
+                mShareOwnVideoQuery->show();
+            return false;
+        }
+    }
     LC_QDEBUG( "livecomms [UI] <- LcUiEnginePrivate::isAllowedToShareVideo()" )
-    return true;
+}
+
+// -----------------------------------------------------------------------------
+// LcUiEnginePrivate::vtVideoSendingSetting
+// -----------------------------------------------------------------------------
+//
+int LcUiEnginePrivate::vtVideoSendingSetting()
+{
+    LC_QDEBUG( "livecomms [UI] -> LcUiEnginePrivate::vtVideoSendingSetting()" )
+    XQSettingsManager settings;
+    XQSettingsKey settingsKey(XQSettingsKey::TargetCentralRepository, 
+                              KCRUidTelephonySettings.iUid, 
+                              KSettingsVTVideoSending);
+    QVariant ownVtVideoSendingSetting = settings.readItemValue(settingsKey);
+    LC_QDEBUG( "livecomms [UI] <- LcUiEnginePrivate::vtVideoSendingSetting()" )
+    return ownVtVideoSendingSetting.toInt();
 }
 
 // -----------------------------------------------------------------------------

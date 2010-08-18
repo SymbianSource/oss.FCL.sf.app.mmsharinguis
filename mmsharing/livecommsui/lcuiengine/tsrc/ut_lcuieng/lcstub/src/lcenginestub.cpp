@@ -87,8 +87,10 @@ MLcSession& CLcEngineStub::Session()
 //
 // -----------------------------------------------------------------------------
 //
-TBool CLcEngineStub::IsFeatureSupported( TLcFeature /*aLcFeature*/ )
+TBool CLcEngineStub::IsFeatureSupported( TLcFeature aLcFeature )
     {
+    if (ELcSendVideoQuery == aLcFeature)
+        return true;
     return lcutStub_LcEngine_lcFeatureSupported;
     }
 

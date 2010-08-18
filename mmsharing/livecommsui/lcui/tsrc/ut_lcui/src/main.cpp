@@ -26,6 +26,8 @@
 #include <QtTest/QtTest>
 #include <stdio.h>
 
+#include <QFile>
+#include <QTextStream>
 
 #define UT_ARGS( args, file )\
     QStringList args( "ut_lcui");\
