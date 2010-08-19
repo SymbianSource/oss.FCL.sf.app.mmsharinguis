@@ -173,7 +173,9 @@ CMusUiEventController::CMusUiEventController(
     : iEventObserver( aEventObserver ),
       iSharingObserver( aSharingObserver ),
 	  iForeground( ETrue ),
-	  iActiveCall( ETrue )      
+	  iShowDialog( EFalse ),
+	  iActiveCall( ETrue )
+	  
     {
     }
 
@@ -545,7 +547,6 @@ TBool CMusUiEventController::DeviceHasDedicatedVolumeKeys()
 void CMusUiEventController::HandleExitL( TBool aTerminateCall )
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiEventController::HandleExitL" );
-    
     if ( iShutdownState == EMusUiShutdownNotDefined )
         {
         iShutdownState = EMusUiShutdownStarted;
@@ -575,7 +576,11 @@ void CMusUiEventController::HandleExitL( TBool aTerminateCall )
         // This must be done before showing the end note, because showing of
         // note may cause the session to continue for extra few seconds.
         DeleteEngineSession();
-
+        if ( iShowDialog )
+        	{
+            MusUiDialogUtil::ShowGlobalInformationDialogL( 
+            		                 R_MUS_NOTE_HF_DEACTIVATED );
+        	}
         // Sharing Ended note
         MusUiDialogUtil::ShowGlobalInformationDialogL( 
                                 R_MUS_LIVE_SHARING_VIEW_NOTE_SHARING_ENDED );
@@ -753,6 +758,21 @@ TBool CMusUiEventController::IsDisplayEnabledL()
     return ret;   
     }
 
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+TBool CMusUiEventController::IsAudioRoutingLoudSpeaker()
+	{
+    MUS_LOG( "mus: [MUSUI ]  -> CMusUiEventController::IsAudioRoutingLoudSpeaker" );
+    TBool ret = EFalse;
+    if ( EngineSession() )
+        {
+        ret = EngineSession()->IsAudioRoutingLoudSpeaker();
+        }
+    MUS_LOG1( "mus: [MUSUI ]  <- CMusUiEventController::IsAudioRoutingLoudSpeaker, %d", ret );
+    return ret;   
+	}
 
 // -----------------------------------------------------------------------------
 //

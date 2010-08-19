@@ -32,6 +32,7 @@
 #include "mussesseioninformationapi.h"
 
 _LIT( KTelNumber, "12345" );
+_LIT( KAnotherTelNumber, "54321" );
 
 // CONSTRUCTION
 UT_CMusAvaNetworkAvailability* UT_CMusAvaNetworkAvailability::NewL()
@@ -176,9 +177,20 @@ void UT_CMusAvaNetworkAvailability::UT_CMusAvaNetworkAvailability_CallConnectedL
                         NMusSessionInformationApi::KMUSPrivacy,
                         0 ));
     
+    iNetworkAvailability->iConfcall = ETrue;
+    iNetworkAvailability->iSettings.SetOptionSentNumber( KTelNumber );
     iNetworkAvailability->CallConnectedL( KTelNumber );
     EUNIT_ASSERT_EQUALS( iNetworkAvailability->State(), 
                          MMusAvaObserver::EMusAvaStatusAvailable );
+    
+    
+    iNetworkAvailability->iSettings.SetOptionSentNumber( KAnotherTelNumber );
+    iNetworkAvailability->CallConnectedL( KTelNumber );   
+    EUNIT_ASSERT_EQUALS( iNetworkAvailability->State(), 
+                         MMusAvaObserver::EMusAvaStatusInProgress );
+    EUNIT_ASSERT( iNetworkAvailability->iSettings.OptionSentTelNumber().Length() == 0 );
+    
+    
     EUNIT_ASSERT_EQUALS( iSettings->TelNumber(), KTelNumber );    
     }
     

@@ -68,7 +68,8 @@ NONSHARABLE_CLASS( UT_CMusEngSession ): public CEUnitTestSuiteClass
         void UT_RectL();
         void UT_SetRectLL();
         void UT_AudioRoutingCanBeChangedL();
-        void UT_AudioOutputIsBTL();
+		void UT_IsAudioRoutingHeadsetL();
+        void UT_IsAudioRoutingLoudSpeakerL();
         void UT_EnableLoudspeakerLL();
         void UT_IsLoudSpeakerEnabledL();
         void UT_VolumeLL();

@@ -115,7 +115,7 @@ void CMusUiClipSharingController::ConstructL( const TRect& aRect )
     iSession->SetAudioRoutingObserver( this );
     iSession->SetVolumeChangeObserver( this );
     
-    if ( iSession->AudioRoutingCanBeChanged() && !iSession->AudioOutputIsBT() )
+    if ( iSession->AudioRoutingCanBeChanged() && !iSession->IsAudioRoutingHeadset() )
         {
         iSession->EnableLoudspeakerL( ELoudspeakerEnabled, ETrue );
         }
@@ -232,7 +232,6 @@ void CMusUiClipSharingController::DeleteEngineSession()
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiClipSharingController::DeleteEngineSession" );
     
     CMusUiSendController::DeleteEngineSession();
-    
     // Cancel transcoding
     if ( iSession && iTranscodingGoing )
         {
@@ -243,10 +242,12 @@ void CMusUiClipSharingController::DeleteEngineSession()
                                 R_MUS_VIEW_NOTE_UNABLE_TO_CONVERT );
                      iSession->CancelTranscodeL() );
         }
-        
+    if ( iSession && iSession->IsAudioRoutingLoudSpeaker() )
+	    {
+	    iShowDialog = ETrue; 
+	    }
     delete iSession;
-    iSession = NULL;
-    
+    iSession = NULL;    
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiClipSharingController::DeleteEngineSession" );
 	}
 

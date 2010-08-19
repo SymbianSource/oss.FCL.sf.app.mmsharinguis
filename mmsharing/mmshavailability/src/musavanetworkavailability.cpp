@@ -74,7 +74,8 @@ CMusAvaNetworkAvailability::CMusAvaNetworkAvailability(
     MMusAvaAvailabilityObserver& aObserver,
     CMusAvaSettingsImp& aSettings )
     :CMusAvaAvailability( aObserver ),
-    iSettings( aSettings )
+    iSettings( aSettings ),
+    iConfcall( EFalse )
     {
     }
 
@@ -151,12 +152,27 @@ void CMusAvaNetworkAvailability::CallConnectedL( const TDesC& aTelNumber )
     {
     MUS_LOG( "mus: [MUSAVA]  \
                 -> CMusAvaNetworkAvailability::CallConnectedL()" )
-    // try to resolve to contact information of the remote host
-
-    iSettings.SetTelNumberL( aTelNumber );
-    iSettings.SetCallDirection( iPhoneStatus->CallDirectionL() );
-    iSettings.SetCallPrivacy( iPhoneStatus->CallPrivacyL() );
-    SetState( MMusAvaObserver::EMusAvaStatusAvailable );
+                
+// try to resolve to contact information of the remote host	
+	iSettings.SetTelNumberL( aTelNumber );
+	iSettings.SetCallDirection( iPhoneStatus->CallDirectionL() );
+	iSettings.SetCallPrivacy( iPhoneStatus->CallPrivacyL() );
+   
+	//isn't the phone sent option successfully
+    if ( ( aTelNumber != iSettings.OptionSentTelNumber()  
+    	   || iSettings.OptionSentTelNumber() == KNullDesC() )
+    	   && iConfcall )
+   	    {
+        MUS_LOG("CMusAvaNetworkAvailability::CallConnectedL EMusAvaStatusInProgress");
+        iSettings.ReleaseOptionSentNumber();
+        SetState( MMusAvaObserver::EMusAvaStatusInProgress );         
+   	    }
+    else
+    	{
+	    SetState( MMusAvaObserver::EMusAvaStatusAvailable );
+	    MUS_LOG("CMusAvaNetworkAvailability::CallConnectedL EMusAvaStatusAvailable");
+			
+    	  }
 
     MUS_LOG( "mus: [MUSAVA]  \
                 <- CMusAvaNetworkAvailability::CallConnectedL()" )
@@ -173,6 +189,7 @@ void CMusAvaNetworkAvailability::ConferenceCallL()
     MUS_LOG( "mus: [MUSAVA]  \
             -> CMusAvaNetworkAvailability::ConferenceCallL()" )
     //Report line status
+    iConfcall = ETrue;
     SetState( MMusAvaObserver::EMusAvaStatusConferenceCall );
     MUS_LOG( "mus: [MUSAVA]  \
                 <- CMusAvaNetworkAvailability::ConferenceCallL()" )
@@ -212,3 +229,20 @@ void CMusAvaNetworkAvailability::NoActiveCallL()
 
     MUS_LOG( "mus: [MUSAVA]  <- CMusAvaNetworkAvailability::NoActiveCallL()" )
     }
+
+// -------------------------------------------------------------------------
+//This function is called when conference call terminted
+//
+// -------------------------------------------------------------------------
+//
+void CMusAvaNetworkAvailability::ConferenceCallLTerminated()
+	{
+    MUS_LOG( "mus: [MUSAVA]  -> CMusAvaNetworkAvailability::ConferenceCallLTerminated()" )
+    if ( iConfcall )
+    	{
+        iConfcall = EFalse;
+    	}
+    AvailabilitiesAbleToShowIndicator();
+
+    MUS_LOG( "mus: [MUSAVA]  <- CMusAvaNetworkAvailability::ConferenceCallLTerminated()" )
+	}

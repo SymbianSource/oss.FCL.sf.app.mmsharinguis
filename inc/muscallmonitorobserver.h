@@ -40,6 +40,8 @@ public: // type definitions
     virtual void ConferenceCallL() = 0;
     
     virtual void NoActiveCallL() = 0;
+    
+    virtual void ConferenceCallLTerminated() = 0;
    
     /**
     *

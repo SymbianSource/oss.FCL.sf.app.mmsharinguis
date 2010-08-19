@@ -189,7 +189,15 @@ void CMusAvaTerminal::ExecuteQueryL( CMusAvaCapabilityQueryBase* aQuery )
 
     ResetAndDestroyQuery();
                   
-    aQuery->ExecuteL();
+    if( aQuery->ValidateUri() )
+    	{
+		aQuery->ExecuteL();
+    	}
+    
+    else
+    	{
+		User::Leave( KErrNotSupported );
+    	}
     
     iQuery = aQuery;                           
         

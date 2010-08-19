@@ -264,6 +264,11 @@ void CMusAvaContactAvailability::NoActiveCallL()
     {
     }
 
+
+void CMusAvaContactAvailability::ConferenceCallLTerminated ()
+	{	
+	}
+
 // -------------------------------------------------------------------------
 //
 // -------------------------------------------------------------------------

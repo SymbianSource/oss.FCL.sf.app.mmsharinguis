@@ -80,6 +80,16 @@ void CMusCallMonitorBase::SetStateL(NMusSessionInformationApi::TMusCallEvent aVa
         User::LeaveIfError(RProperty::Get( NMusSessionInformationApi::KCategoryUid,
                             NMusSessionInformationApi::KMusCallEvent,currentVal));
         MUS_LOG1( "mus: [MUSAO]  - Remote State = %d",iRemoteCallEvent )
+        
+        
+        /*
+         If Call is Connected then set the Call info.
+         */
+        if( aVal==NMusSessionInformationApi::ECallConnected ) 
+            {
+            SetCallInfoL();
+            }
+        
         /* If current event is callconnected and remote is not in hold set the
            property value to CallConnected.Else set it to CallHold.
            Note : We can be sure about Local is connected when it goes to
@@ -125,14 +135,7 @@ void CMusCallMonitorBase::SetStateL(NMusSessionInformationApi::TMusCallEvent aVa
                                              ( TInt ) NMusSessionInformationApi::ENoCall ));
                     }
             }
-        /*
-         If Call is Connected then set the Call info.
-         */
-        if( aVal==NMusSessionInformationApi::ECallConnected ) 
-            {
-            SetCallInfoL();
-            }
-        
+
         }   
  
     MUS_LOG( "mus: [MUSAO]  <- CMusCallMonitorBase::SetStateL" )    

@@ -71,6 +71,7 @@ enum TMusUiMenuCommands
     EMusuiCmdToolbarBrightness,
     EMusuiCmdToolbarMute,
     EMusuiCmdToolbarUnmute,
+    EMusuiCmdToolbarBlank,
     EMusuiCmdToolbarSpeakerOff,
     EMusuiCmdToolbarSpeakerOn,
     EMusuiCmdToolbarGallery,

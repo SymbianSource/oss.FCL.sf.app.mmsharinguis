@@ -70,11 +70,19 @@ class CMusEngTelephoneUtils : public CActive,
         TBool AudioRoutingCanBeChanged() const;
         
         /**
-		* Checks if audio output is BT
+		* Checks if audio routing is headset
 		* 
-		* @return ETrue if audio routing is BT
+		* @return ETrue if audio routing is headset
 		*/
-        TBool AudioOutputIsBT() const;
+        TBool IsAudioRoutingHeadset() const;
+        
+        /**
+		* Checks if audio routing is LoudSpeaker
+		* 
+		* @return ETrue if audio routing is LoudSpeaker and 
+		* currentMode != iAudioOutputAtStartup
+		*/
+        TBool IsAudioRoutingLoudSpeaker() const;
         
 		/**
    		* Changes the audio routing between loudspeaker and handset.

@@ -368,6 +368,11 @@ void CMusAvaDefaultImp::AvailabilityChanged(
     }
 
 
+void CMusAvaDefaultImp::AvailabilitiesAbleToShowIndicator()
+	{
+	iObserver->AvailabilitiesAbleToShowIndicator();
+	}
+
 // -----------------------------------------------------------------------------
 //  Availability error.
 // -----------------------------------------------------------------------------

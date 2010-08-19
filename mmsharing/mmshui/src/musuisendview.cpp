@@ -70,7 +70,12 @@ void CMusUiSendView::ManualAddressEntryL( const TDesC& aAddress )
         SendController()->InviteL( address );
         }
     else
-        {
+        {  
+        if ( SendController() && SendController()->IsAudioRoutingLoudSpeaker() )
+            {
+            MusUiDialogUtil::ShowGlobalInformationDialogL( 
+					 R_MUS_NOTE_HF_DEACTIVATED );
+            }
         MusUiDialogUtil::ShowGlobalInformationDialogL( 
                             R_MUS_LIVE_SHARING_VIEW_NOTE_SHARING_ENDED );
         MusAppUi()->HandleExit();

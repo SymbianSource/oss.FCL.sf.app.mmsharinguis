@@ -209,38 +209,64 @@ void UT_CMusEngSession::UT_AudioRoutingCanBeChangedL()
 //
 // -----------------------------------------------------------------------------
 //	
-void UT_CMusEngSession::UT_AudioOutputIsBTL()
+void UT_CMusEngSession::UT_IsAudioRoutingHeadsetL()
     {
     iLiveSession->iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
                   CTelephonyAudioRouting::EBTAudioAccessory;
-	EUNIT_ASSERT( iLiveSession->AudioOutputIsBT() );
+	EUNIT_ASSERT( iLiveSession->IsAudioRoutingHeadset() );
     
     iLiveSession->iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
                   CTelephonyAudioRouting::ENotActive;
-    EUNIT_ASSERT( !iLiveSession->AudioOutputIsBT());
+    EUNIT_ASSERT( !iLiveSession->IsAudioRoutingHeadset());
     
     iLiveSession->iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
                   CTelephonyAudioRouting::ENone;
-    EUNIT_ASSERT( !iLiveSession->AudioOutputIsBT());
+    EUNIT_ASSERT( !iLiveSession->IsAudioRoutingHeadset());
     
     iLiveSession->iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
                   CTelephonyAudioRouting::EHandset;
-    EUNIT_ASSERT( !iLiveSession->AudioOutputIsBT());
+    EUNIT_ASSERT( !iLiveSession->IsAudioRoutingHeadset());
     
     iLiveSession->iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
                   CTelephonyAudioRouting::ELoudspeaker;
-    EUNIT_ASSERT( !iLiveSession->AudioOutputIsBT());
+    EUNIT_ASSERT( !iLiveSession->IsAudioRoutingHeadset());
     
     iLiveSession->iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
                   CTelephonyAudioRouting::EWiredAudioAccessory;
-    EUNIT_ASSERT( !iLiveSession->AudioOutputIsBT());
+    EUNIT_ASSERT( iLiveSession->IsAudioRoutingHeadset());
     
     iLiveSession->iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
                   CTelephonyAudioRouting::ETTY;
-    EUNIT_ASSERT( !iLiveSession->AudioOutputIsBT());
+    EUNIT_ASSERT( !iLiveSession->IsAudioRoutingHeadset());
     
     }
 
+void UT_CMusEngSession::UT_IsAudioRoutingLoudSpeakerL()
+	{
+	iLiveSession->iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
+	              CTelephonyAudioRouting::ELoudspeaker;
+	iLiveSession->iTelephoneUtils->iAudioOutputAtStartup = 
+			      CTelephonyAudioRouting::ELoudspeaker;
+	EUNIT_ASSERT( !iLiveSession->IsAudioRoutingLoudSpeaker());
+	
+	iLiveSession->iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
+				  CTelephonyAudioRouting::ELoudspeaker;
+	iLiveSession->iTelephoneUtils->iAudioOutputAtStartup = 
+			      CTelephonyAudioRouting::EHandset;
+	EUNIT_ASSERT( iLiveSession->IsAudioRoutingLoudSpeaker() );
+	
+	iLiveSession->iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
+				  CTelephonyAudioRouting::ELoudspeaker;
+	iLiveSession->iTelephoneUtils->iAudioOutputAtStartup = 
+    		      CTelephonyAudioRouting::EBTAudioAccessory;
+    EUNIT_ASSERT( iLiveSession->IsAudioRoutingLoudSpeaker() );
+		
+    iLiveSession->iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
+                  CTelephonyAudioRouting::ELoudspeaker;
+    iLiveSession->iTelephoneUtils->iAudioOutputAtStartup = 
+    		      CTelephonyAudioRouting::EWiredAudioAccessory;
+    EUNIT_ASSERT( iLiveSession->IsAudioRoutingLoudSpeaker() );
+	}
 
 // -----------------------------------------------------------------------------
 //
@@ -522,12 +548,19 @@ EUNIT_TEST(
     SetupL, UT_AudioRoutingCanBeChangedL, Teardown)
 
 EUNIT_TEST(
-    "AudioOutputIsBT - test ",
+    "IsAudioRoutingHeadsetL - test ",
     "CMusEngSession",
-    "AudioOutputIsBT",
+    "IsAudioRoutingHeadsetL",
     "FUNCTIONALITY",
-    SetupL, UT_AudioOutputIsBTL, Teardown)
+    SetupL, UT_IsAudioRoutingHeadsetL, Teardown)
     
+EUNIT_TEST(
+    "IsAudioRoutingLoudSpeakerL - test ",
+    "CMusEngSession",
+    "IsAudioRoutingLoudSpeakerL",
+    "FUNCTIONALITY",
+    SetupL, UT_IsAudioRoutingLoudSpeakerL, Teardown)
+
 EUNIT_TEST(
     "EnableLoudspeakerL - test ",
     "CMusEngSession",

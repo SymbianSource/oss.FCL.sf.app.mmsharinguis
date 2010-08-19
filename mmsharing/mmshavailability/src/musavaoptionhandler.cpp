@@ -341,6 +341,8 @@ void CMusAvaOptionHandler::CapabilitiesResolved(
         {
         // tell the upper layer that
         // query was succesfull. VS is available
+        //record the number
+        iSettings.SetOptionSentNumber( iSettings.TelNumber() );
         SetState( MMusAvaObserver::EMusAvaStatusAvailable );
         }
     else if ( aSentQuery.Result() == KCapabilityCapabilitiesForbidden )

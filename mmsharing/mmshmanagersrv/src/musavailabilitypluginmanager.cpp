@@ -306,6 +306,21 @@ void CMusAvailabilityPluginManager::AvailabilityChanged(
         AvailabilityChanged()" )	
     }
 
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+ void CMusAvailabilityPluginManager::AvailabilitiesAbleToShowIndicator()
+	{
+	    TInt err = 0;
+		TRAP( err, IndicateAvailabilityL() );
+		if ( err )
+			{
+			// Not sure about what to do. Very rare situation.
+			MUS_LOG1( "mus: [MUSSRV] AvailabilitiesAbleToShowIndicator() leave code: %d",err )
+			}
+	}
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -747,8 +762,8 @@ void CMusAvailabilityPluginManager::IndicateAvailabilityL()
             {
             MUS_LOG( "mus: [MUSSRV]    Create indicator" )
             iIndicator = CMusIndicatorApi::NewL( *this );
-            iIndicator->IndicateAvailabilityL();
             }
+        iIndicator->IndicateAvailabilityL();
         iApplicationManager.SetIndicatorStatusL( ETrue );
         }
     else

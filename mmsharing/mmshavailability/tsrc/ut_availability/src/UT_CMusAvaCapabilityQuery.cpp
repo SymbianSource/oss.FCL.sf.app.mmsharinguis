@@ -392,6 +392,62 @@ void UT_CMusAvaCapabilityQuery::UT_CMusAvaCapabilityQuery_ExecuteLL(  )
     CleanupStack::PopAndDestroy( capabQueryObserver );
     }
 
+
+void UT_CMusAvaCapabilityQuery::UT_CMusAvaCapabilityQuery_ValidateUriL()
+    {
+	if( iQuery->iOriginator )
+		{
+	    delete iQuery->iOriginator;
+		}
+	
+    //SIP Uri case, identical
+	CSIPAddress* iOriginatorSipAddress = CSIPAddress::DecodeL( _L8("sip:username111@domain.com") );
+    CleanupStack::PushL( iOriginatorSipAddress );
+
+	iQuery->iOriginator = CUri8::NewL( iOriginatorSipAddress->Uri8().Uri() );
+	iQuery->iRemoteUri.Copy( _L8("sip:username111@domain.com") );
+	
+	EUNIT_ASSERT( iQuery->ValidateUri() == EFalse );
+	
+    CleanupStack::PopAndDestroy(iOriginatorSipAddress);    
+	
+    delete iQuery->iOriginator;
+    
+    //SIP Uri case, not identical
+	iOriginatorSipAddress = CSIPAddress::DecodeL( _L8("sip:username111@domain.com") );	
+    CleanupStack::PushL( iOriginatorSipAddress );
+    
+	iQuery->iOriginator = CUri8::NewL( iOriginatorSipAddress->Uri8().Uri() );	
+	iQuery->iRemoteUri.Copy( _L8("sip:username222@domain.com") );
+	
+	EUNIT_ASSERT( iQuery->ValidateUri() == ETrue );
+    CleanupStack::PopAndDestroy(iOriginatorSipAddress);
+	
+    delete iQuery->iOriginator;
+    
+    //TEL Uri, identical
+	iOriginatorSipAddress = CSIPAddress::DecodeL( _L8("sip:18586037801@domain.com") );
+    CleanupStack::PushL( iOriginatorSipAddress );
+
+	iQuery->iOriginator = CUri8::NewL( iOriginatorSipAddress->Uri8().Uri() );
+	iQuery->iRemoteUri.Copy( _L8("tel:8586037801") );
+	
+	EUNIT_ASSERT( iQuery->ValidateUri() == EFalse );
+    CleanupStack::PopAndDestroy(iOriginatorSipAddress);
+
+    delete iQuery->iOriginator;
+	
+    //TEL Uri, not identical
+	iOriginatorSipAddress = CSIPAddress::DecodeL( _L8("sip:18586037801@domain.com") );
+    CleanupStack::PushL( iOriginatorSipAddress );
+
+	iQuery->iOriginator = CUri8::NewL( iOriginatorSipAddress->Uri8().Uri() );
+	iQuery->iRemoteUri.Copy( _L8("tel:9876543210") );
+	
+	EUNIT_ASSERT( iQuery->ValidateUri() == ETrue );
+    CleanupStack::PopAndDestroy(iOriginatorSipAddress);
+    }
+
 void UT_CMusAvaCapabilityQuery::UT_CMusAvaCapabilityQuery_CanceledL(  )
     {
     
@@ -1164,7 +1220,14 @@ EUNIT_TEST(
     "ExecuteL",
     "FUNCTIONALITY",
     SetupL,UT_CMusAvaCapabilityQuery_ExecuteLL, Teardown)
-
+  
+EUNIT_TEST(
+    "ValidateUri - test ",
+    "CMusAvaCapabilityQuery",
+    "ValidateUri",
+    "FUNCTIONALITY",
+    SetupL,UT_CMusAvaCapabilityQuery_ValidateUriL, Teardown)    
+    
 EUNIT_TEST(
     "Canceled - test ",
     "CMusAvaCapabilityQuery",

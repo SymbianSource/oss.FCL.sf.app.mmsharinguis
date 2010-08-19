@@ -82,6 +82,8 @@ class UT_CMusAvaCapabilityQuery
         
         void UT_CMusAvaCapabilityQuery_ExecuteLL();
         
+        void UT_CMusAvaCapabilityQuery_ValidateUriL();
+        
         void UT_CMusAvaCapabilityQuery_CanceledL();
         
         void UT_CMusAvaCapabilityQuery_CompletedLL();

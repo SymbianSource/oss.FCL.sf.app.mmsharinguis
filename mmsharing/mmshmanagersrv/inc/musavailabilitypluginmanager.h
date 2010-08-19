@@ -151,6 +151,8 @@ class CMusAvailabilityPluginManager : public CBase,
 	virtual void AvailabilityError( 
 		TAvailabilityName aName, TAvailabilityStatus aStatus );
 	
+	virtual void AvailabilitiesAbleToShowIndicator();
+	
 
     public:  //from MMusAvaSettingsObserver
     

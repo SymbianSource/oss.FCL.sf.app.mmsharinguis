@@ -288,6 +288,11 @@ void CMusAvaCallEventMonitor::RunL()
                 iObserver.ConferenceCallL();
                 break;
                 }
+            case NMusSessionInformationApi::EConferenceTerminated:
+            	{
+            	iObserver.ConferenceCallLTerminated();
+            	break;
+            	}
 
             default:
                 {

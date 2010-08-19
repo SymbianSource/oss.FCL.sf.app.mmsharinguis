@@ -111,7 +111,11 @@ void CMusPropertyMonitor::RunL()
         case NMusSessionInformationApi::ENoCall:
              MUS_LOG( "mus: [MUSAO]  CallEvent  = ENoCall" )
              StopMusClient();
-             break;        
+             break;     
+        case NMusSessionInformationApi::EConferenceTerminated:
+             MUS_LOG( "mus: [MUSAO]  CallEvent  = EConferenceTerminated" ) 
+             break;
+        
         default:
              MUS_LOG( "mus: [MUSAO]  CallEvent  = default. Treated ENoCall" )
              StopMusClient();

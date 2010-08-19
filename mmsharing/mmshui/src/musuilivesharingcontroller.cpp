@@ -115,7 +115,7 @@ void CMusUiLiveSharingController::ConstructL( const TRect& aRect )
     iSession->SetAudioRoutingObserver( this );
     iSession->SetVolumeChangeObserver( this );
         
-    if ( iSession->AudioRoutingCanBeChanged() && !iSession->AudioOutputIsBT() )
+    if ( iSession->AudioRoutingCanBeChanged() && !iSession->IsAudioRoutingHeadset() )
         {
         iSession->EnableLoudspeakerL( ELoudspeakerEnabled, ETrue );
         }
@@ -185,7 +185,10 @@ void CMusUiLiveSharingController::PauseL()
 void CMusUiLiveSharingController::DeleteEngineSession()
     {
     CMusUiSendController::DeleteEngineSession();
-    
+    if ( iSession && iSession->IsAudioRoutingLoudSpeaker() )
+	    {
+	    iShowDialog = ETrue; 
+	    }
     delete iSession;
     iSession = NULL;
     }

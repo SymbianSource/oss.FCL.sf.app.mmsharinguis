@@ -83,12 +83,19 @@ class CMusEngSession : public CBase,
         IMPORT_C TBool AudioRoutingCanBeChanged() const;
         
         /**
-		* Checks if audio output is BT
+		* Checks if audio routing is headset
 		* 
-		* @return ETrue if audio routing is BT
+		* @return ETrue if audio routing is headset
 		*/
-        IMPORT_C TBool AudioOutputIsBT() const;
+        IMPORT_C TBool IsAudioRoutingHeadset() const;
 		
+        /**
+		* Checks if audio routing is LoudSpeaker
+		* 
+		* @return ETrue if audio routing is LoudSpeaker and 
+		* currentMode != iAudioOutputAtStartup
+		*/
+        IMPORT_C TBool IsAudioRoutingLoudSpeaker() const;
         /**
         * Activates/deactivates loadspeaker
         *

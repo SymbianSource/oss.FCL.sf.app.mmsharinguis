@@ -113,6 +113,7 @@ void CMusCallConferenceEventMonitor::RunL()
                  SetStateL( NMusSessionInformationApi::EConferenceCall ); 
                  break;
             case RMobileConferenceCall::EConferenceTerminated:
+                 SetStateL( NMusSessionInformationApi::EConferenceTerminated );
                  MonitorCallL();
                  break;
             case RMobileConferenceCall::EConferenceSwapped:
@@ -179,6 +180,14 @@ void CMusCallConferenceEventMonitor::SetStateL(
     else
         {
          // No point of reporting it .
+         //EConferenceTerminated must be set every time to notify avaeventmonitor
+        if ( aVal == NMusSessionInformationApi::EConferenceTerminated )
+        	{
+			User::LeaveIfError(RProperty::Set( NMusSessionInformationApi::KCategoryUid,
+						 NMusSessionInformationApi::KMusCallEvent,
+						 aVal ));  
+        	}
+    
         }    
     MUS_LOG( "mus: [MUSAO]  <- CMusCallConferenceEventMonitor::SetStateL" )    
     }

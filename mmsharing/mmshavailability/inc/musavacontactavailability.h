@@ -131,6 +131,9 @@ public: // from base class CMusAvaAvailability
     * @return
     */
     virtual void ConferenceCallL();
+    
+    
+    virtual void ConferenceCallLTerminated();
 
 private:
 

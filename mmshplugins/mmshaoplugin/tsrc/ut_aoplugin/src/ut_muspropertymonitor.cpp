@@ -133,7 +133,7 @@ void UT_CMusPropertyMonitor::UT_CMusPropertyMonitor_RunLL()
     iMusPropertyMonitor->RunL();
     EUNIT_ASSERT( iMusPropertyMonitor->iManager );
     
-    iMusPropertyMonitor->iPropertyEvent.iPValue = NMusSessionInformationApi::ECallConnected;
+    iMusPropertyMonitor->iPropertyEvent.iPValue = NMusSessionInformationApi::EConferenceTerminated;
     iMusPropertyMonitor->Cancel();
     iMusPropertyMonitor->RunL();
     EUNIT_ASSERT( iMusPropertyMonitor->iManager );

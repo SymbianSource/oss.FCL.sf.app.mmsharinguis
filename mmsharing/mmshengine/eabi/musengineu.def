@@ -58,8 +58,8 @@ EXPORTS
 	_ZN20CMusEngMceOutSession7InviteLERK7TDesC16 @ 57 NONAME
 	_ZN21CMusEngReceiveSession17AcceptInvitationLERKi @ 58 NONAME
 	_ZN21CMusEngReceiveSession4NewLERK5TRectR22MMusEngSessionObserverR29MMusEngReceiveSessionObserver @ 59 NONAME
-	_ZNK14CMusEngSession15AudioOutputIsBTEv @ 60 NONAME
-	_ZNK14CMusEngSession20IsLoudSpeakerEnabledEv @ 61 NONAME
+	_ZNK14CMusEngSession20IsLoudSpeakerEnabledEv @ 60 NONAME
+	_ZNK14CMusEngSession21IsAudioRoutingHeadsetEv @ 61 NONAME
 	_ZNK14CMusEngSession24AudioRoutingCanBeChangedEv @ 62 NONAME
 	_ZNK14CMusEngSession4RectEv @ 63 NONAME
 	_ZNK14CMusEngSession7VolumeLEv @ 64 NONAME
@@ -90,4 +90,5 @@ EXPORTS
 	_ZTV21CMusEngTelephoneUtils @ 89 NONAME
 	_ZTV21CMusSipProfileHandler @ 90 NONAME
 	_ZTV27CMusEngSessionDurationTimer @ 91 NONAME
+	_ZNK14CMusEngSession25IsAudioRoutingLoudSpeakerEv @ 92 NONAME
 

@@ -969,6 +969,17 @@ RESOURCE AVKON_TOOLBAR r_mus_toolbar
                     };
                 };
             },
+	
+	//****************************************************************** //
+        TBAR_CTRL
+            {
+            type = EAknCtButton;
+            id = EMusuiCmdToolbarBlank;
+            control = AVKON_BUTTON
+                {
+                flags = KAknButtonSizeFitText;
+                };
+            },
            
         // ****************************************************************** //
         
@@ -1602,6 +1613,12 @@ RESOURCE TBUF r_mus_note_hf_activated
     {
     // "Handsfree activated"
     buf = qtn_hf_conf_activate;
+    }
+
+RESOURCE TBUF r_mus_note_hf_deactivated
+    {
+    // "Handsfree deactivated"
+    buf = qtn_hf_conf_earpiece;
     }
 
 RESOURCE SLIDER r_mus_slider_vertical

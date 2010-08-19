@@ -31,8 +31,10 @@
 */
 #define ASYNCHRONOUS_MESSAGE_SLOTS 255
 
-// ======== LOCAL FUNCTIONS ========
+const TInt KMusServerSessionCreationWaitTimeoutInMicrosecs = 10000000; // 10 secs
 
+// ======== LOCAL FUNCTIONS ========
+      
 // ---------------------------------------------------------------------------
 //
 // ---------------------------------------------------------------------------
@@ -40,21 +42,49 @@
 RMusManagerClientSession::RMusManagerClientSession()
     : RSessionBase ()
     {
-
     }
 
+
 // ---------------------------------------------------------------------------
-//
+// Use timeout mechanism for session creation as otherwise it can block
+// so long that WServ terminates the process. There's no way to cancel
+// session creation other than destuction of client session. Therefore, in case
+// of timeout, leave and let creation finish silently or get canceled when
+// user of client session object deletes us.
 // ---------------------------------------------------------------------------
 //
 void RMusManagerClientSession::ConnectL()
     {
-    MUS_LOG( "mus: [MUSCLI]  -> RMusManagerClientSession::ConnectL()" );
-    TRequestStatus s;
-    User::LeaveIfError( CreateSession( KMusManagerServerName(), Version(),
-                                             ASYNCHRONOUS_MESSAGE_SLOTS, &s ) );
+    MUS_LOG( "mus: [MUSCLI]  -> RMusManagerClientSession::ConnectL(), with timeout" );
 
-    User::WaitForRequest( s );
+    if ( iSessionCreationStatus.Int() == KRequestPending )
+        {
+        // Previous creation still pending
+        User::Leave( KErrNotReady );
+        }
+    
+    RTimer timer;
+    CleanupClosePushL( timer );
+    User::LeaveIfError( timer.CreateLocal() );
+    
+    User::LeaveIfError( CreateSession( KMusManagerServerName(), Version(),
+                            ASYNCHRONOUS_MESSAGE_SLOTS, &iSessionCreationStatus) );
+    TRequestStatus timeoutStatus;
+    timer.After( timeoutStatus, KMusServerSessionCreationWaitTimeoutInMicrosecs );
+    User::WaitForRequest( iSessionCreationStatus, timeoutStatus );
+    if ( timeoutStatus.Int() != KRequestPending )
+        {
+        MUS_LOG( "mus: [MUSCLI]  RMusManagerClientSession::ConnectL, timeout" );
+        User::Leave( KErrTimedOut );
+        } 
+    else
+        {
+        MUS_LOG( "mus: [MUSCLI]  RMusManagerClientSession::ConnectL, no timeout" );
+        timer.Cancel();
+        User::WaitForRequest( timeoutStatus );
+        }
+    CleanupStack::PopAndDestroy( &timer );
+    
     MUS_LOG( "mus: [MUSCLI]  <- RMusManagerClientSession::ConnectL()" );
     }
 

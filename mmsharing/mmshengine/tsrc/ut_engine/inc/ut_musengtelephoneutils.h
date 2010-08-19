@@ -63,7 +63,8 @@ NONSHARABLE_CLASS( UT_CMusEngTelephoneUtils ): public CEUnitTestSuiteClass
         
         void UT_NewLL();
         void UT_AudioRoutingCanBeChangedL();
-        void UT_AudioOutputIsBTL();
+        void UT_IsAudioRoutingHeadsetL();
+        void UT_IsAudioRoutingLoudSpeakerL();
         void UT_LoudspeakerLL();
         void UT_IsLoudSpeakerEnabledL();
         void UT_GetVolumeLL();

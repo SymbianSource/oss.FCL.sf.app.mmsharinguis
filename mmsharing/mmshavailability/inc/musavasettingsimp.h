@@ -258,6 +258,13 @@ public:
      * @return The SIP profile id.
      */   		
     CMusAvaSip& Sip();
+    
+    void SetOptionSentNumber( const TDesC& aTelNumber );
+    
+    const TDesC& OptionSentTelNumber() const;
+    
+    void ReleaseOptionSentNumber();
+    
 
      
      
@@ -290,6 +297,9 @@ private: // data
      * Owns.
      */   
     HBufC* iTelNumber;
+    
+    HBufC* iOptionSentTelNumber;
+
 
 	/**
      * Current Call Direction

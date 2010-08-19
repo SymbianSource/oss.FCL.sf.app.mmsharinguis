@@ -21,6 +21,8 @@
 #include "musmanageripccommon.h"
 #include "muslogger.h"
 
+const TInt KMusServerClosingWaitTimeoutInMicrosecs = 10000000; // 10 secs
+
 // ----------------------------------------------------------------------------
 // MusManagerServerStarter::Start
 // ----------------------------------------------------------------------------
@@ -84,12 +86,18 @@ TInt MusManagerServerStarter::CreateServerProcess( RSemaphore& aSemaphore )
     RSemaphore closingSemaphore;
     if ( closingSemaphore.OpenGlobal( KMusManagerServerClosingSemaphoreName ) == KErrNone )
         {
-        MUS_LOG( "mus: [MUSCLI]     Server is currently closing, wait" );
+        MUS_LOG( "mus: [MUSCLI]     CreateServerProcess, wait for server closing" );
         // Don't wait forever if server is somehow horribly jammed
-        const TInt KMusServerClosingWaitTimeoutInMicrosecs = 20000000; // 20 secs
-        closingSemaphore.Wait(KMusServerClosingWaitTimeoutInMicrosecs);
+        
+        TInt waitErr = closingSemaphore.Wait( KMusServerClosingWaitTimeoutInMicrosecs );
+        MUS_LOG1( "mus: [MUSCLI]    CreateServerProcess, waitErr( %d )",
+                  waitErr );
+        closingSemaphore.Close();
+        if ( waitErr != KErrNone )
+            {
+            return waitErr;
+            }
         }
-    closingSemaphore.Close();
     
     const TUidType serverUid( KNullUid, KNullUid, KServerUid3 );
     RProcess server;

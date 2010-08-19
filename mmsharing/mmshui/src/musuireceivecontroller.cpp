@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Application's UI class.
-*  Version     : %version:  be1sipx1#75.1.14 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version:  be1sipx1#75.1.17 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -268,7 +268,7 @@ void CMusUiReceiveController::HandleIncomingSessionL(
         HandleError( errorPrivacyStatus );
         }
         
-    if ( privacyStatus == 1 )
+    if ( privacyStatus == 1 && !iOperatorSpecificFunctionality )
       {
        MUS_LOG( "mus: [MUSUI ]  Call is from private number" )
        iOriginator = KPrivateNumber().AllocL();
@@ -287,7 +287,7 @@ void CMusUiReceiveController::HandleIncomingSessionL(
     
     // Display the query dialog:
     
-    if ( privacyStatus == 1 )
+    if ( privacyStatus == 1 && !iOperatorSpecificFunctionality )
         {
         iReceiveObserver.ShowInvitationQueryL( *iOriginator );
         }  
@@ -428,6 +428,10 @@ const TDesC& CMusUiReceiveController::TypedAddress() const
 void CMusUiReceiveController::DeleteEngineSession()
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiReceiveController::DeleteEngineSession" );
+    if ( iSession && iSession->IsAudioRoutingLoudSpeaker() )
+	    {
+	    iShowDialog = ETrue; 
+	    }
     delete iSession;
     iSession = NULL;
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiReceiveController::DeleteEngineSession" );
@@ -673,7 +677,7 @@ void CMusUiReceiveController::InvitationAcceptedL()
     
     // Enable loud speaker already before answering but disable it immediately
     // if accepting fails for some reason
-    if ( iSession->AudioRoutingCanBeChanged() && !iSession->AudioOutputIsBT() )
+    if ( iSession->AudioRoutingCanBeChanged() && !iSession->IsAudioRoutingHeadset() )
         {
         iSession->EnableLoudspeakerL( ELoudspeakerEnabled, ETrue );
         }

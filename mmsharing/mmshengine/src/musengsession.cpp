@@ -75,11 +75,19 @@ EXPORT_C TBool CMusEngSession::AudioRoutingCanBeChanged() const
 //
 // -----------------------------------------------------------------------------
 //
-EXPORT_C TBool CMusEngSession::AudioOutputIsBT() const
+EXPORT_C TBool CMusEngSession::IsAudioRoutingHeadset() const
     {
-    return iTelephoneUtils->AudioOutputIsBT();
+    return iTelephoneUtils->IsAudioRoutingHeadset();
     }
 
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+EXPORT_C TBool CMusEngSession::IsAudioRoutingLoudSpeaker() const
+    {
+    return iTelephoneUtils->IsAudioRoutingLoudSpeaker();
+    }
 
 // -----------------------------------------------------------------------------
 //

@@ -316,6 +316,10 @@ public:	// New functions
     */
     TBool IsDisplayEnabledL();
     
+    /**
+     * 
+     */
+    TBool IsAudioRoutingLoudSpeaker();
 
 protected:    // New functions
 
@@ -424,7 +428,12 @@ protected:
     */
     TMusUiShutdownState iShutdownState;
     
+    /**
+	* Flag indicating whether show "loudspeaker deactived"
+	*/
+    TBool iShowDialog;
     
+   
 private:
 	
     /**

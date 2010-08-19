@@ -300,6 +300,8 @@ void CMusUiReceiveView::DynInitToolbarL( TInt aResourceId,
         {
         aToolbar->SetFocusedItemL( EMusuiCmdToolbarFullScreen );
         }
+		
+    Toolbar()->RemoveItem( EMusuiCmdToolbarBlank );
     
     // Last generic base class functionality
     CMusUiGeneralView::DynInitToolbarL( aResourceId, aToolbar );

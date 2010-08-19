@@ -147,7 +147,16 @@ public:
             }
         MUS_LOG( "mus: [MUSAVA]  <- CMusAvaAvailability::SetState" )
         }
-   
+
+	/**
+	* Calculate the availabilited to decide to show the toolbar or not.
+	*
+	*/
+    void AvailabilitiesAbleToShowIndicator()
+    	{
+    	iObserver.AvailabilitiesAbleToShowIndicator();
+    	}
+
    /**
 	* Returns specific availability state.
 	*

@@ -97,8 +97,7 @@ TBool CMusEngTelephoneUtils::AudioRoutingCanBeChanged() const
     {
     MUS_LOG( "mus: [ENGINE]  -> CMusEngTelephoneUtils::AudioRoutingCanBeChanged" )
     
-    TBool retValue = ( iTelephonyAudioRouting->Output() !=
-                       CTelephonyAudioRouting::EWiredAudioAccessory &&
+    TBool retValue = ( 
                        iTelephonyAudioRouting->Output() !=
                        CTelephonyAudioRouting::ETTY );
     
@@ -113,19 +112,48 @@ TBool CMusEngTelephoneUtils::AudioRoutingCanBeChanged() const
 //
 // -----------------------------------------------------------------------------
 //
-TBool CMusEngTelephoneUtils::AudioOutputIsBT() const
+TBool CMusEngTelephoneUtils::IsAudioRoutingHeadset() const
     {
-    MUS_LOG( "mus: [ENGINE]  -> CMusEngTelephoneUtils::AudioOutputIsBT" )
+    MUS_LOG( "mus: [ENGINE]  -> CMusEngTelephoneUtils::IsAudioRoutingHeadset" )
 	    
     TBool retValue = ( iTelephonyAudioRouting->Output() ==
-                       CTelephonyAudioRouting::EBTAudioAccessory );
+                       CTelephonyAudioRouting::EBTAudioAccessory ||
+                       iTelephonyAudioRouting->Output() ==
+                       CTelephonyAudioRouting::EWiredAudioAccessory );
 	    
-    MUS_LOG1( "mus: [ENGINE]  <- CMusEngTelephoneUtils::AudioOutputIsBT: %d",
+    MUS_LOG1( "mus: [ENGINE]  <- CMusEngTelephoneUtils::IsAudioRoutingHeadset: %d",
                retValue )
 	              
     return retValue;
     }
 
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+TBool CMusEngTelephoneUtils::IsAudioRoutingLoudSpeaker() const
+    {
+    MUS_LOG( "mus: [ENGINE]  -> CMusEngTelephoneUtils::IsAudioRoutingLoudSpeaker" )
+    TBool retValue = EFalse;
+    
+    CTelephonyAudioRouting::TAudioOutput currentMode =
+                                            iTelephonyAudioRouting->Output();
+    MUS_LOG1( "mus: [ENGINE] iAudioOutputAtStartup: %d", iAudioOutputAtStartup );
+    MUS_LOG1( "mus: [ENGINE] currentMode: %d", currentMode );
+    
+    if( currentMode != iAudioOutputAtStartup && 
+        currentMode == CTelephonyAudioRouting::ELoudspeaker )
+    	{
+    
+         retValue = ETrue;
+    
+    	}
+    	
+    MUS_LOG1( "mus: [ENGINE]  <- CMusEngTelephoneUtils::IsAudioRoutingLoudSpeaker: %d",
+               retValue )
+	              
+    return retValue;
+    }
 
 // -----------------------------------------------------------------------------
 //
@@ -141,7 +169,9 @@ void CMusEngTelephoneUtils::LoudspeakerL( TBool aEnable, TBool aShowDialog )
         if ( iTelephonyAudioRouting->Output() == 
              CTelephonyAudioRouting::EHandset || 
              iTelephonyAudioRouting->Output() == 
-             CTelephonyAudioRouting::EBTAudioAccessory )  
+             CTelephonyAudioRouting::EBTAudioAccessory|| 
+             iTelephonyAudioRouting->Output() == 
+             CTelephonyAudioRouting::EWiredAudioAccessory )  
             {
             // Disable note shown by audiorouting api as it causes
             // application going to background for a while. Instead, display

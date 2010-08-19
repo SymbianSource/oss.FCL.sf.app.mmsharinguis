@@ -5,7 +5,7 @@
 * under the terms of "Eclipse Public License v1.0"
 * which accompanies this distribution, and is available
 * at the URL "http://www.eclipse.org/legal/epl-v10.html".
-*  Version     : %version: 42.1.4.1.3 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: be1sipx1#42.1.4.1.4 % << Don't touch! Updated by Synergy at check-out.
 *
 * Initial Contributors:
 * Nokia Corporation - initial contribution.
@@ -120,7 +120,11 @@ void CMusAvaRegisterAvailability::DoExecuteL()
     {
     MUS_LOG( "mus: [MUSAVA]  -> CMusAvaRegisterAvailability::DoExecuteL " )
     SetState( MMusAvaObserver::EMusAvaStatusInProgress );
-    RegisterL();
+    TRAPD( err, RegisterL() );
+    if( err != KErrNone )
+       {
+   		SetState( MMusAvaObserver::EMusAvaStatusNotRegistered );
+       }
     // TBD: SetState( MMusAvaObserver::EMusAvaNameRegistration );
 
     MUS_LOG( "mus: [MUSAVA]  <- CMusAvaRegisterAvailability::DoExecuteL " )

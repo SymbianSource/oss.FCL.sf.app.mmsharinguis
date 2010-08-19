@@ -51,8 +51,11 @@ CMusAvaNetworkRegistrationStatus::~CMusAvaNetworkRegistrationStatus()
     iObserver.Reset();
     iObserver.Close();
     iPhone.Close();
-    iTelServer.UnloadPhoneModule( KMmTsyModuleName );
-    iTelServer.Close();
+    if( iTelServer.Handle() )
+    	{
+        iTelServer.UnloadPhoneModule( KMmTsyModuleName );
+        iTelServer.Close();
+    	}
     }
 
     

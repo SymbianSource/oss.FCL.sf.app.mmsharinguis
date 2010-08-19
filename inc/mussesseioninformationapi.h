@@ -51,7 +51,8 @@ namespace NMusSessionInformationApi
         ENoCall,
         ECallConnected,
         ECallHold,       
-        EConferenceCall
+        EConferenceCall,
+        EConferenceTerminated
         };
 
     /**  Contains the call direction */

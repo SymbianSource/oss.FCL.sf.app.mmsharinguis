@@ -29,6 +29,7 @@
 #include "muslogger.h" // debug logging
 #include <musui.rsg>
 #include <musui.mbg>
+#include "musuidialogutil.h"
 
 #include <aknViewAppUi.h>
 #include <avkon.hrh>
@@ -304,7 +305,8 @@ void CMusUiClipSharingView::DynInitToolbarL( TInt aResourceId,
              !AknLayoutUtils::PenEnabled() )
             {
             aToolbar->SetFocusedItemL( EMusuiCmdToolbarPause );
-            }                               
+            }    
+    	Toolbar()->RemoveItem( EMusuiCmdToolbarBlank );
         }
             
     // Last generic base class functionality
@@ -329,6 +331,11 @@ void CMusUiClipSharingView::RunFetchDialogL()
         }
     else
         {
+		if ( SendController() && SendController()->IsAudioRoutingLoudSpeaker() )
+            {
+            MusUiDialogUtil::ShowGlobalInformationDialogL(
+                             R_MUS_NOTE_HF_DEACTIVATED );
+            }
         MusAppUi()->HandleExit();
         }
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiClipSharingView::RunFetchDialogL" );

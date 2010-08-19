@@ -408,7 +408,8 @@ void CMusUiLiveSharingView::DynInitToolbarL( TInt aResourceId,
              !AknLayoutUtils::PenEnabled() )
             {
             aToolbar->SetFocusedItemL( EMusuiCmdToolbarPauseLive );
-            }                                
+            }     
+        Toolbar()->RemoveItem( EMusuiCmdToolbarBlank );
         }
                         
     // Last generic base class functionality

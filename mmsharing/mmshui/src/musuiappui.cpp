@@ -52,7 +52,8 @@ using namespace MusSettingsKeys;
 void CMusUiAppUi::ConstructL()
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiAppUi::ConstructL" );
-    BaseConstructL( EAknEnableSkin | EAppOrientationAutomatic | EAknEnableMSK );
+    BaseConstructL( EAknEnableSkin | EAppOrientationAutomatic | EAknEnableMSK 
+    		      | EAknSingleClickCompatible );
     
     iResourceHandler = CMusUiResourceHandler::NewL( *this );
     MultimediaSharing::TMusUseCase usecase = MusUiStartController::ReadUseCaseL();

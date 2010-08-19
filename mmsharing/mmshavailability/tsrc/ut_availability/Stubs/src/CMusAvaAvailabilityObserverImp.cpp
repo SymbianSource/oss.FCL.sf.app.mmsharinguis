@@ -113,3 +113,8 @@ TBool CMusAvaAvailabilityObserverImp::Available(
            && MMusAvaObserver::EMusAvaStatusAvailable == iStatus );
     }
 
+void CMusAvaAvailabilityObserverImp::AvailabilitiesAbleToShowIndicator()
+	{
+	 //nothing to do
+	}
+

@@ -40,6 +40,7 @@
 #include "musavasharedobject.h"
 #include "mussettings.h"
 
+_LIT8( KCapabilityTestOriginatorSIPAddressUri8, "sip:user@domain.com");
 
 // CONSTRUCTION
 UT_CMusAvaTerminal* UT_CMusAvaTerminal::NewL()
@@ -218,7 +219,7 @@ void UT_CMusAvaTerminal::UT_CMusAvaTerminal_ExecuteQueryLL(  )
     if ( !iProfile->iArray )
         {
         iProfile->iArray = new ( ELeave ) CDesC8ArrayFlat( 1 );
-        iProfile->iArray->AppendL( _L8("sip:user@domain.com") );
+        iProfile->iArray->AppendL( KCapabilityTestOriginatorSIPAddressUri8 );
         }
     
     EUNIT_ASSERT( iExchange->Terminals().Count() == 0 );
@@ -257,6 +258,8 @@ void UT_CMusAvaTerminal::UT_CMusAvaTerminal_ExecuteQueryLL(  )
     EUNIT_ASSERT( terminal.iQueries == 1 );
     EUNIT_ASSERT( terminal.iQuery == query );
     
+
+    CMusAvaCapabilityQuery* tmpQuery = query;
     query = CMusAvaCapabilityQuery::NewL( *iCapability,
                                         *iSIPConnection,
                                         *iProfile,
@@ -264,12 +267,22 @@ void UT_CMusAvaTerminal::UT_CMusAvaTerminal_ExecuteQueryLL(  )
     CleanupStack::PushL( query );
     EUNIT_ASSERT( iExchange->Terminals().Count() == 1 );
     EUNIT_ASSERT( terminal.iQueries == 2 );
-    
+ 
+
     //Second query cannot be executed
     EUNIT_ASSERT_SPECIFIC_LEAVE( terminal.ExecuteQueryL( query ),
                                  KErrAlreadyExists )
     EUNIT_ASSERT( terminal.iQuery != query );
+
+    
+    //Uri identical case
+	terminal.iQuery = NULL;
+	query->iRemoteUri.Copy( KCapabilityTestOriginatorSIPAddressUri8 );
+	EUNIT_ASSERT_SPECIFIC_LEAVE( terminal.ExecuteQueryL( query ),
+								 KErrNotSupported )      
+        
     CleanupStack::PopAndDestroy( query );
+    delete tmpQuery;
     }
 
 

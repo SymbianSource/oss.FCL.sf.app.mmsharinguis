@@ -189,6 +189,8 @@ class CMusAvaDefaultImp : public CMusAvaInterface,
         
     virtual MMusAvaObserver::TAvailabilityStatus AvailabilityPluginState();
     
+    virtual void AvailabilitiesAbleToShowIndicator();
+    
 
     private: // data
 
