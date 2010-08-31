@@ -24,6 +24,7 @@
 #include <badesca.h>
 #include <e32base.h>
 #include <e32std.h>
+#include <mussettingskeys.h>
 
 class MMusAvaSettingsObserver;
 
@@ -49,10 +50,18 @@ public:
         };
 public:
     
-     /**
-     * Returns the manual activation
-     *
-     */   		
+    /**
+    * Returns the fast mode value
+    *
+    * @return The fast mode value.
+    */         
+    virtual MusSettingsKeys::TFastMode FastMode() const;
+    
+    
+    /**
+    * Returns the manual activation
+    *
+    */   		
     virtual TManualActivation ManualActivation();
     	
     /**
@@ -117,20 +126,17 @@ public:
      */   		
     virtual void SetObserver( MMusAvaSettingsObserver& aObserver );
     
+    /*
+    * Gets the settings observer pointer 
+    * 
+    */
+    MMusAvaSettingsObserver* Observer();
+    
      /**
      * Sets the for the manual activation
      *
      */   		
     virtual void SetManualActivation( TManualActivation aManualActivation );
-    
-    /**
-    * Returns the direction of the mobile call.
-    *
-    * @return 0, if the direction of the call is unknown.
-    *         1, call is from public number.
-    *         2, call is from private number   
-    */    		
-    virtual TInt CallPrivacy();
 
 	};
 

@@ -15,24 +15,75 @@
 *
 */
 
-#include <sipstrings.h>
+
 #include "musunittesting.h"
 #include "musmanagerstub.h"
 #include "mussipcrplugin.h"
 #include "mussipcrplugintest.h"
 #include "muslogger.h" 
 #include "musmanager.h"
+#include "mussettings.h"
 
 #include <alwaysonlinemanagercommon.h>
 #include <alwaysonlinemanagerclient.h>
 #include <digia/eunit/eunitmacros.h>
 #include <SipResolvedClient.h>    
+#include <sipstrings.h>
 #include <sipstrconsts.h>
-#include "FeatMgr.h"
-
+#include <SdpCodecStringPool.h>
+#include <sdpdocument.h>
 
 // Next row is to disable warning emerging from EUnit code.
 #pragma warn_illtokenpasting off
+
+_LIT8( KSdpSendOnly, "v=0\r\n\
+o=Inviter2008 63241204263093750 132223800 IN IP4 10.0.0.6\r\n\
+s=-\r\n\
+c=IN IP4 10.0.0.6\r\n\
+t=0 0\r\n\
+m=video 49152 RTP/AVP 98\r\n\
+a=sendonly\r\n\
+a=rtpmap:98 H264/90000\r\n" );
+
+_LIT8( KSdpSendRecv, "v=0\r\n\
+o=Inviter2008 63241204263093750 132223800 IN IP4 10.0.0.6\r\n\
+s=-\r\n\
+c=IN IP4 10.0.0.6\r\n\
+t=0 0\r\n\
+m=video 49152 RTP/AVP 98\r\n\
+a=sendrecv\r\n\
+a=rtpmap:98 H264/90000\r\n" );
+
+_LIT8( KSdpNoMedia, "v=0\r\n\
+o=Inviter2008 63241204263093750 132223800 IN IP4 10.0.0.6\r\n\
+s=-\r\n\
+c=IN IP4 10.0.0.6\r\n\
+t=0 0\r\n" );
+
+_LIT8( KSdpNoVideo, "v=0\r\n\
+o=Inviter2008 63241204263093750 132223800 IN IP4 10.0.0.6\r\n\
+s=-\r\n\
+c=IN IP4 10.0.0.6\r\n\
+t=0 0\r\n\
+m=audio 5000 RTP/AVP 106 8 0\r\n\
+a=sendrecv\r\n\
+a=rtpmap:106 AMR/8000\r\n" );
+
+_LIT8( KSdpVideoNoAttributes, "v=0\r\n\
+o=Inviter2008 63241204263093750 132223800 IN IP4 10.0.0.6\r\n\
+s=-\r\n\
+c=IN IP4 10.0.0.6\r\n\
+t=0 0\r\n\
+m=video 49152 RTP/AVP 98\r\n" );
+
+_LIT8( KSdpRecvOnly, "v=0\r\n\
+o=Inviter2008 63241204263093750 132223800 IN IP4 10.0.0.6\r\n\
+s=-\r\n\
+c=IN IP4 10.0.0.6\r\n\
+t=0 0\r\n\
+m=video 49152 RTP/AVP 98\r\n\
+a=recvonly\r\n\
+a=rtpmap:98 H264/90000\r\n" );
 
 
 // --------------------------------------------------------------------------
@@ -89,6 +140,7 @@ CMusSipCrPluginTest::~CMusSipCrPluginTest()
 void CMusSipCrPluginTest::SetupL(  )
     {
     iPlugin = CMusSipCrPlugin::NewL();
+    SIPStrings::OpenL();
     }
 
 
@@ -98,12 +150,36 @@ void CMusSipCrPluginTest::SetupL(  )
 // 
 void CMusSipCrPluginTest::Teardown(  )
     {
+    SIPStrings::Close();
     delete iPlugin;
     }
 
 
 
 // ------------------------- Test functions begin ---------------------------
+
+// --------------------------------------------------------------------------
+// 
+// --------------------------------------------------------------------------
+// 
+void CMusSipCrPluginTest::UT_ConstructL()
+    {
+    // 1. String pool was opend by us
+    EUNIT_ASSERT( iPlugin->iCloseStringPool );
+        
+    // 2. String pool was already opened by someone else, KErrAlreadyExists
+    delete iPlugin;
+    iPlugin = NULL;
+    SdpCodecStringPool::OpenL();
+    TRAPD( err, iPlugin = CMusSipCrPlugin::NewL() );
+    if ( err != KErrNone )
+        {
+        SdpCodecStringPool::Close();
+        User::Leave(err);
+        }
+    EUNIT_ASSERT( !iPlugin->iCloseStringPool );
+    SdpCodecStringPool::Close();    
+    }
 
 
 // --------------------------------------------------------------------------
@@ -112,8 +188,6 @@ void CMusSipCrPluginTest::Teardown(  )
 // 
 void CMusSipCrPluginTest::UT_ChannelL()
     {
-    SIPStrings::OpenL();
-    
     RPointerArray<CSIPHeaderBase> array;
     
     TUid response;
@@ -128,7 +202,7 @@ void CMusSipCrPluginTest::UT_ChannelL()
 
     EUNIT_ASSERT( response.iUid == CMusManager::ESipOptions )
 
-    // Everything is OK
+    // Everything is OK, 2-way video not supported
     CMusManager::SetAvailability( 
                  ( MultimediaSharing::TMusAvailabilityStatus ) KErrNone );
     
@@ -162,53 +236,28 @@ void CMusSipCrPluginTest::UT_ChannelL()
                        NULL );
     
     EUNIT_ASSERT( response.iUid == CMusManager::ESipInviteNotDesired )
-    //Feature Manager testing
-    FeatureManager::MultimediaSharingNotSupported();
-    response = iPlugin->ChannelL( 
-    		           SIPStrings::StringF( SipStrConsts::EOptions ),
-                       KNullDesC8(),
-                       array,
-                       KNullDesC8(),
-                       NULL );
-
-    EUNIT_ASSERT( response.iUid == CMusManager::ESipInviteNotDesired )
-    // Everything is OK
+       
+    // 2-way video is supported and sendrecv not present in SDP    
+    MultimediaSharingSettings::iVideoDirection = MusSettingsKeys::ETwoWayVideo;    
     CMusManager::SetAvailability( 
                  ( MultimediaSharing::TMusAvailabilityStatus ) KErrNone );
-    
+
     response = iPlugin->ChannelL( SIPStrings::StringF( SipStrConsts::EMessage ),
                        KNullDesC8(),
                        array,
-                       KNullDesC8(),
-                       NULL );
-    
-    EUNIT_ASSERT( response.iUid == CMusManager::ESipInviteNotDesired )
-    
-    // Server is shut down                     
-    CMusManager::SetAvailability( MultimediaSharing::EErrServerShutDown );
-    
-    response = iPlugin->ChannelL( SIPStrings::StringF( SipStrConsts::EMessage ),
-                       KNullDesC8(),
-                       array,
-                       KNullDesC8(),
+                       KSdpSendOnly(),
                        NULL );
 
-    EUNIT_ASSERT( response.iUid == CMusManager::ESipInviteNotDesired )
-
-    // Mus is not supported
-    CMusManager::SetAvailability(
-            ( MultimediaSharing::TMusAvailabilityStatus ) KErrNotSupported );
+    EUNIT_ASSERT( response.iUid == CMusManager::ESipInviteDesired )
     
+    // 2-way video is supported and sendrecv is present in SDP    
     response = iPlugin->ChannelL( SIPStrings::StringF( SipStrConsts::EMessage ),
                        KNullDesC8(),
                        array,
-                       KNullDesC8(),
+                       KSdpSendRecv(),
                        NULL );
-    
-    EUNIT_ASSERT( response.iUid == CMusManager::ESipInviteNotDesired )
-    FeatureManager::MultimediaSharingSupported();  
-    SIPStrings::Close();                       
-                        
+        
+    EUNIT_ASSERT( response.iUid == CMusManager::ESipInviteDesired2WayVideo )
     }
 
 
@@ -269,6 +318,45 @@ void CMusSipCrPluginTest::UT_ImplementationGroupProxy()
     }
 
 
+// --------------------------------------------------------------------------
+// 
+// --------------------------------------------------------------------------
+// 
+void CMusSipCrPluginTest::UT_CheckForSendRecvAttributeL()
+    {
+    CSdpDocument* sdpDocument;
+    TBool sendRecv;
+    
+    // 1. SDP doesn't have a single media field
+    sdpDocument = CSdpDocument::DecodeLC( KSdpNoMedia() );
+    sendRecv = iPlugin->CheckForSendRecvAttributeL( sdpDocument->MediaFields() );
+    CleanupStack::PopAndDestroy( sdpDocument );
+    EUNIT_ASSERT( !sendRecv );
+    
+    // 2. SDP has audio field, but no video
+    sdpDocument = CSdpDocument::DecodeLC( KSdpNoVideo() );
+    sendRecv = iPlugin->CheckForSendRecvAttributeL( sdpDocument->MediaFields() );
+    CleanupStack::PopAndDestroy( sdpDocument );
+    EUNIT_ASSERT( !sendRecv );
+    
+    // 3. SDP has video field without any attributes
+    sdpDocument = CSdpDocument::DecodeLC( KSdpVideoNoAttributes() );
+    sendRecv = iPlugin->CheckForSendRecvAttributeL( sdpDocument->MediaFields() );
+    CleanupStack::PopAndDestroy( sdpDocument );
+    EUNIT_ASSERT( sendRecv );
+        
+    // 4. SDP has video with "sendrecv" attribute
+    sdpDocument = CSdpDocument::DecodeLC( KSdpSendRecv() );
+    sendRecv = iPlugin->CheckForSendRecvAttributeL( sdpDocument->MediaFields() );
+    CleanupStack::PopAndDestroy( sdpDocument );
+    EUNIT_ASSERT( sendRecv );    
+    
+    // 5. SDP has video with "recvonly" attribute
+    sdpDocument = CSdpDocument::DecodeLC( KSdpRecvOnly() );
+    sendRecv = iPlugin->CheckForSendRecvAttributeL( sdpDocument->MediaFields() );
+    CleanupStack::PopAndDestroy( sdpDocument );
+    EUNIT_ASSERT( !sendRecv );
+    }
 
 
 //  TEST TABLE
@@ -277,6 +365,13 @@ EUNIT_BEGIN_TEST_TABLE(
     CMusSipCrPluginTest,
     "CMusSipCrPluginTest",
     "CMusSipCrPluginTest" )
+   
+EUNIT_TEST(
+    "ConstructL - test",
+    "CMusSipCrPluginTest",
+    "UT_ConstructL",
+    "FUNCTIONALITY",
+    SetupL, UT_ConstructL, Teardown)
 
 EUNIT_TEST(
     "CMusSipCrPluginTest",
@@ -305,6 +400,13 @@ EUNIT_TEST(
     "ImplementationGroupProxyTest",
     "FUNCTIONALITY",
     SetupL, UT_ImplementationGroupProxy, Teardown)
+    
+EUNIT_TEST(
+    "CheckForSendRecvAttribute - stest",
+    "CMusSipCrPluginTest",
+    "UT_CheckForSendRecvAttribute",
+    "FUNCTIONALITY",
+    SetupL, UT_CheckForSendRecvAttributeL, Teardown)
     
 EUNIT_END_TEST_TABLE
 

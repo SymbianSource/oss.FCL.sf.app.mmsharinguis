@@ -15,6 +15,6 @@
 *
 */
 
-
-PRJ_TESTMMPFILES
+PRJ_MMPFILES
+../../../../mmshindicator/group/musindicator.mmp
 ut_musmanagerserver.mmp

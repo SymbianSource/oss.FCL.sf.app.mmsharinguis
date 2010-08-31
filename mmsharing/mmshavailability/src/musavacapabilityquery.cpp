@@ -366,7 +366,10 @@ TBool CMusAvaCapabilityQuery::ValidateAttributesL( CSdpDocument& aSDP )
             type->Value().Compare( KCapabilitySDPAttributeType ) == 0 ) ;
         
         }
-    
+        
+    MusSettingsKeys::TFastMode mode = CMusAvaCapability::ResolveFastModeL( aSDP );
+    Capability().Exchange().QueryObserver().FastModeResolved( mode );
+
     return valid;        
     }
 

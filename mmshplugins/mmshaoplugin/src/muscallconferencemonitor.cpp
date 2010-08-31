@@ -245,6 +245,19 @@ void CMusCallConferenceMonitor::MonitorCallL()
     MUS_LOG( "mus: [MUSAO]  -> CMusCallConferenceMonitor::CheckCallStatus")
     }
 
+
+// --------------------------------------------------------------------------------
+// TMobileConferenceStatus GetCconfStatus()
+// Get the Conference Call Status
+// --------------------------------------------------------------------------------
+//
+RMobileConferenceCall::TMobileConferenceStatus CMusCallConferenceMonitor::GetConfStatus()
+    {
+    return iConfStatus;
+    }
+
+
+
 // End of file
 
 

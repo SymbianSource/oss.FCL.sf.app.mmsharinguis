@@ -20,11 +20,6 @@
 
 
 
-CTelephonyAudioRouting::TAudioOutput CTelephonyAudioRouting::iCurrentOutput =
-        CTelephonyAudioRouting::ENone;
-CTelephonyAudioRouting::TAudioOutput CTelephonyAudioRouting::iPreviousOutput = 
-        CTelephonyAudioRouting::ENone;
-
 
 // ============================ MEMBER FUNCTIONS ===============================
 
@@ -91,7 +86,6 @@ void CTelephonyAudioRouting::SetOutputL( TAudioOutput aOutput )
         User::Leave( leaveValue );
         }
         
-    iPreviousOutput = iCurrentOutput;
     iCurrentOutput = aOutput;
     }
 

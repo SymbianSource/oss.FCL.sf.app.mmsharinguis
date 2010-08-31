@@ -37,11 +37,13 @@ SOURCEPATH          ../src
 SOURCE              dllmain.cpp
 SOURCE              ut_cmusindicatorapi.cpp
 SOURCE              ut_cmussoundplayer.cpp
+SOURCE              ut_cmusindicatordsa.cpp
 
 // tested classes
 SOURCEPATH          ../../../src
 SOURCE              mussoundplayer.cpp
 SOURCE              musindicatorapi.cpp
+SOURCE              musindicatordsa.cpp
 SOURCE              musresourceutil.cpp
 
 USERINCLUDE         ../inc
@@ -54,23 +56,28 @@ USERINCLUDE         ../../../../inc
 USERINCLUDE         ../../../../../inc
 USERINCLUDE         ../../../../../tsrc/ututils/inc
 USERINCLUDE         ../../../../../tsrc/propertystub/inc
+USERINCLUDE         ../../../../../tsrc/fbsbitmapstub/inc
+USERINCLUDE         ../../../../../tsrc/centralrepositorystub/inc
 
 // STUB SOURCES
 SOURCEPATH          ../../../../../tsrc/propertystub/src
 SOURCE              e32property.cpp
 SOURCEPATH          ../../../../../tsrc/fbsbitmapstub/src
 SOURCE              fbs.cpp
+SOURCEPATH          ../../../../../tsrc/centralrepositorystub/src
+SOURCE              centralrepositorystub.cpp
 
 // STUB INCLUDES
 
 // To replace RProperty with a stub    
 SYSTEMINCLUDE       ../../../../../tsrc/propertystub/inc 
+SYSTEMINCLUDE       ../../../../../tsrc/centralrepositorystub/inc
 
 // INCLUDESs
 
 APP_LAYER_SYSTEMINCLUDE
 
-LIBRARY             centralrepository.lib
+//LIBRARY             centralrepository.lib
 LIBRARY             commonengine.lib // RConeResourceLoader
 LIBRARY             bafl.lib
 LIBRARY             eunit.lib

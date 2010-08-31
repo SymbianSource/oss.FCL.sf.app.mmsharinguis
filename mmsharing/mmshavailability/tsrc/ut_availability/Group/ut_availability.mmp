@@ -27,8 +27,8 @@ UID             0x1000af5a 0x01700000
 MACRO                   UNIT_TESTING
 //epocallowdlldata 
 
-CAPABILITY      EUNIT_CAPS
 
+CAPABILITY              EUNIT_CAPS
 VENDORID                VID_DEFAULT
 
 // Test sources
@@ -59,7 +59,8 @@ SOURCE                  UT_CMusAvaDefaultOptionHandler.cpp
 SOURCE                  UT_CMusAvaSipprofileAvailability.cpp
 SOURCE                  UT_CMusAvaSipProfileRegistryObserver.cpp
 SOURCE                  UT_CMusAvaNetworkAvailability.cpp
-SOURCE                  UT_CMusAvaSettingAvailability.cpp    
+SOURCE                  UT_CMusAvaSettingAvailability.cpp
+SOURCE					UT_CMusAvaCallEventMonitor.cpp    
 SOURCE                  UT_CMusAvaSipheaderUtil.cpp
 SOURCE                  ut_cmusavaclientresolverutil.cpp  
 SOURCE                  musavacapabilitytesthelper.cpp
@@ -126,7 +127,8 @@ SOURCE                  musavaprofileregistryadapterstub.cpp
 SOURCE                  centralrepositorystub.cpp
 SOURCE                  sipprofileregistrystub.cpp
 SOURCE                  sipprofilestub.cpp
-SOURCE			csipcontactheaderstub.cpp
+SOURCE					csipcontactheaderstub.cpp
+SOURCE					musavacallmonitorobserver.cpp
 SOURCE                  muscallmonitorstub.cpp
 
 SOURCEPATH              ../../../../../tsrc/sipprofilestub/src
@@ -147,7 +149,6 @@ SOURCE		            musavaailabilitystub.cpp
 SOURCEPATH              ../../../../../mmshplugins/mmshaoplugin/src
 SOURCE                  muscalleventmonitor.cpp
 SOURCE                  muscallmonitor.cpp
-SOURCE                  musclirmonitor.cpp
 
 //SOURCE                  musconferencecallmonitor.cpp
 // Using RProperty Stubs
@@ -168,12 +169,16 @@ USERINCLUDE             ../../../../cenrep
 USERINCLUDE             ../../../../../mmshplugins/mmshaoplugin/inc
 USERINCLUDE             ../../../../../tsrc/propertystub/inc
 USERINCLUDE             ../../../../../tsrc/sipclientstub/inc
+USERINCLUDE             ../../../../../tsrc/musavaailabilitystub/inc
+USERINCLUDE             ../../../../../tsrc/centralrepositorystub/inc
+USERINCLUDE             ../../../../../tsrc/sipprofilestub/inc
 
 SYSTEMINCLUDE           ../../../../../tsrc/sipprofilestub/inc
 SYSTEMINCLUDE           ../../../../../tsrc/sipclientstub/inc
 SYSTEMINCLUDE           ../../../../../tsrc/musavaailabilitystub/inc
 SYSTEMINCLUDE           ../../../../../tsrc/centralrepositorystub/inc
 SYSTEMINCLUDE           ../../../../../tsrc/propertystub/inc
+SYSTEMINCLUDE           /epoc32/include/platform/digia/eunit
 
 APP_LAYER_SYSTEMINCLUDE
 
@@ -194,7 +199,6 @@ LIBRARY                 esock.lib
 LIBRARY                 insock.lib
 LIBRARY                 sdpcodec.lib
 LIBRARY                 sipcodec.lib
-LIBRARY                 PbkEng.lib
 LIBRARY                 connmon.lib
 LIBRARY                 etelmm.lib
 LIBRARY                 etel.lib

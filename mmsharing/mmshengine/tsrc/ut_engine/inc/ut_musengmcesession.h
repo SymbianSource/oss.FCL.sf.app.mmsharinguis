@@ -29,9 +29,8 @@
 class CMusEngLiveSession;
 class CMusEngReceiveSession;
 class CMusEngClipSession;
-class CMusEngObserverStub;
-class CMceSession;
-class CMusEngMceSession;
+class CLcSessionObserverStub;
+class CLcUiProviderStub;
 
 //  CLASS DEFINITION
 /**
@@ -67,52 +66,69 @@ NONSHARABLE_CLASS( UT_CMusEngMceSession ): public CEUnitTestSuiteClass
         void Teardown();
 
     private: // Test methdods
-    
-        void UT_CMusEngMceSession_TerminateLL();
-        void UT_CMusEngMceSession_GetSessionTimeL();
-        void UT_CMusEngMceSession_ConnectionActiveL();
-        void UT_CMusEngMceSession_ContainsAudioLL();
-        void UT_CMusEngMceSession_IsMutedLL();
-        void UT_CMusEngMceSession_OrientationLL();
-        void UT_CMusEngMceSession_SetOrientationLL();
-        void UT_CMusEngMceSession_VolumeUpLL();
-        void UT_CMusEngMceSession_VolumeDownLL();
-        void UT_CMusEngMceSession_SetVolumeLL();
-        void UT_CMusEngMceSession_EnableDisplayL();
-        void UT_CMusEngMceSession_MuteLL();
-        void UT_CMusEngMceSession_UnmuteLL();
-        void UT_CMusEngMceSession_HandleTerminationL();
 
-        void UT_CMusEngMceSession_AdjustVideoCodecLL();
-        void UT_CMusEngMceSession_AdjustAudioCodecLL();
-        void UT_CMusEngMceSession_RectChangedLL();
-        void UT_CMusEngMceSession_SetSessionSdpLinesLL();
-        void UT_CMusEngMceSession_AdjustStreamsAndCodecsLL();
-        void UT_CMusEngMceSession_IncomingSessionL();
-        void UT_CMusEngMceSession_IncomingUpdateL();
-        void UT_CMusEngMceSession_StreamStateChangedL();
-        void UT_CMusEngMceSession_StreamStateChangedWithSourceL();
-        void UT_CMusEngMceSession_StreamStateChangedWithSinkL();
-        void UT_CMusEngMceSession_SessionStateChangedL();
-        void UT_CMusEngMceSession_SessionConnectionStateChangedL();
-        void UT_CMusEngMceSession_FailedL();
-        void UT_CMusEngMceSession_UpdateFailedL();
-        
-        void UT_CMusEngMceSession_SRReceivedL();
-        void UT_CMusEngMceSession_RRReceivedL();
-        void UT_CMusEngMceSession_InactivityTimeoutL();
-        void UT_CMusEngMceSession_SsrcAddedL();
-        void UT_CMusEngMceSession_SsrcRemovedL();
-        void UT_CMusEngMceSession_UpdateTimerEventL();
-        void UT_CMusEngMceSession_IsRoamingBetweenAPsAllowedL(); 
-        void UT_CMusEngMceSession_IsDisplayEnabledLL();
-        
-        void UT_CMusEngMceSession_VolumeChangedL();
-    
-    private:
-        
-        void SetMaxVolForSpeakersL(CMceSession& aSession, TInt aMaxVol);
-        TBool VerifySpeakersVolume(CMusEngMceSession& aSession, TInt aVolume);
+        void UT_LcSessionStateL();
+        void UT_RemoteVideoPlayerL();
+        void UT_LocalVideoPlayerL();          
+        void UT_LocalDisplayNameL();
+        void UT_RemoteDisplayNameL();
+        void UT_RemoteDetailsL();
+        void UT_SetParameterL();
+        void UT_ParameterValueL();
+        void UT_IsLcAudioMutedL();
+        void UT_MuteLcAudioL();
+        void UT_MuteLcMicL();
+        void UT_EnableLcLoudspeakerL();
+        void UT_SetLcVolumeL();        
+        void UT_GetSessionTimeL();
+        void UT_HandleTerminationL();
+        void UT_AdjustVideoCodecL();
+        void UT_AdjustAudioCodecL();
+        void UT_RectChangedL();
+        void UT_SetSessionSdpLinesL();
+        void UT_SetSessionSdpLines_OperatorL();
+        void UT_SetMediaSdpLinesL();
+        void UT_SetMediaSdpLines_OperatorL();
+        void UT_AdjustStreamsAndCodecsL();
+        void UT_IncomingSessionL();
+        void UT_IncomingUpdateL();
+        void UT_StreamStateChangedL();
+        void UT_StreamStateChangedWithSourceL();
+        void UT_StreamStateChangedWithSinkL();
+        void UT_SessionStateChangedL();
+        void UT_HandleSessionStateChanged_EncoderKeyStoringL();
+        void UT_SessionConnectionStateChangedL();
+        void UT_FailedL();
+        void UT_UpdateFailedL();
+        void UT_SRReceivedL();
+        void UT_RRReceivedL();        
+        void UT_SsrcAddedL();
+        void UT_SsrcRemovedL();
+        void UT_UpdateTimerEventL();
+        void UT_IsRoamingBetweenAPsAllowedL();
+        void UT_SaveContactL();
+        void UT_RectL();
+        void UT_SetRectLL();
+        void UT_SecondaryRectL();
+        void UT_SetSecondaryRectLL();
+        void UT_EnableDisplayLL();
+        void UT_CMusEngMceSession_SetOrientationLL();
+        void UT_SetEncodingDeviceLL();
+        void UT_SetCodecConfigKeyLL();
+        void UT_ReadCodecConfigKeyLL();
+        void UT_StoreEncoderConfigInfoLL();
+        void UT_StreamStreamingL();
+        void UT_InformObserverAboutSessionStateChangeL();
+        void UT_InformObserverAboutSessionUpdateL();
+        void UT_InformObserverAboutSessionFailureL();
+        void UT_InformObserverAboutPlayerStateChangeL();
+        void UT_InformObserverAboutPlayerUpdateL();
+        void UT_InformObserverAboutPlayerFailureL();      
+        void UT_LcUiProviderL(); 
+        void UI_IsBackgroundStartupL();
+        void UT_InformUiProviderAboutReceivingStartL();
+        void UT_SetForegroundStatusL();
+        void UT_UpdateLcSessionLL();
         
     private:    // Data
 
@@ -120,8 +136,8 @@ NONSHARABLE_CLASS( UT_CMusEngMceSession ): public CEUnitTestSuiteClass
         CMusEngReceiveSession* iReceiveSession;
         CMusEngClipSession* iClipSession;
         CMusEngLiveSession* iSomeOtherSession;
-        CMusEngObserverStub* iObserver;
-
+        CLcSessionObserverStub* iLcSessionObserver;
+        CLcUiProviderStub* iLcUiProvider;
         TMceTransactionDataContainer iContainer;
         EUNIT_DECLARE_TEST_TABLE;
     };

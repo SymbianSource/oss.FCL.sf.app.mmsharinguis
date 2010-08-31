@@ -368,11 +368,6 @@ void CMusAvaDefaultImp::AvailabilityChanged(
     }
 
 
-void CMusAvaDefaultImp::AvailabilitiesAbleToShowIndicator()
-	{
-	iObserver->AvailabilitiesAbleToShowIndicator();
-	}
-
 // -----------------------------------------------------------------------------
 //  Availability error.
 // -----------------------------------------------------------------------------
@@ -516,3 +511,17 @@ MMusAvaObserver::TAvailabilityStatus CMusAvaDefaultImp::AvailabilityState(
         retval )
     return retval;
     }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusAvaDefaultImp::PrepareForReceivedInviteL()
+    {
+    for ( TInt i = 0; i < iAvailabilities.Count(); i++ )
+        {
+        iAvailabilities[i]->PrepareForReceivedInviteL();
+        }
+    }
+
+// End of file

@@ -299,12 +299,12 @@ sub print_help
 	print("\n*************************************************************\n\n");
 	print("Script runs by default all multimediasharing eunit tests\n");
 	print("and creates build, test and coverage results to:\n\n");
-	print("    mmsharing/src/internal/unittestrunner/results/\n\n");
+	print("    $coverageResultsDirDefault\n\n");
 	print("Own configuration file (list of components to be processed)\n");
 	print("can be used as well:\n\n");
 	print("    >unittest_ctc.pl -eunitdlls=myowneunitcomponents.txt\n\n");
 	print("The text file should follow the syntax of default configuration file\n");
-	print("mmsharing/src/internal/unittestrunner/eunitdlls_ctc.txt\n\n");
+	print("$scriptLocation/eunitdlls_ctc.txt\n\n");
 	print("Alloc failure simulation can be turned on with following command:\n\n");
 	print("    >unittest_ctc.pl -allocfailure=2\n\n");
 	print("Any number will turn eunit alloc on.\n");

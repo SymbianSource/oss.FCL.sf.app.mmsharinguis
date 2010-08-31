@@ -16,12 +16,11 @@
 */
 
 
-
 #ifndef MUSCALLMONITOROBSERVER_H
 #define MUSCALLMONITOROBSERVER_H
 
 #include <e32cmn.h>
-#include <CPbkContactItem.h>
+#include <badesca.h>
 
 /**
  * Observer for the monitor
@@ -33,22 +32,19 @@ class MMusCallMonitorObserver
 
 public: // type definitions
 
-    virtual void CallConnectedL( const TDesC& aTelNumber ) = 0;
+    virtual void CallConnectedL( const TDesC& aTelNumber, TBool aIsSipUri ) = 0;
     
-    virtual void CallHoldL( const TDesC& aTelNumber ) = 0;
+    virtual void CallHoldL( const TDesC& aTelNumber, TBool aIsSipUri ) = 0;
     
     virtual void ConferenceCallL() = 0;
     
     virtual void NoActiveCallL() = 0;
-    
-    virtual void ConferenceCallLTerminated() = 0;
    
     /**
     *
     */
-    virtual TBool ResolveAddressesL( CPbkContactItem& /*aPbkItem*/,
-                            CDesCArrayFlat*& /*aContactsArray*/,
-                            TPbkFieldId /*aTPbkFieldId*/  )
+    virtual TBool ResolveAddressesL( const TDesC& /*aContactId*/,
+                            CDesCArrayFlat*& /*aContactsArray*/)
         {
         return EFalse;
         }

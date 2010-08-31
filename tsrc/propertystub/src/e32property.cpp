@@ -16,12 +16,18 @@
 */
 
 #include "e32property.h"
+#include "mussessionproperties.h"
+#include "mussesseioninformationapi.h"
 #include <e32cmn.h>
 
 static RArray<TUint> iIntProperty;
 static TInt iErrorCode = KErrNone;
 static RProperty::TPropertyCalledFunctions iCalledFunction = RProperty::ENone;
-static TName iString = KNullDesC();
+// Large enough to store maximum length descriptor for RProperty
+static TBuf<RProperty::KMaxPropertySize> iString = KNullDesC();
+static TBuf<RProperty::KMaxPropertySize> iVideoCodecList = KNullDesC();
+static TBuf<RProperty::KMaxPropertySize> iSessionRecipient = KNullDesC();
+static TBuf<RProperty::KMaxPropertySize> iEngineName = KNullDesC();
 static TInt iValue = KErrNotFound;
 
 
@@ -78,6 +84,7 @@ TInt RProperty::Get( TInt& aValue)
     return error;
     }
 
+
 TInt RProperty::Get( TUid /*aCategory*/, TUint /*aKey*/, TDes8& aValue)
     {
     // This is not widely used in Mush , so who cares in stub.
@@ -85,10 +92,26 @@ TInt RProperty::Get( TUid /*aCategory*/, TUint /*aKey*/, TDes8& aValue)
     return iErrorCode;
     }
 
-TInt RProperty::Get( TUid /*aCategory*/, TUint /*aKey*/, TDes16& aValue )
+
+TInt RProperty::Get( TUid /*aCategory*/, TUint aKey, TDes16& aValue )
     {
-    // This is not widely used in Mush , so who cares in stub.
-    aValue = iString;
+    if ( aKey == NMusSessionInformationApi::KMUSCallProvider )
+         {
+         aValue = iEngineName;
+         }
+    else if ( aKey == NMusSessionApi::KVideoCodecs )
+        {
+        aValue = iVideoCodecList;
+        }
+    else if ( aKey == NMusSessionApi::KRemoteSipAddress )
+        {
+        aValue = iSessionRecipient;
+        }
+    else
+        {
+        aValue = iString;
+        }
+    
     return iErrorCode;
     }
 
@@ -118,10 +141,27 @@ TInt RProperty::Set( TUid /*aCategory*/, TUint /*aKey*/, const TDesC8& /*aValue*
     return iErrorCode;
     }
 
-TInt RProperty::Set( TUid /*aCategory*/, TUint /*aKey*/, const TDesC& aValue )
+
+TInt RProperty::Set( TUid /*aCategory*/, TUint aKey, const TDesC& aValue )
     {
-    // This is not widely used in Mush , so who cares in stub.
-    iString = aValue;
+
+    if ( aKey == NMusSessionInformationApi::KMUSCallProvider )
+        {
+        iEngineName = aValue;
+        }
+    
+    else if ( aKey == NMusSessionApi::KVideoCodecs )
+        {
+        iVideoCodecList = aValue;
+        }
+    else if ( aKey == NMusSessionApi::KRemoteSipAddress )
+        {
+        iSessionRecipient = aValue;
+        }
+    else
+        {
+        iString = aValue;
+        }
     return iErrorCode;
     }
 
@@ -193,7 +233,7 @@ void PropertyHelper::Close()
     iErrorCode = KErrNone;
     iCalledFunction = RProperty::ENone;
     iString = KNullDesC();
+    iEngineName = KNullDesC();
     iValue = KErrNotFound;
     }
-
 

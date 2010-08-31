@@ -27,6 +27,8 @@
 #include "musresourcefinderutil.h"
 #include "mussettings.h"
 #include "mussesseioninformationapi.h"
+#include "musindicatorapi.h"
+#include "mussessionproperties.h"
 
 #include <musresourceproperties.h>
 
@@ -48,6 +50,7 @@
 #include <utf.h>
 #include <features.hrh>
 #include <aknenv.h>
+#include <UikonInternalPSKeys.h>
 
 ////////  public -- constructor and destructor  ////////
 
@@ -77,8 +80,9 @@ CMusAiwProvider::~CMusAiwProvider()
     {
     MUS_LOG( "mus: [AIWPRO]  -> CMusAiwProvider::~CMusAiwProvider" )
     delete iResourceFileName ;
-    iResourceFileName = NULL ;  
-
+    iResourceFileName = NULL ;    
+    delete iIndicator;
+    iIndicator = NULL ;    
     MUS_LOG( "mus: [AIWPRO]  <- CMusAiwProvider::~CMusAiwProvider" )
     }
 
@@ -143,25 +147,7 @@ void CMusAiwProvider::InitializeMenuPaneL(
         TInt                        /* aCascadeId */,
         const CAiwGenericParamList& /* aInParamList */ )
     {
-	FeatureManager::InitializeLibL();
-    TBool support = FeatureManager::FeatureSupported( KFeatureIdMultimediaSharing );
-	FeatureManager::UnInitializeLib();
-	if( support )
-		{
-	    DoInitializeMenuPaneL( aMenuPane, aIndex );
-		}
-	}
-	
-	
-// -----------------------------------------------------------------------------
-// Initializes menu pane by adding provider-specific menu items.
-// -----------------------------------------------------------------------------
-//
-void CMusAiwProvider::DoInitializeMenuPaneL(
-        CAiwMenuPane&               aMenuPane,
-        TInt                        aIndex)
-    {
-    MUS_LOG1( "mus: [AIWPRO]  -> CMusAiwProvider::DoInitializeMenuPaneL( %d )",
+    MUS_LOG1( "mus: [AIWPRO]  -> CMusAiwProvider::InitializeMenuPaneL( %d )",
               aIndex )
     
     if( iResourceFileName == NULL )
@@ -172,7 +158,10 @@ void CMusAiwProvider::DoInitializeMenuPaneL(
     TFileName filename ( *iResourceFileName );
     MUS_LOG_TDESC( "mus: [AIWPRO]     Resource filename: ", filename ) 
     
-    if( ApplicationRunningL() )
+    // If app running but hidden from fast swap it means that application
+    // is hidden from user and options menu should look same as 
+    // when application is not yet started
+    if( ApplicationRunningL() && !HiddenFromFastSwapL() )
     	{
         MUS_LOG( "mus: [AIWPRO]     Application already running:\
                  giving _continue sharing_ menu command" )
@@ -191,6 +180,10 @@ void CMusAiwProvider::DoInitializeMenuPaneL(
 	        {
 	       	OperatorVariantStartUpL( filename, aMenuPane, aIndex );
 	        }
+	    else if ( IsFastStartupModeL() )
+	        {
+	        FastModeStartUpL( filename, aMenuPane, aIndex );
+	        }
 		else
 			{
 	        NoVariationStartUpL( filename, aMenuPane, aIndex );
@@ -198,7 +191,7 @@ void CMusAiwProvider::DoInitializeMenuPaneL(
 		}   
 
     
-    MUS_LOG( "mus: [AIWPRO]  <- CMusAiwProvider::DoInitializeMenuPaneL" )
+    MUS_LOG( "mus: [AIWPRO]  <- CMusAiwProvider::InitializeMenuPaneL" )
     }
 
 // -----------------------------------------------------------------------------
@@ -209,7 +202,12 @@ void CMusAiwProvider::DoInitializeMenuPaneL(
 void CMusAiwProvider::DoInitialiseL()
     {
     MUS_LOG( "mus: [AIWPRO]  -> CMusAiwProvider::DoInitialiseL")
-
+    
+    if ( !iIndicator )
+        {
+        MUS_LOG( "mus: [AIWPRO]  :  creating indicator")
+        iIndicator = CMusIndicatorApi::NewL();
+        }
     MUS_LOG( "mus: [AIWPRO]  <- CMusAiwProvider::DoInitialiseL")
     }
 
@@ -252,19 +250,10 @@ void CMusAiwProvider::NoVariationStartUpL( TFileName&     aFileName,
        3.When iAvailability plugin says OK ( Based on call,network,settingui item)
        4.Also in confrence and hold cases
     */        
-    if ( iAvailability == MultimediaSharing::ESipRegistrationPending || 
-         iAvailability == MultimediaSharing::ESipOptionsSent ||
-         iAvailability == MultimediaSharing::EMultimediaSharingAvailable ||
-         iAvailability == MultimediaSharing::EErrCallOnHold ||
-         iAvailability == MultimediaSharing::EErrConferenceCall ||             
-         iAvailability == MultimediaSharing::ESipOptionsNotCapable ||
-         iAvailability == MultimediaSharing::ESipOptionsNotSent ||
-         iAvailability == MultimediaSharing::EErrNetwork ||
-         iAvailability == MultimediaSharing::EManualActivation ||
-         iAvailability == MultimediaSharing::EErrConnection ||
-         iAvailability == MultimediaSharing::EErrSipRegistration )           
+    if ( AvailabilityOk( iAvailability ) )           
         {
-        MUS_LOG1( "mus: [AIWPRO]  Showing AIW Menu -> iAvailability = %d ",iAvailability )
+        MUS_LOG1( "mus: [AIWPRO]  Showing AIW Menu -> iAvailability = %d ",
+                  iAvailability )
         TInt resourceID =  R_MUSAIWPROVIDER_BASIC_CASCADED_SUBMENU ;           
         if ( !FeatureManager::FeatureSupported( KFeatureIdCamera ) )
             {
@@ -278,7 +267,8 @@ void CMusAiwProvider::NoVariationStartUpL( TFileName&     aFileName,
         }
     else
         {
-        MUS_LOG1( "mus: [AIWPRO] Not Showing AIW Menu -> iAvailability = %d ",iAvailability )
+        MUS_LOG1( "mus: [AIWPRO] Not Showing AIW Menu -> iAvailability = %d ",
+                  iAvailability )
         }
     CleanupStack::PopAndDestroy( manager );	
     MUS_LOG( "mus: [AIWPRO]  <- CMusAiwProvider::NoVariationStartUpL" )   
@@ -300,7 +290,8 @@ void CMusAiwProvider::OperatorVariantStartUpL( TFileName&     aFileName,
     // should be shown in call menu only if iAvailability plugin returns OK 
     if ( iAvailability == MultimediaSharing::EMultimediaSharingAvailable )           
         {
-        MUS_LOG1( "mus: [AIWPRO]  Showing AIW Menu -> iAvailability = %d ", iAvailability )
+        MUS_LOG1( "mus: [AIWPRO]  Showing AIW Menu -> iAvailability = %d ", 
+                  iAvailability )
         TInt resourceID =  R_MUSAIWPROVIDER_BASIC_CASCADED_SUBMENU ;           
         if ( !FeatureManager::FeatureSupported( KFeatureIdCamera ) )
             {
@@ -314,7 +305,8 @@ void CMusAiwProvider::OperatorVariantStartUpL( TFileName&     aFileName,
         }
     else
         {
-        MUS_LOG1( "mus: [AIWPRO] Not Showing AIW Menu -> iAvailability = %d ",iAvailability )
+        MUS_LOG1( "mus: [AIWPRO] Not Showing AIW Menu -> iAvailability = %d ",
+                  iAvailability )
         }
         
     CleanupStack::PopAndDestroy( manager );	
@@ -322,6 +314,60 @@ void CMusAiwProvider::OperatorVariantStartUpL( TFileName&     aFileName,
     MUS_LOG( "mus: [AIWPRO]  <- CMusAiwProvider::OperatorVariantStartUpL" )  
 	}
 	
+// -----------------------------------------------------------------------------
+// In fast mode, Multimediasharing Menu items 
+// should not be shown before options queries have completed. Outcome
+// of queries does not matter.
+// -----------------------------------------------------------------------------
+//
+void CMusAiwProvider::FastModeStartUpL( 
+    TFileName& aFileName, CAiwMenuPane& aMenuPane, TInt aIndex )
+    {
+    MUS_LOG( "mus: [AIWPRO]  -> CMusAiwProvider::FastModeStartUpL" )   
+    
+    if ( MultimediaSharingSettings::CapabilityQuerySettingL() != 
+            MusSettingsKeys::EParallel )
+        {
+        // If parallel capability query is not enabled, use normal startup as
+        // capability query is essential for fast session setup
+        NoVariationStartUpL( aFileName, aMenuPane, aIndex );
+        }
+    else
+        {
+        CMusManager* manager = CMusManager::NewLC();
+        iAvailability = manager->AvailabilityL();
+    
+        if ( iAvailability == MultimediaSharing::ESipRegistrationPending ||
+             iAvailability == MultimediaSharing::ESipOptionsSent ||
+             !AvailabilityOk( iAvailability ) )
+            {
+            // Need to wait for options to complete
+            MUS_LOG1( "mus: [AIWPRO] Not Showing AIW Menu -> iAvailability = %d ",
+                      iAvailability )
+            }
+        else
+            {
+            // It does not matter what was result of query
+            MUS_LOG1( "mus: [AIWPRO]  Showing AIW Menu -> iAvailability = %d ", 
+                      iAvailability )
+            TInt resourceID =  R_MUSAIWPROVIDER_BASIC_CASCADED_SUBMENU ;           
+            if ( !FeatureManager::FeatureSupported( KFeatureIdCamera ) )
+                {
+                MUS_LOG( "mus: [AIWPRO]  Camera Not Available" )
+                resourceID =  R_MUSAIWPROVIDER_NOCAMERA_CASCADED_SUBMENU ;                 
+                }            
+                aMenuPane.AddMenuItemsL( aFileName,
+                                         resourceID,
+                                         KMusAiwProviderUid,
+                                         aIndex );
+            }
+            
+        CleanupStack::PopAndDestroy( manager ); 
+        }
+
+    MUS_LOG( "mus: [AIWPRO]  <- CMusAiwProvider::FastModeStartUpL" )  
+    }
+
 // -----------------------------------------------------------------------------
 // 
 // -----------------------------------------------------------------------------
@@ -501,32 +547,29 @@ void CMusAiwProvider::HandleMenuCmdL(
             {
             MUS_LOG( "mus: [AIWPRO]     \
                     EMusCommandLiveShare: Will now attempt to start Mus." )
-            TRAP( error, manager->StartApplicationL( 
-                                        MultimediaSharing::EMusLiveVideo ) );
+            TRAP( error, StartApplicationL( *manager, MultimediaSharing::EMusLiveVideo ) );
             break;
             }
         case EMusCommandClipShare:
             {
             MUS_LOG( "mus: [AIWPRO]     \
-                    EMusCommandClipShare: Will now attempt to start Mus." )
-            TRAP( error, manager->StartApplicationL(
-                                        MultimediaSharing::EMusClipVideo ) );
+                    EMusCommandClipShare: Will now attempt to start Mus." )            
+            TRAP( error, StartApplicationL( *manager, MultimediaSharing::EMusClipVideo ) );
+            
             break;
             }
         case EMusCommandImageShare:
             {
             MUS_LOG( "mus: [AIWPRO]     \
                     EMusCommandImageShare: Will now attempt to start Mus." )
-            TRAP( error, manager->StartApplicationL(
-                                        MultimediaSharing::EMusStillImage ) );
+            TRAP( error, StartApplicationL( *manager, MultimediaSharing::EMusStillImage ) );
             break;
             }
         case EMusCommandContinue:
             {
             MUS_LOG( "mus: [AIWPRO]     \
                     EMusCommandContinue: Will now attempt to start/continue Mus." )
-            TRAP( error, manager->StartApplicationL( 
-                                        MultimediaSharing::EMusContinue ) ); 
+            TRAP( error, StartApplicationL( *manager, MultimediaSharing::EMusContinue ) ); 
             break;
             }
         default:
@@ -546,6 +589,131 @@ void CMusAiwProvider::HandleMenuCmdL(
         }
 
     MUS_LOG( "mus: [AIWPRO]  <- CMusAiwProvider::HandleMenuCmdL" )
+    }
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
+TBool CMusAiwProvider::AvailabilityOk( 
+    MultimediaSharing::TMusAvailabilityStatus aAvailability ) const
+    {
+    return (
+        aAvailability == MultimediaSharing::ESipRegistrationPending || 
+        aAvailability == MultimediaSharing::ESipOptionsSent ||
+        aAvailability == MultimediaSharing::EMultimediaSharingAvailable ||
+        aAvailability == MultimediaSharing::EErrCallOnHold ||
+        aAvailability == MultimediaSharing::EErrConferenceCall ||             
+        aAvailability == MultimediaSharing::ESipOptionsNotCapable ||
+        aAvailability == MultimediaSharing::ESipOptionsNotSent ||
+        aAvailability == MultimediaSharing::EErrNetwork ||
+        aAvailability == MultimediaSharing::EManualActivation ||
+        aAvailability == MultimediaSharing::EErrConnection ||
+        aAvailability == MultimediaSharing::EErrSipRegistration );
+    }
+
+// -----------------------------------------------------------------------------
+// App's fastswap visibility status is interesting only in fast mode.
+// -----------------------------------------------------------------------------
+//
+TBool CMusAiwProvider::HiddenFromFastSwapL()
+    {
+    MUS_LOG( "mus: [AIWPRO]  -> CMusAiwProvider::HiddenFromFastSwapL" )
+    
+    TBool hidden( EFalse );
+    if ( !IsFastStartupModeL() )
+        {
+        MUS_LOG( "mus: [AIWPRO]  <- CMusAiwProvider::HiddenFromFastSwapL" )
+        return hidden;
+        }
+    
+    const TInt KMusAiwMaxHiddenAppSizeMod = 4;
+    TBuf16 <KMusAiwMaxHiddenAppSizeMod*KMaxHiddenApps> hiddenList;
+    TInt err = RProperty::Get( KPSUidUikon, KUikAppHiddenList, hiddenList );
+    MUS_LOG1( "mus: [AIWPRO] Hidden list read:%d", err )
+    
+    if ( err == KErrNone )
+        {
+        TBool continueFinding( ETrue );
+        MUS_LOG1( "mus: [AIWPRO] Hidden list len:%d", hiddenList.Length() )
+        for ( TInt i = 0; i < KMaxHiddenApps && continueFinding; i++ )
+            {
+            // 32-bit uid values are retrieved in two 16-bit parts
+            __ASSERT_ALWAYS( hiddenList.Length() > i + 1, User::Leave( KErrEof ) );
+            TUint32 listValue = hiddenList[ i ] << 16;
+            listValue += hiddenList[ ++i ];
+            // the value NULL marks the end of array -> leave the loop
+            if ( listValue )
+                {
+                MUS_LOG1( "mus: [AIWPRO]     Hidden uid:%d", listValue )
+                if ( listValue == KMusUiUid )
+                    {
+                    hidden = ETrue;
+                    continueFinding = EFalse;
+                    }
+                }
+            else
+                {
+                // Zero value means ending of list
+                continueFinding = EFalse;
+                }
+            }
+        }
+    
+    MUS_LOG1( "mus: [AIWPRO]  <- CMusAiwProvider::HiddenFromFastSwapL:%d", hidden )
+    
+    return hidden;
+    }
+
+// -----------------------------------------------------------------------------
+// Check whether fast mode is enabled, take in count that key
+// might not be present.
+// -----------------------------------------------------------------------------
+//
+TBool CMusAiwProvider::IsFastStartupModeL()
+    {
+    TBool fastModeEnabled( EFalse );
+    MusSettingsKeys::TFastMode fastMode( MusSettingsKeys::EFastModeOff );
+    TRAPD( err, fastMode = MultimediaSharingSettings::FastStartupModeL() );
+    if ( err == KErrNoMemory )
+        {
+        User::Leave( err );
+        }
+    if ( err == KErrNone )
+        {
+        fastModeEnabled = ( fastMode == MusSettingsKeys::EFastModeOn );
+        }
+    return fastModeEnabled;
+    }
+
+// -----------------------------------------------------------------------------
+// If fast mode is enabled and app is running and hidden, it has been started
+// with live use-case but user does not know that. If user tries to do
+// clip usecase in such situation, use case is just updated and engine
+// takes case of bringing hidden application to foreground.
+// -----------------------------------------------------------------------------
+//
+void CMusAiwProvider::StartApplicationL( 
+    CMusManager& aManager, MultimediaSharing::TMusUseCase aUseCase )
+    {
+    MUS_LOG( "mus: [AIWPRO]  -> CMusAiwProvider::StartApplicationL" )
+    
+    TBool startApp( ETrue );
+    if ( IsFastStartupModeL() && aUseCase == MultimediaSharing::EMusClipVideo && 
+         ApplicationRunningL() && HiddenFromFastSwapL() )
+        {
+        MUS_LOG( "mus: [AIWPRO]     App already running hidden, change only usecase!" )
+        User::LeaveIfError( RProperty::Set( 
+                NMusSessionApi::KCategoryUid, NMusSessionApi::KUseCase, aUseCase ) );
+        startApp = EFalse;
+        }
+    
+    if ( startApp )
+        {
+        aManager.StartApplicationL( aUseCase );
+        }
+    
+    MUS_LOG( "mus: [AIWPRO]  <- CMusAiwProvider::StartApplicationL" )
     }
 
 // end of file

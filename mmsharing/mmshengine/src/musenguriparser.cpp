@@ -22,7 +22,6 @@
 
 #include <uri8.h>
 #include <charconv.h>
-//#include <f32file.h>
 #include <utf.h>
 #include <collate.h>
 
@@ -34,7 +33,7 @@
 // UTF7 is not working, since it converts + as +-
 // -----------------------------------------------------------------------------
 //
-EXPORT_C TMusEngUriParser::TMusEngUriParser( const TDesC16& aUri )
+TMusEngUriParser::TMusEngUriParser( const TDesC16& aUri )
     :iUriType( ENotParsed )
     {
     TBuf8<KMaxUriLength> buf;
@@ -49,22 +48,20 @@ EXPORT_C TMusEngUriParser::TMusEngUriParser( const TDesC16& aUri )
         }
     }
 
-
 // ----------------------------------------------------------------------------- 
 //
 // -----------------------------------------------------------------------------
 //
-EXPORT_C TMusEngUriParser::TMusEngUriType TMusEngUriParser::UriType()
+TMusEngUriParser::TMusEngUriType TMusEngUriParser::UriType()
     {
     return iUriType;
     }
-    
 
 // ----------------------------------------------------------------------------- 
 //
 // -----------------------------------------------------------------------------
 //
-EXPORT_C HBufC8* TMusEngUriParser::GetUri8L()
+HBufC8* TMusEngUriParser::GetUri8L()
     {
     MUS_LOG( "mus: [ENGINE]  -> TMusEngUriParser::GetUri8L()" )
     
@@ -76,15 +73,13 @@ EXPORT_C HBufC8* TMusEngUriParser::GetUri8L()
     MUS_LOG( "mus: [ENGINE]  <- TMusEngUriParser::GetUri8L()" )
 
     return uri8;
-
     }
-
 
 // -----------------------------------------------------------------------------
 // 
 // -----------------------------------------------------------------------------
 //
-EXPORT_C HBufC16* TMusEngUriParser::GetUri16L( TBool aPrefix )
+HBufC16* TMusEngUriParser::GetUri16L( TBool aPrefix )
     {
     MUS_LOG( "mus: [ENGINE]  -> TMusEngUriParser::GetUri16L()" )
     
@@ -106,16 +101,13 @@ EXPORT_C HBufC16* TMusEngUriParser::GetUri16L( TBool aPrefix )
     MUS_LOG( "mus: [ENGINE]  <- TMusEngUriParser::GetUri16L()" )
     
     return uri16;
-   
     }
 
-
-// -----------------------------------------------------------------------------
-// 
+// ----------------------------------------------------------------------------- 
 //
 // -----------------------------------------------------------------------------
 //
-EXPORT_C void TMusEngUriParser::ParseUriL()
+void TMusEngUriParser::ParseUriL()
     {
     MUS_LOG( "mus: [ENGINE]  -> TMusEngUriParser::ParseUriL()" )
     
@@ -135,7 +127,7 @@ EXPORT_C void TMusEngUriParser::ParseUriL()
             {// basic behaviour
             MUS_LOG( "mus: [ENGINE]  -> TMusEngUriParser::ParseUriL() \
                     normal behaviour" )
-            User::Leave( KErrCorrupt );
+            User::Leave( KErrArgument );        
             }
         else
             { // variant behaviour(local tel uri)
@@ -144,9 +136,7 @@ EXPORT_C void TMusEngUriParser::ParseUriL()
         }
     }
 
-
 // -----------------------------------------------------------------------------
-// 
 //
 // -----------------------------------------------------------------------------
 //
@@ -189,18 +179,13 @@ void TMusEngUriParser::HandleSipUriL()
     
     iUriType = TMusEngUriParser::ESip;
     }
-    
    
-   
-   
-// -----------------------------------------------------------------------------
-// 
+// ----------------------------------------------------------------------------- 
 //
 // -----------------------------------------------------------------------------
 //
 void TMusEngUriParser::HandleTelUriL()
     {
-    // Remove leading and trailing whitespaces
     iUri.TrimAll();
     if ( iUri.FindF( KMusEngTelPrefix() ) != 0 )
         {
@@ -223,8 +208,6 @@ void TMusEngUriParser::HandleTelUriL()
 
     TInt index = KMusEngTelPrefix().Length() + KMusEngPlusSign().Length();
 
-    // Remove whitespaces and extra chracters like parentheses. Check that the
-    // rest characters are digits
     while ( index < iUri.Length() )
         {
         TChar character = iUri[ index ];
@@ -245,9 +228,7 @@ void TMusEngUriParser::HandleTelUriL()
     iUriType = TMusEngUriParser::ETel;
     }
     
-    
 // -----------------------------------------------------------------------------
-// 
 //
 // -----------------------------------------------------------------------------
 //
@@ -258,8 +239,7 @@ void TMusEngUriParser::HandleLocalTelUriL()
     if ( iUri.FindF( KMusEngTelPrefix() ) != 0 )
         {
         // local tel uri without prefix
-        if ( iUri.Length() + KMusEngTelPrefix().Length() <=
-             KMaxUriLength )
+        if ( iUri.Length() + KMusEngTelPrefix().Length() <= KMaxUriLength )
             {
             iUri.Insert( 0, KMusEngTelPrefix() );
             }
@@ -271,10 +251,7 @@ void TMusEngUriParser::HandleLocalTelUriL()
     else
         {
         //Tel uri with prefix
-        iUri.Replace(
-                0,
-                KMusEngTelPrefix().Length(),
-                KMusEngTelPrefix() );
+        iUri.Replace( 0, KMusEngTelPrefix().Length(), KMusEngTelPrefix() );
         }
 
     TInt index = KMusEngTelPrefix().Length();
@@ -292,6 +269,5 @@ void TMusEngUriParser::HandleLocalTelUriL()
         
     iUriType = TMusEngUriParser::ETel;
     }
-    
-    
+
 // End of file

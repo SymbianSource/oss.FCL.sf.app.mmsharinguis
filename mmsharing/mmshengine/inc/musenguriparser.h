@@ -54,12 +54,12 @@ class TMusEngUriParser
 		/**
 		* Default constructor
 		*/
-     	IMPORT_C TMusEngUriParser( const TDesC16& aUri );
+     	TMusEngUriParser( const TDesC16& aUri );
      	
      	/**
 		* @returns Uri type
 		*/
-     	IMPORT_C TMusEngUriType UriType();
+     	TMusEngUriType UriType();
 
 		/**
 		* @returns Parsed and validated 8-bit version of contained URI
@@ -67,7 +67,7 @@ class TMusEngUriParser
 		* @pre UriType() != ENotParsed
 		* @leave KErrNotReady if precondition is not fulfilled
 		*/
-     	IMPORT_C HBufC8* GetUri8L();
+     	HBufC8* GetUri8L();
      	
      	/**
      	* @param aPrefix if ETrue, also sip: or tel:prefix is returned
@@ -76,14 +76,14 @@ class TMusEngUriParser
 		* @pre UriType() != ENotParsed
 		* @leave KErrNotReady if precondition is not fulfilled
 		*/
-     	IMPORT_C HBufC16* GetUri16L( TBool aPrefix );
+     	HBufC16* GetUri16L( TBool aPrefix );
      
      	/**
         * Parses and validates contained URI
         * @leave KErrCorrupt if URI is not valid SIP or TEL URI
         * @post UriType() != ENotParsed
         */
-        IMPORT_C void ParseUriL();
+        void ParseUriL();
         
      	
     private:
@@ -92,11 +92,10 @@ class TMusEngUriParser
         void HandleTelUriL();
         void HandleLocalTelUriL();
         
-    
-		TBuf8<KMaxUriLength> iUri;
-
-        TMusEngUriType iUriType;
+    private: // Data
         
+		TBuf8<KMaxUriLength> iUri;
+        TMusEngUriType iUriType; 
     };
 
-#endif
+#endif // MUSENGURIPARSER_H

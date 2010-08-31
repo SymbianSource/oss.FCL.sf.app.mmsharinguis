@@ -1,19 +1,18 @@
 <?xml version="1.0"?>
-<!DOCTYPE SystemDefinition SYSTEM "sysdef_1_4_0.dtd" [
+<!DOCTYPE SystemDefinition SYSTEM "sysdef_1_5_1.dtd" [
   <!ENTITY layer_real_source_path "sf/app/mmsharinguis" >
 ]>
 
-<SystemDefinition name="mmsharinguis" schema="1.4.0">
+<SystemDefinition name="mmsharinguis" schema="1.5.1">
   <systemModel>
     <layer name="app_layer">
       <module name="mmsharinguis">
-  		<unit unitID="msdo.mmsharinguis"  name="mmsharinguis" bldFile="&layer_real_source_path;/group" mrp=""/> 
+        <unit name="mmsharinguis" unitID="msdo.mmsharinguis" bldFile="&layer_real_source_path;" mrp="" proFile="mmsharinguis.pro" />
       </module>
     </layer>
-
     <layer name="api_test_layer">
       <module name="mmsharinguis_api_test">
-        <unit unitID="msdo.mmsharinguis_api_test" mrp="" bldFile="&layer_real_source_path;/mmsharinguis_plat/multimedia_sharing_manager_api/tsrc/group" name="mmsharinguis_api_test" />
+        <unit unitID="msdo.mmsharinguis_api_test" mrp="" bldFile="\sf\app\mmsharinguis\mmsharinguis_plat\multimedia_sharing_manager_api\tsrc\group" name="mmsharinguis_api_test" />
       </module>
     </layer>
   </systemModel>

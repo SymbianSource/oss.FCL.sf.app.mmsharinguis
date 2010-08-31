@@ -86,6 +86,9 @@ class CMceOutSession : public CMceSession
 	    */
 		IMPORT_C static CMceOutSession* NewL(CMceRefer& aRefer);
 	    
+		/// Note: This function exists only in the stub
+	    IMPORT_C static	CMceOutSession* NewL();
+		
 	    /**
 	    * Destructor.
 	    */

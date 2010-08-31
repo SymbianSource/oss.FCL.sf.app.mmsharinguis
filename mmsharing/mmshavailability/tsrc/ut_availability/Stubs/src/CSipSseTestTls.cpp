@@ -36,7 +36,7 @@ void CSipSseTestTls::OpenL ()
     self->ClientRequest( NULL );
     self->ClientResponse( SIPStrings::StringF( SipStrConsts::EEmpty ), NULL );
     Dll::SetTls( self );
-	
+
     User::LeaveIfError( self->Set ( MusSettingsKeys::KActivation,
                             MusSettingsKeys::EAlwaysActive ) );
     User::LeaveIfError( self->Set ( MusSettingsKeys::KAuditoryNotification,
@@ -57,7 +57,9 @@ void CSipSseTestTls::OpenL ()
                             MusSettingsKeys::EPortrait ) );                    
     User::LeaveIfError( self->Set ( MusSettingsKeys::KCapabilityQuery,
                             MusSettingsKeys::ENoOptions ) );
-
+    User::LeaveIfError( self->Set ( MusSettingsKeys::KAllowOnlyIn3GNetwork,
+                            MusSettingsKeys::EAllowedAllBearers ) );
+                            
 	}
 
 void CSipSseTestTls::Close ()
@@ -108,6 +110,9 @@ void CSipSseTestTls::Reset()
         MusSettingsKeys::EPortrait );
     Storage()->Set ( MusSettingsKeys::KCapabilityQuery,
         MusSettingsKeys::ENoOptions );
+        
+   	Storage()->Set ( MusSettingsKeys::KAllowOnlyIn3GNetwork,
+	   	MusSettingsKeys::EAllowedAllBearers );       
 
     iRegistryBehavior = 0;
     iProfileBehavior = 0;

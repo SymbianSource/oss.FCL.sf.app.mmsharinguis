@@ -699,13 +699,6 @@
 #define qtn_msh_set_activation_off               "Off"
 
 // d:Text of a list item in video sharing settings view
-// d:Activation setting: on
-// l:list_set_graphic_pane_t1
-// r:3.2
-//
-#define qtn_msh_set_activation_on               "On"
-
-// d:Text of a list item in video sharing settings view
 // d:Capability auditory note setting title
 // l:list_setting_pane_t1
 // r:3.2

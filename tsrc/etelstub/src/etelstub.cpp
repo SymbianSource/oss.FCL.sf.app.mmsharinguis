@@ -27,8 +27,7 @@ static RMobileConferenceCall::TMobileConferenceEvent iConfEvent = RMobileConfere
 static RMobileCall::TMobileCallStatus iCallStatus = RMobileCall::EStatusIdle; 
 static RMobileCall::TMobileCallDirection iDirection = RMobileCall::EDirectionUnknown;
 static TBool iReqToCancel = EFalse;
-static RTelSubSessionBase::TCalledFunction iCalledFunction = RTelSubSessionBase::ENone;
-static RMobileCall::TMobileCallRemoteIdentityStatus iRemoteIdStatus = RMobileCall::ERemoteIdentityUnknown;
+static RTelSubSessionBase::TCalledFunction iCalledFunction = RTelSubSessionBase::ENone;  
 
 
 EXPORT_C TInt RTelServer::Connect( int )
@@ -68,7 +67,9 @@ EXPORT_C RMobileCall::RMobileCall()
     
 EXPORT_C void RCall::Close()
     {
-
+    iCallEvent = RMobileCall::ELocalBarred;
+    iCallStatus = RMobileCall::EStatusUnknown; 
+    iDirection = RMobileCall::EDirectionUnknown;
     }
     
 EXPORT_C void RLine::Close()
@@ -226,7 +227,6 @@ EXPORT_C TInt RMobileCall::GetMobileCallInfo( TDes8& aBuffer )   const
     callInfo.iRemoteParty.iRemoteNumber.iTelNumber.Copy( KNumber() );
     callInfo.iRemoteParty.iDirection = iDirection;
     callInfo.iEmergency = iEmergency;
-    callInfo.iRemoteParty.iRemoteIdStatus = iRemoteIdStatus;
     RMobileCall::TMobileCallInfoV3Pckg pckg( callInfo );
     
     aBuffer.Copy( pckg );
@@ -365,24 +365,3 @@ void RTelHelper::SetCallEmergency( TBool aVal )
     {
     iEmergency = aVal;
     }
-void RTelHelper::SetRemoteIdStatus( RMobileCall::TMobileCallRemoteIdentityStatus aStatus )
-    {
-    iRemoteIdStatus = aStatus;
-    }
-
-EXPORT_C void
-RMobilePhone::GetIdentityServiceStatus(TRequestStatus& aReqStatus,
-	TMobilePhoneIdService /*aService*/,
-	TMobilePhoneIdServiceStatus& /*aStatus*/,
-	TMobileInfoLocation /*aLocation*/) const
-	{
-	aReqStatus = KRequestPending;
-	}
-
-EXPORT_C void
-RMobilePhone::NotifyIdentityServiceStatus(TRequestStatus& aReqStatus,
-	const TMobilePhoneIdService /*aService*/,
-	TMobilePhoneIdServiceStatus& /*aStatus*/) const
-	{
-	aReqStatus = KRequestPending;
-	}

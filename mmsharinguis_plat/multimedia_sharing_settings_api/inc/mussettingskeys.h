@@ -202,19 +202,84 @@ namespace MusSettingsKeys
       * Contains UID of the encoding device meant to be used. Read by MuS Engine
       */
     const TInt KEncodingDevice( 0x0F );
-    
-    /** Defines the type of privcy exchange. 
-     Defines that how are SIP PRIVACY id handled */
-    const TInt KPrivacyExchange( 0x10 );
-   
-    enum TPrivacyExchange
+
+    /**
+      * Defines whether multimediasharing is restricted to CS call type only.
+      * Default value will be 0 ( EFalse ) means it is allowed in all call types
+      * for example VOIP and Skype calls.
+      */
+    const TInt KAllowOnlyWithActiveCSCall( 0x10 );
+    /** Contains the possible values of KAllowedCSOnly key. */
+    enum TAllowedCSOnly
         {
-        EPrivacy = 1,
-        ENoPrivacy
+        EAllowedAllCalls,
+        EAllowedCSOnly        
         };
-        
+
+    /**
+      * Defines whether multimediasharing is restricted to 3G bearer only.
+      * Default value will be 0 ( EFalse ) means it is allowed in all bearer types
+      * for example 3G,WLAN etc.
+      */
+    const TInt KAllowOnlyIn3GNetwork( 0x11 );
+    /** Contains the possible values of KAllowed3GOnly key. */
+    enum TAllowed3GOnly
+        {
+        EAllowedAllBearers,
+        EAllowed3GOnly        
+        };
+
+    /**
+     * Defines which and how cameras are used. The default value
+     * is EUseCameraSwapping. To disable camera swapping and roll back
+     * old behaviuor, value must be set to EUseOnlyMainCamera.
+     * to the menu or to the toolbar.
+     */
+    const TInt KCameraUsage( 0x12 );
+
+    /** Contains the possible values of KCameraUsage key. */
+    enum TUseCamera
+        {
+        EUseOnlyMainCamera,
+        EUseOnlySecondaryCamera,
+        EUseCameraSwapping
+        };
+
+    /**
+     * Defines whether multimediasharing is supporting 2-way video. The
+     * default value is EOneWayVideo. 
+     */
+    const TInt KVideoDirection( 0x13 );
+    
+    /** Contains the possible values of KVideoDirection key. */
+    enum TVideoDirection
+        {
+        EOneWayVideo,
+        ETwoWayVideo
+        };
+    
+    /**
+     * Defines whether b=AS and b=TIAS SDP attributes are used. Zero value 
+     * means that usage of TIAS is disabled, only AS will be used (hard coded
+     * value). Positive value means AS in KBits per second. TIAS value will 
+     * be set to AS multiplied by 1000.
+     */
+    const TInt KVideoBandwidth( 0x14 );
+    
+    /**
+     * Defines whether multimediasharing is supporting fast startup mode
+     */
+    const TInt KFastStartupMode( 0x15 );
+    
+    /** Contains the possible values of KFastStartupMode key. */
+    enum TFastMode
+        {
+        EFastModeOn,
+        EFastModeOff,
+        EFastModeDisabled
+        };    
     }
 
-
+    
 #endif // MUSSETTINGSKEYS_H
   

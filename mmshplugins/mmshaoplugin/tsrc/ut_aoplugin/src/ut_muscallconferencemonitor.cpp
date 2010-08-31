@@ -96,6 +96,9 @@ void UT_CMusCallConferenceMonitor::SetupL()
                     NMusSessionInformationApi::KMusCallCount,
                     1 );
     */
+    
+    RTelHelper::SetConfStatus( RMobileConferenceCall::EConferenceIdle );
+
     RProperty::Set( NMusSessionInformationApi::KCategoryUid,
                      NMusSessionInformationApi::KMusCallEvent,
                      0 );
@@ -104,7 +107,6 @@ void UT_CMusCallConferenceMonitor::SetupL()
                     CMusCallConferenceMonitor::NewL(  iMobilePhone,
                                                       iLine ,
                                                       iCallMonitorArray );
-    
     }
 
 
@@ -218,6 +220,14 @@ void UT_CMusCallConferenceMonitor::UT_CMusCallConferenceMonitor_MonitorCallLL()
     
     }
 
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusCallConferenceMonitor::UT_CMusCallConferenceMonitor_GetConfStatus()
+    {
+    EUNIT_ASSERT( iConferenceCallMonitor->GetConfStatus() == RMobileConferenceCall::EConferenceIdle );
+    }
 
 //  TEST TABLE
 
@@ -260,6 +270,13 @@ EUNIT_TEST(
     "MonitorCallL",
     "FUNCTIONALITY",
     SetupL, UT_CMusCallConferenceMonitor_MonitorCallLL, Teardown)
+    
+EUNIT_TEST(
+    "GetCconfStatusL - test ",
+    "CMusConferenceCallMonitor",
+    "GetCconfStatus",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusCallConferenceMonitor_GetConfStatus, Teardown)
     
 
 EUNIT_END_TEST_TABLE

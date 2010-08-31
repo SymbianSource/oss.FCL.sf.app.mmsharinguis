@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Resource file for MUSSettingsPlugin.
-*  Version     : %version: be1sipx1#19 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: 19 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -229,6 +229,20 @@ RESOURCE LISTBOX r_sip_select_setting_page_control
     }
 
 // ---------------------------------------------------------------------------
+// r_vs_video_saving_setting_page
+// Video saving setting page.
+// ---------------------------------------------------------------------------
+//
+RESOURCE AVKON_SETTING_PAGE r_vs_video_saving_setting_page
+    {
+    number = EAknSettingPageNoOrdinalDisplayed;
+    label = qtn_msh_set_saving_title;
+    softkey_resource = R_AVKON_SOFTKEYS_OK_CANCEL__OK;
+    type = EAknSetListBox;
+    editor_resource_id = r_setting_listbox;
+    }
+
+// ---------------------------------------------------------------------------
 // r_vs_recorded_video_saving_setting_page
 // Recorded video saving setting page.
 // ---------------------------------------------------------------------------
@@ -285,7 +299,7 @@ RESOURCE ARRAY r_operator_activation_setting_page_lbx
         {
         LBUF
             {
-            txt = qtn_msh_set_activation_on;
+            txt = qtn_msh_set_activation_always;
             },
         LBUF
             {
@@ -293,7 +307,6 @@ RESOURCE ARRAY r_operator_activation_setting_page_lbx
             }
         };
     }
-
 
 // ---------------------------------------------------------------------------
 // r_activation_setting_page_lbx
@@ -415,11 +428,11 @@ RESOURCE MENU_BAR r_vs_menubar_change_exit
         MENU_TITLE
             {
             menu_pane = r_vs_menu_item_exit;
-            }/*,
+            },
         MENU_TITLE
             {
             menu_pane = r_vs_menu_item_change;
-            }*/
+            }
         };
     }
 
@@ -448,7 +461,7 @@ RESOURCE MENU_PANE r_vs_menu_item_exit
             }
         };
     }
-/*
+
 // ---------------------------------------------------------------------------
 //    r_vs_settings_menu_item_change
 //    Options menu item 'Change'.
@@ -465,7 +478,7 @@ RESOURCE MENU_PANE r_vs_menu_item_change
             }
         };
     }
-*/
+
 // ---------------------------------------------------------------------------
 // r_setting_listbox
 // Common listbox editor resource for setting pages.

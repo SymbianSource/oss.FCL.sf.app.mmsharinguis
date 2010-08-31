@@ -16,28 +16,58 @@
 */
 
 
-#ifndef MUSHENGCLIPSESSIONOBSERVER_H
-#define MUSHENGCLIPSESSIONOBSERVER_H
+#ifndef MUSENGCLIPSESSIONOBSERVER_H
+#define MUSENGCLIPSESSIONOBSERVER_H
 
 // INCLUDES
-#include <e32std.h>
-#include "musengoutsessionobserver.h"
+#include <e32def.h>
 
 // CLASS DECLARATION
 
 /**
-*  An interface to be implemented by users of Multimedia Sharing Engine if they wish to receive
-*  events from session state changes.
+*  An interface to be implemented by users of Multimedia Sharing Engine 
+*  if they wish to receive clip sharing specific events.
 *
-*  This observer is set using CMSSession::SetSessionObserver function.
+*  This observer is set using CMusEngClipSession::SetSessionObserver function.
 *
-*  @lib ???.lib
 */
-class MMusEngClipSessionObserver : public MMusEngOutSessionObserver
+class MMusEngClipSessionObserver
     {
     public: 
     
+        /**
+	    * Indicates that shared clip has ended.
+	    */
         virtual void EndOfClip() = 0;        
+        
+        /**
+	    * Indicates that chosen clip must be transcoded before sharing.
+	    */
+        virtual void TranscodingNeeded() = 0;
+        
+        /**
+	    * Indicates that transcoding has progressed.
+	    * @param aPercentage Percentage of completion
+	    */
+        virtual void TranscodingProgressed( TInt aPercentage ) = 0;
+        
+        /**
+	    * Indicates that transcoding has successfully complited
+	    * but session establishment is not yet proceeding.
+	    */
+        virtual void TranscodingCompletedInit() = 0;
+        
+        /**
+	    * Indicates that transcoding has successfully complited
+	    * and session establishment continues.
+	    */
+        virtual void TranscodingCompletedFinalize() = 0;
+        
+        /**
+	    * Indicates that transcoding has failed.
+	    */
+        virtual void TranscodingFailed() = 0;
+        
     };
 
 #endif

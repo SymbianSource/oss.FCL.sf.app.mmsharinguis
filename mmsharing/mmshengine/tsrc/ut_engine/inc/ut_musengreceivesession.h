@@ -27,9 +27,10 @@
 //  FORWARD DECLARATIONS
 class CMceInSession;
 class CMusEngReceiveSession;
-class CMusEngObserverStub;
+class CLcSessionObserverStub;
 class CMceVideoStream;
 class CMceAudioStream;
+class CLcUiProviderStub;
 
 #include <e32def.h>
 #ifndef NONSHARABLE_CLASS
@@ -79,7 +80,11 @@ NONSHARABLE_CLASS( UT_CMusEngReceiveSession ): public CEUnitTestSuiteClass
     private: // Test methdods
     
         void UT_NewLL();
-        void UT_AcceptInvitationLL();
+        void UT_LcSessionStateL();
+        void UT_EstablishLcSessionL();
+        void UT_TerminateLcSessionL();
+        void UT_RemoteVideoPlayerL();        
+        void UT_RemoteDisplayName();        
         void UT_HandleSessionStateChangedL();
         void UT_AdjustVideoCodecLL();
         void UT_AdjustAudioCodecLL();
@@ -87,9 +92,6 @@ NONSHARABLE_CLASS( UT_CMusEngReceiveSession ): public CEUnitTestSuiteClass
         void UT_IncomingSessionL();
         void UT_IncomingUpdateL();
         void UT_StreamStateChangedL();
-        
-        // All the following functions test
-        // CMusEngReceiveSession::CompleteSessionStructureL
         void UT_CompleteSessionStructureL_WithoutSessionL();
         void UT_CompleteSessionStructureL_WithoutStreamsL();
         void UT_CompleteSessionStructureL_WithOutgoingStreamL();
@@ -98,14 +100,18 @@ NONSHARABLE_CLASS( UT_CMusEngReceiveSession ): public CEUnitTestSuiteClass
         void UT_CompleteSessionStructureL_WithVideoInBoundToVideoOutL();
         void UT_CompleteSessionStructureL_WithMultipleVideoInsL();
         void UT_CompleteSessionStructureL_WithVideoAndMultipleAudioInsL();
-        void UT_CompleteSessionStructureL_OperatorVariant();
-        
+        void UT_CompleteSessionStructureL_OperatorVariant();   
+        void UT_CompleteSessionStructureL_SdpBandwidthAttributesL();   
         void UT_ParseAssertedIdentityL();
+        void UT_ContactSavingLL();
+        void UT_IsDisplayActive();
+        void UT_InactivityTimeoutL();
         
     private:    // Data
 
         CMusEngReceiveSession* iReceiveSession;
-        CMusEngObserverStub* iObserver;
+        CLcSessionObserverStub* iLcSessionObserver;
+        CLcUiProviderStub* iLcUiProvider;
 
         EUNIT_DECLARE_TEST_TABLE;
 

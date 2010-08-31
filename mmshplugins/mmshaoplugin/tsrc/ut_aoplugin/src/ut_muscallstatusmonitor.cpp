@@ -111,7 +111,7 @@ void UT_CMusCallStatusMonitor::SetupL()
                      NMusSessionInformationApi::KMusCallEvent,
                      NMusSessionInformationApi::ENoCall );
     
-    iCallStatusMonitor = CMusCallStatusMonitor::NewL( iCall, *this ); 
+    iCallStatusMonitor = CMusCallStatusMonitor::NewL( iCall, *this, *this ); 
     }
 
 
@@ -173,40 +173,34 @@ void UT_CMusCallStatusMonitor::UT_CMusCallStatusMonitor_CheckStateLL()
         callEvent  )
     
     // RMobileCall::EStatusDisconnecting
-    User::LeaveIfError(
-        RProperty::Get( NMusSessionInformationApi::KCategoryUid,
-                        NMusSessionInformationApi::KMusCallEvent,
-                        callEvent ) );
-    TInt callEnt = callEvent;
     iCallStatusMonitor->iCallStatus = RMobileCall::EStatusDisconnecting;
     iCallStatusMonitor->CheckStateL();
     User::LeaveIfError(
         RProperty::Get( NMusSessionInformationApi::KCategoryUid,
                         NMusSessionInformationApi::KMusCallEvent,
                         callEvent ) );  
-    EUNIT_ASSERT( callEnt==callEvent );
+    EUNIT_ASSERT_EQUALS( 
+        static_cast< TInt >( NMusSessionInformationApi::ENoCall ),
+        callEvent )
     EUNIT_ASSERT( iCallStatusMonitor == NULL )
     
     // RMobileCall::EStatusDisconnectingWithInband
     // iCallStatusMonitor was deleted by the previous call
-    iCallStatusMonitor = CMusCallStatusMonitor::NewL( iCall, *this );
-    User::LeaveIfError(
-        RProperty::Get( NMusSessionInformationApi::KCategoryUid,
-                        NMusSessionInformationApi::KMusCallEvent,
-                        callEvent ) );
-    callEnt = callEvent;
+    iCallStatusMonitor = CMusCallStatusMonitor::NewL( iCall, *this, *this );
     iCallStatusMonitor->iCallStatus = RMobileCall::EStatusDisconnectingWithInband;
     iCallStatusMonitor->CheckStateL();
     User::LeaveIfError(
         RProperty::Get( NMusSessionInformationApi::KCategoryUid,
                         NMusSessionInformationApi::KMusCallEvent,
                         callEvent ) );    
-    EUNIT_ASSERT( callEnt == callEvent );
+    EUNIT_ASSERT_EQUALS( 
+        static_cast< TInt >( NMusSessionInformationApi::ENoCall ),
+        callEvent )
     EUNIT_ASSERT( iCallStatusMonitor == NULL )
     
     // RMobileCall::EStatusHold
     // iCallStatusMonitor was deleted by the previous call
-    iCallStatusMonitor = CMusCallStatusMonitor::NewL( iCall, *this ); 
+    iCallStatusMonitor = CMusCallStatusMonitor::NewL( iCall, *this, *this ); 
     iCallStatusMonitor->iCallStatus = RMobileCall::EStatusHold;
     iCallStatusMonitor->CheckStateL();
     User::LeaveIfError(
@@ -300,7 +294,14 @@ void UT_CMusCallStatusMonitor::UT_CMusCallStatusMonitor_RunErrorL()
     }
 
 
-   
+// -----------------------------------------------------------------------------
+//  MusCallStateChanged from the MusCallStateObserver 
+// -----------------------------------------------------------------------------
+//
+void UT_CMusCallStatusMonitor::MusCallStateChanged()
+    {
+    // NOP
+    }   
 
 
 //  TEST TABLE

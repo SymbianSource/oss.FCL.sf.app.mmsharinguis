@@ -27,6 +27,7 @@ UID             0x1000af5a 0x10282394
 CAPABILITY              EUNIT_CAPS
 VENDORID                VID_DEFAULT
 
+
 MACRO                   UNIT_TESTING
 EPOCSTACKSIZE		0x14000
 EPOCHEAPSIZE		0x020000 0x800000
@@ -50,7 +51,6 @@ SOURCE                  telephonyaudioroutingstub.cpp
 
 SOURCEPATH              ../../../../../tsrc/centralrepositorystub/src
 SOURCE                  centralrepositorystub.cpp
-SOURCE                  cenrepnotifyhandlerstub.cpp
 
 SOURCEPATH              ../../../../../tsrc/drmstub/src
 SOURCE                  drmcommonstub.cpp
@@ -59,37 +59,57 @@ SOURCEPATH              ../../../../../tsrc/mceclientstub/src
 SOURCE                  mcecamerasource.cpp
 SOURCE                  mcemediasource.cpp
 
+SOURCEPATH              ../../../../../tsrc/propertystub/src
+SOURCE		            e32property.cpp
 
+SOURCEPATH              ../../../../../tsrc/contactenginestub/src
+SOURCE		            contactenginestub.cpp
 
 // Test classes
 SOURCEPATH              ../src
-SOURCE                  ut_musengsession.cpp
+SOURCE                  ut_musengsessionmanager.cpp
 SOURCE                  ut_musengmcesession.cpp
 SOURCE                  ut_musengoutsession.cpp
 SOURCE                  ut_musenglivesession.cpp
 SOURCE                  ut_musengclipsession.cpp
 SOURCE                  ut_musengreceivesession.cpp
+SOURCE                  ut_musengtwowaysession.cpp
+SOURCE                  ut_musengtwowayrecvsession.cpp
+SOURCE                  ut_musengcamerahandler.cpp
 SOURCE                  ut_musengsipprofilehandler.cpp
 SOURCE                  ut_musengmceutils.cpp
 SOURCE                  ut_musengtelephoneutils.cpp
 SOURCE                  ut_musengsessiondurationtimer.cpp
 SOURCE                  ut_musenguriparser.cpp
-SOURCE                  ut_musengorientationhandler.cpp
+SOURCE                  ut_musenglivevideoplayer.cpp
+SOURCE                  ut_musengremotevideoplayer.cpp
+SOURCE                  ut_musengclipvideoplayer.cpp
+SOURCE                  ut_muspropertywatch.cpp
 
 // Tested classes
 SOURCEPATH              ../../../src
-SOURCE                  musengsession.cpp
+SOURCE                  musengsessionmanager.cpp
 SOURCE                  musengmcesession.cpp
 SOURCE                  musengmceoutsession.cpp
 SOURCE                  musenglivesession.cpp
 SOURCE                  musengclipsession.cpp
 SOURCE                  musengreceivesession.cpp
+SOURCE                  musengtwowaysession.cpp
+SOURCE                  musengtwowayrecvsession.cpp
 SOURCE                  mussipprofilehandler.cpp
 SOURCE                  musengtelephoneutils.cpp
 SOURCE                  musengsessiondurationtimer.cpp
 SOURCE                  musengmceutils.cpp
 SOURCE                  musenguriparser.cpp
-SOURCE                  musengorientationhandler.cpp
+SOURCE                  musengcamerahandler.cpp
+SOURCE                  musengvideoplayerbase.cpp
+SOURCE                  musenglocalvideoplayer.cpp
+SOURCE                  musenglivevideoplayer.cpp
+SOURCE                  musengremotevideoplayer.cpp
+SOURCE                  musengclipvideoplayer.cpp
+
+SOURCEPATH              ../../../../mmshshared/src
+SOURCE                  muspropertywatch.cpp
 
 // Includes
 
@@ -98,13 +118,13 @@ USERINCLUDE             ../../../inc
 USERINCLUDE             ../../../../mmshshared/inc
 USERINCLUDE             ../../../../inc
 USERINCLUDE             ../../../../../inc
-USERINCLUDE             ../../../../../tsrc/sipprofilestub/inc
+USERINCLUDE           	../../../../../tsrc/sipprofilestub/inc  
 USERINCLUDE             ../../../../../tsrc/centralrepositorystub/inc
+USERINCLUDE             ../../../../../tsrc/propertystub/inc
 USERINCLUDE             ../../../../../tsrc/telephonyaudioroutingstub/inc
 
 // to replace SIP profiles with a stub
 SYSTEMINCLUDE           ../inc
-// to replace profile with a stub
 SYSTEMINCLUDE           ../../../../../tsrc/sipprofilestub/inc 
 // to replace cenrep with a stub
 SYSTEMINCLUDE           ../../../../../tsrc/centralrepositorystub/inc 
@@ -114,12 +134,15 @@ SYSTEMINCLUDE           ../../../../../tsrc/mceclientstub/inc
 SYSTEMINCLUDE           ../../../../../tsrc/telephonyaudioroutingstub/inc 
 // to replace DRMCommon with a stub
 SYSTEMINCLUDE           ../../../../../tsrc/drmstub/inc
+// to replace RProperty with a stub
+SYSTEMINCLUDE           ../../../../../tsrc/propertystub/inc
+// to replace certain parts of contact engine with a stub
+SYSTEMINCLUDE			../../../../../tsrc/contactenginestub/inc
 
-#if defined ( APP_LAYER_SYSTEMINCLUDE )
 APP_LAYER_SYSTEMINCLUDE
-#else
-SYSTEMINCLUDE     /epoc32/include
-#endif
+SYSTEMINCLUDE           /epoc32/include/ecom
+SYSTEMINCLUDE           /epoc32/include/platform/digia/EUnit
+
 
 LIBRARY     euser.lib
 LIBRARY     bafl.lib
@@ -128,8 +151,11 @@ LIBRARY     eunit.lib
 LIBRARY     charconv.lib
 LIBRARY     inetprotutil.lib
 LIBRARY     sipcodec.lib
-LIBRARY     efsrv.lib
+
 LIBRARY 	mceclientstub.lib  
+
+LIBRARY     cntmodel.lib
+LIBRARY		estor.lib
 
 DEBUGLIBRARY		flogger.lib
 

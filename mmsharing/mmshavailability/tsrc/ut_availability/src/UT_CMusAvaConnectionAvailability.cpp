@@ -135,6 +135,114 @@ void UT_CMusAvaConnectionAvailability::UT_CMusAvaConnectionAvailability_NewLL()
 
 void UT_CMusAvaConnectionAvailability::UT_CMusAvaConnectionAvailability_DoExecuteLL()
     {
+	// Test: VS is allowed in All Netwoks by Default. 
+
+	// Test1: VS in 3G Always Allowed. 
+	TInt error = KErrArgument;
+	TInt count = KErrNone;
+    iStorage->SetPhoneNetworkModeStatus( RMobilePhone::ENetworkModeWcdma );
+    iStorage->SetRegistrationStatus( RMobilePhone::ERegisteredOnHomeNetwork );
+    MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::EActiveInHomeNetworks );
+    TRAP( error, iConnectionAvailability->DoExecuteL() );
+    if ( error == KErrNoMemory ) User::Leave( error );
+    EUNIT_ASSERT ( error == KErrNone );
+
+    EUNIT_GET_ALLOC_DECORATOR_FAILCOUNT( count );
+    if ( count > 0 && iConnectionAvailability->State() 
+        == MMusAvaObserver::EMusActivationError )
+        {
+        User::Leave( KErrNoMemory );
+        }
+    EUNIT_ASSERT( iConnectionAvailability->State() ==  MMusAvaObserver::EMusAvaStatusAvailable );
+
+
+	//Test2 : VS is even allowed when Network type is Unknown
+	iStorage->SetPhoneNetworkModeStatus( RMobilePhone::ENetworkModeUnknown );
+    iStorage->SetRegistrationStatus( RMobilePhone::ERegisteredOnHomeNetwork );
+    MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::EAlwaysActive );
+    CMusAvaConnectionMonitor& avaConnectionMonitor = iSharedObject->ConnectionMonitor();
+    avaConnectionMonitor.iConnectionMonitor.iConnectionId = 1; 
+    avaConnectionMonitor.iConnectionMonitor.iConnectionCounter = 1;
+    avaConnectionMonitor.iConnectionMonitor.iUintAttributeValue = 1;
+    avaConnectionMonitor.iConnectionMonitor.iConnectionInfoError = KErrNone;    
+    
+    //EUNIT_DISABLE_ALLOC_DECORATOR;
+    
+    TRAP( error, iConnectionAvailability->DoExecuteL() );
+    if ( error == KErrNoMemory ) User::Leave( error );
+    
+    //EUNIT_DISABLE_ALLOC_DECORATOR;
+    
+    EUNIT_ASSERT ( error == KErrNone );
+    EUNIT_GET_ALLOC_DECORATOR_FAILCOUNT( count );
+    
+    //HKK Define own error condition in which it can fil. 
+    
+    
+    if ( count > 0 && ( iConnectionAvailability->State() 
+        == MMusAvaObserver::EMusActivationError) ||
+        (iConnectionAvailability->State() == MMusAvaObserver::EMusAvaNetworkType ))
+        {
+        User::Leave( KErrNoMemory );
+        }
+    EUNIT_ASSERT( iConnectionAvailability->State() ==  MMusAvaObserver::EMusAvaStatusAvailable );
+	
+	// Test3: VS in GSM Network is Allowed Ensure, PDP Context Need to be up to ensure network does 
+	// support data connection; Note DTM Flag is not needed anymore since VS is allowed in all network. 
+    iStorage->SetPhoneNetworkModeStatus( RMobilePhone::ENetworkModeGsm );
+    iStorage->SetRegistrationStatus( RMobilePhone::ERegisteredOnHomeNetwork );
+    
+    MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::EAlwaysActive );
+    avaConnectionMonitor.iConnectionMonitor.iConnectionId = 1; 
+    avaConnectionMonitor.iConnectionMonitor.iConnectionCounter = 1;
+    avaConnectionMonitor.iConnectionMonitor.iUintAttributeValue = 1;
+    avaConnectionMonitor.iConnectionMonitor.iConnectionInfoError = KErrNone;    
+    TRAP( error, iConnectionAvailability->DoExecuteL() );
+    if ( error == KErrNoMemory ) User::Leave( error );
+    EUNIT_ASSERT ( error == KErrNone );
+    EUNIT_GET_ALLOC_DECORATOR_FAILCOUNT( count );
+    if ( count > 0 && ( iConnectionAvailability->State() 
+        == MMusAvaObserver::EMusActivationError ) ||
+        (iConnectionAvailability->State() == MMusAvaObserver::EMusAvaNetworkType ))
+        
+        {
+        User::Leave( KErrNoMemory );
+        }
+    EUNIT_ASSERT( iConnectionAvailability->State() ==  MMusAvaObserver::EMusAvaStatusAvailable );
+	
+	
+	// Test4: VS in GSM Network is dis-allowed if PDP context is not up. 
+    iStorage->SetPhoneNetworkModeStatus( RMobilePhone::ENetworkModeGsm );
+    iStorage->SetRegistrationStatus( RMobilePhone::ERegisteredOnHomeNetwork );
+    MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::EAlwaysActive );
+    avaConnectionMonitor.iConnectionMonitor.iConnectionId = 1; 
+    avaConnectionMonitor.iConnectionMonitor.iConnectionCounter = 0;
+    avaConnectionMonitor.iConnectionMonitor.iUintAttributeValue = 1;
+    avaConnectionMonitor.iConnectionMonitor.iConnectionInfoError = KErrNone;    
+    TRAP( error, iConnectionAvailability->DoExecuteL() );
+    if ( error == KErrNoMemory ) User::Leave( error );
+    EUNIT_ASSERT ( error == KErrNone );
+    EUNIT_GET_ALLOC_DECORATOR_FAILCOUNT( count );
+    if ( count > 0 && ( iConnectionAvailability->State() 
+        == MMusAvaObserver::EMusActivationError ) ||
+        (iConnectionAvailability->State() == MMusAvaObserver::EMusAvaNetworkType ))
+        
+        {
+        User::Leave( KErrNoMemory );
+        }
+    EUNIT_ASSERT( iConnectionAvailability->State() ==  MMusAvaObserver::EMusAvaEdgeDtmStatusUnknown );
+    }
+
+
+void UT_CMusAvaConnectionAvailability::UT_CMusAvaConnectionAvailability_DoExecuteLL2()
+    {
+    // Restrict VS to be only Used in 3G mode, 
+    
+   	iStorage->Set ( MusSettingsKeys::KAllowOnlyIn3GNetwork,
+   	MusSettingsKeys::EAllowed3GOnly );       
+	
+	// Test: In GSM VS is not Allowed when its restricted to be only used in 3G
+    
     TInt ret = 0;
     iStorage->SetPhoneNetworkModeStatus( RMobilePhone::ENetworkModeGsm );
     iStorage->SetRegistrationStatus( RMobilePhone::ERegisteredOnHomeNetwork );
@@ -146,17 +254,18 @@ void UT_CMusAvaConnectionAvailability::UT_CMusAvaConnectionAvailability_DoExecut
 
     TInt count = 0;
     EUNIT_GET_ALLOC_DECORATOR_FAILCOUNT( count );
-    if ( count > 0 && iConnectionAvailability->State() 
-        == MMusAvaObserver::EMusActivationError )
+    if ( count > 0 &&
+         iConnectionAvailability->State() !=  MMusAvaObserver::EMusAvaNetworkType )
         {
         User::Leave( KErrNoMemory );
         }
     EUNIT_ASSERT( iConnectionAvailability->State() ==  MMusAvaObserver::EMusAvaNetworkType );
+
+    // Test2: In 3G VS is allowed.
+    
     iStorage->SetPhoneNetworkModeStatus( RMobilePhone::ENetworkModeWcdma );
     iStorage->SetRegistrationStatus( RMobilePhone::ERegisteredOnHomeNetwork );
-    MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::EAlwaysActive );
-    MultimediaSharingSettings::SetOperatorVariantSettingL( MusSettingsKeys::EStandard );
-    
+    MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::EActiveInHomeNetworks );
     TRAP( error, iConnectionAvailability->DoExecuteL() );
     if ( error == KErrNoMemory ) User::Leave( error );
     EUNIT_ASSERT ( error == KErrNone );
@@ -168,28 +277,9 @@ void UT_CMusAvaConnectionAvailability::UT_CMusAvaConnectionAvailability_DoExecut
         User::Leave( KErrNoMemory );
         }
     EUNIT_ASSERT( iConnectionAvailability->State() ==  MMusAvaObserver::EMusAvaStatusAvailable );
-
-    // No roaming for operator variant
-    MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::EAlwaysActive );
-    MultimediaSharingSettings::SetOperatorVariantSettingL( MusSettingsKeys::EOperatorSpecific );
-    iStorage->SetRegistrationStatus( RMobilePhone::ERegisteredRoaming );
     
-    TRAP( error, iConnectionAvailability->DoExecuteL() );
-    if ( error == KErrNoMemory ) User::Leave( error );
-    EUNIT_ASSERT ( error == KErrNone );
-    EUNIT_GET_ALLOC_DECORATOR_FAILCOUNT( count );
-    if ( count > 0 && iConnectionAvailability->State() 
-        == MMusAvaObserver::EMusActivationError )
-        {
-        User::Leave( KErrNoMemory );
-        }
-    EUNIT_ASSERT( iConnectionAvailability->State() ==  MMusAvaObserver::EMusActivationError );
-    
-    // operator variant OK
-    MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::EAlwaysActive );
-    MultimediaSharingSettings::SetOperatorVariantSettingL( MusSettingsKeys::EOperatorSpecific );
-    iStorage->SetRegistrationStatus( RMobilePhone::ERegisteredOnHomeNetwork );
-    
+    // Test3: Active in home networks
+    MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::EActiveInHomeNetworks );
     TRAP( error, iConnectionAvailability->DoExecuteL() );
     if ( error == KErrNoMemory ) User::Leave( error );
     EUNIT_ASSERT ( error == KErrNone );
@@ -200,9 +290,8 @@ void UT_CMusAvaConnectionAvailability::UT_CMusAvaConnectionAvailability_DoExecut
         User::Leave( KErrNoMemory );
         }
     EUNIT_ASSERT( iConnectionAvailability->State() ==  MMusAvaObserver::EMusAvaStatusAvailable );
-    MultimediaSharingSettings::SetOperatorVariantSettingL( MusSettingsKeys::EStandard );
     
-    // activation set off
+    //Test4: activation set off
     iStorage->SetPhoneNetworkModeStatus( RMobilePhone::ENetworkModeWcdma );
     iStorage->SetRegistrationStatus( RMobilePhone::ERegisteredOnHomeNetwork );
     MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::ENever );
@@ -211,7 +300,7 @@ void UT_CMusAvaConnectionAvailability::UT_CMusAvaConnectionAvailability_DoExecut
     EUNIT_ASSERT ( error == KErrNone );
     EUNIT_ASSERT( iConnectionAvailability->State() ==  MMusAvaObserver::EMusActivationError ); 
 
-    //Edge/Dtm activation settings
+    // Test5: Edge/Dtm activation settings
     // case 1 Dtm mode allowed and atleast one pdp context exist
     iStorage->SetPhoneNetworkModeStatus( RMobilePhone::ENetworkModeGsm );
     iStorage->SetRegistrationStatus( RMobilePhone::ERegisteredOnHomeNetwork );
@@ -233,6 +322,7 @@ void UT_CMusAvaConnectionAvailability::UT_CMusAvaConnectionAvailability_DoExecut
         }
     EUNIT_ASSERT( iConnectionAvailability->State() ==  MMusAvaObserver::EMusAvaStatusAvailable );
     
+    // Test5: Edge DTM is allowed but no pdp context
     // case 2 Dtm mode allowed and no pdp context exist
     iStorage->SetPhoneNetworkModeStatus( RMobilePhone::ENetworkModeGsm );
     iStorage->SetRegistrationStatus( RMobilePhone::ERegisteredOnHomeNetwork );
@@ -253,7 +343,7 @@ void UT_CMusAvaConnectionAvailability::UT_CMusAvaConnectionAvailability_DoExecut
         }
     EUNIT_ASSERT( iConnectionAvailability->State() ==  MMusAvaObserver::EMusAvaEdgeDtmStatusUnknown );
     
-    // case 2 Dtm mode not allowed
+    // Test6: case 2 Dtm mode not allowed
     iStorage->SetPhoneNetworkModeStatus( RMobilePhone::ENetworkModeGsm );
     iStorage->SetRegistrationStatus( RMobilePhone::ERegisteredOnHomeNetwork );
     MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::EAlwaysActive );
@@ -268,6 +358,12 @@ void UT_CMusAvaConnectionAvailability::UT_CMusAvaConnectionAvailability_DoExecut
         User::Leave( KErrNoMemory );
         }
     EUNIT_ASSERT( iConnectionAvailability->State() ==  MMusAvaObserver::EMusAvaNetworkType );
+    
+    // Reset the Central Reppository to the default value to avoid 
+    // poluting common storage.
+    
+   	iStorage->Set ( MusSettingsKeys::KAllowOnlyIn3GNetwork,
+   	MusSettingsKeys::EAllowedAllBearers );       
     }
  		
 void UT_CMusAvaConnectionAvailability::UT_CMusAvaConnectionAvailability_NameL()
@@ -283,26 +379,80 @@ void UT_CMusAvaConnectionAvailability::UT_CMusAvaConnectionAvailability_StopL()
 
 void UT_CMusAvaConnectionAvailability::UT_CMusAvaConnectionAvailability_PhoneNetworkModeStatusL()
     {
+    //Test1:  VS by default would allow all type of Networks. 
+    // Unknow Network Type : Allowed
     iConnectionAvailability->PhoneNetworkModeStatus( RMobilePhone::ENetworkModeUnknown );
-    EUNIT_ASSERT( iConnectionAvailability->iState ==  MMusAvaObserver::EMusAvaNetworkType );
+    TInt count = 0;
+    EUNIT_GET_ALLOC_DECORATOR_FAILCOUNT( count );
+    if ( count > 0 && ( iConnectionAvailability->State() ==  MMusAvaObserver::EMusActivationError ) ||
+    					(iConnectionAvailability->State() == MMusAvaObserver::EMusAvaNetworkType ))
+        {
+        User::Leave( KErrNoMemory );
+        }
+    EUNIT_ASSERT( iConnectionAvailability->iState ==  MMusAvaObserver::EMusAvaStatusAvailable );
+    
+    //GSM Network is Allowed:
+    iConnectionAvailability->PhoneNetworkModeStatus( RMobilePhone::ENetworkModeGsm );
+    
+    count = 0;
+    EUNIT_GET_ALLOC_DECORATOR_FAILCOUNT( count );
+    if ( count > 0 && ( iConnectionAvailability->State() ==  MMusAvaObserver::EMusActivationError ) ||
+    					(iConnectionAvailability->State() == MMusAvaObserver::EMusAvaNetworkType ))
+        {
+        User::Leave( KErrNoMemory );
+        }
+    
+    EUNIT_ASSERT( iConnectionAvailability->iState ==  MMusAvaObserver::EMusAvaStatusAvailable );
+    
+    //WCDMA: 3G is Allowed
     iConnectionAvailability->PhoneNetworkModeStatus( RMobilePhone::ENetworkModeWcdma );
     MMusAvaObserver::TAvailabilityStatus state = MMusAvaObserver::EMusAvaStatusNotExecuted;
     state = iConnectionAvailability->State();
-    TInt count = 0;
+    count = 0;
     EUNIT_GET_ALLOC_DECORATOR_FAILCOUNT( count );
-    if ( count > 0 && state == MMusAvaObserver::EMusActivationError )
+    if ( count > 0 && (state == MMusAvaObserver::EMusActivationError ) ||
+    				    ( state == MMusAvaObserver::EMusAvaNetworkType ))
         {
         User::Leave( KErrNoMemory );
         }
     EUNIT_ASSERT( state ==  MMusAvaObserver::EMusAvaStatusAvailable );
+
+    //Test2:  Restrict VS to be only used in 3G
+	iStorage->Set ( MusSettingsKeys::KAllowOnlyIn3GNetwork,
+      	MusSettingsKeys::EAllowed3GOnly );       
+	
+	//Unknown Network DisAllowed
+    iConnectionAvailability->PhoneNetworkModeStatus( RMobilePhone::ENetworkModeUnknown );
+    EUNIT_ASSERT( iConnectionAvailability->iState ==  MMusAvaObserver::EMusAvaNetworkType );
+    
+    //GSM Network is Dis-Allowed:
+    iConnectionAvailability->PhoneNetworkModeStatus( RMobilePhone::ENetworkModeGsm );
+    EUNIT_ASSERT( iConnectionAvailability->iState ==  MMusAvaObserver::EMusAvaNetworkType );
+
+    
+    //3G is Allowed:
+    iConnectionAvailability->PhoneNetworkModeStatus( RMobilePhone::ENetworkModeWcdma );
+    MMusAvaObserver::TAvailabilityStatus state1 = MMusAvaObserver::EMusAvaStatusNotExecuted;
+    state1 = iConnectionAvailability->State();
+    TInt count1 = 0;
+    EUNIT_GET_ALLOC_DECORATOR_FAILCOUNT( count );
+    if ( count1 > 0 && state1 == MMusAvaObserver::EMusActivationError )
+        {
+        User::Leave( KErrNoMemory );
+        }
+    EUNIT_ASSERT( state1 ==  MMusAvaObserver::EMusAvaStatusAvailable );
+    
+    //Reset the key to the default value.
+   	iStorage->Set ( MusSettingsKeys::KAllowOnlyIn3GNetwork,
+      	MusSettingsKeys::EAllowedAllBearers );       
     }
                           
 void UT_CMusAvaConnectionAvailability::UT_CMusAvaConnectionAvailability_NetworkRegistrationStatusL()
     {
-    MultimediaSharingSettings::SetOperatorVariantSettingL( MusSettingsKeys::EOperatorSpecific );
-    MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::EAlwaysActive );
+    MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::EActiveInHomeNetworks );
     iConnectionAvailability->iState = MMusAvaObserver::EMusAvaStatusAvailable;
     iConnectionAvailability->NetworkRegistrationStatus( RMobilePhone::ERegistrationUnknown );
+    MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::EAlwaysActive );
     TInt count = 0;
     EUNIT_GET_ALLOC_DECORATOR_FAILCOUNT( count );
     if ( count > 0 && iConnectionAvailability->iState 
@@ -312,8 +462,7 @@ void UT_CMusAvaConnectionAvailability::UT_CMusAvaConnectionAvailability_NetworkR
         }
     EUNIT_ASSERT( iConnectionAvailability->iState ==  MMusAvaObserver::EMusAvaRoamingError );
     iConnectionAvailability->iState = MMusAvaObserver::EMusAvaStatusAvailable;
-    MultimediaSharingSettings::SetOperatorVariantSettingL( MusSettingsKeys::EStandard );
-    MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::EAlwaysActive );
+    MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::EActiveInHomeNetworks );
     iConnectionAvailability->NetworkRegistrationStatus( RMobilePhone::ERegisteredOnHomeNetwork );
     EUNIT_GET_ALLOC_DECORATOR_FAILCOUNT( count );
     if ( count > 0 && iConnectionAvailability->iState 
@@ -586,6 +735,12 @@ void UT_CMusAvaConnectionAvailability::UT_CMusAvaConnectionAvailability_NetworkR
     == MMusAvaObserver::EMusAvaStatusAvailable );
     
     iStorage->SetPhoneNetworkModeStatus( RMobilePhone::ENetworkModeWcdma );
+    iStorage->SetRegistrationStatus( RMobilePhone::ERegistrationUnknown );
+    MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::EActiveInHomeNetworks );
+    EUNIT_ASSERT( iConnectionAvailability->NetworkRegistrationAndSettingsL()
+    == MMusAvaObserver::EMusActivationError );
+    
+    iStorage->SetPhoneNetworkModeStatus( RMobilePhone::ENetworkModeWcdma );
     iStorage->SetRegistrationStatus( RMobilePhone::ERegisteredOnHomeNetwork );
     MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::ENever );
     EUNIT_ASSERT( iConnectionAvailability->NetworkRegistrationAndSettingsL()
@@ -593,7 +748,7 @@ void UT_CMusAvaConnectionAvailability::UT_CMusAvaConnectionAvailability_NetworkR
     
     iStorage->SetPhoneNetworkModeStatus( RMobilePhone::ENetworkModeWcdma );
     iStorage->SetRegistrationStatus( RMobilePhone::ERegisteredOnHomeNetwork );
-    MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::EAlwaysActive );
+    MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::EActiveInHomeNetworks );
     EUNIT_ASSERT( iConnectionAvailability->NetworkRegistrationAndSettingsL()
     == MMusAvaObserver::EMusAvaStatusAvailable );
     
@@ -608,7 +763,7 @@ void UT_CMusAvaConnectionAvailability::UT_CMusAvaConnectionAvailability_NetworkR
      	iConcreteSettings->SetManualActivation( MMusAvaSettings::EActivationAllowed);
     MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::EAlwaysActive );
     EUNIT_ASSERT( iConnectionAvailability->NetworkRegistrationAndSettingsL()
-    == MMusAvaObserver::EMusActivationError );
+    == MMusAvaObserver::EMusAvaStatusAvailable );
     
     iStorage->SetPhoneNetworkModeStatus( RMobilePhone::ENetworkModeWcdma );
     iStorage->SetRegistrationStatus( RMobilePhone::ERegisteredOnHomeNetwork );
@@ -618,7 +773,6 @@ void UT_CMusAvaConnectionAvailability::UT_CMusAvaConnectionAvailability_NetworkR
     == MMusAvaObserver::EMusAvaStatusAvailable );
     
     
-    MultimediaSharingSettings::SetOperatorVariantSettingL( MusSettingsKeys::EStandard );
     iStorage->SetPhoneNetworkModeStatus( RMobilePhone::ENetworkModeWcdma );
     iStorage->SetRegistrationStatus( RMobilePhone::ERegisteredRoaming );
     MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::EAlwaysActive );
@@ -637,12 +791,20 @@ void UT_CMusAvaConnectionAvailability::UT_CMusAvaConnectionAvailability_NetworkR
     iConcreteSettings->SetManualActivation( MMusAvaSettings::EActivationExecuted);
     MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::EAlwaysActive );
     EUNIT_ASSERT( iConnectionAvailability->NetworkRegistrationAndSettingsL()
-    == MMusAvaObserver::EMusActivationError );
+    == MMusAvaObserver::EMusAvaStatusAvailable );
     
     iStorage->SetPhoneNetworkModeStatus( RMobilePhone::ENetworkModeWcdma );
     iStorage->SetRegistrationStatus( RMobilePhone::ERegisteredRoaming );
+    iConcreteSettings->SetManualActivation( MMusAvaSettings::EActivationExecuted);
+    MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::EActiveInHomeNetworks );
+    EUNIT_ASSERT( iConnectionAvailability->NetworkRegistrationAndSettingsL()
+    == MMusAvaObserver::EMusActivationError );
+    
+    MultimediaSharingSettings::SetOperatorVariantSettingL( MusSettingsKeys::EStandard );
+    iStorage->SetPhoneNetworkModeStatus( RMobilePhone::ENetworkModeWcdma );
+    iStorage->SetRegistrationStatus( RMobilePhone::ERegisteredRoaming );
     iConcreteSettings->SetManualActivation( MMusAvaSettings::EActivationNotExecuted);
-    MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::EAlwaysActive );
+    MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::EActiveInHomeNetworks );
     EUNIT_ASSERT( iConnectionAvailability->NetworkRegistrationAndSettingsL()
     == MMusAvaObserver::EMusAvaManualActivation );
     
@@ -660,13 +822,21 @@ void UT_CMusAvaConnectionAvailability::UT_CMusAvaConnectionAvailability_NetworkR
     iConcreteSettings->SetManualActivation( MMusAvaSettings::EActivationNotAllowed);
     MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::EAlwaysActive );
     EUNIT_ASSERT( iConnectionAvailability->NetworkRegistrationAndSettingsL()
+    == MMusAvaObserver::EMusAvaStatusAvailable );
+    
+    MultimediaSharingSettings::SetOperatorVariantSettingL( MusSettingsKeys::EStandard );
+    iStorage->SetPhoneNetworkModeStatus( RMobilePhone::ENetworkModeWcdma );
+    iStorage->SetRegistrationStatus( RMobilePhone::ERegisteredRoaming );
+    iConcreteSettings->SetManualActivation( MMusAvaSettings::EActivationNotAllowed);
+    MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::EActiveInHomeNetworks );
+    EUNIT_ASSERT( iConnectionAvailability->NetworkRegistrationAndSettingsL()
     == MMusAvaObserver::EMusActivationError );
     
     MultimediaSharingSettings::SetOperatorVariantSettingL( MusSettingsKeys::EStandard );
     iStorage->SetPhoneNetworkModeStatus( RMobilePhone::ENetworkModeWcdma );
     iStorage->SetRegistrationStatus( RMobilePhone::ERegisteredRoaming );
     iConcreteSettings->SetManualActivation( MMusAvaSettings::EActivationNotExecuted);
-    MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::EAlwaysActive );
+    MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::EActiveInHomeNetworks );
     EUNIT_ASSERT( iConnectionAvailability->NetworkRegistrationAndSettingsL()
     == MMusAvaObserver::EMusAvaManualActivation );
     
@@ -674,7 +844,7 @@ void UT_CMusAvaConnectionAvailability::UT_CMusAvaConnectionAvailability_NetworkR
     iStorage->SetPhoneNetworkModeStatus( RMobilePhone::ENetworkModeWcdma );
     iStorage->SetRegistrationStatus( RMobilePhone::ERegisteredRoaming );
     iConcreteSettings->SetManualActivation( MMusAvaSettings::EActivationAllowed);
-    MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::EAlwaysActive );
+    MultimediaSharingSettings::SetActivationSettingL( MusSettingsKeys::EActiveInHomeNetworks );
     EUNIT_ASSERT( iConnectionAvailability->NetworkRegistrationAndSettingsL()
     == MMusAvaObserver::EMusAvaStatusAvailable );
     }
@@ -716,6 +886,14 @@ EUNIT_TEST(
     "DoExecuteL",
     "FUNCTIONALITY",
     SetupL, UT_CMusAvaConnectionAvailability_DoExecuteLL, Teardown)
+    
+EUNIT_TEST(
+    "DoExecuteL - test 3G Restricted",
+    "CMusAvaConnectionAvailability",
+    "DoExecuteL",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusAvaConnectionAvailability_DoExecuteLL2, Teardown)
+    
     
 EUNIT_TEST(
     "Name - test ",

@@ -164,13 +164,14 @@ void UT_CMusCallConferenceEventMonitor::UT_CMusCallConferenceEventMonitor_RunLL(
                      val );
     EUNIT_ASSERT( val==NMusSessionInformationApi::EConferenceCall);
 
-    RTelHelper::SetConfEvent( RMobileConferenceCall::EConferenceTerminated );                               
+    RTelHelper::SetConfEvent( RMobileConferenceCall::EConferenceTerminated );
+    iConferenceCallEventMonitor->SetStateL( NMusSessionInformationApi::ENoCall );                               
     iConferenceCallEventMonitor->Cancel(); // Cancel the active object    
     iConferenceCallEventMonitor->RunL();
     RProperty::Get( NMusSessionInformationApi::KCategoryUid,
                      NMusSessionInformationApi::KMusCallEvent,
                      val );
-    EUNIT_ASSERT( val==NMusSessionInformationApi::EConferenceTerminated);
+    EUNIT_ASSERT( val==NMusSessionInformationApi::ENoCall);
 
     RTelHelper::SetConfEvent( RMobileConferenceCall::EConferenceSwapped );
     iConferenceCallEventMonitor->SetStateL( NMusSessionInformationApi::ENoCall );                               

@@ -32,7 +32,7 @@
 #include "mussesseioninformationapi.h"
 
 _LIT( KTelNumber, "12345" );
-_LIT( KAnotherTelNumber, "54321" );
+_LIT( KSipUri, "sip:uri@host" );
 
 // CONSTRUCTION
 UT_CMusAvaNetworkAvailability* UT_CMusAvaNetworkAvailability::NewL()
@@ -86,12 +86,6 @@ void UT_CMusAvaNetworkAvailability::ConstructL()
                        NMusSessionInformationApi::KMusCallDirection,
                        RProperty::EInt,
                        0 );
-    
-	
-    RProperty::Define( NMusSessionInformationApi::KCategoryUid,
-                       NMusSessionInformationApi::KMUSPrivacy,
-                       RProperty::EInt,
-                       0 );
                        
     }
 
@@ -123,10 +117,6 @@ void UT_CMusAvaNetworkAvailability::UT_CMusAvaNetworkAvailability_DoExecuteLL()
     User::LeaveIfError( RProperty::Set( NMusSessionInformationApi::KCategoryUid,
                     	NMusSessionInformationApi::KMusCallEvent,
                     	0 ));
-
-    User::LeaveIfError( RProperty::Set( NMusSessionInformationApi::KCategoryUid,
-                        NMusSessionInformationApi::KMUSPrivacy,
-                        0 ));
     
     iNetworkAvailability->DoExecuteL();    
     EUNIT_ASSERT_EQUALS( iNetworkAvailability->State(), 
@@ -138,22 +128,50 @@ void UT_CMusAvaNetworkAvailability::UT_CMusAvaNetworkAvailability_DoExecuteLL()
                     	NMusSessionInformationApi::KMusCallEvent,
                     	1 ));
                     
-    User::LeaveIfError( RProperty::Set( NMusSessionInformationApi::KCategoryUid,
-                    NMusSessionInformationApi::KMusTelNumber,
-                    KTelNumber ));
-                
-    User::LeaveIfError( RProperty::Set( NMusSessionInformationApi::KCategoryUid,
-                NMusSessionInformationApi::KMusCallDirection,
-                0 ));
+	User::LeaveIfError( RProperty::Set( NMusSessionInformationApi::KCategoryUid,
+                    	NMusSessionInformationApi::KMusTelNumber,
+                    	KTelNumber ));
+                    
+	User::LeaveIfError( RProperty::Set( NMusSessionInformationApi::KCategoryUid,
+                    NMusSessionInformationApi::KMusCallDirection,
+                    0 ));
                                                                          
     iNetworkAvailability->DoExecuteL();
     EUNIT_ASSERT_EQUALS( iNetworkAvailability->State(), 
                          MMusAvaObserver::EMusAvaStatusAvailable );
     EUNIT_ASSERT_EQUALS( iSettings->TelNumber(), KTelNumber );
+    const MDesCArray& sipAddresses = iSettings->SipAddresses();
+    EUNIT_ASSERT_EQUALS( sipAddresses.MdcaCount(), 0 );
     EUNIT_ASSERT_EQUALS( iSettings->CallDirection(), 0 );
-    
     }
     
+void UT_CMusAvaNetworkAvailability::UT_CMusAvaNetworkAvailability_DoExecuteL_SipUriL()
+    {
+    // one call, SIP URI given
+    User::LeaveIfError( RProperty::Set( NMusSessionInformationApi::KCategoryUid,
+                        NMusSessionInformationApi::KMusCallEvent,
+                        1 ));
+                    
+    User::LeaveIfError( RProperty::Set( NMusSessionInformationApi::KCategoryUid,
+                        NMusSessionInformationApi::KMusTelNumber,
+                        KSipUri ));
+                    
+    User::LeaveIfError( RProperty::Set( NMusSessionInformationApi::KCategoryUid,
+                    NMusSessionInformationApi::KMusCallDirection,
+                    0 ));
+                                                                         
+    iNetworkAvailability->DoExecuteL();
+    EUNIT_ASSERT_EQUALS( iNetworkAvailability->State(), 
+                         MMusAvaObserver::EMusAvaStatusAvailable );
+    EUNIT_ASSERT_EQUALS( iSettings->TelNumber(), KNullDesC );
+
+    const MDesCArray& sipAddresses = iSettings->SipAddresses();
+    EUNIT_ASSERT_EQUALS( sipAddresses.MdcaCount(), 1 );
+    EUNIT_ASSERT_EQUALS( sipAddresses.MdcaPoint( 0 ), KSipUri );
+    
+    EUNIT_ASSERT_EQUALS( iSettings->CallDirection(), 0 );
+    }
+
 void UT_CMusAvaNetworkAvailability::UT_CMusAvaNetworkAvailability_StopL()
     {
     iNetworkAvailability->Stop();
@@ -172,26 +190,20 @@ void UT_CMusAvaNetworkAvailability::UT_CMusAvaNetworkAvailability_CallConnectedL
     User::LeaveIfError( RProperty::Set( NMusSessionInformationApi::KCategoryUid,
                    		NMusSessionInformationApi::KMusCallDirection,
                     	0 ));
-
-    User::LeaveIfError( RProperty::Set( NMusSessionInformationApi::KCategoryUid,
-                        NMusSessionInformationApi::KMUSPrivacy,
-                        0 ));
-    
-    iNetworkAvailability->iConfcall = ETrue;
-    iNetworkAvailability->iSettings.SetOptionSentNumber( KTelNumber );
-    iNetworkAvailability->CallConnectedL( KTelNumber );
+                    	                                                     
+    iNetworkAvailability->CallConnectedL( KTelNumber, EFalse );
     EUNIT_ASSERT_EQUALS( iNetworkAvailability->State(), 
                          MMusAvaObserver::EMusAvaStatusAvailable );
+    EUNIT_ASSERT_EQUALS( iSettings->TelNumber(), KTelNumber );
     
-    
-    iNetworkAvailability->iSettings.SetOptionSentNumber( KAnotherTelNumber );
-    iNetworkAvailability->CallConnectedL( KTelNumber );   
-    EUNIT_ASSERT_EQUALS( iNetworkAvailability->State(), 
-                         MMusAvaObserver::EMusAvaStatusInProgress );
-    EUNIT_ASSERT( iNetworkAvailability->iSettings.OptionSentTelNumber().Length() == 0 );
-    
-    
-    EUNIT_ASSERT_EQUALS( iSettings->TelNumber(), KTelNumber );    
+
+    // Test SIP URI
+    iNetworkAvailability->CallConnectedL( KSipUri, ETrue );
+    // Tel number should not have been modified
+    EUNIT_ASSERT_EQUALS( iSettings->TelNumber(), KTelNumber );
+    const MDesCArray& sipAddresses = iSettings->SipAddresses();
+    EUNIT_ASSERT_EQUALS( sipAddresses.MdcaCount(), 1 );
+    EUNIT_ASSERT_EQUALS( sipAddresses.MdcaPoint( 0 ), KSipUri );
     }
     
 void UT_CMusAvaNetworkAvailability::UT_CMusAvaNetworkAvailability_ConferenceCallLL()
@@ -206,17 +218,21 @@ void UT_CMusAvaNetworkAvailability::UT_CMusAvaNetworkAvailability_CallHoldLL()
     User::LeaveIfError( RProperty::Set( NMusSessionInformationApi::KCategoryUid,
                    		NMusSessionInformationApi::KMusCallDirection,
                     	0 ));
-    User::LeaveIfError( RProperty::Set( NMusSessionInformationApi::KCategoryUid,
-                        NMusSessionInformationApi::KMUSPrivacy,
-                        0 ));
     
-    
-    iNetworkAvailability->CallHoldL( KTelNumber );
+    iNetworkAvailability->CallHoldL( KTelNumber, EFalse );
     EUNIT_ASSERT_EQUALS( iNetworkAvailability->State(), 
                          MMusAvaObserver::EMusAvaStatusCallOnHold );
-    EUNIT_ASSERT_EQUALS( iSettings->TelNumber(), KTelNumber );    
-    }
+    EUNIT_ASSERT_EQUALS( iSettings->TelNumber(), KTelNumber );
     
+    // Test SIP URI
+    iNetworkAvailability->CallConnectedL( KSipUri, ETrue );    
+    // Tel number should not have been modified
+    EUNIT_ASSERT_EQUALS( iSettings->TelNumber(), KTelNumber );
+    const MDesCArray& sipAddresses = iSettings->SipAddresses();
+    EUNIT_ASSERT_EQUALS( sipAddresses.MdcaCount(), 1 );
+    EUNIT_ASSERT_EQUALS( sipAddresses.MdcaPoint( 0 ), KSipUri );
+    }
+
 void UT_CMusAvaNetworkAvailability::UT_CMusAvaNetworkAvailability_NoActiveCallLL()
     {
     iNetworkAvailability->NoActiveCallL();
@@ -225,6 +241,17 @@ void UT_CMusAvaNetworkAvailability::UT_CMusAvaNetworkAvailability_NoActiveCallLL
     EUNIT_ASSERT_EQUALS( iSettings->TelNumber(), KNullDesC );    
     }                
 
+void UT_CMusAvaNetworkAvailability::UT_CMusAvaNetworkAvailability_SetRemoteHostLL()
+    {
+    _LIT( KMusTestPhoneNum, "12341234" );
+    iNetworkAvailability->SetRemoteHostL( KMusTestPhoneNum(), EFalse );
+    EUNIT_ASSERT_EQUALS( iSettings->TelNumber(), KMusTestPhoneNum );
+    EUNIT_ASSERT_EQUALS( iSettings->ContactResolvingUri(), KNullDesC );
+    
+    _LIT( KMusTestSipUri, "sip:12341234@1.2.3.4" );
+    iNetworkAvailability->SetRemoteHostL( KMusTestSipUri(), ETrue );
+    EUNIT_ASSERT_EQUALS( iSettings->ContactResolvingUri(), KMusTestSipUri );
+    }                
 
 
 //  TEST TABLE
@@ -240,6 +267,13 @@ EUNIT_TEST(
     "DoExecuteL",
     "FUNCTIONALITY",
     SetupL, UT_CMusAvaNetworkAvailability_DoExecuteLL, Teardown)
+
+EUNIT_TEST(
+    "DoExecuteL - test SIP URI ",
+    "CMusAvaNetworkAvailability",
+    "DoExecuteL",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusAvaNetworkAvailability_DoExecuteL_SipUriL, Teardown)
 
 EUNIT_TEST(
     "Stop - test ",
@@ -282,6 +316,13 @@ EUNIT_TEST(
     "NoActiveCallL",
     "FUNCTIONALITY",
     SetupL, UT_CMusAvaNetworkAvailability_NoActiveCallLL, Teardown )      
+
+EUNIT_TEST(
+    "SetRemoteHostL - test ",
+    "CMusAvaNetworkAvailability",
+    "SetRemoteHostL",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusAvaNetworkAvailability_SetRemoteHostLL, Teardown )  
     
 
 EUNIT_END_TEST_TABLE

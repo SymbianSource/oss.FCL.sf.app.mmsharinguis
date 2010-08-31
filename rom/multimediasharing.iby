@@ -21,52 +21,62 @@
 #define __MULTIMEDIASHARING_IBY__
 
 
-#ifdef __MULTIMEDIA_SHARING
+#if defined(__MULTIMEDIA_SHARING) || defined(__CS_VIDEO_TELEPHONY)
 
+/*========================================================================
+* Livecomms UI dll for both MUS and VT
+* ========================================================================
+*/
+file=ABI_DIR\UREL\livecommsui.dll SHARED_LIB_DIR\livecommsui.dll
+
+/*========================================================================
+* MUS SIS stub
+* ========================================================================
+*/
+data=DATAZ_\system\install\multimediasharing_stub.sis    system\install\multimediasharing_stub.sis
+
+#endif
+
+
+#ifdef __MULTIMEDIA_SHARING
 
 /*========================================================================
 * MUS UI
 * ========================================================================
 */
-S60_APP_EXE(musui)
-S60_APP_AIF_ICONS(musui)
-data=DATAZ_\BITMAP_DIR\musuiicons.mif BITMAP_DIR\musuiicons.mif
-data=DATAZ_\BITMAP_DIR\musuitoolbaricons.mif BITMAP_DIR\musuitoolbaricons.mif
-data=ZPRIVATE\10003A3F\APPS\musui_reg.rsc PRIVATE\10003A3F\IMPORT\APPS\musui_reg.rsc
-#ifndef RD_APPS_TO_EXES
-SCALABLE_IMAGE(System\Apps\musui,System\Apps\musui,musui)
-#else
-SCALABLE_IMAGE(APP_BITMAP_DIR,APP_BITMAP_DIR,musui)
-#endif
+
+//file=ABI_DIR\UREL\musui.exe PROGRAMS_DIR\musui.exe
+//data=DATAZ_\resource\apps\musui.rsc \resource\apps\musui.rsc
+//data=DATAZ_\private\10003a3f\import\apps\musui_reg.rsc \private\10003a3f\import\apps\musui_reg.rsc
 
 
 /*========================================================================
 * MUS General
 * ========================================================================
 */
-file=ABI_DIR\urel\musmanagerserver.exe          PROGRAMS_DIR\musmanagerserver.exe
-file=ABI_DIR\urel\musmanagerclient.dll          SHARED_LIB_DIR\musmanagerclient.dll
-file=ABI_DIR\urel\musengine.dll                 SHARED_LIB_DIR\musengine.dll
-file=ABI_DIR\urel\musindicator.dll              SHARED_LIB_DIR\musindicator.dll
-data=DATAZ_\private\1028238D\tone.amr           private\1028238D\tone.amr
-data=DATAZ_\BITMAP_DIR\musindicatoricons.mif    BITMAP_DIR\musindicatoricons.mif
-data=DATAZ_\BITMAP_DIR\musindicatoricons.mbm    BITMAP_DIR\musindicatoricons.mbm
+//file=ABI_DIR\UREL\musmanagerserver.exe          PROGRAMS_DIR\musmanagerserver.exe
+//file=ABI_DIR\UREL\musmanagerclient.dll          SHARED_LIB_DIR\musmanagerclient.dll
+//file=ABI_DIR\UREL\musindicator.dll              SHARED_LIB_DIR\musindicator.dll
+//data=DATAZ_\private\1028238D\tone.amr           private\1028238D\tone.amr
+//data=DATAZ_\BITMAP_DIR\musindicatoricons.mif    BITMAP_DIR\musindicatoricons.mif
+//data=DATAZ_\BITMAP_DIR\musindicatoricons.mbm    BITMAP_DIR\musindicatoricons.mbm
 
 /*========================================================================
 * MUS Ecom Plugins
 * ========================================================================
 */
-ECOM_PLUGIN(musaoplugin.dll,musaoplugin.rsc)
+//ECOM_PLUGIN(musaoplugin.dll,musaoplugin.rsc)
 
-ECOM_PLUGIN(musaiwprovider.dll,musaiwprovider.rsc)
-ECOM_PLUGIN(musavailabilityplugin.dll,musavailabilityplugin.rsc)
-ECOM_PLUGIN(muswpadapter.dll,muswpadapter.rsc)
+//ECOM_PLUGIN(musaiwprovider.dll,musaiwprovider.rsc)
+//ECOM_PLUGIN(musavailabilityplugin.dll,musavailabilityplugin.rsc)
+//ECOM_PLUGIN(muswpadapter.dll,muswpadapter.rsc)
 //ECOM_PLUGIN(mmcctranscoder.dll,10282896.rsc)
+//ECOM_PLUGIN(musengineplugin.dll,musengineplugin.rsc)
 
 // In __VOIP terminals, MuS uses same client resolver plugin as VoIP.
 // In all other terminals, a separate resolver plugin is needed 
 #ifndef __VOIP
-ECOM_PLUGIN(mussipcrplugin.dll,mussipcrplugin.rsc)
+//ECOM_PLUGIN(mussipcrplugin.dll,mussipcrplugin.rsc)
 #endif
 
 
@@ -74,15 +84,8 @@ ECOM_PLUGIN(mussipcrplugin.dll,mussipcrplugin.rsc)
 * MUS Settings UI
 * ========================================================================
 */
-ECOM_PLUGIN( mussettingsui.dll,mussettingsui.rsc )
-data=DATAZ_\BITMAP_DIR\mussettingsplugin.mif BITMAP_DIR\mussettingsplugin.mif
-
-
-/*========================================================================
-* MUS SIS stub
-* ========================================================================
-*/
-data=DATAZ_\system\install\multimediasharing_stub.sis    system\install\multimediasharing_stub.sis
+//ECOM_PLUGIN( mussettingsui.dll,mussettingsui.rsc )
+//data=DATAZ_\BITMAP_DIR\mussettingsplugin.mif BITMAP_DIR\mussettingsplugin.mif
 
 
 /*========================================================================
@@ -92,7 +95,7 @@ data=DATAZ_\system\install\multimediasharing_stub.sis    system\install\multimed
 * in centralrepository. Hence central repositary uid should be specified as proxy data owner.
 * ========================================================================
 */
-data=DATAZ_\private\1028238D\backup_registration.xml     private\1028238D\backup_registration.xml
+//data=DATAZ_\private\1028238D\backup_registration.xml     private\1028238D\backup_registration.xml
 
 #endif
 

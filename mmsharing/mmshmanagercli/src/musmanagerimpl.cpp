@@ -402,9 +402,6 @@ TInt CMusManagerImpl::CMusManagerImplListener::RunError( TInt aError )
     {
     MUS_LOG1( "mus: [MUSCLI]     CMusManagerImplListener::RunError: %d", \
                  aError );
-    // Nothing can be done here.
-    aError = KErrNone;
-    
     return aError;
     }
 

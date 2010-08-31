@@ -96,6 +96,8 @@ public:
      * @return Name of *this* availability.
      */
     virtual MMusAvaObserver::TAvailabilityName Name();
+    
+    virtual void PrepareForReceivedInviteL();
 
 public:
 
@@ -103,6 +105,7 @@ public:
     TBool iExecuteLeave;
     MMusAvaObserver::TAvailabilityStatus iStatusStub;
     MMusAvaObserver::TAvailabilityName iNameStub;
+    TBool iPrepareForInviteCalled;
 	
 private:
     

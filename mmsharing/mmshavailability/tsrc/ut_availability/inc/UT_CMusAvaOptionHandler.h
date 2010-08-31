@@ -35,6 +35,7 @@ class CMusAvaObserverImp;
 class CMusAvaSettingsImp;	
 class CMusAvaSharedObject;
 class CMusAvaAvailabilityObserverImp;
+class CMusAvaSettingsObserverImp;
 
 //  CLASS DEFINITION
 /**
@@ -89,6 +90,14 @@ class UT_CMusAvaOptionHandler
         void UT_CMusAvaOptionHandler_SipHeadersL();
         
         void UT_CMusAvaOptionHandler_VideoCodecsResolvedLL();
+        
+        void UT_CMusAvaOptionHandler_DoSetStateL();
+        
+        void UT_CMusAvaOptionHandler_DoSetStateFastModeL();
+        
+        void UT_CMusAvaOptionHandler_FastModeResolvedL();
+        
+        void UT_CMusAvaOptionHandler_CapabilityQueryAnsweredL();
 
         
 		EUNIT_DECLARE_TEST_TABLE; 
@@ -103,6 +112,8 @@ class UT_CMusAvaOptionHandler
         CMusAvaSharedObject* iSharedObject; 
 
         CSIPProfile* iProfile;
+        
+        CMusAvaSettingsObserverImp* iSettingsObserver;
         
     };
 

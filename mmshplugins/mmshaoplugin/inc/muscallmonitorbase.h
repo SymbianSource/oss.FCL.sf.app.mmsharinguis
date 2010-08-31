@@ -23,6 +23,7 @@
 #include "musunittesting.h"
 #include "mussesseioninformationapi.h"
 #include "mmustsypropertyobserver.h"
+#include "mmuscallstateobserver.h"
 #include <etelmm.h>
 #include <e32base.h>
 
@@ -57,6 +58,11 @@ class CMusCallMonitorBase : public CActive
          * CActive Implentation
          */
         TInt RunError( TInt aError ); 
+        
+        /**
+         * Checks if it the data is ready for the CS Call
+         */
+        TBool IsDataReadyL();
 
         
     protected:
@@ -64,30 +70,15 @@ class CMusCallMonitorBase : public CActive
         /**
          * C++ constructor.
          */
-        CMusCallMonitorBase( const RMobileCall& aCall, MMusTsyPropertyObserver& aObserver );
+        CMusCallMonitorBase( const RMobileCall& aCall,   
+                                MMusTsyPropertyObserver& aObserver, 
+                                MMusCallStateObserver& aCallStateObserver );
         
         /**
          * Notify observer that our state changed
          */
         virtual void NotifyCallStateChanged( NMusSessionInformationApi::TMusCallEvent aVal );
         
-        /**
-         * Inspect the dialled number and set the PS key controlling whether
-         * to add Privacy-header accordingly.
-         */        
-        void SetClirSetting( const TDesC& aDialledNumber ) const;
-
-         /**
-         * Should set the privacy ps key to on off based on incoming cs call privacy settings.
-         * aCallInfo : Callinfo package read from current cs call.     
-         */
-        void SetTerminatingPrivacy( const RMobileCall& aCall ) const;
-        
-        /**
-        * Removes privacy prefix away from phone number
-        * @return returns dialed number witout prefix.  
-        */
-        HBufC* RemovePrefix( const TDesC& aOriginator ) const;
         
     protected:            
        
@@ -112,11 +103,17 @@ class CMusCallMonitorBase : public CActive
          *  Observer to get nofitied when RCall status changed 
          */
         MMusTsyPropertyObserver& iTsyObserver;
+        
+        
+        /*
+         * Reference of callstate observer not owned
+         */
+        MMusCallStateObserver& iCallStateObserver;
+
 
         MUS_UNITTEST( UT_CMusCallMonitor )
-        MUS_UNITTEST( UT_CMusCallEventMonitor ) 
-        MUS_UNITTEST( UT_CMusCallStatusMonitor )
-        MUS_UNITTEST( UT_CMusCallMonitorBase )
+ 		MUS_UNITTEST( UT_CMusCallEventMonitor )
+ 		MUS_UNITTEST( UT_CMusCallStatusMonitor )
     };
 
 #endif // MUSAOCALLMONITORBASE_H

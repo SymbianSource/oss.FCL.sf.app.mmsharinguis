@@ -24,10 +24,16 @@
 //  SYSTEM INCLUDES
 #include <digia/eunit/eunitmacros.h>
 
+// Test configurations
+_LIT(KEmptyProvider,"");
+_LIT(KTestTelNumber,"+3585050");
+
+
 
 CMusCallMonitorMock::CMusCallMonitorMock( const RMobileCall& aCall,
-										MMusTsyPropertyObserver& aObserver ) 
-        : CMusCallMonitorBase( aCall, aObserver )
+										MMusTsyPropertyObserver& aObserver,
+										MMusCallStateObserver& aCallStateObserver ) 
+        : CMusCallMonitorBase( aCall, aObserver, aCallStateObserver )
     {
     }
 
@@ -107,11 +113,24 @@ void UT_CMusCallMonitorBase::ConstructL()
 // UT_CMusCallMonitorBase::NotifyCallStateChanged() 
 // -----------------------------------------------------------------------------
 //
-void 
-UT_CMusCallMonitorBase::NotifyCallStateChanged( NMusSessionInformationApi::TMusCallEvent /*aVal*/,
-                                                TName& /*aCallName*/ )
+void UT_CMusCallMonitorBase::NotifyCallStateChanged(
+									NMusSessionInformationApi::TMusCallEvent /*aVal*/,
+									TName& /*aCallName*/ )
     {          
     }
+
+
+
+// -----------------------------------------------------------------------------
+//  MusCallStateChanged from the MusCallStateObserver 
+// -----------------------------------------------------------------------------
+//
+void UT_CMusCallMonitorBase::MusCallStateChanged()
+    {
+    iCallStateObserverInvoked = ETrue;
+    }   
+
+
 
 // -----------------------------------------------------------------------------
 //
@@ -123,13 +142,15 @@ void UT_CMusCallMonitorBase::SetupL()
                      NMusSessionInformationApi::KMusCallEvent,
                      0 );
     RTelHelper::SetCallDirection( RMobileCall::EDirectionUnknown );
-    iCallMonitorBase = new CMusCallMonitorMock( iCall, *this );    
+    iCallMonitorBase = new CMusCallMonitorMock( iCall, *this, *this );
+    iCallStateObserverInvoked = EFalse;
     }
 
 
 void UT_CMusCallMonitorBase::Setup2L()
     {
-    iCallMonitorBase = new CMusCallMonitorMock( iCall, *this );    
+    iCallStateObserverInvoked = EFalse;
+    iCallMonitorBase = new CMusCallMonitorMock( iCall, *this, *this );    
     }
 
 // -----------------------------------------------------------------------------
@@ -155,7 +176,6 @@ void UT_CMusCallMonitorBase::Teardown()
 void UT_CMusCallMonitorBase::UT_SetStateLL()
     {
     TInt tmp;
-    
     EUNIT_ASSERT ( RProperty::Get( NMusSessionInformationApi::KCategoryUid,
                      NMusSessionInformationApi::KMusCallEvent, tmp ) != KErrNone );
     
@@ -173,9 +193,13 @@ void UT_CMusCallMonitorBase::UT_SetStateLL()
         {
         User::Leave( KErrNoMemory );
         }
-
+	
+	EUNIT_ASSERT (!iCallStateObserverInvoked )
 	
     iCallMonitorBase->SetStateL( NMusSessionInformationApi::ECallHold );
+	
+	EUNIT_ASSERT ( iCallStateObserverInvoked )
+
     RProperty::Get( NMusSessionInformationApi::KCategoryUid,
                      NMusSessionInformationApi::KMusCallEvent,
                      tmp );
@@ -213,7 +237,7 @@ void UT_CMusCallMonitorBase::UT_SetCallInfoLL()
                      telnro );
     
     EUNIT_ASSERT( telnro == KTelnro );
-
+    
     RProperty::Get( NMusSessionInformationApi::KCategoryUid,
                      NMusSessionInformationApi::KMusCallDirection,
                      direction );
@@ -251,7 +275,16 @@ void UT_CMusCallMonitorBase::UT_SetCallInfoLL()
     
     EUNIT_ASSERT( direction == NMusSessionInformationApi::ECallTerminated );
     
-
+    /* Test for call provider */
+    // Call Provider info is only Set for VoIP Calls
+    iCallMonitorBase->SetCallInfoL();  
+    TBuf<RProperty::KMaxPropertySize> provider;
+    RProperty::Get( NMusSessionInformationApi::KCategoryUid,
+                    NMusSessionInformationApi::KMUSCallProvider,
+                    provider );
+    
+    
+    EUNIT_ASSERT( provider == KEmptyProvider );
     }
 
 
@@ -266,81 +299,41 @@ void UT_CMusCallMonitorBase::UT_RunErrorL()
 
 
 // -----------------------------------------------------------------------------
-//
+// UT_CMusCallMonitorBase::UT_CMusCallMonitorBase_IsDataReadyLL()
+// Test if required Data is ready for CS calls
 // -----------------------------------------------------------------------------
 //
-void UT_CMusCallMonitorBase::UT_SetClirSettingL()
+void UT_CMusCallMonitorBase::UT_CMusCallMonitorBase_IsDataReadyLL()
     {
-    TInt tmp;
-    _LIT( KTestNumber1, "11111" );
-    _LIT( KTestNumber2, "#31#11111" );
+    TBool dataReady = EFalse;
     
-    iCallMonitorBase->SetClirSetting( KTestNumber1() );
-    RProperty::Get( NMusSessionInformationApi::KCategoryUid,
-                     NMusSessionInformationApi::KMusClirSetting,
-                     tmp );
-    EUNIT_ASSERT( tmp==NMusSessionInformationApi::ESendOwnNumber);
-    
-    iCallMonitorBase->SetClirSetting( KTestNumber2() );
-    RProperty::Get( NMusSessionInformationApi::KCategoryUid,
-                     NMusSessionInformationApi::KMusClirSetting,
-                     tmp );
-    EUNIT_ASSERT( tmp==NMusSessionInformationApi::EDoNotSendOwnNumber);
-        
-    }
+    //Test-1: Date Ready:
+    User::LeaveIfError( RProperty::Set( NMusSessionInformationApi::KCategoryUid,
+                                            NMusSessionInformationApi::KMusTelNumber,
+                                            KTestTelNumber ));
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusCallMonitorBase::UT_SetTerminatingPrivacyL()
-    {
-    TInt tmp;
-        
-    iCallMonitorBase->SetTerminatingPrivacy( iCallMonitorBase->iCall );
-    RProperty::Get( NMusSessionInformationApi::KCategoryUid,
-                     NMusSessionInformationApi::KMUSPrivacy,
-                     tmp );
-    EUNIT_ASSERT( tmp==NMusSessionInformationApi::EPrivacyOff);
-        
-    RTelHelper::SetRemoteIdStatus( RMobileCall::ERemoteIdentitySuppressed );
-    iCallMonitorBase->SetTerminatingPrivacy( iCallMonitorBase->iCall );
-    RProperty::Get( NMusSessionInformationApi::KCategoryUid,
-                     NMusSessionInformationApi::KMUSPrivacy,
-                     tmp );
-    EUNIT_ASSERT( tmp==NMusSessionInformationApi::EPrivacyOn);
+    User::LeaveIfError( RProperty::Set( NMusSessionInformationApi::KCategoryUid,
+                                            NMusSessionInformationApi::KMusCallDirection,
+                                            NMusSessionInformationApi::ECallOrginated ));
+            
+    dataReady = iCallMonitorBase->IsDataReadyL();
+    EUNIT_ASSERT_EQUALS( dataReady, ETrue )
     
-    
-    }
+    //Test-2: Partial Data is Ready
+    User::LeaveIfError( RProperty::Set( NMusSessionInformationApi::KCategoryUid,
+                                            NMusSessionInformationApi::KMusTelNumber,
+                                            KNullDesC ));
+    dataReady = iCallMonitorBase->IsDataReadyL();
+    EUNIT_ASSERT_EQUALS( dataReady, EFalse )
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusCallMonitorBase::UT_RemovePrefixL()
-    {
-    _LIT( KTestNumber1, "11111" );
-    _LIT( KTestNumber2, "#31#11111" );
-    _LIT( KTestNumber3, "*31#11111" );
 
-    
-    HBufC* test1 = iCallMonitorBase->RemovePrefix(  KTestNumber1 );
-    CleanupStack::PushL( test1 );
-    EUNIT_ASSERT( *test1 == KTestNumber1 );
-    CleanupStack::PopAndDestroy( test1 );
-    
-    HBufC* test2 = iCallMonitorBase->RemovePrefix(  KTestNumber3 );
-    CleanupStack::PushL( test2 );
-    EUNIT_ASSERT( *test2 == KTestNumber1 );
-    CleanupStack::PopAndDestroy( test2 );
-    
-    HBufC* test3 = iCallMonitorBase->RemovePrefix(  KTestNumber2 );
-    CleanupStack::PushL( test3 );
-    EUNIT_ASSERT( *test3 == KTestNumber1 );
-    CleanupStack::PopAndDestroy( test3 );
-    
-    
-        
+    //Test-3: Data Not Ready.
+    User::LeaveIfError(RProperty::Set( NMusSessionInformationApi::KCategoryUid,
+                 NMusSessionInformationApi::KMusCallEvent,
+                 ( TInt ) NMusSessionInformationApi::ENoCall ));
+
+    dataReady = iCallMonitorBase->IsDataReadyL();
+    EUNIT_ASSERT_EQUALS( dataReady, EFalse )
     }
 
 
@@ -372,30 +365,15 @@ EUNIT_TEST(
     "FUNCTIONALITY",
     SetupL, UT_RunErrorL, Teardown)
     
+    
 EUNIT_TEST(
-    "SetClirSetting - test",
+    "IsDataReadyL - test",
     "CMusCallMonitorBase",
-    "SetClirSetting",
+    "IsDataReadyL",
     "FUNCTIONALITY",
-    SetupL, UT_SetClirSettingL, Teardown)
-
-EUNIT_TEST(
-    "SetTerminatingPrivacy - test",
-    "CMusCallMonitorBase",
-    "SetTerminatingPrivacy",
-    "FUNCTIONALITY",
-    SetupL, UT_SetTerminatingPrivacyL, Teardown)
-
-EUNIT_TEST(
-    "RemovePrefix - test",
-    "CMusCallMonitorBase",
-    "RemovePrefix",
-    "FUNCTIONALITY",
-    SetupL, UT_RemovePrefixL, Teardown)
+    SetupL, UT_CMusCallMonitorBase_IsDataReadyLL, Teardown)    
     
 
 EUNIT_END_TEST_TABLE
 
 //  END OF FILE
-
-

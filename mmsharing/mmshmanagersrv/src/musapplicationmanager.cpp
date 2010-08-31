@@ -23,15 +23,23 @@
 #include "musmanagerservercommon.h"
 #include "mussessionproperties.h"
 #include "musuid.hrh"
+#include "mussettings.h"
+/* PS keys related to NMusSessionInformationApi defined here */
+#include "mussesseioninformationapi.h"
+#include "muscleanupresetanddestroy.h"
+#include "lcengine.h"
 
 #include <apacmdln.h>
 #include <apgtask.h>
-//#include <badesca.h>
 #include <e32cmn.h>
 #include <e32property.h>
+#include <utf.h>
+#include <apadef.h>
+
 
 // CONSTANTS
-
+_LIT8( KDefaultEngineName, "MultimediaSharing" );
+_LIT( KMusUiProcessName, "musui.exe" );
 
 // -----------------------------------------------------------------------------
 // CMusApplicationManager::NewL
@@ -79,9 +87,6 @@ CMusApplicationManager::~CMusApplicationManager()
     MUS_LOG( "mus: [MUSSRV] -> \
     					CMusApplicationManager::~CMusApplicationManager()" );
 
-    iApaSession.Close();
-    iWsSession.Close();
-
     MUS_LOG( "mus: [MUSSRV] <- \
     					CMusApplicationManager::~CMusApplicationManager()" );
     }
@@ -95,8 +100,7 @@ void CMusApplicationManager::ConstructL()
     {
     MUS_LOG( "mus: [MUSSRV] -> CMusApplicationManager::ConstructL()" );
 
-    User::LeaveIfError( iApaSession.Connect() );
-    User::LeaveIfError( iWsSession.Connect() );
+    SetPropertyL( NMusSessionApi::KFastMode, MusSettingsKeys::EFastModeOff );
 
     MUS_LOG( "mus: [MUSSRV] <- CMusApplicationManager::ConstructL()" );
     }
@@ -118,7 +122,10 @@ CMusApplicationManager::CMusApplicationManager()
 TBool CMusApplicationManager::ApplicationRunning()
     {
     MUS_LOG( "mus: [MUSSRV] <> CMusApplicationManager::ApplicationRunning()" );
-    return GetApaTask().Exists();
+    
+    TFindProcess findProcess( KMusUiProcessName );
+    TFullName name;
+    return ( findProcess.Next( name ) == KErrNone );
     }
 
 
@@ -136,13 +143,15 @@ void CMusApplicationManager::StartApplicationL()
         }
     else
         {
-        TUid appUid;
-        appUid.iUid = KMusUiUid;
+        MUS_LOG( "mus: [MUSSRV]     Starting app" );
         
-        TThreadId aThreadId;
-        
-        User::LeaveIfError( 
-                    iApaSession.StartDocument( KNullDesC, appUid, aThreadId) );
+        RProcess process;
+        CleanupClosePushL( process );
+        HBufC* args = CreateCommandLineArgsLC();
+        User::LeaveIfError( process.Create( KMusUiProcessName, *args ) );
+        process.Resume();
+        CleanupStack::PopAndDestroy( args );
+        CleanupStack::PopAndDestroy( &process );
         }
 
     MUS_LOG( "mus: [MUSSRV] <- CMusApplicationManager::StartApplicationL()" );
@@ -157,8 +166,7 @@ void CMusApplicationManager::StopApplicationL()
     {
     MUS_LOG( "mus: [MUSSRV] -> CMusApplicationManager::StopApplicationL()" );
 
-    TApaTask task = GetApaTask();
-    if( task.Exists() )
+    if( ApplicationRunning() )
         {
         SetPropertyL( NMusSessionApi::KStatus, 
                       MultimediaSharing::EMultimediaSharingNotAvailable );
@@ -176,12 +184,7 @@ void CMusApplicationManager::ShowApplicationL()
     {
     MUS_LOG( "mus: [MUSSRV] -> CMusApplicationManager::ShowApplicationL()" );
     
-    // does a task for multimediasharing exist?
-    TApaTask task = GetApaTask();
-    if( task.Exists() )
-        {
-        task.BringToForeground();
-        }
+    // TODO: How to bring a QT application to foreground?
     
     MUS_LOG( "mus: [MUSSRV] <- CMusApplicationManager::ShowApplicationL()" );
     }
@@ -199,10 +202,21 @@ void CMusApplicationManager::WriteSessionPropertiesL(
      MUS_LOG2( "mus: [MUSSRV] -> \
                CMusApplicationManager::WriteSessionPropertiesL( %d, %d )",
                ( TInt ) aUseCase, ( TInt ) aStatus );
-
+	TRAPD( error,  		   
+    if ( aUseCase == MultimediaSharing::EMusLiveVideo &&
+            MultimediaSharingSettings::VideoDirectionL() == 
+                                            MusSettingsKeys::ETwoWayVideo )
+        {
+		MUS_LOG( "mus: [MUSSRV]  UseCase MultimediaSharing::EMusTwoWayVideo" );
+        aUseCase = MultimediaSharing::EMusTwoWayVideo;
+        }
+		)
+	if ( error == KErrNoMemory )
+		{
+		User::Leave( error );
+		}
     // set use case property
-    SetPropertyL( NMusSessionApi::KUseCase,
-                  ( TInt ) aUseCase );
+    SetPropertyL( NMusSessionApi::KUseCase, ( TInt ) aUseCase );
 
     WriteSessionPropertiesL( aStatus, aSessionParameters );
 
@@ -257,14 +271,24 @@ void CMusApplicationManager::WriteSessionPropertiesL(
     SetPropertyL( NMusSessionApi::KContactName,
                   aSessionParameters.MdcaPoint( KContactName ) );
 
-    // set status property
-    SetStatusL( aStatus );
+    // fast mode  
+    TInt fastMode;
+    User::LeaveIfError( RProperty::Get( NMusSessionApi::KCategoryUid, 
+                                        NMusSessionApi::KFastMode, 
+                                        fastMode ) );  
+    if ( fastMode != MusSettingsKeys::EFastModeDisabled )
+        {
+        lex.Assign( aSessionParameters.MdcaPoint( KFastMode ) );
+        lex.Val( val );
+        SetPropertyL( NMusSessionApi::KFastMode, val );
+        }
+    else
+        {        
+        MUS_LOG( "mus: [MUSSRV]  fast mode disabled, do not update it" );
+        }
     
-    // set privacy property
-    lex.Assign( aSessionParameters.MdcaPoint( KPrivacyStatus ) );
-    lex.Val( val );
-
-    SetPropertyL( NMusSessionApi::KPrivacyStatus, val );
+   // set status property
+    SetStatusL( aStatus );
 
     MUS_LOG( "mus: [MUSSRV] <- \
              CMusApplicationManager::WriteSessionPropertiesL()" );
@@ -368,15 +392,97 @@ void CMusApplicationManager::SetPropertyL( TUint aProperty, TInt aValue )
     MUS_LOG( "mus: [MUSSRV] <- CMusApplicationManager::SetPropertyL()" );
     }
 
+// -----------------------------------------------------------------------------
+// Reads the callprovider description from the PS key
+// return aProvider will have the proper callprovider name.
+// -----------------------------------------------------------------------------
+//
+void CMusApplicationManager::CallProviderL(TDes8& aProvider)
+    {
+    MUS_LOG( "mus: [MUSSRV] -> CMusApplicationManager::CallProviderL");
+    const TInt KMusMgrMaxPluginNameLen = 256; 
+    TBuf<KMusMgrMaxPluginNameLen> pluginName;
+    
+    User::LeaveIfError(RProperty::Get( 
+                                NMusSessionInformationApi::KCategoryUid,
+                                NMusSessionInformationApi::KMUSCallProvider,
+                                pluginName ));
+    User::LeaveIfError( 
+            CnvUtfConverter::ConvertFromUnicodeToUtf8( aProvider, pluginName ));
+    
+    MUS_LOG( "mus: [MUSSRV] <- CMusApplicationManager::CallProviderL");
+    }
 
 // -----------------------------------------------------------------------------
-//
+// Resolves name of the ecom plugin which implements the livecomms engine api
+// by using the callprovider
 // -----------------------------------------------------------------------------
 //
-TApaTask CMusApplicationManager::GetApaTask() 
+void CMusApplicationManager::ResolvePluginNameL(TDes8& aPluginName)
     {
-    MUS_LOG( "mus: [MUSSRV] <> CMusApplicationManager::GetApaTask()" );
-    TUid appUid;
-    appUid.iUid = KMusUiUid;
-    return TApaTaskList( iWsSession ).FindApp( appUid );
+    MUS_LOG( "mus: [MUSSRV] -> CMusApplicationManager::ResolvePluginNameL");
+    
+    TBuf8<RProperty::KMaxPropertySize> providerName ;
+
+    // Read the call provider name 
+    CallProviderL( providerName );
+
+    RImplInfoPtrArray pluginArray;
+    MusCleanupResetAndDestroy<RImplInfoPtrArray>::PushL( pluginArray );
+
+    TEComResolverParams resolverParams;
+    
+    resolverParams.SetDataType ( providerName );
+    resolverParams.SetWildcardMatch (ETrue);
+    
+    // Use default plugin even if listing fails
+    TRAPD( err, 
+       REComSession::ListImplementationsL(KLcEngineInterfaceUid, resolverParams, pluginArray) );
+    MUS_LOG1( "mus: [MUSSRV]    List implementations compl:%d", err );
+    if ( err == KErrNoMemory )
+        {
+        User::Leave( err );
+        }
+    
+    if( pluginArray.Count() > 0 )
+        {
+        CImplementationInformation* info = pluginArray[ 0 ];
+        __ASSERT_ALWAYS( aPluginName.MaxLength() >= info->DataType().Length(), 
+                         User::Leave( KErrArgument ) );
+        aPluginName.Copy( info->DataType() );
+        }
+    else
+        {
+        __ASSERT_ALWAYS( aPluginName.MaxLength() >= KDefaultEngineName().Length(), 
+                                 User::Leave( KErrArgument ) );
+        aPluginName.Copy( KDefaultEngineName() );
+        }
+    CleanupStack::PopAndDestroy();//pluginArray
+    MUS_LOG( "mus: [MUSSRV] <- CMusApplicationManager::ResolvePluginNameL");
     }
+
+// -----------------------------------------------------------------------------
+// Creates command line used when starting application.
+// -----------------------------------------------------------------------------
+//
+HBufC* CMusApplicationManager::CreateCommandLineArgsLC()
+    {
+    MUS_LOG( "mus: [MUSSRV] -> CMusApplicationManager::CreateCommandLineLC");
+    
+    TBuf8<KMusMgrMaxPluginNameLen> pluginNameUtf8;
+    ResolvePluginNameL( pluginNameUtf8 );
+    
+    MUS_LOG_TDESC8( "mus: [MUSSRV]     Plugin name:", pluginNameUtf8 );
+    
+    HBufC* commandLineArgs = HBufC::NewLC( KMusMgrMaxPluginNameLen );
+    TPtr commandLineArgsPtr( commandLineArgs->Des() );
+    User::LeaveIfError( 
+        CnvUtfConverter::ConvertToUnicodeFromUtf8( 
+            commandLineArgsPtr, pluginNameUtf8 ) );
+    
+    MUS_LOG_TDESC( "mus: [MUSSRV] <- command line args:", commandLineArgsPtr );
+    
+    return commandLineArgs;
+    }
+
+// End of File

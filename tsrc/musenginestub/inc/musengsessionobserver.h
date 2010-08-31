@@ -25,7 +25,7 @@
 // CLASS DECLARATION
 
 /**
-* An interface to be implemented by users of Multimedia Sharing Engine if
+* An interface to be implemented by users of Multimedia Sharing Engine if 
 * they wish to receive events from session and streaming state changes.
 *
 * @lib museng.lib
@@ -58,7 +58,7 @@ class MMusEngSessionObserver
         *
         * @since S60 v3.2
         */
-        virtual void SessionConnectionLost() = 0;
+        virtual void SessionConnectionLost() = 0; 
 
         /**
         * Undefined exception has occurred. Session is useless and must be
@@ -82,7 +82,7 @@ class MMusEngSessionObserver
         *
         * @since S60 v3.2
         */
-        virtual void StreamStreaming() = 0;
+        virtual void StreamStreaming() = 0;        
 
         /**
         * Update time information of this session
@@ -90,7 +90,7 @@ class MMusEngSessionObserver
         * @since S60 v3.2
         */
         virtual void SessionTimeChanged( const TTimeIntervalSeconds& aSeconds ) = 0;
-
+        
         /**
         * RTCP inactivity timeout has occurred.
         *

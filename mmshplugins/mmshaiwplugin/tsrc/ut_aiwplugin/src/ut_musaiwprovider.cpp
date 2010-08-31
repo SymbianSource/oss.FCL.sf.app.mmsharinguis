@@ -15,7 +15,7 @@
 *
 */
 
-#include <eikmenup.h>
+
 #include "ut_musaiwprovider.h"
 #include "musaiwprovider.h"
 #include "musaiwprovider.hrh"
@@ -27,6 +27,7 @@
 #include "mussesseioninformationapi.h"
 #include "mussettings.h"
 #include "mustesthelp.h"
+#include "mussessionproperties.h"
 #define MUS_MEMORY_LEAVE_CHECKING_ON
 
 #include <e32property.h>
@@ -38,6 +39,8 @@
 #include <digia/eunit/eunitmacros.h>
 #include <aknglobalnote.h>
 #include <apgtask.h>
+#include <eikmenup.h>
+#include <uikoninternalpskeys.h>
 
 
 // Next row is to disable warning emerging from EUnit code.
@@ -48,6 +51,8 @@
 
 _LIT( KMusAiwProviderResource, "c:\\sys\\bin\\musaiwproviderui.rsc" );
 _LIT( KResourceFilenameRom,"z:\\sys\\bin\\musaiwproviderui.rsc" );
+
+_LIT( KMusOnHold, "On hold" );
 
 _LIT8( KMusOnHold8, "On hold" );
 _LIT8( KMusNetworkIncompatible8, "Network incompatible" );
@@ -159,6 +164,8 @@ void UT_CMusAiwProvider::SetupL()
     CMusManager::SetUseCase( MultimediaSharing::EMusContinue );
     CMusManager::SetStartError( KErrNone );
     CMusManager::SetAvailability( KErrNone );
+    MultimediaSharingSettings::SetPropertyValueL( 
+                  MusSettingsKeys::KFastStartupMode, MusSettingsKeys::EFastModeOff );
     
     }
 
@@ -170,6 +177,7 @@ void UT_CMusAiwProvider::SetupL()
 void UT_CMusAiwProvider::Teardown(  )
     {
     delete iProvider;
+    PropertyHelper::Close();
     }
 
 
@@ -273,28 +281,17 @@ void UT_CMusAiwProvider::UT_CMusAiwProvider_HandleServiceCmdLL()
 //
 void UT_CMusAiwProvider::UT_CMusAiwProvider_InitializeMenuPaneLL()
     {    
-
-    
     RFs fs;
     User::LeaveIfError( fs.Connect() );
-
     CleanupClosePushL( fs );
-
+    
     BaflUtils::CopyFile( fs, KMusAiwProviderResource(),
                          KResourceFilenameRom() );
 
     CAiwGenericParamList* list = CAiwGenericParamList::NewLC();
 
-    CEikMenuPane* eikPane = new( ELeave ) CEikMenuPane( this );
-    CleanupStack::PushL( eikPane );
-
-    // Constructing eikPane is not compulsory for testing and leads to a memory
-    // leak.
-    //eikPane->ConstructL( NULL, this );
-
-    CAiwMenuPane* aiwPane = new( ELeave ) CAiwMenuPane( *eikPane, 0 ); //Takes ownership
-    CleanupStack::Pop( eikPane );
-    CleanupStack::PushL( aiwPane );
+    CEikMenuPane* eikPane = NULL;
+    CAiwMenuPane* aiwPane = CreateAiwMenuPaneLC( &eikPane );
 
     // ResourceFile is empty 
     delete iProvider->iResourceFileName;
@@ -372,28 +369,18 @@ void UT_CMusAiwProvider::UT_CMusAiwProvider_InitializeMenuPaneLL()
 
 void UT_CMusAiwProvider::UT_CMusAiwProvider_InitializeMenuPaneL2L()
     {    
-
     RFs fs;
     User::LeaveIfError( fs.Connect() );
-
     CleanupClosePushL( fs );
-
+    
     BaflUtils::CopyFile( fs, KMusAiwProviderResource(),
                          KResourceFilenameRom() );
 
     CAiwGenericParamList* list = CAiwGenericParamList::NewLC();
 
-    CEikMenuPane* eikPane = new( ELeave ) CEikMenuPane( this );
-    CleanupStack::PushL( eikPane );
-
-    // Constructing eikPane is not compulsory for testing and leads to a memory
-    // leak.
-    //eikPane->ConstructL( NULL, this );
-
-    CAiwMenuPane* aiwPane = new( ELeave ) CAiwMenuPane( *eikPane, 0 ); //Takes ownership
-    CleanupStack::Pop( eikPane );
-    CleanupStack::PushL( aiwPane );
-
+    CEikMenuPane* eikPane = NULL;
+    CAiwMenuPane* aiwPane = CreateAiwMenuPaneLC( &eikPane );
+    
     // ResourceFile is empty 
     delete iProvider->iResourceFileName;
     
@@ -441,27 +428,17 @@ void UT_CMusAiwProvider::UT_CMusAiwProvider_InitializeMenuPaneL2L()
 
 void UT_CMusAiwProvider::UT_CMusAiwProvider_InitializeMenuPaneL3L()
     {    
-
     RFs fs;
     User::LeaveIfError( fs.Connect() );
-
     CleanupClosePushL( fs );
-
+    
     BaflUtils::CopyFile( fs, KMusAiwProviderResource(),
                          KResourceFilenameRom() );
 
     CAiwGenericParamList* list = CAiwGenericParamList::NewLC();
 
-    CEikMenuPane* eikPane = new( ELeave ) CEikMenuPane( this );
-    CleanupStack::PushL( eikPane );
-
-    // Constructing eikPane is not compulsory for testing and leads to a memory
-    // leak.
-    //eikPane->ConstructL( NULL, this );
-
-    CAiwMenuPane* aiwPane = new( ELeave ) CAiwMenuPane( *eikPane, 0 ); //Takes ownership
-    CleanupStack::Pop( eikPane );
-    CleanupStack::PushL( aiwPane );
+    CEikMenuPane* eikPane = NULL;
+    CAiwMenuPane* aiwPane = CreateAiwMenuPaneLC( &eikPane );
 
     // ResourceFile is empty 
     delete iProvider->iResourceFileName;
@@ -508,27 +485,17 @@ void UT_CMusAiwProvider::UT_CMusAiwProvider_InitializeMenuPaneL3L()
 
 void UT_CMusAiwProvider::UT_CMusAiwProvider_InitializeMenuPaneL4L()
     {    
-
     RFs fs;
     User::LeaveIfError( fs.Connect() );
-
     CleanupClosePushL( fs );
-
+    
     BaflUtils::CopyFile( fs, KMusAiwProviderResource(),
                          KResourceFilenameRom() );
 
     CAiwGenericParamList* list = CAiwGenericParamList::NewLC();
 
-    CEikMenuPane* eikPane = new( ELeave ) CEikMenuPane( this );
-    CleanupStack::PushL( eikPane );
-
-    // Constructing eikPane is not compulsory for testing and leads to a memory
-    // leak.
-    //eikPane->ConstructL( NULL, this );
-
-    CAiwMenuPane* aiwPane = new( ELeave ) CAiwMenuPane( *eikPane, 0 ); //Takes ownership
-    CleanupStack::Pop( eikPane );
-    CleanupStack::PushL( aiwPane );
+    CEikMenuPane* eikPane = NULL;
+    CAiwMenuPane* aiwPane = CreateAiwMenuPaneLC( &eikPane );
 
     // ResourceFile is empty 
     delete iProvider->iResourceFileName;
@@ -575,27 +542,17 @@ void UT_CMusAiwProvider::UT_CMusAiwProvider_InitializeMenuPaneL4L()
 
 void UT_CMusAiwProvider::UT_CMusAiwProvider_InitializeMenuPaneL5L()
     {    
-
     RFs fs;
     User::LeaveIfError( fs.Connect() );
-
     CleanupClosePushL( fs );
-
+    
     BaflUtils::CopyFile( fs, KMusAiwProviderResource(),
                          KResourceFilenameRom() );
 
     CAiwGenericParamList* list = CAiwGenericParamList::NewLC();
 
-    CEikMenuPane* eikPane = new( ELeave ) CEikMenuPane( this );
-    CleanupStack::PushL( eikPane );
-
-    // Constructing eikPane is not compulsory for testing and leads to a memory
-    // leak.
-    //eikPane->ConstructL( NULL, this );
-
-    CAiwMenuPane* aiwPane = new( ELeave ) CAiwMenuPane( *eikPane, 0 ); //Takes ownership
-    CleanupStack::Pop( eikPane );
-    CleanupStack::PushL( aiwPane );
+    CEikMenuPane* eikPane = NULL;
+    CAiwMenuPane* aiwPane = CreateAiwMenuPaneLC( &eikPane );
 
     // ResourceFile is empty 
     delete iProvider->iResourceFileName;
@@ -644,27 +601,17 @@ void UT_CMusAiwProvider::UT_CMusAiwProvider_InitializeMenuPaneL5L()
 
 void UT_CMusAiwProvider::UT_CMusAiwProvider_InitializeMenuPaneL6L()
     {    
-
     RFs fs;
     User::LeaveIfError( fs.Connect() );
-
     CleanupClosePushL( fs );
-
+    
     BaflUtils::CopyFile( fs, KMusAiwProviderResource(),
                          KResourceFilenameRom() );
 
     CAiwGenericParamList* list = CAiwGenericParamList::NewLC();
 
-    CEikMenuPane* eikPane = new( ELeave ) CEikMenuPane( this );
-    CleanupStack::PushL( eikPane );
-
-    // Constructing eikPane is not compulsory for testing and leads to a memory
-    // leak.
-    //eikPane->ConstructL( NULL, this );
-
-    CAiwMenuPane* aiwPane = new( ELeave ) CAiwMenuPane( *eikPane, 0 ); //Takes ownership
-    CleanupStack::Pop( eikPane );
-    CleanupStack::PushL( aiwPane );
+    CEikMenuPane* eikPane = NULL;
+    CAiwMenuPane* aiwPane = CreateAiwMenuPaneLC( &eikPane );
 
     // ResourceFile is empty 
     delete iProvider->iResourceFileName;
@@ -710,30 +657,19 @@ void UT_CMusAiwProvider::UT_CMusAiwProvider_InitializeMenuPaneL6L()
     
     }
 
-
-void UT_CMusAiwProvider::UT_CMusAiwProvider_InitializeMenuPaneL7L()
+void UT_CMusAiwProvider::UT_CMusAiwProvider_InitializeMenuPaneLFastModeL()
     {    
-
     RFs fs;
     User::LeaveIfError( fs.Connect() );
-
     CleanupClosePushL( fs );
-
+    
     BaflUtils::CopyFile( fs, KMusAiwProviderResource(),
                          KResourceFilenameRom() );
 
     CAiwGenericParamList* list = CAiwGenericParamList::NewLC();
 
-    CEikMenuPane* eikPane = new( ELeave ) CEikMenuPane( this );
-    CleanupStack::PushL( eikPane );
-
-    // Constructing eikPane is not compulsory for testing and leads to a memory
-    // leak.
-    //eikPane->ConstructL( NULL, this );
-
-    CAiwMenuPane* aiwPane = new( ELeave ) CAiwMenuPane( *eikPane, 0 ); //Takes ownership
-    CleanupStack::Pop( eikPane );
-    CleanupStack::PushL( aiwPane );
+    CEikMenuPane* eikPane = NULL;
+    CAiwMenuPane* aiwPane = CreateAiwMenuPaneLC( &eikPane );
 
     // ResourceFile is empty 
     delete iProvider->iResourceFileName;
@@ -744,31 +680,35 @@ void UT_CMusAiwProvider::UT_CMusAiwProvider_InitializeMenuPaneL7L()
     // Menu item counter
     TInt menuPaneCount = eikPane->NumberOfItemsInPane();
 
-    // test "forbidden" feature: mus NOT allowed, operator variant set to operator
-    MultimediaSharingSettings::SetOperatorVariantSettingL(
-                     MusSettingsKeys::EOperatorSpecific );
-    RProperty::Set( NMusSessionInformationApi::KCategoryUid,
-                    NMusSessionInformationApi::KMUSForbidden,
-                    NMusSessionInformationApi::EMUSForbidden );    
-    EUNIT_ASSERT( eikPane->NumberOfItemsInPane() == menuPaneCount )
-
     // set operator back to standard and allow mus
     RProperty::Set( NMusSessionInformationApi::KCategoryUid ,
                     NMusSessionInformationApi::KMUSForbidden ,
                     NMusSessionInformationApi::EMUSAllowed );
     MultimediaSharingSettings::SetOperatorVariantSettingL(
                      MusSettingsKeys::EStandard );
-
-    // Cases for "Mush not supported"
-    FeatureManager::MultimediaSharingNotSupported();
-    CMusManager::SetAvailability( MultimediaSharing::EMultimediaSharingAvailable );
+    MultimediaSharingSettings::SetPropertyValueL( 
+              MusSettingsKeys::KFastStartupMode, MusSettingsKeys::EFastModeOn );
+ 
+    // Options not enabled, mus shown in menu
+    //
+    MultimediaSharingSettings::SetCapabilityQuerySettingL(
+              MusSettingsKeys::ENoOptions );
+    CMusManager::SetAvailability(MultimediaSharing::EMultimediaSharingAvailable);
     menuPaneCount = eikPane->NumberOfItemsInPane();
     iProvider->InitializeMenuPaneL( *aiwPane, 0, 0, *list );
-    MUS_CHECK_MEMORY_LEAVE( eikPane->NumberOfItemsInPane() == menuPaneCount )
-    FeatureManager::MultimediaSharingSupported();
+    
+    MUS_CHECK_MEMORY_LEAVE( eikPane->NumberOfItemsInPane() == menuPaneCount + 3 )
 
-    // set camera support on
-    FeatureManager::CameraSupported();
+    // Options supported, not yet available, mus not shown in menu
+    //
+    MultimediaSharingSettings::SetCapabilityQuerySettingL(
+                  MusSettingsKeys::EParallel );
+    CMusManager::SetAvailability(MultimediaSharing::ESipOptionsSent);
+    menuPaneCount = eikPane->NumberOfItemsInPane();
+    iProvider->InitializeMenuPaneL( *aiwPane, 0, 0, *list );
+   
+    MUS_CHECK_MEMORY_LEAVE( eikPane->NumberOfItemsInPane() == menuPaneCount )
+    
     CleanupStack::PopAndDestroy( aiwPane );
     CleanupStack::PopAndDestroy( list );
     BaflUtils::DeleteFile( fs, KResourceFilenameRom() );
@@ -776,8 +716,53 @@ void UT_CMusAiwProvider::UT_CMusAiwProvider_InitializeMenuPaneL7L()
     CleanupStack::PopAndDestroy(); // fs
     
     }
-	
-	
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusAiwProvider::UT_CMusAiwProvider_InitializeMenuPaneLFastMode2L()
+    {
+    RFs fs;
+    User::LeaveIfError( fs.Connect() );
+    CleanupClosePushL( fs );
+    
+    BaflUtils::CopyFile( fs, KMusAiwProviderResource(),
+                         KResourceFilenameRom() );
+
+    CAiwGenericParamList* list = CAiwGenericParamList::NewLC();
+
+    CEikMenuPane* eikPane = NULL;
+    CAiwMenuPane* aiwPane = CreateAiwMenuPaneLC( &eikPane );
+   
+    // ResourceFile is empty 
+    delete iProvider->iResourceFileName;
+    
+    iProvider->iResourceFileName = NULL ;
+    iProvider->InitializeMenuPaneL( *aiwPane, 0, 0, *list );
+    EUNIT_ASSERT( iProvider->iResourceFileName != NULL )
+
+    // Options supported, available, mus shown in menu
+    //
+    MultimediaSharingSettings::SetPropertyValueL( 
+              MusSettingsKeys::KFastStartupMode, MusSettingsKeys::EFastModeOn );
+
+    MultimediaSharingSettings::SetCapabilityQuerySettingL(
+                  MusSettingsKeys::EParallel );
+
+    CMusManager::SetAvailability(MultimediaSharing::EMultimediaSharingAvailable);
+    TInt menuPaneCount = eikPane->NumberOfItemsInPane();
+    iProvider->InitializeMenuPaneL( *aiwPane, 0, 0, *list );
+
+    MUS_CHECK_MEMORY_LEAVE( eikPane->NumberOfItemsInPane() == menuPaneCount + 3 )
+    
+    CleanupStack::PopAndDestroy( aiwPane );
+    CleanupStack::PopAndDestroy( list );
+    BaflUtils::DeleteFile( fs, KResourceFilenameRom() );
+
+    CleanupStack::PopAndDestroy(); // fs
+    }
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -792,12 +777,15 @@ void UT_CMusAiwProvider::UT_CMusAiwProvider_HandleMenuCmdLL()
     EUNIT_ASSERT( CMusManager::UseCase() == MultimediaSharing::EMusLiveVideo )
 
     iProvider->HandleMenuCmdL( EMusCommandClipShare, *pl, *pl, 0, this );
+    MUS_CHECK_MEMORY_LEAVE( CMusManager::UseCase() == MultimediaSharing::EMusClipVideo  )
     EUNIT_ASSERT( CMusManager::UseCase() == MultimediaSharing::EMusClipVideo )
 
     iProvider->HandleMenuCmdL( EMusCommandImageShare, *pl, *pl, 0, this );
+    MUS_CHECK_MEMORY_LEAVE( CMusManager::UseCase() == MultimediaSharing::EMusStillImage  )
     EUNIT_ASSERT( CMusManager::UseCase() == MultimediaSharing::EMusStillImage )
 
     iProvider->HandleMenuCmdL( EMusCommandContinue, *pl, *pl, 0, this );
+    MUS_CHECK_MEMORY_LEAVE( CMusManager::UseCase() == MultimediaSharing::EMusContinue  )
     EUNIT_ASSERT( CMusManager::UseCase() == MultimediaSharing::EMusContinue )
 
     CMusManager::SetStartError(
@@ -838,9 +826,59 @@ void UT_CMusAiwProvider::UT_CMusAiwProvider_HandleMenuCmdLL()
 //
 // -----------------------------------------------------------------------------
 //
+void UT_CMusAiwProvider::UT_CMusAiwProvider_HandleMenuCmdLFastModeL()
+    {
+    CAiwGenericParamList* pl = CAiwGenericParamList::NewLC();
+    
+    MultimediaSharingSettings::SetPropertyValueL( 
+               MusSettingsKeys::KFastStartupMode, MusSettingsKeys::EFastModeOn );
+    
+    // Fast mode, start live sharing (handle normally)
+    CMusManager::SetUseCase( MultimediaSharing::EMusContinue );
+    iProvider->HandleMenuCmdL( EMusCommandLiveShare, *pl, *pl, 0, this );
+    MUS_CHECK_MEMORY_LEAVE( CMusManager::UseCase() == MultimediaSharing::EMusLiveVideo  )
+    EUNIT_ASSERT( CMusManager::UseCase() == MultimediaSharing::EMusLiveVideo )
+
+    // Fast mode, start clip sharing, app not running nor hidden (handle normally)
+    CMusManager::SetUseCase( MultimediaSharing::EMusContinue );
+    iProvider->HandleMenuCmdL( EMusCommandClipShare, *pl, *pl, 0, this );
+    MUS_CHECK_MEMORY_LEAVE( CMusManager::UseCase() == MultimediaSharing::EMusClipVideo  )
+    EUNIT_ASSERT( CMusManager::UseCase() == MultimediaSharing::EMusClipVideo )
+        
+    // Fast mode, start clip sharing, app running and hidden (mus mgr is not
+    // used for starting application, only usecase P&S value is changed)
+    CMusManager::SetUseCase( MultimediaSharing::EMusContinue );
+    
+    TApaTask::iApplicationExist = ETrue;
+    
+    TBuf16< 10 > listOkMus; 
+    TUint16 upperBits = KMusUiUid >> 16;  
+    listOkMus.Append( upperBits );
+    listOkMus.Append( KMusUiUid );
+    listOkMus.Append( 0 );
+    listOkMus.Append( 0 );
+    RProperty::Set( KPSUidUikon, KUikAppHiddenList, listOkMus );  
+    
+    RProperty::Set( NMusSessionApi::KCategoryUid, NMusSessionApi::KUseCase, MultimediaSharing::EMusContinue );
+    
+    iProvider->HandleMenuCmdL( EMusCommandClipShare, *pl, *pl, 0, this );
+    EUNIT_ASSERT( CMusManager::UseCase() == MultimediaSharing::EMusContinue )
+    
+    TInt usecaseAfterFakeStart( 0 );
+    RProperty::Get( NMusSessionApi::KCategoryUid, NMusSessionApi::KUseCase, usecaseAfterFakeStart );
+    EUNIT_ASSERT( usecaseAfterFakeStart == MultimediaSharing::EMusClipVideo );
+    
+    CleanupStack::PopAndDestroy( pl );
+
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
 void UT_CMusAiwProvider::UT_CMusAiwProvider_ApplicationRunningLL()
     {
-    // Stub returns EFalse as default
+    TApaTask::iApplicationExist = EFalse;
     EUNIT_ASSERT( !iProvider->ApplicationRunningL() )
 
     // Use stub to mimic the existence of application
@@ -971,8 +1009,90 @@ void UT_CMusAiwProvider::UT_ImplementationGroupProxyL()
     ImplementationGroupProxy( tableCount );
     }
 
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusAiwProvider::UT_HiddenFromFastSwapL()
+    {
+    // Normal mode
+    MultimediaSharingSettings::SetPropertyValueL( 
+                MusSettingsKeys::KFastStartupMode, MusSettingsKeys::EFastModeOff );
+    EUNIT_ASSERT( !iProvider->HiddenFromFastSwapL() )
+    
+    // Fast mode
+    //
+    MultimediaSharingSettings::SetPropertyValueL( 
+               MusSettingsKeys::KFastStartupMode, MusSettingsKeys::EFastModeOn );
+    
+    // Key not found
+    PropertyHelper::SetErrorCode( KErrNotFound );
+    EUNIT_ASSERT( !iProvider->HiddenFromFastSwapL() )
+    
+    // Malformed key value
+    PropertyHelper::SetErrorCode( KErrNone );
+    TBuf16< 5 > listMalformed;
+    listMalformed.Copy( _L("05645") );
+    RProperty::Set( KPSUidUikon, KUikAppHiddenList, listMalformed );   
+    MUS_EUNIT_ASSERT_SPECIFIC_LEAVE( iProvider->HiddenFromFastSwapL(), KErrEof );
+    
+    // No musuid in value list
+    TBuf16< 6 > listOkNoMus;
+    TUint32 uid1 = 10002000;
+    TUint32 uid2 = 20003000;
+    // avkoncapserver publishes values in following manner
+    TUint16 upperBits = uid1 >> 16;
+    listOkNoMus.Append( upperBits );
+    listOkNoMus.Append( uid1 );
+    upperBits = uid2 >> 16;
+    listOkNoMus.Append( upperBits );
+    listOkNoMus.Append( uid2 );
+    listOkNoMus.Append( 0 );
+    listOkNoMus.Append( 0 );
+    RProperty::Set( KPSUidUikon, KUikAppHiddenList, listOkNoMus );  
+    EUNIT_ASSERT( !iProvider->HiddenFromFastSwapL() )
+    
+    // Musuid in value list
+    TBuf16< 10 > listOkMus;
+    TUint32 uid3 = 30005000;
+    upperBits = uid1 >> 16;
+    listOkMus.Append( upperBits );
+    listOkMus.Append( uid1 );
+    upperBits = uid2 >> 16;
+    listOkMus.Append( upperBits );
+    listOkMus.Append( uid2 );
+    
+    upperBits = KMusUiUid >> 16;  
+    listOkMus.Append( upperBits );
+    listOkMus.Append( KMusUiUid );
+    
+    upperBits = uid3 >> 16;
+    listOkMus.Append( upperBits );
+    listOkMus.Append( uid3 );
+    
+    listOkMus.Append( 0 );
+    listOkMus.Append( 0 );
+    RProperty::Set( KPSUidUikon, KUikAppHiddenList, listOkMus );  
+    EUNIT_ASSERT( iProvider->HiddenFromFastSwapL() )
+    }
 
+// HELPERS
 
+CAiwMenuPane* UT_CMusAiwProvider::CreateAiwMenuPaneLC( CEikMenuPane** aEikPane )
+    {
+    CEikMenuPane* eikPane = new( ELeave ) CEikMenuPane( this );
+    CleanupStack::PushL( eikPane );
+
+    // Constructing eikPane is not compulsory for testing and leads to a memory
+    // leak.
+    //eikPane->ConstructL( NULL, this );
+
+    CAiwMenuPane* aiwPane = new( ELeave ) CAiwMenuPane( *eikPane, 0 ); //Takes ownership
+    CleanupStack::Pop( eikPane );
+    CleanupStack::PushL( aiwPane );
+    *aEikPane = eikPane;
+    return aiwPane;
+    }
 
 //  TEST TABLE
 
@@ -1033,20 +1153,34 @@ EUNIT_TEST(
     "InitializeMenuPaneL",
     "FUNCTIONALITY",
     SetupL, UT_CMusAiwProvider_InitializeMenuPaneL6L, Teardown)
-    
+
 EUNIT_TEST(
-    "InitializeMenuPaneL - test7",
+    "InitializeMenuPaneL - fast mode",
     "CMusAiwProvider",
     "InitializeMenuPaneL",
     "FUNCTIONALITY",
-    SetupL, UT_CMusAiwProvider_InitializeMenuPaneL7L, Teardown)
-	     
+    SetupL, UT_CMusAiwProvider_InitializeMenuPaneLFastModeL, Teardown)
+
+EUNIT_TEST(
+    "InitializeMenuPaneL - fast mode 2",
+    "CMusAiwProvider",
+    "InitializeMenuPaneL",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusAiwProvider_InitializeMenuPaneLFastMode2L, Teardown)
+
 EUNIT_TEST(
     "HandleMenuCmdL - test",
     "CMusAiwProvider",
     "HandleMenuCmdL",
     "FUNCTIONALITY",
     SetupL, UT_CMusAiwProvider_HandleMenuCmdLL, Teardown)
+
+EUNIT_TEST(
+    "HandleMenuCmdL - fastmode test",
+    "CMusAiwProvider",
+    "HandleMenuCmdL",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusAiwProvider_HandleMenuCmdLFastModeL, Teardown)   
 
 EUNIT_TEST(
     "ApplicationRunningL - test",
@@ -1082,6 +1216,13 @@ EUNIT_TEST(
     "ImplementationGroupProxy",
     "FUNCTIONALITY",
     SetupL, UT_ImplementationGroupProxyL, Teardown)
+    
+EUNIT_TEST(
+    "HiddenFromFastSwapL",
+    "CMusAiwProvider",
+    "HiddenFromFastSwapL",
+    "FUNCTIONALITY",
+    SetupL, UT_HiddenFromFastSwapL, Teardown)
 
 EUNIT_END_TEST_TABLE
 

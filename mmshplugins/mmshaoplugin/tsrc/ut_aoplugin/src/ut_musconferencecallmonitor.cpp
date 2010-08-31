@@ -126,9 +126,6 @@ void UT_CMusConferenceCallMonitor::UT_RunError()
     {
     EUNIT_ASSERT_EQUALS( iMonitor->RunError( KErrNone ),
                          KErrNone )
-    // Make sure RunError handles the error compleatly and returns
-    // KErrNone
-    EUNIT_ASSERT( iMonitor->RunError( KErrGeneral ) == KErrNone );
     }
 
 // -----------------------------------------------------------------------------

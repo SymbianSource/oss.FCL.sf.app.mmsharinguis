@@ -23,6 +23,7 @@
 #include "mussesseioninformationapi.h"
 #include "muscallmonitorbase.h"
 #include "musunittesting.h"
+#include "mmuscallstateobserver.h"
 
 #include <etelmm.h>
 #include <e32base.h>
@@ -42,7 +43,9 @@ class CMusCallStatusMonitor : public CMusCallMonitorBase
          * aCall is not owned.
          * @return CMusCallStatusMonitor object.
          */
-        static CMusCallStatusMonitor* NewL( const RMobileCall& aCall, MMusTsyPropertyObserver& aObserver );
+        static CMusCallStatusMonitor* NewL( const RMobileCall& aCall, 
+                                               MMusTsyPropertyObserver& aObserver,
+                                               MMusCallStateObserver& aCallStateObserver );
                                 
         /**
          * Destructor.
@@ -54,7 +57,8 @@ class CMusCallStatusMonitor : public CMusCallMonitorBase
         /**
          * C++ constructor.
          */
-        CMusCallStatusMonitor(const RMobileCall& aCall, MMusTsyPropertyObserver& aObserver );
+        CMusCallStatusMonitor(const RMobileCall& aCall, MMusTsyPropertyObserver& aObserver,
+                                  MMusCallStateObserver& aCallStateObserver );
 
         /**
          * Symbian 2nd-phase constructor.

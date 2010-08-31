@@ -27,6 +27,8 @@
 #include "muscallmonitorbase.h"
 #include "mussesseioninformationapi.h"
 #include "mmustsypropertyobserver.h"
+#include "mmuscallstateobserver.h"
+
 
 // Forward declaration
 
@@ -42,7 +44,8 @@ class CMusCallMonitorMock : public CMusCallMonitorBase
 public:
     
     CMusCallMonitorMock( const RMobileCall& aCall,
-    					MMusTsyPropertyObserver& aObserver );
+    					MMusTsyPropertyObserver& aObserver,
+    					MMusCallStateObserver& aCallStateObserver );
     ~CMusCallMonitorMock();
     
     private:
@@ -59,7 +62,8 @@ public:
  * 
  */
 NONSHARABLE_CLASS( UT_CMusCallMonitorBase ): public CEUnitTestSuiteClass,
-											MMusTsyPropertyObserver
+											MMusTsyPropertyObserver,
+											MMusCallStateObserver
     {
     public:
         //Two phase construction
@@ -78,6 +82,9 @@ NONSHARABLE_CLASS( UT_CMusCallMonitorBase ): public CEUnitTestSuiteClass,
     virtual void NotifyCallStateChanged( NMusSessionInformationApi::TMusCallEvent aVal,
     									 TName& aCallName );
     
+    public:    // from MMusCallStateObserver.
+    virtual void MusCallStateChanged();
+    
 
     private: // Constructor
         UT_CMusCallMonitorBase();
@@ -92,16 +99,14 @@ NONSHARABLE_CLASS( UT_CMusCallMonitorBase ): public CEUnitTestSuiteClass,
     private: // Test methdods
         void UT_SetStateLL();
         void UT_SetCallInfoLL();
-        void UT_RunErrorL();
-        
-        void UT_SetClirSettingL();
-        void UT_SetTerminatingPrivacyL();
-        void UT_RemovePrefixL();
+        void UT_RunErrorL();     
+        void UT_CMusCallMonitorBase_IsDataReadyLL();
         
     
     private:    // Data        
         CMusCallMonitorBase* iCallMonitorBase;
         RMobileCall iCall;
+        TBool iCallStateObserverInvoked;
 
         EUNIT_DECLARE_TEST_TABLE;
 

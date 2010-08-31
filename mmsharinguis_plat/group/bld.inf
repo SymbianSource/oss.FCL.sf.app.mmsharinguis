@@ -17,7 +17,7 @@
 */
 
 
-
+#include "../live_comms_plugin_api/group/bld.inf"
 #include "../multimedia_sharing_settings_api/group/bld.inf"
 #include "../multimedia_sharing_resource_api/group/bld.inf"
 #include "../multimedia_sharing_manager_api/group/bld.inf"

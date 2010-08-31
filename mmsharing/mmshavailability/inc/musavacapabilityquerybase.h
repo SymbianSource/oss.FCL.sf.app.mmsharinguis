@@ -44,7 +44,7 @@ const TInt KCapabilityQueryNotReady = 0;
 const TInt KCapabilityCapabilitesReady = 1;
 const TInt KCapabilityCapabilitesNotFound = 2;
 const TInt KCapabilityCapabilitiesForbidden = 3;
-const TInt KMaxRemoteUriLength = 512;
+
 
 /**
  * Sent capability query (OPTIONS)
@@ -112,12 +112,6 @@ public: // new functions
      *     
      */
     HBufC8* ContentLC();
-
-    /**
-     * Check if Recipient address is same as that in profile.
-     *     
-     */
-    TBool ValidateUri();
 
     
     
@@ -220,17 +214,9 @@ private: // own data
     CUri8* iRegisteredContact;
     CUri8* iOriginator;
     CSIPClientTransaction* iTrx;
-    TBuf8<KMaxRemoteUriLength> iRemoteUri;
     
 //for unit testing
     CAPABILITY_UT_DEFINITIONS
-    
-private:    // Friend classes
-
-#ifdef EUNIT_TEST
-   friend class UT_CMusAvaCapabilityQuery;
-   friend class UT_CMusAvaCapabilityQueryBase;
-#endif
     
     };
 

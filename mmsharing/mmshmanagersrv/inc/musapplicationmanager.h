@@ -27,6 +27,9 @@
 #include <e32base.h>
 #include <w32std.h>
 
+
+const TInt KMusMgrMaxPluginNameLen = 256;
+
 //class TApaTask;
 
 /**
@@ -120,6 +123,12 @@ class CMusApplicationManager : public CBase
 		*
 		*/
 	    void SetIndicatorStatusL( TBool aLaunch );
+        
+        /**
+         * Resolves name of the ecom plugin which implements the livecomms engine api
+         * by using the callprovider
+         */
+        void ResolvePluginNameL(TDes8& aPluginName);
 	
 
 	private: // helper functions
@@ -135,22 +144,15 @@ class CMusApplicationManager : public CBase
 	    void SetPropertyL( TUint aProperty, TInt aValue );
 	    
 	    /**
-	    *
+        * Reads the call provider information from PS key.
+        */
+	    void CallProviderL(TDes8& aProvider);
+	    
+	    /**
+	    * Creates command line used when starting application.
+	    * 
 	    */
-	    TApaTask GetApaTask();
-	
-
-	private: // owned data
-	
-		/**
-		* Window server session handle
-		*/
-	    RWsSession iWsSession;
-	
-		/**
-		*
-		*/
-	    RApaLsSession iApaSession;
+	    HBufC* CreateCommandLineArgsLC();
     };
 
 

@@ -38,6 +38,7 @@ END // RESOURCE
 SOURCEPATH              ../src
 SOURCE                  musindicatorapi.cpp
 SOURCE                  mussoundplayer.cpp
+SOURCE                  musindicatordsa.cpp
 SOURCE                  musresourceutil.cpp
 
 USERINCLUDE             ../inc

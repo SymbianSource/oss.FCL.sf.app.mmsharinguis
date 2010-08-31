@@ -40,7 +40,8 @@ public:
     virtual void AvailabilityChangedL(
                  MultimediaSharing::TMusAvailabilityStatus aAvailability ) = 0;
 
-    virtual void StartLiveSharingL() = 0;
+    virtual void StartSharingWithUseCaseL( MultimediaSharing::TMusUseCase aUseCase ) = 0;
+    
     };
 
 

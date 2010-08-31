@@ -108,8 +108,6 @@ public:
     virtual void AvailabilityError(
         MMusAvaObserver::TAvailabilityName aName,
         MMusAvaObserver::TAvailabilityStatus aStatus );
-    
-    virtual void AvailabilitiesAbleToShowIndicator();
 
 public:
 

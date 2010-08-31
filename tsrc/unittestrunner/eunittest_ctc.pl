@@ -42,9 +42,10 @@ $ignoredFileName = "ignored_ctc.txt";
 $ignoredmodeSourceRelative = "1";
 
 $coverageSymbols = "MON.sym";
-$ctcCommandPart1 = "ctcwrap -i d -n";
-$ctcCommandPart2 = "abld build winscw udeb";
-$ctcCommandPart2Test = "abld test build winscw udeb";
+#$ctcCommandPart1 = "ctcwrap -i d -2comp -no-conf-check -n";
+$ctcCommandPart1 = "ctcwrap -i d -2comp -n";
+$ctcCommandPart2 = "sbs.bat -c winscw_udeb";
+$ctcCommandPart2Test = "sbs -c winscw_udeb.test";
 $ctcIgnoredPart1 = " -C \"EXCLUDE+";
 $ctcIgnoredPart2 = "\" ";
 
@@ -239,11 +240,12 @@ sub doBuild()
 		    	unlink("$eunitDstDllLocation$currentDllNameLine");
 		    	if ($currentBuildModeLine =~ /$eunitTestBuildMode/)
 					{
-						doSystemCall("abld test reallyclean winscw udeb ");
+						doSystemCall("sbs -c winscw_udeb.test reallyclean ");
 		    	}
 		    	else
 		    	{
-		    		doSystemCall("abld reallyclean winscw udeb ");
+		    		#doSystemCall("sbs -c winscw_udeb reallyclean ");
+		    		doSystemCall("sbs REALLYCLEAN ");
 		    	}
 	    	}
 	    	else
@@ -267,16 +269,15 @@ sub doBuild()
 				else
 				{
 					print("previous dll was not from same path - build all!\n");
-					doSystemCall("bldmake bldfiles");
 					
 					if ($currentBuildModeLine =~ /$eunitTestBuildMode/)
-					{
-						doSystemCall("abld test reallyclean winscw udeb ");
-		    		doSystemCall("$ctcCommandPart1 $coverageResultsDir$coverageSymbols $excludedCmd $ctcCommandPart2Test");
-		    	}
+				    {
+                        doSystemCall("sbs -c winscw_udeb.test reallyclean ");
+                        doSystemCall("$ctcCommandPart1 $coverageResultsDir$coverageSymbols $excludedCmd $ctcCommandPart2Test");
+		    	    }
 		    	else
 		    	{
-		    		doSystemCall("abld reallyclean winscw udeb ");
+		    		doSystemCall("sbs REALLYCLEAN ");
 		    		doSystemCall("$ctcCommandPart1 $coverageResultsDir$coverageSymbols $excludedCmd $ctcCommandPart2");
 		    	}
 				}

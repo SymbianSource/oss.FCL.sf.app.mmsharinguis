@@ -5,7 +5,7 @@
 * under the terms of "Eclipse Public License v1.0"
 * which accompanies this distribution, and is available
 * at the URL "http://www.eclipse.org/legal/epl-v10.html".
-*  Version     : %version: 15.1.4 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: 15.1.5 % << Don't touch! Updated by Synergy at check-out.
 *
 * Initial Contributors:
 * Nokia Corporation - initial contribution.
@@ -26,7 +26,6 @@
 #include "musavaavailability.h"
 #include "musavasipconnectionadapter.h"
 #include "musavasipprofileregistryadapter.h"
-#include "mussettingskeys.h"
 #include <sipprofileregistryobserver.h>
 #include <e32base.h>
 
@@ -204,7 +203,7 @@ private: // Helpers
 	* EFalse otherwise
 	*/
     TBool RegistrationStatusL();
-    
+
 private: // Data
 
     /**
@@ -227,7 +226,7 @@ private: // Data
      */
      CSIPConnection* iConnection;
 
-     MusSettingsKeys::TOperatorVariant iOperatorVariant;
+
     MUS_UNITTEST( UT_CMusAvaRegisterAvailability )
     };
 

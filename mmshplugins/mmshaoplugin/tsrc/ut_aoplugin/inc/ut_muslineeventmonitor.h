@@ -21,7 +21,7 @@
 #define MUSLINEEVENTMONITORTEST_H
 
 //#include <etelmm.h>
-#include <digia/eunit/ceunittestsuiteclass.h>
+#include <CEUnitTestSuiteClass.h>
 
 //#include "ut_musaocallmonitor.h"
 #include "muscallstatusmonitorobserver.h"

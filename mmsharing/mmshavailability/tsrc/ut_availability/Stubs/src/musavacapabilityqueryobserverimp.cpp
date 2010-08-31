@@ -77,3 +77,9 @@ TBool CMusAvaCapabilityQueryObserverImp::CapabilityQueryAnswered( TBool aAnswere
     {
     return EFalse;
     }
+
+void CMusAvaCapabilityQueryObserverImp::FastModeResolved( 
+                                    MusSettingsKeys::TFastMode /*aMode*/ )
+    {
+    
+    }

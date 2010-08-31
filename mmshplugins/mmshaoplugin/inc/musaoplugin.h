@@ -28,6 +28,8 @@
 #include <e32property.h>
 
 #include "musunittesting.h"
+#include "mmuscallstateobserver.h"
+#include "musmanager.h"
 
 // Enable the below line if Kodiak Ptt has to be monitered
 //class CMusPttCallMonitor;
@@ -41,7 +43,8 @@ IMPORT_C const TImplementationProxy* ImplementationGroupProxy( TInt& aTableCount
  *
  * @lib musaoplugin.dll
  */
-class CMusAoPlugin : public CAlwaysOnlineEComInterface                      
+class CMusAoPlugin : public CAlwaysOnlineEComInterface,
+                     public MMusCallStateObserver
     {
 public:
 
@@ -75,6 +78,12 @@ public: // new API
      */
 
     void DeleteProperties();
+    
+    
+public: // from MMusCallStateObserver
+
+    void MusCallStateChanged();
+    
 
 private: // constructors
 
@@ -98,10 +107,22 @@ private: // constructors
      */
 	void DefinePropertyL(TInt aKey,RProperty::TType aType,const TDesC& aVal);
 
-    /**
+	/**
      * Utility function to delete keys.
      */
 	void DeleteProperty(TInt aKey);
+
+	/**
+     * Starts Mus Manager Client.In turn it will start Mus Manager
+     * Server and Availability Plugin.
+     */
+    void StartMusClientL();
+
+    /*
+     * Stops Mus Manager Client.
+     */ 
+    void StopMusClient();
+
 	
 public: // from base class CAlwaysOnlineEComInterface
 
@@ -118,6 +139,12 @@ public: // from base class CAlwaysOnlineEComInterface
 
 private: // data
    
+    /**
+     * Instance of MusManager Client. Owned.
+     */
+    CMusManager* iManager;
+    
+
     /* Property Monitor  */
     CMusPropertyMonitor*      iPropertyMonitor;
 
@@ -147,7 +174,6 @@ private: // data
     TInt iError;
    
     MUS_UNITTEST( UT_CMusAoPlugin )
-
     };
 
 #endif // MUSAOPLUGIN_H

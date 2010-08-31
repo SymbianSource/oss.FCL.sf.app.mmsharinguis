@@ -16,22 +16,27 @@
 */
 
 
-#ifndef MUSHENGMCESESSION_H
-#define MUSHENGMCESESSION_H
+#ifndef MUSENGMCESESSION_H
+#define MUSENGMCESESSION_H
 
 // USER
-#include "musengsession.h"
 #include "musengsessiondurationtimerobserver.h"
 #include "musunittesting.h"
 #include "mussipprofileuser.h"
+#include "musengdisplayhandler.h"
+#include "musengaudioroutingobserver.h"
 
 // SYSTEM
+#include <lcsession.h>
+#include <lcaudiocontrol.h>
 #include <mcesessionobserver.h>
 #include <mceinsessionobserver.h>
 #include <mcestreamobserver.h>
 #include <mcertpobserver.h>
 #include <mcetransactiondatacontainer.h>
+#include <mcemediasource.h>
 
+// FORWARD DECLARATIONS
 class CMceManager;
 class CMceSession;
 class CMceVideoStream;
@@ -39,8 +44,10 @@ class CMceAudioStream;
 class CMceVideoCodec;
 class CMceAudioCodec;
 class CMusEngSessionDurationTimer;
-class MMusEngSessionObserver;
 class CMusSipProfileHandler;
+class CMusEngTelephoneUtils;
+class MMusEngAudioRoutingObserver;
+class MLcSessionObserver;
 
 // CONSTANTS
 
@@ -51,14 +58,20 @@ _LIT8( KMusAcceptHeader,
 _LIT8( KMusEngSessionSdpLineXApplication, "a=X-application:com.nokia.rtvs\r\n" );
 _LIT8( KMusEngSessionSdpLineApplication , "a=application:com.gsma.rts\r\n" );
 _LIT8( KMusEngSessionSdpLineType, "a=type:videolive\r\n" );
-_LIT8( KMusEngSessionSdpLineBandwidthLine  , "b=AS" );
+_LIT8( KMusEngSessionSdpLineBandwidthLine  , "b=AS:" );
 _LIT8( KMusEngSessionSdpLineBandwidthField  , "b=AS:85\r\n" );
+_LIT8( KMusEngSessionSdpLineTiasLine  , "b=TIAS:" );
 _LIT8( KMusPPreferredIdentity, "P-Preferred-Identity" );
-_LIT8( KMusPrivacyHeader, "Privacy" );
-_LIT8( KMusAnonymousHeader, "\"Anonymous\" <sip:anonymous@anonymous.invalid>" );
+_LIT8( KMusEngNewLine  , "\r\n" );
 
-const TInt KMusEngMaxVolume = 10;
-const TInt KMusEngMinVolume = 0;
+const TInt KMusTiasMultiplier = 1000;
+const TUint8 KMusEngRtpKeepAliveTimer = 5;
+const TUint8 KMusEngKeepAlivePayloadTypeVideoH263 = 96;
+const TUint8 KMusEngKeepAlivePayloadTypeAudio = 97;
+const TUint8 KMusEngKeepAlivePayloadTypeVideoAvc = 98;
+
+// Value for uninitialized rect
+const TInt KMusEngRectNotInit = 1000;
 
 // CLASS DECLARATION
 
@@ -72,26 +85,18 @@ const TInt KMusEngMinVolume = 0;
 *
 * @lib musengine.lib
 */
-class CMusEngMceSession : public CMusEngSession,
+class CMusEngMceSession : public CBase,
+                          public MLcSession,
+                          public MLcAudioControl,
                           public MMceSessionObserver,
                           public MMceInSessionObserver,
                           public MMceStreamObserver,
                           public MMceRtpObserver,
                           public MMusEngSessionDurationTimerObserver,
-                          public MMusSipProfileUser
+                          public MMusSipProfileUser,
+                          public MMusEngDisplayHandler,
+                          public MMusEngAudioRoutingObserver
     {
-    
-    public: 
-    
-        /*
-        * Defines possible rotations 
-        */
-        enum TDisplayOrientation
-            {
-            EPortrait, // Normal
-            ELandscape // 90 degree's clockwise rotation
-            };
-        
     public:
 
         /**
@@ -99,51 +104,35 @@ class CMusEngMceSession : public CMusEngSession,
         */
         ~CMusEngMceSession();
 
-
-    public: // API FUNCTIONS
-
-        /**
-        * Terminates session. 
-        *
-        * @pre Session is established
-        * @post Session is ready to be deleted
-        * @leave KErrNotReady if precondition is not fullfilled
-        */
-        IMPORT_C void TerminateL();
+        
+    public: //  from MMusEngDisplayHandler
 
         /**
-        * Get session time return estabilished session time
+        * Returns currently assigned drawing area
         *
-        * @return TTime returns time if connection established else < 0
+        * @return TRect This session drawing area rectangle
         */
-        IMPORT_C TTimeIntervalSeconds GetSessionTime() const;
-
-        /**
-        * Returns current connection state
-        *
-        * @return TBool returns current connection state
-        */
-        IMPORT_C TBool ConnectionActive() const;
-
-        /**
-        * Returns presence or absence of audio in session.
-        *
-        * @pre Session is ongoing
-        * @return ETrue if session contains audio.
-        * @leave KErrNotReady if precondition is not fullfilled
-        */
-        IMPORT_C TBool ContainsAudioL();
+        TRect Rect() const;
         
         /**
-        * Returns state of local playback meaning if playback is muted or not.
+        * Sets new drawing area
         *
-        * @pre Session is ongoing
-        * @return ETrue if session does not contain audio or contained 
-        *         audio is muted.
-        * @leave KErrNotReady if precondition is not fullfilled
+        * @param TRect This session new drawing area rectangle
         */
-        IMPORT_C TBool IsMutedL();
-
+        void SetRectL( const TRect& aRect );
+        
+        /**
+        * Sets secondary rect (e.g. viewfinder in twoway session)
+        * @param TRect This session new secondary drawing area rectangle
+        */
+        void SetSecondaryRectL( const TRect& aSecondaryRect );
+        
+        /**
+        * Gets secondary rect.
+        * @return TRect This session secondary drawing area rectangle
+        */
+        virtual TRect SecondaryRect() const;
+            
         /**
         * Returns current display orientation.
         *
@@ -151,7 +140,7 @@ class CMusEngMceSession : public CMusEngSession,
         * @return Current display orientation 
         * @leave KErrNotReady if precondition is not fullfilled
         */
-        IMPORT_C TDisplayOrientation OrientationL();
+        TDisplayOrientation OrientationL();
         
         /**
         * Sets display orientation.
@@ -160,79 +149,106 @@ class CMusEngMceSession : public CMusEngSession,
         * @return Sets display orientation 
         * @leave KErrNotReady if precondition is not fullfilled
         */
-        IMPORT_C void SetOrientationL( TDisplayOrientation aOrientation );
-        
-        /**
-        * Returns state of the screen device.
-        * 
-        * @pre Session is ongoing
-        */
-        IMPORT_C TBool IsDisplayEnabledL();
-
-    public: // VIRTUAL API
-
-        // No virtual api
-
-
-    public: //  from CMusEngSession  
-
-        /**
-        * Increases volume level by one
-        *
-        * @pre Session is ongoing
-        */
-        IMPORT_C void VolumeUpL();
-
-        /**
-        * Decreases volume level by one
-        *
-        * @pre Session is ongoing
-        */
-        IMPORT_C void VolumeDownL();
-        
-        /**
-        * Set volume value
-        * @pre Session is ongoing
-        * @param aVal the value of volume 
-        */
-        IMPORT_C void SetVolumeL( TInt aVal );
+        void SetOrientationL( TDisplayOrientation aOrientation );
 
         /**
         * Permission to draw on screen device.
         * 
         * @pre Session is ongoing
         */
-        IMPORT_C void EnableDisplayL( TBool aEnable );
-
+        void EnableDisplayL( TBool aEnable );
+        
         /**
-        * Implements virtual from CMusEngSession
+        * Implements virtual from MMusEngDisplayHandler
         *
         * @pre Session is ongoing
         */
-        IMPORT_C void MuteL();
-
+        TBool IsDisplayEnabled();
+        
         /**
-        * Implements virtual from CMusEngSession
+        * Implements virtual from MMusEngDisplayHandler
         *
         * @pre Session is ongoing
         */
-        IMPORT_C void UnmuteL();
-        
-        void RefreshOrientationL();
-        
+        TBool IsDisplayActive();
 
+        
+    public: // From MMusEngAudioRoutingObserver
+        
+        void AudioRoutingChanged();        
+        
+        
+    public: // From MLcSession
+        
+        virtual TLcSessionState LcSessionState() const;
+        
+        void SetLcSessionObserver( MLcSessionObserver* aObserver );
+
+        void SetLcUiProvider( MLcUiProvider* aUiProvider );        
+        
+        virtual MLcVideoPlayer* RemoteVideoPlayer();
+    
+        virtual MLcVideoPlayer* LocalVideoPlayer();       
+       
+        virtual const TDesC& LocalDisplayName();
+    
+        virtual const TDesC& RemoteDisplayName();
+
+        TInt SetParameter( TInt aId, TInt aValue );
+
+        TInt ParameterValue( TInt aId );    
+        
+        TBool IsBackgroundStartup();
+        
+        TInt SetForegroundStatus( TBool aIsForeground );
+        
+        const TDesC& RemoteDetails();
+        
+        void UpdateLcSessionL();
+        
+        TBool SendDialTone( TChar aKey);
+        
+        
+    public: // From MLcAudioControl
+        
+        TBool IsLcAudioMutedL();
+
+        void MuteLcAudioL( TBool aMute );       
+
+        TBool IsLcMicMutedL();    
+
+        void MuteLcMicL( TBool aMute );
+        
+        TBool IsEnablingLcLoudspeakerAllowed();
+
+        void EnableLcLoudspeakerL( TBool aEnabled );
+        
+        TBool IsLcLoudspeakerEnabled();
+
+        TInt LcVolumeL();
+     
+        void SetLcVolumeL( TInt aValue );    
+    
+        void IncreaseLcVolumeL();
+        
+        void DecreaseLcVolumeL();        
+
+    public:
+        
+        MLcSessionObserver* LcSessionObserver();
+        
+        MLcUiProvider* LcUiProvider();
+        
     protected: // CONSTRUCTORS
 
         /**
         * Constructor
         *
         */
-        CMusEngMceSession( const TRect& aRect,
-                           MMusEngSessionObserver& aSessionObserver );
+        CMusEngMceSession();
 
         /**
         * Second-phase constructor
-        *
         */
         void ConstructL();
         
@@ -258,7 +274,8 @@ class CMusEngMceSession : public CMusEngSession,
         * gets called for every video codec in session. To be overridden in 
         * sibling classes if needed.
         */ 
-        virtual void AdjustVideoCodecL( CMceVideoCodec& aVideoCodec );
+        virtual void AdjustVideoCodecL( CMceVideoCodec& aVideoCodec,
+                                        TMceSourceType aSourceType );
         
         /**
         * Sets Multimediasharing specific audio codec settings like audio MMF 
@@ -274,13 +291,27 @@ class CMusEngMceSession : public CMusEngSession,
         */
         virtual void DoCodecSelectionL( CMceVideoStream& aVideoStream );
         
+        virtual void RectChangedL();
         
     protected: // HELPER FUNCTIONS
 
-        /**
-        *
-        */
-        void RectChangedL();
+        void InformObserverAboutSessionStateChange();
+        
+        void InformObserverAboutSessionUpdate();
+        
+        void InformObserverAboutSessionFailure( TInt aReason );
+        
+        void InformObserverAboutPlayerStateChange( MLcVideoPlayer* aPlayer );
+        
+        void InformObserverAboutPlayerUpdate( MLcVideoPlayer* aPlayer );
+        
+        void InformObserverAboutPlayerFailure( 
+            MLcVideoPlayer* aPlayer, 
+            TInt aReason );
+        
+        void InformUiProviderAboutReceivingStart();
+        
+        MLcUiProvider& LcUiProviderL();
   
         /**
         * Sets session specific SDP lines to a session.
@@ -323,15 +354,9 @@ class CMusEngMceSession : public CMusEngSession,
         void Reject( CMceInSession& aSession,
                      const TDesC8& aReason = KNullDesC8(),
                      TUint32 aCode = 0 );
-
-    protected:  // from CMusEngSession
-	
-        /**
-        *
-        */
-        void VolumeChanged( TInt aVolume, TBool aAudioRouteChanged );
-             
-    
+        
+        void SaveContactL( const TDesC8& aAddress );
+            
     protected: // from MMceInSessionObserver
     
         /**
@@ -485,12 +510,28 @@ class CMusEngMceSession : public CMusEngSession,
         void SsrcRemoved( CMceMediaStream& aStream,
                           CMceRtpSource& aSource,
                           TUint aSsrc );       
-                          
-	private: // from MMusSipProfileUser
+    
         
-        TBool IsRoamingBetweenAPsAllowed();
-      			
+    private: // from MMusSipProfileUser
+        
+        virtual TBool IsRoamingBetweenAPsAllowed();
+        
+        virtual void ProfileRegistered();
+        
+        
     private: // HELPER FUNCTIONS
+
+        /**
+        * Adds b=AS and b=TIAS lines to the array
+        */
+        void AddSdpBandwidthAttributesL( CDesC8Array& aSdpLinesArray,
+                                         TInt aBandwidthAs );
+
+        /**
+        * Checks whether AS or TIAS bandwidth attributes present in the array 
+        */
+        TBool IsBandwidthAttributeSet( MDesC8Array* aSdpLinesArray );
+
 
         /**
         * Callback
@@ -518,19 +559,58 @@ class CMusEngMceSession : public CMusEngSession,
                                      const CMceVideoCodec& aBestBitrateVideoCodec );
                                      
         void DoCodecModeBasedRemovalL( CMceVideoStream& aVideoStream );
+  
         /**
-         * This function currently used to remove the AVC codec support based on
-         * cenrep encoder device uid value.
-         */
-        void DoCodecConfigurationBasedRemovalL( CMceVideoStream& aVideoStream );
-
-
-    protected: // MEMBERS
-
-        /**
-        * Callback reference to session observer interface.
+        * Get session time return estabilished session time
+        * @return TTime returns time if connection established else < 0
         */
-        MMusEngSessionObserver& iSessionObserver;
+        TTimeIntervalSeconds GetSessionTime() const;        
+        
+    protected:
+        
+        /**
+        * Reads from CenRep and sets encoding device for a codec.
+        */
+        void SetEncodingDeviceL( CMceVideoCodec& aVideoCodec );
+
+        /**
+        * Sets configuration key for a codec
+        */
+        void SetCodecConfigKeyL( CMceVideoCodec& aVideoCodec );
+    
+        /**
+        * Reads proper configuration key for a codec. NULL if not available.
+        * Ownership is transferred.
+        */
+        HBufC8* ReadCodecConfigKeyL( const CMceVideoCodec& aVideoCodec ) const;
+        
+        /**
+        * Constructs and stores to cenrep a concatenation of all AVC config keys.
+        */
+        void StoreEncoderConfigInfoL() const;
+        
+        /**
+        * Returns config key id for the provided codec. Ownership is transferred
+        */
+        const TPtrC8 ConfigKeyIdL( const CMceVideoCodec& aVideoCodec ) const;
+
+            
+    protected: // Data
+
+        /**
+        * Drawing area rect.
+        */
+        TRect iRect;
+
+        /**
+        * Telephone utilities.
+        */
+        CMusEngTelephoneUtils* iTelephoneUtils;        
+        
+        /**
+         * UID used to identify application, needed to create MCE manager
+         */
+        TUid iMceManagerUid;
         
         /**
         * Class for connecting to MCE server.
@@ -559,13 +639,43 @@ class CMusEngMceSession : public CMusEngSession,
         */
         TBool iOperatorVariant;
 
-		/**
+        /**
         * The handler for the SIP profile related to this session
         */
         CMusSipProfileHandler* iSipProfileHandler;
 
-    private:
+        /**
+        * Session state for MLcSession 
+        */
+        MLcSession::TLcSessionState iLcSessionState;       
+        
+        /**
+        * If true, configuration key of current AVC codec must be written to
+        * CenRep after session establishment.
+        */
+        TBool iStoreEncoderConfigInfo;
+        
+        /**
+        * Remote details 
+        */
+        HBufC* iRemoteDetails;
+        
+    private: // New functions
+        
+        void StreamStreaming( CMceMediaStream& aStream );
+                
+    private: // Data
 
+        /**
+        * The session observer, if present.
+        */
+        MLcSessionObserver* iLcSessionObserver;
+
+        /**
+        * The UI provider, if present.
+        */        
+        MLcUiProvider* iLcUiProvider;        
+        
         /**
         * It is assumed, that user has only one instance of this class.
         * The same instance is passed between MCE and user, but the data
@@ -578,7 +688,7 @@ class CMusEngMceSession : public CMusEngSession,
         */
         TTime iStartTime;
 
-        CMusEngSessionDurationTimer*   iUpdateTimer;
+        CMusEngSessionDurationTimer* iUpdateTimer;
         
         /**
         * Value indicating seconds gone since last received RTCP sender or 
@@ -591,11 +701,18 @@ class CMusEngMceSession : public CMusEngSession,
         * muted as part of disabling bundled display sink 
         */
         TBool iExplicitlyMuted;
-
-
+        
+        /**
+        * Value indicates whether session was started in background mode.
+        * (see IsBackgroundStartup()). Once application comes to foreground, 
+        * iBackground is set to EFalse
+        */
+        TBool iBackground;
+        
     MUS_UNITTEST( UT_CMusEngSession )
     MUS_UNITTEST( UT_CMusEngMceSession )
     MUS_UNITTEST( UT_CMusEngReceiveSession )
+    MUS_UNITTEST( UT_CMusEngSessionManager )
     };
     
-#endif //MUSHENGMCESESSION_H
+#endif // MUSENGMCESESSION_H

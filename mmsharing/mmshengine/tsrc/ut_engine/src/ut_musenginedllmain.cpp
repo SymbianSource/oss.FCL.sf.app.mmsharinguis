@@ -16,7 +16,6 @@
 */
 
 //  USER INCLUDES
-#include "ut_musengsession.h"
 #include "ut_musengmcesession.h"
 #include "ut_musengoutsession.h"
 #include "ut_musenglivesession.h"
@@ -27,7 +26,14 @@
 #include "ut_musengtelephoneutils.h"
 #include "ut_musenguriparser.h"
 #include "ut_musengsipprofilehandler.h"
-#include "ut_musengorientationhandler.h"
+#include "ut_musengsessionmanager.h"
+#include "ut_musengtwowaysession.h"
+#include "ut_musengtwowayrecvsession.h"
+#include "ut_musengcamerahandler.h"
+#include "ut_musenglivevideoplayer.h"
+#include "ut_musengremotevideoplayer.h"
+#include "ut_musengclipvideoplayer.h"
+#include "ut_muspropertywatch.h"
 
 
 //  SYSTEM INCLUDES
@@ -40,19 +46,24 @@
 //
 EXPORT_C MEUnitTest* CreateTestSuiteL()
     {
-    
     CEUnitTestSuite* rootSuite = CEUnitTestSuite::NewLC( _L( "Mush Engine" ) );
 
+    rootSuite->AddL( UT_CMusEngClipVideoPlayer::NewLC() );
+    CleanupStack::Pop();
+    
     rootSuite->AddL( UT_CMusEngSipProfileHandler::NewLC() );
     CleanupStack::Pop();
 
+    rootSuite->AddL( UT_CMusEngLiveVideoPlayer::NewLC() );
+    CleanupStack::Pop();  
+
+    rootSuite->AddL( UT_CMusEngRemoteVideoPlayer::NewLC() );
+    CleanupStack::Pop();    
+    
     rootSuite->AddL( UT_MusEngMceUtils::NewLC() );
     CleanupStack::Pop();
     
     rootSuite->AddL( UT_CMusEngSessionDurationTimer::NewLC() );
-    CleanupStack::Pop();
-
-    rootSuite->AddL( UT_CMusEngSession::NewLC() );
     CleanupStack::Pop();  
     
     rootSuite->AddL( UT_CMusEngMceSession::NewLC() );
@@ -70,15 +81,27 @@ EXPORT_C MEUnitTest* CreateTestSuiteL()
     rootSuite->AddL( UT_CMusEngClipSession::NewLC() );
     CleanupStack::Pop();      
     
+    rootSuite->AddL( UT_CMusEngTwoWaySession::NewLC() );
+    CleanupStack::Pop();  
+    
+    rootSuite->AddL( UT_CMusEngTwoWayRecvSession::NewLC() );
+    CleanupStack::Pop();  
+    
+    rootSuite->AddL( UT_TMusEngCameraHandler::NewLC() );
+    CleanupStack::Pop();
+        
     rootSuite->AddL( UT_CMusEngTelephoneUtils::NewLC() );
     CleanupStack::Pop();      
-    
+ 
     rootSuite->AddL( UT_TMusEngUriParser::NewLC() );
-    CleanupStack::Pop();     
+    CleanupStack::Pop();
     
-    rootSuite->AddL( UT_CMusEngOrientationHandler::NewLC() );
-    CleanupStack::Pop();     
-
+    rootSuite->AddL( UT_CMusEngSessionManager::NewLC() );
+    CleanupStack::Pop();  
+     
+    rootSuite->AddL( UT_CMusPropertyWatch::NewLC() );
+    CleanupStack::Pop();
+    
     CleanupStack::Pop( rootSuite );
 
     return rootSuite;

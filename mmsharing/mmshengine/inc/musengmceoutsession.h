@@ -23,9 +23,8 @@
 #include "musengmcesession.h"
 #include "musunittesting.h"
 
-
 // FORWARD DECLARATIONS
-class MMusEngOutSessionObserver;
+class MLcUiProvider;
 class CMceStreamBundle;
 
 // CLASS DECLARATION
@@ -46,54 +45,14 @@ class CMusEngMceOutSession : public CMusEngMceSession
         */
         ~CMusEngMceOutSession();
 
-
-    public: // NEW API FUNCTIONS
-
-        /**
-        * Sends invite to specified address. Session establishment is done in 
-        * pause mode meaning that no RTP will be sent to network as a 
-        * consequence of established session. PlayL() can be called any time 
-        * during session establishment or after that in order to allow 
-        * RTP sending.
-        * @leave KErrAlreadyExists if session establishment is already 
-        *        in progress
-        */
-        IMPORT_C void InviteL( const TDesC& aRecipient );
-
-        /**
-        * Cancels Invite.
-        * @pre Invite is sent
-        */
-        IMPORT_C void CancelInviteL( );
+    public: // From MLcSession
         
-        /**
-        * If codecs supported by recipient are known e.g. because of OPTIONS
-        * query, they can be communicated to engine via this function
-        * @param aVideoCodecs Comma separated list of supported codecs 
-        */
-        IMPORT_C void SetSupportedVideoCodecListL( const TDesC& aVideoCodecs );
-
-
-    public: // VIRTUAL API
-     
-        /**
-        * Resumes previously paused session. Exact behavior depends on 
-        * exact session type.
-        */
-        virtual void PlayL() = 0;
-
-        /**
-        * Pauses session. Exact behavior depends on exact session type.
-        */
-        virtual void PauseL() = 0;
-
-        /**
-        * Tells whether session is paused or not
-        * @pre Call of InviteL has been completed
-        */
-        virtual TBool IsPlayingL() = 0;
-
-
+        const TDesC& RemoteDisplayName();
+        
+        void EstablishLcSessionL();
+        
+        void TerminateLcSessionL();        
+        
     protected: // Must be implemented in derived class
 
         /**
@@ -103,6 +62,7 @@ class CMusEngMceOutSession : public CMusEngMceSession
         virtual void CompleteSessionStructureL( 
                                         CMceStreamBundle& aLocalBundle ) = 0;
     
+        virtual void AddDisplayL( CMceMediaStream& aStream );
     
     protected: // May be overridden in derived classes
          
@@ -115,7 +75,15 @@ class CMusEngMceOutSession : public CMusEngMceSession
         */
         virtual void EstablishSessionL();
         
+        TBool IsH264Supported() const;
 
+        /**
+         *
+         */        
+        virtual void CreateMceSessionStructureL( TBool aForceSdpBandwidth =  
+                                                  EFalse );
+
+         
     protected: // helper function inherited from CMusEngMceSession
 
         /**
@@ -129,7 +97,8 @@ class CMusEngMceOutSession : public CMusEngMceSession
         * session. This function overrides function in base class and may 
         * be further overridden. Function calls also overridden version.
         */ 
-        void AdjustVideoCodecL( CMceVideoCodec& aVideoCodec );
+        void AdjustVideoCodecL( CMceVideoCodec& aVideoCodec, 
+                                TMceSourceType aSourceType );
         
         /**
         * Sets Multimediasharing specific audio codec settings like audio and
@@ -145,60 +114,66 @@ class CMusEngMceOutSession : public CMusEngMceSession
         /**
         * Constructor
         */
-        CMusEngMceOutSession( const TRect& aRect,
-                              MMusEngSessionObserver& aSessionObserver,
-                              MMusEngOutSessionObserver& aOutSessionObserver );
+        CMusEngMceOutSession();
 
         /**
         * Second-phase constructor
         */
-        void ConstructL( TUint aSipProfileId );
+        void ConstructL();
 
+        
+    private: // from MMusSipProfileUser, overrides base class definition
+            
+        virtual void ProfileRegistered();
+ 
+        
+     private:
+        
+        void DoInviteL( const TDesC& aRecipient = KNullDesC );
+       
+        HBufC* ResolveRecipientLC();  
+        
+        static TInt AsyncBrakeCompleted( TAny* aPtr );
+        
+        static TInt RegistrationTimerExpired( TAny* aPtr );
 
-    private:
+        static TInt InvitationResponseTimerExpired( TAny* aPtr );
+        
+        void InitRecipientNotFoundHandling();
 
-        /**
-        *
-        */
-        void CreateMceSessionStructureL();  
+        void HandleRecipientNotFound();
         
-        /**
-        * Add privacy sip header if call privacy is switched on else otherwise.
-        */
-        void AddPrivacyHeaderL( CDesC8Array& aHeaders );
-        
-        
-    protected: // DATA
+        TBool DoSyncRetryL();
 
-        /**
-        * Callback reference to outsession observer interface.
-        */
-        MMusEngOutSessionObserver& iOutSessionObserver;
+        void SplitL( const TDesC& aDes, const TDesC& aChar, CDesCArray* aArray );
         
-        /**
-        * ETrue if operator specific behavior is expected
-        */
-        TBool iPrivate; 
+        HBufC* ReadDescPropertyL( TUint aKey );
+
+        TBool IgnoreErrorNote();
         
-        /**
-        * ETrue if private number is turn on
-        */
-        TBool iPrivateNumber;
+        HBufC* RemoteAddressL() const;
         
+        void InputRecipientL( TDes& aRecipientAddress );
     
     protected: // DATA
     
-        /**
-        * Recipient of session to be constructed
-        */
-        HBufC8* iRecipient;
-        
+        HBufC* iRemoteDisplayName;
+        HBufC8* iRecipient;      
         HBufC8* iVideoCodecList;
-        
+        TInt iTriedInvitations;
+        HBufC* iRemoteSipAddressProposal;
+        CDeltaTimer* iDeltaTimer;
+        TCallBack iAsyncBrakeCallBack;
+        TDeltaTimerEntry iAsyncBrakeEntry;
+        TCallBack iRegistrationCallBack;
+        TCallBack iInvitationResponseCallBack;
+        TDeltaTimerEntry iRegistrationEntry;
+        TDeltaTimerEntry iInvitationResponseEntry;
+        TBool iRegistrationPending;
+        TBool iAddressQueried;
         
     private:
     
         MUS_UNITTEST ( UT_CMusEngOutSession )
-
     };
 #endif //MUSHENGMCESESSION_H

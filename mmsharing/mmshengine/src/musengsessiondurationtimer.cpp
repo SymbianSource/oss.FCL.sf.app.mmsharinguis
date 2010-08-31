@@ -99,17 +99,6 @@ void CMusEngSessionDurationTimer::RunL()
         }
     }
 
-// -------------------------------------------------------------------------
-//  If RunL() leaves,It should be handled here.
-// -------------------------------------------------------------------------
-//
-TInt CMusEngSessionDurationTimer::RunError( TInt aError )
-    {    
-    // Nothing can be done here.
-    aError = KErrNone;
-
-    return aError;
-    }
 
 // -----------------------------------------------------------------------------
 // 

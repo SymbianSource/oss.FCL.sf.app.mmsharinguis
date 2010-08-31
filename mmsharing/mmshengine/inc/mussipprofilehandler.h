@@ -12,8 +12,10 @@
 * Contributors:
 *
 * Description:
+*  Version     : %version: 6.1.4 % << Don't touch! Updated by Synergy at check-out.
 *
 */
+
 
 
 #ifndef MUSSIPPROFILEHANDLER_H
@@ -45,14 +47,13 @@ class CMusSipProfileHandler : public CBase,
                               public MSIPProfileRegistryObserver,
                               public MSIPObserver,
                               public MSIPConnectionObserver,
-                              public MSipProfileAlrObserver
-                              
+                              public MSipProfileAlrObserver                             
     {
     MUS_UNITTEST( UT_CMusEngSipProfileHandler )
     
     public:
 
-		/**
+        /**
         * Creates new instance of CMusSipProfileHandler
         * @param aSipProfileId profile id of requested profile
         */
@@ -66,8 +67,8 @@ class CMusSipProfileHandler : public CBase,
 
 
     public: // API
-
-		/**
+        
+        /**
         * Creates the SIP profile used.
         * @param aSipProfileId profile ID of requested SIP profile
         */
@@ -94,21 +95,24 @@ class CMusSipProfileHandler : public CBase,
         * Should be called when a MuS session terminates.
         */
         void RefreshIapAvailabilities();
+        
+        /**
+         * @return ETrue if SIP profile returned by Profile() is registered
+         */
+        TBool IsRegistered();
 
+        
     private:
 
         /**
         * Constructor
-        *
         */
         CMusSipProfileHandler( MMusSipProfileUser& aUser );
 
         /**
         * Second-phase constructor
-        *
         */
         void ConstructL();
-
 
     private: // From MSIPProfileRegistryObserver
 
@@ -134,15 +138,15 @@ class CMusSipProfileHandler : public CBase,
             TUint32 aProfileId,
             TInt aError );
 
-	private: // From MSIPObserver
- 	
+    private: // From MSIPObserver    
+
         void IncomingRequest( TUint32 aIapId,
                               CSIPServerTransaction* aTransaction );
 
         void TimedOut( CSIPServerTransaction& aTransaction );
 
-	private: // MSIPConnectionObserver must be implemented to enable SIP profile
-
+    private: // MSIPConnectionObserver must be implemented to enable SIP profile
+        
         void IncomingRequest (CSIPServerTransaction* aTransaction );
 
         void IncomingRequest (CSIPServerTransaction* aTransaction,
@@ -168,10 +172,10 @@ class CMusSipProfileHandler : public CBase,
         void ErrorOccured( TInt aError,
                            CSIPTransactionBase& aTransaction,
                            CSIPDialogAssocBase& aDialogAssoc );
-
+        
         void ErrorOccured( TInt aError, CSIPRefresh& aSIPRefresh );
 
-        void ErrorOccured( TInt aError,
+        void ErrorOccured( TInt aError, 
                            CSIPRegistrationBinding& aRegistration );
 
         void ErrorOccured( TInt aError, CSIPDialogAssocBase& aDialogAssoc );
@@ -179,10 +183,10 @@ class CMusSipProfileHandler : public CBase,
         void InviteCompleted( CSIPClientTransaction& aTransaction );
 
         void InviteCanceled( CSIPServerTransaction& aTransaction );
-
-        void ConnectionStateChanged( CSIPConnection::TState aState );
-
-	private: // From MSipProfileAlrObserver
+        
+        void ConnectionStateChanged( CSIPConnection::TState aState );     
+        
+    private: // From MSipProfileAlrObserver    
         
         void AlrEvent( MSipProfileAlrObserver::TEvent aEvent,
                        TUint32 aProfileId,
@@ -192,19 +196,20 @@ class CMusSipProfileHandler : public CBase,
         void AlrError( TInt aError,
                        TUint32 aProfileId,
                        TUint32 aSnapId,
-                       TUint32 aIapId );
-                       
-	private: // New functions
+                       TUint32 aIapId );         
+  
+    private: // New functions
         
         TUint32 ProfileId() const;
-
+        
     private: // DATA
-    
-    	MMusSipProfileUser& iUser;
+        
+        MMusSipProfileUser& iUser;
         CSIP* iSip;
         CSIPProfileRegistry* iProfileRegistry;
         CSipProfileAlrController* iProfileAlrController;
         CSIPProfile* iSipProfile;
     };
+
 
 #endif // MUSSIPPROFILEHANDLER_H

@@ -26,6 +26,7 @@ class CDesC8ArrayFlat;
 
 #include <e32base.h>
 
+const TInt KCenRepStubGlobalKeyValueMaxLen = 20; // stub stuff
 
 namespace NCentralRepositoryConstants
 /** Namespace encapsulating the CentralRepository constants.
@@ -256,6 +257,10 @@ public: // Stub functios
     // Deletes heap reserved by previous function.
     static void DeleteStubAvcConfigKeys();
     
+    // Setter for static cenrep val, note amount of globals is limited
+    static TInt SetStubGlobal(TUint32 aKey, TInt aValue);
+    static void ResetStubGlobal();
+    
 
 public: // Stub data
 
@@ -277,6 +282,16 @@ public: // Stub data
     static TBool iStaticWriteAvcKeysToStaticData;
     
     static TInt iStaticEncoderUid;
+    
+    class TCenRepStubKeyValueEntry
+        {
+    public:
+        TUint iKey;
+        TInt iVal;
+        };
+        
+    static TCenRepStubKeyValueEntry iGlobalKeyVals[ KCenRepStubGlobalKeyValueMaxLen ];
+    static TInt iGlobalKeyValsTop;
     
     TUid iRepositoryUid;
     

@@ -26,6 +26,8 @@
 
 //  FORWARD DECLARATIONS
 class CMusEngClipSession;
+class CLcSessionObserverStub;
+class CLcUiProviderStub;
 class CMusEngObserverStub;
 
 // CONSTANTS
@@ -60,44 +62,29 @@ NONSHARABLE_CLASS( UT_CMusEngClipSession ): public CEUnitTestSuiteClass
     private: // Test case setup and teardown
 
         void SetupL();
-        void Setup2L();
-
         void Teardown();
 
     private: // Test methdods
     
         void UT_NewLL();
-        void UT_SetClipLL();
-        void UT_FastForwardLL();
-        void UT_FastRewindLL();
-        void UT_PositionLL();
-        void UT_DurationLL();
-        void UT_SetPositionLL();
-        void UT_TranscodeLToAvcL();
-        void UT_TranscodeLToH263L();
-        void UT_CancelTranscodeLL();
-        void UT_PlayLL();
-        void UT_PauseLL();
-        void UT_IsPlayingLL();
         void UT_CompleteSessionStructureLL();
         void UT_StreamStateChangedL();
         void UT_StreamStateChangedWithSourceL();
         void UT_StreamStateChangedWithSinkL();
         void UT_AddAmrCodecLL();
         void UT_AddVideoCodecLL();
-        void UT_HasClipEndedL();
         void UT_ConstructAudioStructureLL();
         void UT_ConstructAudioStructureL_OperatorVariantL();
         void UT_EstablishSessionLL();
-        void UT_IsRewindFromEndL();
         
     private:    // Data
 
         CMusEngClipSession* iClipSession;
-        CMusEngObserverStub* iObserver;
+        CLcSessionObserverStub* iLcSessionObserver;
+        CLcUiProviderStub* iLcUiProvider;
+        CMusEngObserverStub* iAudioRoutingObserver;
 
         EUNIT_DECLARE_TEST_TABLE;
-
     };
 
 #endif      //  __UT_MUSENGCLIPSESSION_H__

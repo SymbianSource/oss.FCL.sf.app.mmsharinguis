@@ -185,6 +185,11 @@ private: // data
     MusSettingsKeys::TOperatorVariant iOperatorVariant;
 
     /**
+     * VS activation current value.
+     */
+    MusSettingsKeys::TActivation iVSActication;
+
+    /**
      * Listbox items.
      */
     CGSListBoxItemTextArray* iListboxItemArray;

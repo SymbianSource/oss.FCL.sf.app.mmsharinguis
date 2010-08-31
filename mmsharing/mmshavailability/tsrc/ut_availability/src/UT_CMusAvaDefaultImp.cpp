@@ -33,8 +33,6 @@
 
 //  EXTERNAL INCLUDES
 #include <digia/eunit/eunitmacros.h>
-#include <CPbkContactItem.h>
-#include <CPbkContactEngine.h>
 #include <sipstrings.h>
 #include <digia/eunit/eunitdecorators.h>
 
@@ -385,26 +383,13 @@ void UT_CMusAvaDefaultImp::UT_CMusAvaDefaultImp_AvailabilityStateL()
         }
     
     EUNIT_DISABLE_ALLOC_DECORATOR;
-    CPbkContactEngine* contactEngine = CPbkContactEngine::NewL();
     EUNIT_ENABLE_ALLOC_DECORATOR;
-    CleanupStack::PushL( contactEngine );
 
     // dummy initialization, other ways CPbkContactEngine leaks memory
-    CPbkContactItem* pbkItem = NULL;
-    TRAP_IGNORE( pbkItem = contactEngine->ReadContactL( 1 ) );
-    delete pbkItem;
-    
-    CPbkContactItem*  contactItem= contactEngine->CreateEmptyContactL();
-    CleanupStack::PushL( contactItem ); 
 
     //contact  
-    TPbkContactItemField* fieldMobile = contactItem->FindField(EPbkFieldIdPhoneNumberMobile);
-    fieldMobile->TextStorage()->SetTextL( KPlusNumber() );
-    
     EUNIT_DISABLE_ALLOC_DECORATOR;
-    contactEngine->AddNewContactL( *contactItem );
     EUNIT_ENABLE_ALLOC_DECORATOR;
-    CleanupStack::PopAndDestroy( contactItem );
     
     iConcreteSettings->SetTelNumberL( KPlusNumber() );
     
@@ -415,7 +400,6 @@ void UT_CMusAvaDefaultImp::UT_CMusAvaDefaultImp_AvailabilityStateL()
     EUNIT_ASSERT( iDefaultImp->AvailabilityState(
         MMusAvaObserver::EMusAvaInviteHandler) 
         == MMusAvaObserver::EMusAvaStatusAvailable );
-    CleanupStack::PopAndDestroy( contactEngine );
    
    }
 

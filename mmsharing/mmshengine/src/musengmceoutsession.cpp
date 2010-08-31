@@ -18,16 +18,17 @@
 
 // USER
 #include "musengmceoutsession.h"
-#include "musengoutsessionobserver.h"
-#include "musenglivesessionobserver.h"
 #include "mussettings.h"
 #include "musengmceutils.h"
 #include "musenguriparser.h"
 #include "musenglogger.h"
-#include "mussesseioninformationapi.h"
 #include "mussipprofilehandler.h"
+#include "mussessionproperties.h"
+#include "musresourceproperties.h"
 
 // SYSTEM
+#include <lcsessionobserver.h>
+#include <lcuiprovider.h>
 #include <mcestreambundle.h>
 #include <mcemediastream.h>
 #include <mceoutsession.h>
@@ -40,20 +41,14 @@
 #include <mcedisplaysink.h>
 #include <mcevideocodec.h>
 #include <mceaudiocodec.h>
+#include <e32property.h>
 
 #include <sipprofile.h>
 #include <sipextensionheader.h>
 #include <sipaddress.h>
 #include <uri8.h>
-#include <e32property.h>
 
-
-
-const TInt KMusEngSipReasonCodeBadRequest = 400;
-const TInt KMusEngSipReasonCodeUnauthorized = 401;
-const TInt KMusEngSipReasonCodePaymentRequired = 402;
 const TInt KMusEngSipReasonCodeRecipientNotFound  = 404;
-const TInt KMusEngSipReasonCodeProxyAuthenticationRequired = 407;
 const TInt KMusEngSipReasonCodeRequestTimeout = 408;
 const TInt KMusEngSipReasonCodeUnsupportedMediaType = 415;
 const TInt KMusEngSipReasonCodeUnsupportedUriScheme = 416;
@@ -64,9 +59,6 @@ const TInt KMusEngSipReasonCodeNotAcceptableHere = 488;
 const TInt KMusEngSipReasonCodeDecline = 603;
 const TInt KMusEngSipReasonCodeNotAcceptable = 606;
 // The next code represents unofficial sip error code
-// "478 Unresolveable Destination, we were not able to process the URI (478/TM)
-const TInt KMusEngSipReasonCode478NotAbleToProcessURI = 478;
-// The next code represents unofficial sip error code
 // "479 Regretfuly, we were not able to process the URI (479/SL)
 const TInt KMusEngSipReasonCode479NotAbleToProcessURI = 479;
 
@@ -74,7 +66,66 @@ const TUint8 KMusEngPayloadTypeVideoH263 = 96;
 const TUint8 KMusEngPayloadTypeAudio = 97;
 const TUint8 KMusEngPayloadTypeVideoAvc = 98;
 
-using namespace NMusSessionInformationApi;
+const TInt KMusEngSipAddressMaxLength = 256;
+const TInt KMusEngSipAddressesMaxAmount  =   8;
+_LIT( KMusEngCommaSymbol, "," );
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+CMusEngMceOutSession::CMusEngMceOutSession()
+    : CMusEngMceSession(),
+      iTriedInvitations( 0 ),
+      iAsyncBrakeCallBack( AsyncBrakeCompleted, this ),
+      iRegistrationCallBack( RegistrationTimerExpired, this ),
+      iInvitationResponseCallBack( InvitationResponseTimerExpired, this )
+    {
+    iAsyncBrakeEntry.Set( iAsyncBrakeCallBack );
+    iRegistrationEntry.Set( iRegistrationCallBack );
+    iInvitationResponseEntry.Set( iInvitationResponseCallBack );
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceOutSession::ConstructL()
+    {
+    MUS_LOG( "mus: [ENGINE]  -> CMusEngMceOutSession::ConstructL()" )
+    
+    CMusEngMceSession::ConstructL();
+    TInt sipProfileId;
+    TInt error = KErrNone;
+    error = ( RProperty::Get( NMusSessionApi::KCategoryUid, 
+                             NMusSessionApi::KSipProfileId, sipProfileId ) );
+    if ( error != KErrNone )
+       {
+       sipProfileId = KErrNone;
+       error = KErrNone;
+       }
+    iSipProfileHandler->CreateProfileL( sipProfileId );
+    iVideoCodecList = NULL;
+    TBuf<RProperty::KMaxPropertySize> buffer;
+    error = ( RProperty::Get( NMusSessionApi::KCategoryUid, 
+                                 NMusSessionApi::KVideoCodecs, buffer ) );
+    if ( error == KErrNone && buffer.Length() )
+        {
+        iVideoCodecList = 
+                    CnvUtfConverter::ConvertFromUnicodeToUtf8L( buffer );
+        }
+        
+    iDeltaTimer = CDeltaTimer::NewL( CActive::EPriorityStandard );
+    
+    /* Read the contact name set by availability plugin */    
+    error = RProperty::Get( NMusSessionApi::KCategoryUid,
+                                 NMusSessionApi::KContactName,
+                                 buffer );
+    iRemoteDisplayName = ( error == KErrNone && buffer.Length() ) 
+                         ? buffer.AllocL() : KNullDesC().AllocL();
+    
+    MUS_LOG( "mus: [ENGINE]  <- CMusEngMceOutSession::ConstructL()" )
+    }
 
 // -----------------------------------------------------------------------------
 //
@@ -83,104 +134,76 @@ using namespace NMusSessionInformationApi;
 CMusEngMceOutSession::~CMusEngMceOutSession()
     {
     MUS_LOG( "mus: [ENGINE]  -> CMusEngMceOutSession::~CMusEngMceOutSession()" )
-
+ 
+    if ( iAddressQueried && iRecipient )
+        {
+        TRAP_IGNORE( SaveContactL( *iRecipient ) )
+        }
+    
+    delete iDeltaTimer;
     delete iRecipient;
     delete iVideoCodecList;
-    
+    delete iRemoteSipAddressProposal;
+    delete iRemoteDisplayName;
     MUS_LOG( "mus: [ENGINE]  <- CMusEngMceOutSession::~CMusEngMceOutSession()" )
     }
 
-
+// -----------------------------------------------------------------------------
+// From MLcSession
 // -----------------------------------------------------------------------------
 //
-// -----------------------------------------------------------------------------
-//
-EXPORT_C void CMusEngMceOutSession::InviteL( const TDesC& aRecipient )
+void CMusEngMceOutSession::EstablishLcSessionL()
     {
-    MUS_LOG( "mus: [ENGINE]  -> CMusEngMceOutSession::InviteL()")
+    MUS_LOG( "mus: [ENGINE]  -> CMusEngMceOutSession::EstablishLcSessionL()")
 
-    if ( iSession )
+    iAddressQueried = EFalse;
+    if ( LcUiProvider() && !IsBackgroundStartup() )
         {
-        MUS_ENG_LOG_SESSION_STATE( *iSession ) 
-
-        if ( iSession->State() == CMceSession::EIdle ||
-             iSession->State() == CMceSession::ETerminated )
-            {
-            // This is the case when last invite has ended up to an error,
-            // last sharing has ended normally, or construction of the session
-            // stucture has not been completed. Delete old session and try to
-            // continue normally.
-            delete iSession;
-            iSession = NULL;
-            MUS_LOG( "mus: [ENGINE]     Existing session deleted")
-            }
-        else
-            {
-            // Session is already ongoing. Leave.
-            User::Leave( KErrAlreadyExists );
-            }
-
+        LcUiProvider()->HandleForegroundStatus( ETrue );
         }
-
-    MUS_LOG_TDESC( "mus: [ENGINE]      CMusEngMceOutSession::InviteL() recipient=",
-                   aRecipient )
-
-    // delete possibly existing recipient
-    delete iRecipient;
-    iRecipient = NULL;  
+    TRAPD( err, DoInviteL() );
+        
+    // If address is in wrong format, Manual Address Entry Dialog is displayed
+    if ( ( err == KErrArgument ) && DoSyncRetryL() )
+        {  
+        err = KErrNone; // Doing retry
+        }
     
-    TMusEngUriParser parser( aRecipient ); 
-    parser.ParseUriL();    
-    iRecipient = parser.GetUri8L();
-
-    CreateMceSessionStructureL();
-
-    EstablishSessionL();
-
-    MUS_LOG( "mus: [ENGINE]  <- CMusEngMceOutSession::InviteL()")
+    User::LeaveIfError( err );
+        
+    MUS_LOG( "mus: [ENGINE]  <- CMusEngMceOutSession::EstablishLcSessionL")
     }
 
-
+// -----------------------------------------------------------------------------
+// From MLcSession
 // -----------------------------------------------------------------------------
 //
-// -----------------------------------------------------------------------------
-//
-EXPORT_C void CMusEngMceOutSession::CancelInviteL()
+void CMusEngMceOutSession::TerminateLcSessionL()
     {
-    MUS_LOG( "mus: [ENGINE]  -> CMusEngMceOutSession::CancelInviteL()" )
+    MUS_LOG( "mus: [ENGINE]  -> CMusEngMceOutSession::TerminateLcSessionL" )
 
     __ASSERT_ALWAYS( iSession, User::Leave( KErrNotReady ) );
-    
-    MUS_ENG_LOG_SESSION_STATE( *iSession ) 
 
     if( iSession->State() == CMceSession::EOffering )
         {
-        MUS_LOG( "mus: [ENGINE]     CMceOutSession->CancelL()" )
-        static_cast<CMceOutSession*>( iSession )->CancelL();
+        static_cast< CMceOutSession* >( iSession )->CancelL();
         }
-
-    MUS_LOG( "mus: [ENGINE]  <- CMusEngMceOutSession::CancelInviteL()" )
+    else
+        {
+        iSession->TerminateL();
+        }
+    
+    MUS_LOG( "mus: [ENGINE]  <- CMusEngMceOutSession::TerminateLcSessionL" )
     }
 
-
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
-EXPORT_C void CMusEngMceOutSession::SetSupportedVideoCodecListL( 
-                                                const TDesC& aVideoCodecs )
+void CMusEngMceOutSession::AddDisplayL( CMceMediaStream& aStream )
     {
-    MUS_LOG_TDESC( "mus: [ENGINE]  -> CMusEngMceOutSession::SetSupportedVideoCodecListL: ",
-                   aVideoCodecs )
-
-    HBufC8* newVideoCodecList = 
-                    CnvUtfConverter::ConvertFromUnicodeToUtf8L( aVideoCodecs );
-    delete iVideoCodecList;
-    iVideoCodecList = newVideoCodecList;
-
-    MUS_LOG( "mus: [ENGINE]  <- CMusEngMceOutSession::SetSupportedVideoCodecListL" )
+    MusEngMceUtils::AddDisplayL( aStream, *iManager, Rect() );
     }
-
 
 // -----------------------------------------------------------------------------
 // Calls MCE function EstablishL with feature tag in Accept-Contact header.
@@ -214,17 +237,12 @@ void CMusEngMceOutSession::EstablishSessionL()
         CleanupStack::PopAndDestroy( headInText );
         }
       
-     /* Add the privacy header if cs call privacy setting is switched on */
-    if ( iPrivate && iPrivateNumber )
-        {
-        AddPrivacyHeaderL( *headers );
-        }
+      
     static_cast<CMceOutSession*>( iSession )->EstablishL( 0, headers );
     CleanupStack::Pop( headers );
     
     MUS_LOG( "mus: [ENGINE]  <- CMusEngMceOutSession::EstablishSessionL()" )
     }
-
 
 // -----------------------------------------------------------------------------
 // Handle MCE session termination. Called by MCE observer function of the
@@ -238,41 +256,18 @@ void CMusEngMceOutSession::HandleTermination( TInt aStatusCode,
 
     switch ( aStatusCode )
         {
-
-        case KMusEngSipReasonCodeBadRequest :
-            {
-            iOutSessionObserver.SessionBadRequest();
-            break;
-            }
-        case KMusEngSipReasonCodeUnauthorized :
-            {
-            iOutSessionObserver.SessionUnauthorized();
-            break;
-            }
-        case KMusEngSipReasonCodePaymentRequired :
-            {
-            iOutSessionObserver.SessionPaymentRequired();
-            break;
-            }
-        case KMusEngSipReasonCodeRecipientNotFound :
-        	//lint -fallthrough
-        case KMusEngSipReasonCode478NotAbleToProcessURI:
+        case KMusEngSipReasonCodeRecipientNotFound : 
             //lint -fallthrough
         case KMusEngSipReasonCode479NotAbleToProcessURI:
             //lint -fallthrough
         case KMusEngSipReasonCodeUnsupportedUriScheme : 
             {
-            iOutSessionObserver.SessionRecipientNotFound();
-            break;
-            }
-        case KMusEngSipReasonCodeProxyAuthenticationRequired :
-            {
-            iOutSessionObserver.SessionProxyAuthenticationRequired();
+            InitRecipientNotFoundHandling();
             break;
             }
         case KMusEngSipReasonCodeRequestTimeout :
             {
-            iOutSessionObserver.SessionRequestTimeOut();
+            InformObserverAboutSessionFailure( MLcSession::ENoAnswer );
             break;
             }
         case KMusEngSipReasonCodeUnsupportedMediaType :
@@ -281,7 +276,7 @@ void CMusEngMceOutSession::HandleTermination( TInt aStatusCode,
             //lint -fallthrough
         case KMusEngSipReasonCodeNotAcceptable:
             {
-            iOutSessionObserver.SessionUnsupportedMediaType();
+            InformObserverAboutSessionFailure( MLcSession::ESessionRejected );
             break;
             }
         case KMusEngSipReasonCodeBusyHere :
@@ -289,27 +284,30 @@ void CMusEngMceOutSession::HandleTermination( TInt aStatusCode,
             // Operator variant uses 486 to rejection instead of 603
             if ( iOperatorVariant )
                 {
-                iOutSessionObserver.SessionRejected();
+                InformObserverAboutSessionFailure( 
+                    MLcSession::ESessionRejected );
                 }
             else
                 {
-                iOutSessionObserver.SessionBusyHere();
+                InformObserverAboutSessionFailure( 
+                    MLcSession::ERecipientBusy );
                 }
             break;
             }
         case KMusEngSipReasonCodeRequestCancelled :  
             {
-            iOutSessionObserver.SessionRequestCancelled();
+            InformObserverAboutSessionFailure( MLcSession::ESessionCancelled );
             break;
             }
         case KMusEngSipReasonCodeDecline :
             {
-            iOutSessionObserver.SessionRejected();
+            InformObserverAboutSessionFailure( MLcSession::ESessionRejected );
             break;
             }
         case KMusEngSipReasonCodeTemporarilyNotAvailable :
             {
-            iOutSessionObserver.SessionTemporarilyNotAvailable();
+            InformObserverAboutSessionFailure( 
+                MLcSession::ERecipientTemporarilyNotAvailable );
             break;
             }
         default:
@@ -324,16 +322,16 @@ void CMusEngMceOutSession::HandleTermination( TInt aStatusCode,
     MUS_LOG( "mus: [ENGINE]  <- CMusEngMceOutSession::HandleTermination()" )
     }
 
-
 // -----------------------------------------------------------------------------
 // Sets payload type and calls overridden base class version
 // -----------------------------------------------------------------------------
 //
-void CMusEngMceOutSession::AdjustVideoCodecL( CMceVideoCodec& aVideoCodec )
+void CMusEngMceOutSession::AdjustVideoCodecL( CMceVideoCodec& aVideoCodec,
+                                              TMceSourceType aSourceType )
     {
     MUS_LOG( "mus: [ENGINE]  -> CMusEngMceOutSession::AdjustVideoCodecL()" )
     
-    CMusEngMceSession::AdjustVideoCodecL( aVideoCodec );
+    CMusEngMceSession::AdjustVideoCodecL( aVideoCodec, aSourceType );
     
     if ( aVideoCodec.SdpName() == KMceSDPNameH263() ||
          aVideoCodec.SdpName() == KMceSDPNameH2632000() )
@@ -354,7 +352,6 @@ void CMusEngMceOutSession::AdjustVideoCodecL( CMceVideoCodec& aVideoCodec )
     MUS_LOG( "mus: [ENGINE]  <- CMusEngMceOutSession::AdjustVideoCodecL()" )
     }
 
-
 // -----------------------------------------------------------------------------
 // Sets payload type and calls overridden base class version
 // -----------------------------------------------------------------------------
@@ -368,71 +365,64 @@ void CMusEngMceOutSession::AdjustAudioCodecL( CMceAudioCodec& aAudioCodec )
     User::LeaveIfError( aAudioCodec.SetPayloadType( KMusEngPayloadTypeAudio ) );
     
     MUS_LOG( "mus: [ENGINE]  <- CMusEngMceOutSession::AdjustAudioCodecL()" )
-    }
-        
+    }  
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
-CMusEngMceOutSession::CMusEngMceOutSession( 
-                                const TRect& aRect,
-                                MMusEngSessionObserver& aSessionObserver,
-                                MMusEngOutSessionObserver& aOutSessionObserver )
-    : CMusEngMceSession( aRect, aSessionObserver ),      
-      iOutSessionObserver( aOutSessionObserver )
+void CMusEngMceOutSession::ProfileRegistered()
     {
-    }
-
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void CMusEngMceOutSession::ConstructL( TUint aSipProfileId )
-    {
-    MUS_LOG( "mus: [ENGINE]  -> CMusEngMceOutSession::ConstructL()" )
-
-    CMusEngMceSession::ConstructL();
-    iSipProfileHandler->CreateProfileL( aSipProfileId );
+    MUS_LOG( "mus: [ENGINE]  -> CMusEngMceOutSession::ProfileRegistered()" )
     
-    // Check if feature specific behavior is expected
-    iPrivate = ( MultimediaSharingSettings::PrivacySetting());
+    if ( iRegistrationPending )
+        {
+        iDeltaTimer->Remove( iRegistrationEntry );
+        iRegistrationPending = EFalse;
         
-    NMusSessionInformationApi::TMusClirSetting clir;
-    // Ignore RProperty::Get return value.Incase of error it should behave default.
-    RProperty::Get( NMusSessionInformationApi::KCategoryUid,
-                    NMusSessionInformationApi::KMusClirSetting,
-                    reinterpret_cast<TInt&>( clir ) );
-    iPrivateNumber = ( clir == NMusSessionInformationApi::ESendOwnNumber )? EFalse: ETrue;
-      
-    MUS_LOG( "mus: [ENGINE]  <- CMusEngMceOutSession::ConstructL()" )
+        
+        HBufC* resolvedRecipient = NULL;
+        TRAPD( error, resolvedRecipient = RemoteAddressL() )
+        if ( error != KErrNone )
+            {
+            InformObserverAboutSessionFailure( error );
+            }
+        else
+            {
+            TRAP( error, DoInviteL( *resolvedRecipient ) )
+            delete resolvedRecipient; 
+            if ( error != KErrNone )
+                {
+                InformObserverAboutSessionFailure( error );
+                }
+            }
+        }
+    
+    MUS_LOG( "mus: [ENGINE]  <- CMusEngMceOutSession::ProfileRegistered()" )
     }
 
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+TBool CMusEngMceOutSession::IsH264Supported() const
+    {
+    return ( iVideoCodecList && iVideoCodecList->FindF( KMceSDPNameH264() ) >= 0 );
+    }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
-void CMusEngMceOutSession::CreateMceSessionStructureL()
+void CMusEngMceOutSession::CreateMceSessionStructureL( TBool aForceSdpBandwidth )
     {
     MUS_LOG( "mus: [ENGINE]  -> CMusEngMceOutSession::CreateMceSessionStructureL()" )
 
- 	CSIPProfile* profile = iSipProfileHandler->Profile();
+    CSIPProfile* profile = iSipProfileHandler->Profile();
     __ASSERT_ALWAYS( profile != NULL, User::Leave( KErrNotReady ) );
 
     // Create session
-    if ( iPrivate && iPrivateNumber )
-        {
-        HBufC8* originator = KMusAnonymousHeader().AllocLC();
-        iSession = CMceOutSession::NewL( *iManager, *profile, *iRecipient, originator );
-        CleanupStack::Pop();
-        }
-    else
-        {
-        iSession = CMceOutSession::NewL( *iManager, *profile, *iRecipient );
-        }
-
+    iSession = CMceOutSession::NewL( *iManager, *profile, *iRecipient );
 
     // Remove QoS-lines if needed
     if ( profile->Type().iSIPProfileClass == 
@@ -445,7 +435,7 @@ void CMusEngMceOutSession::CreateMceSessionStructureL()
         MUS_LOG( "mus: [ENGINE]     Usage of preconditions denied" )
         }
         
-    SetSessionSdpLinesL( *iSession );
+    SetSessionSdpLinesL( *iSession, aForceSdpBandwidth );
 
     // Create bundle for local streams
     
@@ -461,11 +451,11 @@ void CMusEngMceOutSession::CreateMceSessionStructureL()
 
     CMceVideoStream* videoOut = MusEngMceUtils::GetVideoOutStreamL( *iSession );
     
-    SetMediaSdpLinesL( *videoOut );
+    SetMediaSdpLinesL( *videoOut, aForceSdpBandwidth );
 		
     streamForDisplay->SetSourceL( videoOut->Source() );
 
-    MusEngMceUtils::AddDisplayL( *streamForDisplay, *iManager, Rect() );
+    AddDisplayL( *streamForDisplay );
 
     iSession->AddStreamL( streamForDisplay );
     CleanupStack::Pop( streamForDisplay );    
@@ -485,22 +475,386 @@ void CMusEngMceOutSession::CreateMceSessionStructureL()
     MUS_LOG( "mus: [ENGINE]  <- CMusEngMceOutSession::CreateMceSessionStructureL()" )
     }
 
-
-// -----------------------------------------------------------------------------
-// Add Privacy header if own phone number/id should not be sent to remote party
 // -----------------------------------------------------------------------------
 //
-void CMusEngMceOutSession::AddPrivacyHeaderL( CDesC8Array& aHeaders )
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceOutSession::DoInviteL( const TDesC& aRecipient )
     {
-    MUS_LOG( "mus: [ENGINE]  -> AddPrivacyHeaderL()" )
-    _LIT8( KMusPrivacyHeaderValue, "id" );
-    CSIPExtensionHeader* header = CSIPExtensionHeader::NewLC( 
-                                  KMusPrivacyHeader, KMusPrivacyHeaderValue );
-    HBufC8* headInText = header->ToTextL();
-    MUS_LOG_TDESC8( " mus: [ENGINE] Privacy header : ", headInText->Des() );
-    CleanupStack::PopAndDestroy( header );
-    CleanupStack::PushL( headInText );
-    aHeaders.AppendL( *headInText );
-    CleanupStack::PopAndDestroy( headInText );
-    MUS_LOG( "mus: [ENGINE]  <- AddPrivacyHeaderL()" )
+    MUS_LOG_TDESC( "mus: [ENGINE]  -> CMusEngMceOutSession::DoInviteL(): ",
+                   aRecipient ) 
+
+    HBufC* resolvedRecipient = NULL;
+    if ( aRecipient.Length() > 0 )
+        {
+        resolvedRecipient = aRecipient.AllocLC();
+        }
+    else
+        {
+        resolvedRecipient = ResolveRecipientLC();
+        }
+    
+    // delete possibly existing recipient
+    delete iRecipient;
+    iRecipient = NULL;  
+    
+    TMusEngUriParser parser( *resolvedRecipient ); 
+    parser.ParseUriL();    
+    iRecipient = parser.GetUri8L();    
+    
+    /* Set the display name to recipient address if displayname is empty */
+    if ( !iRemoteDisplayName || iRemoteDisplayName->Length() == 0 )
+        {
+        HBufC* tmp = parser.GetUri16L( ETrue );
+        delete iRemoteDisplayName;
+        iRemoteDisplayName = tmp;
+        }
+    
+    CleanupStack::PopAndDestroy( resolvedRecipient );
+    
+    if ( iSession )
+        {
+        MUS_ENG_LOG_SESSION_STATE( *iSession ) 
+        
+        if ( iSession->State() == CMceSession::EIdle ||
+             iSession->State() == CMceSession::ETerminated )
+            {
+            // This is the case when last invite has ended up to an error,
+            // last sharing has ended normally, or construction of the session
+            // stucture has not been completed. Delete old session and try to
+            // continue normally.
+            delete iSession;
+            iSession = NULL;
+            MUS_LOG( "mus: [ENGINE]     Existing session deleted")
+            }
+        else
+            {
+            // Session is already ongoing. Leave.
+            User::Leave( KErrAlreadyExists );
+            }
+      }
+    
+    const TUint KMusEngOneMinuteTimeout = 60000000;
+    if ( iSipProfileHandler->IsRegistered() )
+        {
+        CreateMceSessionStructureL();   
+        EstablishSessionL();
+	// Start one minute expiration timer
+        TTimeIntervalMicroSeconds32 interval( KMusEngOneMinuteTimeout );
+        iDeltaTimer->Remove( iInvitationResponseEntry );
+        iDeltaTimer->Queue( interval, iInvitationResponseEntry );
+        }
+    else
+        {
+        iRegistrationPending = ETrue;
+        // Start one minute expiration timer
+        TTimeIntervalMicroSeconds32 interval( KMusEngOneMinuteTimeout );
+        iDeltaTimer->Remove( iRegistrationEntry );
+        iDeltaTimer->Queue( interval, iRegistrationEntry );
+        }
+    
+    MUS_LOG( "mus: [ENGINE]  <- CMusEngMceOutSession::DoInviteL()" )
     }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+HBufC* CMusEngMceOutSession::ResolveRecipientLC()
+    {
+    MUS_LOG( "mus: [ENGINE]  -> CMusEngMceOutSession::ResolveRecipientLC()" )
+    
+    HBufC* resolvedRecipient = NULL;
+    TRAPD( err, 
+        resolvedRecipient = 
+            ReadDescPropertyL( NMusSessionApi::KRemoteSipAddress ) );
+    if ( err != KErrNone )
+        {
+        __ASSERT_ALWAYS( err != KErrNoMemory, User::Leave( KErrNoMemory ) );
+        resolvedRecipient = KNullDesC().AllocL();
+        }
+    CleanupStack::PushL( resolvedRecipient );
+    
+    delete iRemoteSipAddressProposal;
+    iRemoteSipAddressProposal = NULL;
+    TRAP( err, 
+        iRemoteSipAddressProposal = 
+            ReadDescPropertyL( NMusSessionApi::KRemoteSipAddressProposal ) );
+    if ( err != KErrNone )
+        {
+        __ASSERT_ALWAYS( err != KErrNoMemory, User::Leave( KErrNoMemory ) );
+        iRemoteSipAddressProposal = KNullDesC().AllocL();
+        }
+    
+    if ( resolvedRecipient->Length() > 0 )
+        {
+        if ( resolvedRecipient->Find( KMusEngCommaSymbol ) != KErrNotFound )
+            {
+            // Split the addresses using KMusCommaSymbol as a separator
+            CDesCArray* addresses =
+                new( ELeave )CDesCArrayFlat( KMusEngSipAddressesMaxAmount );
+            CleanupStack::PushL( addresses );
+            SplitL( *resolvedRecipient, KMusEngCommaSymbol, addresses );          
+            
+            // Show List Query Dialog
+            CleanupStack::Pop( addresses );
+            CleanupStack::PopAndDestroy( resolvedRecipient );
+            CleanupStack::PushL( addresses );
+            resolvedRecipient = HBufC::NewLC( KMusEngSipAddressMaxLength );
+            TPtr ptrRetryAddr( resolvedRecipient->Des() ); 
+            if ( !LcUiProviderL().SelectRecipient( *addresses, ptrRetryAddr ) )
+                {
+                // Address not selected from provided list
+                User::Leave( KErrNotFound );
+                }
+            CleanupStack::Pop( resolvedRecipient );
+            CleanupStack::PopAndDestroy( addresses );
+            CleanupStack::PushL( resolvedRecipient );
+            }
+        }
+    else
+        {
+        __ASSERT_ALWAYS( ++iTriedInvitations < 2, User::Leave( KErrNotFound ) );
+        
+        CleanupStack::PopAndDestroy( resolvedRecipient );
+        resolvedRecipient = NULL;
+        resolvedRecipient = HBufC::NewLC( KMusEngSipAddressMaxLength );
+        __ASSERT_ALWAYS( 
+            iRemoteSipAddressProposal->Length() < KMusEngSipAddressMaxLength,
+            User::Leave( KErrOverflow ) );
+        resolvedRecipient->Des().Copy( *iRemoteSipAddressProposal );
+        TPtr ptrRetryAddr( resolvedRecipient->Des() );
+        InputRecipientL( ptrRetryAddr );
+        iAddressQueried = ETrue;
+        }
+    
+    MUS_LOG( "mus: [ENGINE]  -> CMusEngMceOutSession::ResolveRecipientLC()" )
+    
+    return resolvedRecipient;
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+TInt CMusEngMceOutSession::AsyncBrakeCompleted( TAny* aPtr )
+    {
+    if ( aPtr )
+        {
+        reinterpret_cast<CMusEngMceOutSession*>( aPtr )->HandleRecipientNotFound();
+        }
+    return KErrNone;
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+TInt CMusEngMceOutSession::RegistrationTimerExpired( TAny* aPtr )
+    {
+    if ( aPtr )
+        {
+        CMusEngMceOutSession* session = 
+            reinterpret_cast< CMusEngMceOutSession* >( aPtr );
+        session->InformObserverAboutSessionFailure( KErrGeneral );
+        }
+    return KErrNone;
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+TInt CMusEngMceOutSession::InvitationResponseTimerExpired( TAny* aPtr )
+    {
+    if ( aPtr )
+        {
+        CMusEngMceOutSession* session = 
+            reinterpret_cast< CMusEngMceOutSession* >( aPtr );
+        if ( !session->IgnoreErrorNote() )
+            {
+            session->InformObserverAboutSessionFailure( MLcSession::ENoAnswer );
+            }
+        }
+    return KErrNone;
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+TBool CMusEngMceOutSession::IgnoreErrorNote()
+    {
+    TBool ignore = ETrue;
+    if ( iSession && 
+          ( iSession->State() == CMceSession::EOffering || 
+         iSession->State() == CMceSession::EProceeding ) )
+        {
+        ignore = EFalse;
+        }
+     return ignore;   
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceOutSession::InitRecipientNotFoundHandling()
+    {
+    MUS_LOG( "mus: [ENGINE]  -> CMusEngMceOutSession::InitRecipientNotFoundHandling()" )
+    
+    iDeltaTimer->Remove( iAsyncBrakeEntry );
+    const TUint KMusEngAsyncBrakeTimeout = 1;
+    TTimeIntervalMicroSeconds32 interval( KMusEngAsyncBrakeTimeout );
+    iDeltaTimer->Queue( interval, iAsyncBrakeEntry );
+    
+    MUS_LOG( "mus: [ENGINE]  <- CMusEngMceOutSession::InitRecipientNotFoundHandling()" )
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceOutSession::HandleRecipientNotFound()
+    {
+    MUS_LOG( "mus: [ENGINE]  -> CMusEngMceOutSession::HandleRecipientNotFound()" )
+    
+    TInt err( KErrNotFound );
+    
+    TBool retry( EFalse );
+    TRAP( err, retry = DoSyncRetryL() );
+    
+    if ( err != KErrNone || !retry )
+        {
+        InformObserverAboutSessionFailure( MLcSession::ERecipientNotFound );
+        }
+    
+    MUS_LOG( "mus: [ENGINE]  <- CMusEngMceOutSession::HandleRecipientNotFound()" )
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+TBool CMusEngMceOutSession::DoSyncRetryL()
+    {
+    __ASSERT_ALWAYS( iRemoteSipAddressProposal, User::Leave( KErrNotFound ) );
+    __ASSERT_ALWAYS( 
+        iRemoteSipAddressProposal->Length() < KMusEngSipAddressMaxLength,
+        User::Leave( KErrOverflow ) );    
+    
+    TBool retry( EFalse );
+    
+    if ( ++iTriedInvitations < 2 )
+        {        
+        TBuf<KMusEngSipAddressMaxLength> retryAddress;
+        retryAddress.Copy( *iRemoteSipAddressProposal );
+        InputRecipientL( retryAddress );
+        DoInviteL( retryAddress );
+
+        retry = ETrue;
+        iAddressQueried = ETrue;
+        }
+    return retry;
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceOutSession::SplitL( const TDesC& aDes,
+                                   const TDesC& aChar,
+                                   CDesCArray* aArray )
+    {
+    TInt charPos( 0 );
+    TPtrC ptr( aDes );
+    TBool found = EFalse;
+    while( ( charPos = ptr.Find( aChar ) ) > 0 )
+        {
+        found = ETrue;
+        TPtrC str = ptr.Left( charPos );
+        aArray->AppendL( str );
+        ptr.Set( ptr.Right( ptr.Length() - str.Length() - 1 ) );
+        }
+    if ( found && ptr.Length() > 0 )
+        {
+        aArray->AppendL( ptr );
+        }
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+HBufC* CMusEngMceOutSession::ReadDescPropertyL( TUint aKey )
+    {
+    MUS_LOG1( "mus: [ENGINE]     -> CMusEngMceOutSession::ReadDescPropertyL: aKey: [%d]",
+                            aKey );
+
+    TBuf<RProperty::KMaxPropertySize> buffer;
+
+    User::LeaveIfError( RProperty::Get( NMusSessionApi::KCategoryUid,
+                                        aKey,
+                                        buffer ) );
+    HBufC* desc = buffer.AllocL();
+    MUS_LOG_TDESC( "mus: [ENGINE]    <- CMusEngMceOutSession::ReadDescPropertyL: val: ",
+                            (*desc) );
+    return desc;
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+HBufC* CMusEngMceOutSession::RemoteAddressL() const
+    {
+    MUS_LOG( "mus: [ENGINE]  -> CMusEngMceOutSession::RemoteAddressL()" )
+    
+    __ASSERT_ALWAYS( iRecipient, User::Leave( KErrNotReady ) );
+    
+    HBufC* remoteAddr = HBufC::NewLC( iRecipient->Length() );
+    TPtr ptrRemoteAddr( remoteAddr->Des() );
+    User::LeaveIfError( 
+        CnvUtfConverter::ConvertToUnicodeFromUtf8( 
+            ptrRemoteAddr, *iRecipient ) );
+    
+    MUS_LOG( "mus: [ENGINE]  <- CMusEngMceOutSession::RemoteAddressL()" )
+    
+    CleanupStack::Pop( remoteAddr );
+    return remoteAddr;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcSession, Should return the displayname of the remote terminal
+// If found in phone book than contactname else user entered sip address
+// -----------------------------------------------------------------------------
+//
+const TDesC& CMusEngMceOutSession::RemoteDisplayName()
+    {      
+    if ( !iRemoteDisplayName )
+        {
+        return KNullDesC;
+        }
+    return *iRemoteDisplayName;
+    }
+
+// -----------------------------------------------------------------------------
+// Query to the user for sip address of the remote party.
+// If the user entered a new sip address then reset the displayname 
+// to user entered sip address.
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceOutSession::InputRecipientL( TDes& aRecipientAddress )
+    {   
+    if ( !LcUiProviderL().InputRecipient( aRecipientAddress ) )
+       {
+       User::Leave( KErrCancel );
+       }    
+    /* displayname is no longer valid since user entered a new sip address
+     * and displayname will be set to sip address when invitation sent.
+     */
+    delete iRemoteDisplayName;
+    iRemoteDisplayName = NULL;
+    }
+
+// End of file

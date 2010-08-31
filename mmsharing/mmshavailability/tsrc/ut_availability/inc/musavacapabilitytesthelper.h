@@ -194,6 +194,18 @@ a=rtpmap:98 H264/90000\r\n\
 a=rtpmap:96 H263-2000/90000\r\n\
 a=rtpmap:99 MPEG4/90000\r\n");
 
+_LIT8( KCapabilityTestSDPFastMode,"v=0\r\n\
+o=- 452027953 452027953 IN IP4 foobar.com\r\n\
+s=-\r\n\
+c=IN IP4 foobar.com\r\n\
+t=0 0\r\n\
+a=application:com.gsma.rts\r\n\
+a=type:videolive\r\n\
+a=keywds:fastmode\r\n\
+m=video 0 RTP/AVP 96\r\n\
+a=rtpmap:96 H263-2000/90000\r\n");
+
+
 _LIT8( KCapabilityTestContentTypeOther, "application/text");
 
 _LIT8( KRegisteredContact, "sip:registeredcontact@domain.com" );
@@ -241,7 +253,7 @@ public: // static API
                                                    const TDesC8& aAcceptContact, 
                                                    const TDesC8& aContact,
                                                    const TDesC8& aAccept,
-                                                   const TDesC8& aUserAgent);
+                                                   const TDesC8& aUserAgent );
 
     static CSIPServerTransaction* OptionsRequestL( const TDesC8& aRequestUri,
                                                    const TDesC8& aFrom,
@@ -249,8 +261,7 @@ public: // static API
                                                    const TDesC8& aContact,
                                                    const TDesC8& aAccept,
                                                    const TDesC8& aUserAgent,
-                                                   const TDesC8& aAssertId,
-                                                   const TDesC8& aSdp = KNullDesC8);
+                                                   const TDesC8& aAssertId);
 
 
     static CSIPClientTransaction* OptionsResponseL( TUint aResponse,

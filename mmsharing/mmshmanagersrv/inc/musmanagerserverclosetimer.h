@@ -39,7 +39,6 @@ public:
     
 	void StopActiveSchedulerAfter( TUint aMilliSeconds );
 	void RunL();
-	TInt RunError( TInt aError );
 	void DoCancel();
 
 private:

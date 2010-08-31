@@ -93,9 +93,3 @@ TInt CMusAvaSettings2::SipProfileId() const
     {
     return iSipProfileId;
     }
-
-TInt CMusAvaSettings2::CallPrivacy()
-    {
-    return iCallPrivacy;    
-    }
-   

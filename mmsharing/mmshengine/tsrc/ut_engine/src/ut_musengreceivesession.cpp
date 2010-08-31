@@ -21,7 +21,9 @@
 #include "musengstubs.h"
 #include "musengtestdefs.h"
 #include "musengreceivesession.h"
-#include "centralrepository.h"
+#include "mussessionproperties.h"
+#include "contactenginestub.h"
+#include "musengremotevideoplayer.h"
 
 //  SYSTEM INCLUDES
 #include <digia/eunit/eunitmacros.h>
@@ -41,8 +43,20 @@
 #include <mceavccodec.h>
 
 #include <audiopreference.h>
+#include <centralrepository.h>
 
 
+// Using following value increases treshold buffer to 1 second from 
+// default 100 ms
+const TInt KMusEngJitterBufferTreshold = 50;
+const TInt KMusEngTresholdToSecondsFactor = 20;
+const TInt KMusEngTwoSecondInMilliSeconds = 2000; 
+// Use inactivity timer value that is a little bigger than treshold in seconds
+const TUint KMusEngInactivityTimer = KMusEngTresholdToSecondsFactor * 
+                                     KMusEngJitterBufferTreshold + 
+                                     KMusEngTwoSecondInMilliSeconds;
+
+_LIT( KTestContactName, "nokia" );
 
 
 // -----------------------------------------------------------------------------
@@ -108,14 +122,16 @@ void UT_CMusEngReceiveSession::ConstructL()
 //
 void UT_CMusEngReceiveSession::SetupL(  )
     {
-    CRepository::iStaticEncoderUid = 0;
-    iObserver = new( ELeave ) CMusEngObserverStub;
-    iReceiveSession = CMusEngReceiveSession::NewL( TRect(0,0, 100,100), 
-                                                   *iObserver,
-                                                   *iObserver );
-    
+    // set fast mode ON
+    User::LeaveIfError( RProperty::Set( NMusSessionApi::KCategoryUid,
+                                        NMusSessionApi::KFastMode,
+                                        0 ) );
+    iLcSessionObserver = new( ELeave )CLcSessionObserverStub;
+    iLcUiProvider = new( ELeave )CLcUiProviderStub;    
+    iReceiveSession = CMusEngReceiveSession::NewL();
+    iReceiveSession->SetLcSessionObserver( iLcSessionObserver );  
+    iReceiveSession->SetLcUiProvider( iLcUiProvider );    
     }
-
 
 // -----------------------------------------------------------------------------
 //
@@ -123,10 +139,14 @@ void UT_CMusEngReceiveSession::SetupL(  )
 //
 void UT_CMusEngReceiveSession::Teardown(  )
     {
+    PropertyHelper::Close();
     delete iReceiveSession;
-    delete iObserver;
-    CRepository::iStaticEncoderUid = 0;
-    
+    delete iLcUiProvider;
+    delete iLcSessionObserver;
+    PropertyHelper::Close();
+    // Delete static data from CenRep stub
+    CRepository::ResetStubGlobal();
+    CRepository::iForceFailWithCode = KErrNone;
     }
 
 
@@ -278,67 +298,145 @@ void UT_CMusEngReceiveSession::UT_NewLL(  )
     {
     EUNIT_ASSERT( iReceiveSession );
     EUNIT_ASSERT( !iReceiveSession->iSession );
+    EUNIT_ASSERT( iReceiveSession->iMceManagerUid == TUid::Uid( KMusUiUid ) );
     }
 
-
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
-void UT_CMusEngReceiveSession::UT_AcceptInvitationLL()
+void UT_CMusEngReceiveSession::UT_LcSessionStateL()
     {
+    // No MCE session -> Convert to MLcSession::EReceived
+    EUNIT_ASSERT_EQUALS( TInt( MLcSession::EReceived ), 
+                         TInt( iReceiveSession->LcSessionState() ) )
+                         
+    // Some other state -> State returned from the base class 
     TMceTransactionDataContainer container;
-    
-    // There is no pending session to accept, must fail
-    TRAPD( error, iReceiveSession->AcceptInvitationL( ETrue ) );
-    MUS_TEST_FORWARD_ALLOC_FAILURE( error );
-    EUNIT_ASSERT( error == KErrNotReady );
-
-    // There is pending session, but it is not yet reserved resources,
-    // so accepting fails
     CMceInSession* inSession = ConstructInSessionLC( 1, 0 );
     iReceiveSession->IncomingSession( inSession, &container );
     CleanupStack::Pop( inSession );
-    
-    TRAP( error, iReceiveSession->AcceptInvitationL( ETrue ) );
-    MUS_TEST_FORWARD_ALLOC_FAILURE( error );
-    EUNIT_ASSERT( error == KErrNotReady );
-    
-    // Simulate resource reservation and reject
     iReceiveSession->iSession->iState = CMceSession::EProceeding;
-    iReceiveSession->AcceptInvitationL( EFalse );
+    iReceiveSession->EstablishLcSessionL();  
+    EUNIT_ASSERT_EQUALS( TInt( MLcSession::EOpening ), 
+                         TInt( iReceiveSession->LcSessionState() ) )
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngReceiveSession::UT_EstablishLcSessionL()
+    {
+    // No MCE session
+    EUNIT_ASSERT_SPECIFIC_LEAVE( 
+        iReceiveSession->EstablishLcSessionL(), KErrNotReady )    
+ 
+    // Construct a new session and accept it
+    TMceTransactionDataContainer container;
+    CMceInSession* inSession = ConstructInSessionLC( 1, 0 );
+    iReceiveSession->IncomingSession( inSession, &container );
+    CleanupStack::Pop( inSession );
+    iReceiveSession->iSession->iState = CMceSession::EProceeding;
+    iReceiveSession->EstablishLcSessionL();
+    EUNIT_ASSERT( iReceiveSession->iSession )
+    EUNIT_ASSERT_EQUALS( inSession, iReceiveSession->iSession );
+    EUNIT_ASSERT_EQUALS( TInt( CMceSession::EAnswering ),
+                         TInt( iReceiveSession->iSession->iState ) )    
+    }   
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngReceiveSession::UT_TerminateLcSessionL()
+    {
+    // No MCE session
+    EUNIT_ASSERT_SPECIFIC_LEAVE( 
+        iReceiveSession->TerminateLcSessionL(), KErrNotReady )
     
-    EUNIT_ASSERT( iReceiveSession->iSession->iState ==
-                  CMceSession::ETerminated );
+    // Reject session, session state incoming, no operator variant
+    TMceTransactionDataContainer container;
+    CMceInSession* inSession = ConstructInSessionLC( 1, 0 );
+    iReceiveSession->IncomingSession( inSession, &container );
+    CleanupStack::Pop( inSession );
+    iReceiveSession->iSession->iState = CMceSession::EIncoming;
+    iReceiveSession->iOperatorVariant = EFalse;
+    iReceiveSession->TerminateLcSessionL();   
+    EUNIT_ASSERT_EQUALS( TInt( CMceSession::ETerminated ),
+                         TInt( iReceiveSession->iSession->iState ) )
+ 
+    // Reject session, session state proceeding, no operator variant
+    inSession = ConstructInSessionLC( 1, 0 );
+    iReceiveSession->IncomingSession( inSession, &container );
+    CleanupStack::Pop( inSession );
+    iReceiveSession->iSession->iState = CMceSession::EProceeding;
+    iReceiveSession->iOperatorVariant = EFalse;
+    iReceiveSession->TerminateLcSessionL();   
+    EUNIT_ASSERT_EQUALS( TInt( CMceSession::ETerminated ),
+                         TInt( iReceiveSession->iSession->iState ) )
     
-    // Construct new session and reject it with operator variant
+    // Reject session, operator variant
     inSession = ConstructInSessionLC( 1, 0 );
     iReceiveSession->IncomingSession( inSession, &container );
     CleanupStack::Pop( inSession );
     iReceiveSession->iSession->iState = CMceSession::EProceeding;
     iReceiveSession->iOperatorVariant = ETrue;
+    iReceiveSession->TerminateLcSessionL(); 
+    EUNIT_ASSERT_EQUALS( TInt( CMceSession::ETerminated ),
+                         TInt( iReceiveSession->iSession->iState ) )
     
-    iReceiveSession->AcceptInvitationL( EFalse );
-    
-    EUNIT_ASSERT( iReceiveSession->iSession->iState ==
-                  CMceSession::ETerminated );
-
-    // Construct new session and accept it
+    // Terminate an established session
     inSession = ConstructInSessionLC( 1, 0 );
     iReceiveSession->IncomingSession( inSession, &container );
     CleanupStack::Pop( inSession );
-    iReceiveSession->iSession->iState = CMceSession::EProceeding;
+    iReceiveSession->iSession->iState = CMceSession::EEstablished;
+    iReceiveSession->iOperatorVariant = EFalse;
+    iReceiveSession->TerminateLcSessionL(); 
+    EUNIT_ASSERT_EQUALS( TInt( CMceSession::ETerminating ),
+                         TInt( iReceiveSession->iSession->iState ) )    
+    }
 
-    iReceiveSession->AcceptInvitationL( ETrue );   
-    
-    EUNIT_ASSERT( iReceiveSession->iSession );
-    EUNIT_ASSERT( iReceiveSession->iSession == inSession );
-    EUNIT_ASSERT( iReceiveSession->iSession->iState == 
-                  CMceSession::EAnswering );
-    
-    
-    }    
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngReceiveSession::UT_RemoteVideoPlayerL()
+    {
+    EUNIT_ASSERT( iReceiveSession->RemoteVideoPlayer() == 
+                  iReceiveSession->iRemoteVideoPlayer )
+    }
 
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngReceiveSession::UT_RemoteDisplayName()
+    {
+
+    // Creating Valid Session     
+    CMceInSession* inSession = ConstructInSessionLC( 1, 0 );
+    iReceiveSession->iSession = inSession; // Transfers ownership
+    CleanupStack::Pop( inSession );
+    iReceiveSession->CompleteSessionStructureL();
+    EUNIT_ASSERT( inSession->Streams().Count() == 1 );
+    
+
+    // Name is published using publish/subscribe key by Availblity
+    User::LeaveIfError( RProperty::Set( NMusSessionApi::KCategoryUid,
+                                        NMusSessionApi::KContactName,
+                                        KTestContactName ) );
+
+    EUNIT_ASSERT_EQUALS ( KTestContactName(), iReceiveSession->RemoteDisplayName() )
+    
+    
+    User::LeaveIfError( RProperty::Set( NMusSessionApi::KCategoryUid,
+                                       NMusSessionApi::KContactName,
+                                       KNullDesC) );
+    
+    // Ensure its not null and its not equal
+    EUNIT_ASSERT( KTestContactName() != iReceiveSession->RemoteDisplayName() );
+    }
 
 // -----------------------------------------------------------------------------
 //
@@ -364,22 +462,25 @@ void UT_CMusEngReceiveSession::UT_HandleSessionStateChangedL()
     
     // 1 ) First transition to state EProceeding, user and remote end should
     //     be notified
-    inSession->iState = CMceSession::EProceeding;
-    
+    inSession->iState = CMceSession::EProceeding;   
     iReceiveSession->HandleSessionStateChanged( *inSession, 0, KNullDesC8() );
-    EUNIT_ASSERT( iObserver->iIncomingSessionCalled )
+    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
+                         TInt( CLcSessionObserverStub::ESessionStateChanged ) )
     EUNIT_ASSERT( iReceiveSession->iRingLCalled )
-    iObserver->Reset();
+
+    // Ensure Originator is taken from the incoming session
+    EUNIT_ASSERT_EQUALS ( KTestOriginator(), *iReceiveSession->iOriginator )
+    
+    iLcSessionObserver->Reset();
     
     // 2 ) Now simulate second transition to EProceeding state which can happen
     //     if we force 100rel to be used. User and remote end should not be 
     //     notified anymore but change should be ignored.
+    inSession->iState = CMceSession::EProceeding;
     iReceiveSession->HandleSessionStateChanged( *inSession, 0, KNullDesC8() );
-    EUNIT_ASSERT( iObserver->IsReseted() )
-    iObserver->Reset();
-    
+    EUNIT_ASSERT_EQUALS( TInt( CLcSessionObserverStub::EUnknown ),
+                         TInt( iLcSessionObserver->iCalledFunction ) )
     }
-
 
 // -----------------------------------------------------------------------------
 //
@@ -392,10 +493,10 @@ void UT_CMusEngReceiveSession::UT_AdjustVideoCodecLL()
     CMceVideoCodec* codecAvc = CMceAvcCodec::NewLC( KMceSDPNameH264() );
     CMceVideoCodec* codecUnknown = CMceH263Codec::NewLC( KNullDesC8() );
     
-    iReceiveSession->AdjustVideoCodecL( *codecH263 );
-    iReceiveSession->AdjustVideoCodecL( *codecH2632000 );
-    iReceiveSession->AdjustVideoCodecL( *codecAvc );
-    iReceiveSession->AdjustVideoCodecL( *codecUnknown );
+    iReceiveSession->AdjustVideoCodecL( *codecH263, KMceRTPSource );
+    iReceiveSession->AdjustVideoCodecL( *codecH2632000, KMceRTPSource );
+    iReceiveSession->AdjustVideoCodecL( *codecAvc, KMceRTPSource );
+    iReceiveSession->AdjustVideoCodecL( *codecUnknown, KMceRTPSource );
     
     EUNIT_ASSERT_EQUALS( codecH263->KeepAliveTimer(), 5 )
     EUNIT_ASSERT_EQUALS( codecH263->KeepAlivePayloadType(), 96 )
@@ -584,8 +685,6 @@ void UT_CMusEngReceiveSession::UT_IncomingSessionL()
     CleanupStack::Pop( inSession );
     container.Clear();
     
-    EUNIT_ASSERT( iObserver->iIncomingSessionPreNotificationCalled )
-    
     EUNIT_ASSERT( iReceiveSession->iSession );
     EUNIT_ASSERT( iReceiveSession->iSession->iState == 
                   CMceSession::ETerminated );
@@ -630,46 +729,6 @@ void UT_CMusEngReceiveSession::UT_IncomingSessionL()
     EUNIT_ASSERT( iReceiveSession->iSession != inSession );
     EUNIT_ASSERT( iReceiveSession->iSession->iState == 
                   CMceSession::EReserving );
-    
-    // Try again when there is usage of avc is turned off
-    iReceiveSession->iSession->iState = CMceSession::ETerminated;
-    TInt32 KMusDisableAVC = 0x0fffffff;
-    CRepository::iStaticEncoderUid = KMusDisableAVC;
-
-    inSession = ConstructInSessionLC( 1, 0 );
-    
-    // There will 3 AVC codecs and 1 H263 codec
-    EUNIT_ASSERT( static_cast<CMceVideoStream*>( inSession->Streams()[0] )->Codecs().Count() == 4 );
-    iReceiveSession->IncomingSession( inSession, &container );    
-    CleanupStack::Pop( inSession );
-    
-    EUNIT_ASSERT( iReceiveSession->iSession->iState == 
-                  CMceSession::EReserving ||
-                  iReceiveSession->iSession->iState == 
-                  CMceSession::ETerminated );
-    
-    // Should be only the H263 codec
-    EUNIT_ASSERT( static_cast<CMceVideoStream*>( iReceiveSession->iSession->Streams()[0] )->Codecs().Count() <= 4 );
-    
-    //No supported codecs
-    iReceiveSession->iSession->iState = CMceSession::ETerminated;
-    iReceiveSession->iManager->iSupportedVideoCodecs.ResetAndDestroy();
-    inSession = ConstructInSessionLC( 1, 0 );
-    
-    // There will no codecs, simulates situation where no codecs were match
-    //currently session is not been rejected
-    EUNIT_ASSERT( static_cast<CMceVideoStream*>( inSession->Streams()[0] )->Codecs().Count() == 0 );
-    iReceiveSession->IncomingSession( inSession, &container );    
-    CleanupStack::Pop( inSession );
-    
-    EUNIT_ASSERT( iReceiveSession->iSession->iState == 
-                  CMceSession::EReserving ||
-                  iReceiveSession->iSession->iState == 
-                  CMceSession::ETerminated );
-    
-    // Should be only the H263 codec
-    EUNIT_ASSERT( static_cast<CMceVideoStream*>( inSession->Streams()[0] )->Codecs().Count() == 0 );
-    
     }
 
 
@@ -695,7 +754,7 @@ void UT_CMusEngReceiveSession::UT_IncomingUpdateL()
     CleanupStack::Pop( inSession );
     
     iReceiveSession->iSession->iState = CMceSession::EProceeding;
-    iReceiveSession->AcceptInvitationL( ETrue );
+    iReceiveSession->EstablishLcSessionL();
     
     // Now we have an insession, try to update session that is not ours, 
     // new one gets rejected and deleted.
@@ -752,36 +811,28 @@ void UT_CMusEngReceiveSession::UT_StreamStateChangedL()
     // Try without a session, nothing happens
     iReceiveSession->StreamStateChanged( *audioStream );
     
-    // Establish session 
-    
+    // Establish session
     iReceiveSession->IncomingSession( inSession, &container );    
     CleanupStack::Pop( inSession );
-    iObserver->Reset();
+    iLcSessionObserver->Reset();
 
     // Try with audiostream, nothing happens
     audioStream->iState = CMceMediaStream::EBuffering;
     iReceiveSession->StreamStateChanged( *audioStream );
-    EUNIT_ASSERT( iObserver->IsReseted() )
+    EUNIT_ASSERT( iLcSessionObserver->IsReseted() )
     
-    // Try with videostream, but without a source, nothing happens 
-        
-        // Needed hacking
-        CMceRtpSource* rtpSource = 
-                        static_cast<CMceRtpSource*>( videoStream->Source() );
-    videoStream->iSource = NULL;
-    
+    // Try with videostream, but without a source, nothing happens
+    CMceRtpSource* rtpSource = 
+        static_cast<CMceRtpSource*>( videoStream->Source() ); //hack
+    videoStream->iSource = NULL;   
     iReceiveSession->StreamStateChanged( *videoStream );
-    EUNIT_ASSERT( iObserver->IsReseted() )
+    EUNIT_ASSERT( iLcSessionObserver->IsReseted() )
     
     // Try with videostream and a camera source, nothing happens 
-        
-        // Needed hacking
-        videoStream->iSource = 
-                    CMceCameraSource::NewLC( *iReceiveSession->iManager );
-        CleanupStack::Pop();
-    
+    videoStream->iSource = 
+        CMceCameraSource::NewL( *iReceiveSession->iManager ); //hack
     iReceiveSession->StreamStateChanged( *videoStream );
-    EUNIT_ASSERT( iObserver->IsReseted() )
+    EUNIT_ASSERT( iLcSessionObserver->IsReseted() )
     
     // Remove hacks
     delete videoStream->iSource;
@@ -790,21 +841,72 @@ void UT_CMusEngReceiveSession::UT_StreamStateChangedL()
     // Buffering, normal case
     videoStream->iState = CMceMediaStream::EBuffering;
     iReceiveSession->StreamStateChanged( *videoStream );
-    EUNIT_ASSERT( iObserver->iStreamBufferingCalled )
-    iObserver->Reset();
+    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
+                         TInt( CLcSessionObserverStub::EPlayerStateChanged ) )
+    EUNIT_ASSERT( iReceiveSession->iBuffered )
+    iLcSessionObserver->Reset();
     
     // Streaming, normal case
     videoStream->iState = CMceMediaStream::EStreaming;
+    iReceiveSession->iReceiving = EFalse;
+    iReceiveSession->iBuffered = ETrue;
     iReceiveSession->StreamStateChanged( *videoStream );
-    EUNIT_ASSERT( iObserver->iStreamStreamingCalled )
-    EUNIT_ASSERT( rtpSource->iInactivityTimer == 2000 ) 
-    iObserver->Reset();
+    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
+                         TInt( CLcSessionObserverStub::EPlayerStateChanged ) )
+    EUNIT_ASSERT_EQUALS( KMusEngInactivityTimer, rtpSource->iInactivityTimer ) 
+    iLcSessionObserver->Reset();
+    EUNIT_ASSERT_EQUALS( TInt( iLcUiProvider->iCalledFunction ),
+                         TInt( CLcUiProviderStub::EHandleForegroundStatus ) )    
+    iLcUiProvider->Reset();
+    // Normally background info will be cleared once ui comes to foreground and
+    // notifies engine about it
+    iReceiveSession->iBackground = EFalse;
+
+    // Streaming, event is received even when already receiving. Streaming
+    // event is anyway notified.
+    videoStream->iState = CMceMediaStream::EStreaming;
+    iReceiveSession->iReceiving = ETrue;
+    iReceiveSession->iBuffered = ETrue;
+    iReceiveSession->StreamStateChanged( *videoStream );
+    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
+                         TInt( CLcSessionObserverStub::EPlayerStateChanged ) )
+    EUNIT_ASSERT_EQUALS( KMusEngInactivityTimer, rtpSource->iInactivityTimer ) 
+    iLcSessionObserver->Reset();
+    EUNIT_ASSERT_EQUALS( TInt( iLcUiProvider->iCalledFunction ),
+                         TInt( CLcUiProviderStub::EUnknown ) )
+      
+    // Streaming and receiving started already. Streaming is not notified because
+    // of buffering event hasn't been received
+    videoStream->iState = CMceMediaStream::EStreaming;
+    iReceiveSession->iReceiving = ETrue;
+    iReceiveSession->iBuffered = EFalse;
+    iReceiveSession->StreamStateChanged( *videoStream );
+    EUNIT_ASSERT( iLcSessionObserver->IsReseted() )
+    iLcSessionObserver->Reset();
+    
+    // Streaming, receiving not started and buffering not happened ( means no packet
+    // received yet. Ignore this event too.
+    videoStream->iState = CMceMediaStream::EStreaming;
+    iReceiveSession->iReceiving = EFalse;
+    iReceiveSession->iBuffered = EFalse;
+    iReceiveSession->StreamStateChanged( *videoStream );
+    EUNIT_ASSERT( iLcSessionObserver->IsReseted() )
+    iLcSessionObserver->Reset();
+    
+    // Streaming, receiving not started and buffering happened.
+    // Enabling RTP timer leaves. Should be a failure case.
+    videoStream->iState = CMceMediaStream::EStreaming;
+    iReceiveSession->iReceiving = EFalse;
+    iReceiveSession->iBuffered = ETrue;
+    iReceiveSession->StreamStateChanged( *videoStream );
+    EUNIT_ASSERT_NOT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
+                             TInt( CLcSessionObserverStub::EPlayerFailed ) )    
+    iLcSessionObserver->Reset();
     
     // Try default behaviors
     videoStream->iState = CMceMediaStream::EIdle;
     iReceiveSession->StreamStateChanged( *videoStream );
-    EUNIT_ASSERT( iObserver->iStreamIdleCalled );
-    
+    EUNIT_ASSERT( iLcSessionObserver->IsReseted() )
     }
 
 
@@ -881,7 +983,6 @@ void UT_CMusEngReceiveSession::UT_CompleteSessionStructureL_WithVideoInL()
     
     // No audio, bundle is not constructed
     EUNIT_ASSERT( inSession->Bundles().Count() == 0 )
-
     }
 
 
@@ -1064,7 +1165,7 @@ void UT_CMusEngReceiveSession::
                   KMceSpeakerSink );
     CMceSpeakerSink* speaker = 
         static_cast<CMceSpeakerSink*>(inSession->Streams()[1]->Sinks()[0]);
-    EUNIT_ASSERT( speaker->VolumeL() == iReceiveSession->VolumeL() )
+    EUNIT_ASSERT( speaker->VolumeL() == iReceiveSession->LcVolumeL() )
     
     // Stream 2 and bound stream
     EUNIT_ASSERT( inSession->Streams()[2]->Type() == KMceAudio )
@@ -1073,7 +1174,7 @@ void UT_CMusEngReceiveSession::
     EUNIT_ASSERT( inSession->Streams()[2]->Sinks()[0]->Type() == 
                   KMceSpeakerSink );
     speaker = static_cast<CMceSpeakerSink*>(inSession->Streams()[2]->Sinks()[0]);
-    EUNIT_ASSERT( speaker->VolumeL() == iReceiveSession->VolumeL() )
+    EUNIT_ASSERT( speaker->VolumeL() == iReceiveSession->LcVolumeL() )
 
     EUNIT_ASSERT( inSession->Streams()[2]->BoundStream() )
     EUNIT_ASSERT( !inSession->Streams()[2]->BoundStreamL().IsEnabled() )
@@ -1098,7 +1199,7 @@ void UT_CMusEngReceiveSession::
                   KMceSpeakerSink )
     speaker = static_cast<CMceSpeakerSink*>
                         (inSession->Streams()[3]->BoundStreamL().Sinks()[0]);
-    EUNIT_ASSERT( speaker->VolumeL() == iReceiveSession->VolumeL() )
+    EUNIT_ASSERT( speaker->VolumeL() == iReceiveSession->LcVolumeL() )
               
     // Check for bundles
     EUNIT_ASSERT( inSession->Bundles().Count() == 1 )
@@ -1164,28 +1265,39 @@ void UT_CMusEngReceiveSession::UT_CompleteSessionStructureL_OperatorVariant()
     EUNIT_ASSERT_EQUALS( inSession->Bundles().Count(), 0 )
     
     
-    // Session with bandwidth attribute at sessionlevel
-    // -> bandwidth is taken in use at session level
+    // Session with bandwidth attributes b=AS and b=TIAS at session and media
+    // levels -> b=AS is taken in use at session level (b=TIAS is ignored)
     //
     delete iReceiveSession->iSession;
     iReceiveSession->iSession = NULL;
     
     inSession = ConstructInSessionLC( 1, 0 );
-    CDesC8Array* sdpLines = new ( ELeave ) CDesC8ArrayFlat( 1 );
+    //setting session level SDP attributes
+    CDesC8Array* sdpLines = new ( ELeave ) CDesC8ArrayFlat( 2 );
     CleanupStack::PushL( sdpLines );
     sdpLines->AppendL( KMusEngSessionSdpLineBandwidthField() );
+    sdpLines->AppendL( KMusEngSessionSdpLineTiasLine() );
     inSession->SetSessionSDPLinesL( sdpLines );
     CleanupStack::Pop( sdpLines );
     
+    //setting media level SDP attributes
+    sdpLines = new ( ELeave ) CDesC8ArrayFlat( 2 );
+    CleanupStack::PushL( sdpLines );
+    sdpLines->AppendL( KMusEngSessionSdpLineBandwidthField() );
+    sdpLines->AppendL( KMusEngSessionSdpLineTiasLine() );
+    inSession->Streams()[ 0 ]->SetMediaAttributeLinesL( sdpLines );
+    CleanupStack::Pop( sdpLines );
+ 
     // Transfers ownership
     iReceiveSession->iSession = inSession; 
     CleanupStack::Pop( inSession );
     
     iReceiveSession->CompleteSessionStructureL();
-    
-    MDesC8Array* newSdpLines = iReceiveSession->iSession->SessionSDPLinesL();
-    CleanupDeletePushL( newSdpLines );
-    TBool bandwidthFoundFromSessionLevel( EFalse );
+ 
+    // Ensure there is only b=AS and no b=TIAS present at session level 
+    MDesC8Array* newSdpLines = iReceiveSession->iSession->iSessionSDPLines;
+    TBool bandwidthFoundFromSessionLevel = EFalse;
+    TBool tiasFoundFromSessionLevel = EFalse;
     for ( TInt i = 0; newSdpLines && i < newSdpLines->MdcaCount(); i++ )
         {
         if ( newSdpLines->MdcaPoint( i ).Compare( 
@@ -1193,35 +1305,32 @@ void UT_CMusEngReceiveSession::UT_CompleteSessionStructureL_OperatorVariant()
             {
             bandwidthFoundFromSessionLevel = ETrue;
             }
-        }
-    EUNIT_ASSERT( bandwidthFoundFromSessionLevel );
-    CleanupStack::PopAndDestroy( newSdpLines );
-    
-    newSdpLines = iReceiveSession->iSession->Streams()[ 0 ]->MediaAttributeLinesL();
-    CleanupDeletePushL( newSdpLines );
-    TBool bandwidthFoundFromMediaLevel( EFalse );
-    for ( TInt i = 0; newSdpLines && i < newSdpLines->MdcaCount(); i++ )
-        {
-        if ( newSdpLines->MdcaPoint( i ).Compare( 
-                KMusEngSessionSdpLineBandwidthField() ) == 0 )
+        else if ( newSdpLines->MdcaPoint( i ).Find( 
+                KMusEngSessionSdpLineTiasLine() ) == 0 )
             {
-            bandwidthFoundFromMediaLevel = ETrue;
+            tiasFoundFromSessionLevel = ETrue;
             }
         }
-    EUNIT_ASSERT( !bandwidthFoundFromMediaLevel );
-    CleanupStack::PopAndDestroy( newSdpLines );
+    EUNIT_ASSERT( bandwidthFoundFromSessionLevel );
+    EUNIT_ASSERT( !tiasFoundFromSessionLevel );
+ 
+    // Ensure there is no bandwidth attributes at media level 
+    newSdpLines = iReceiveSession->iSession->Streams()[ 0 ]->iMediaSDPLines;
+    EUNIT_ASSERT( !newSdpLines->MdcaCount() );
+
     
-    // Session with bandwidth attribute at media level
-    // -> bandwidth is taken in use at media level
+    // Session with bandwidth AS and TIAS attributes at media level
+    // -> bandwidth AS is taken in use at media level
     //
     delete iReceiveSession->iSession;
     iReceiveSession->iSession = NULL;
     
     inSession = ConstructInSessionLC( 1, 0 );
     
-    sdpLines = new ( ELeave ) CDesC8ArrayFlat( 1 );
+    sdpLines = new ( ELeave ) CDesC8ArrayFlat( 2 );
     CleanupStack::PushL( sdpLines );
     sdpLines->AppendL( KMusEngSessionSdpLineBandwidthField() );
+    sdpLines->AppendL( KMusEngSessionSdpLineTiasLine() );
     inSession->Streams()[ 0 ]->SetMediaAttributeLinesL( sdpLines );
     CleanupStack::Pop( sdpLines );
     
@@ -1231,35 +1340,180 @@ void UT_CMusEngReceiveSession::UT_CompleteSessionStructureL_OperatorVariant()
     
     iReceiveSession->CompleteSessionStructureL();
     
-    newSdpLines = iReceiveSession->iSession->SessionSDPLinesL();
-    CleanupDeletePushL( newSdpLines );
+    // Ensure there is no bandwidth attribute at session level  
+    newSdpLines = iReceiveSession->iSession->iSessionSDPLines;
     bandwidthFoundFromSessionLevel = EFalse;
     for ( TInt i = 0; newSdpLines && i < newSdpLines->MdcaCount(); i++ )
         {
         if ( newSdpLines->MdcaPoint( i ).Compare( 
-                KMusEngSessionSdpLineBandwidthField() ) == 0 )
+                KMusEngSessionSdpLineBandwidthField() ) == 0
+             || newSdpLines->MdcaPoint( i ).Find( 
+                     KMusEngSessionSdpLineTiasLine() ) == 0 )
             {
             bandwidthFoundFromSessionLevel = ETrue;
             }
         }
     EUNIT_ASSERT( !bandwidthFoundFromSessionLevel );
-    CleanupStack::PopAndDestroy( newSdpLines );
     
-    newSdpLines = iReceiveSession->iSession->Streams()[ 0 ]->MediaAttributeLinesL();
-    CleanupDeletePushL( newSdpLines );
-    bandwidthFoundFromMediaLevel = EFalse;
-    for ( TInt i = 0; newSdpLines && i < newSdpLines->MdcaCount(); i++ )
-        {
-        if ( newSdpLines->MdcaPoint( i ).Compare( 
-                KMusEngSessionSdpLineBandwidthField() ) == 0 )
-            {
-            bandwidthFoundFromMediaLevel = ETrue;
-            }
-        }
-    EUNIT_ASSERT( bandwidthFoundFromMediaLevel );
-    CleanupStack::PopAndDestroy( newSdpLines );
+    // Ensure media level has only b=AS attribute
+    newSdpLines = iReceiveSession->iSession->Streams()[ 0 ]->iMediaSDPLines;
+    EUNIT_ASSERT( newSdpLines );
+    EUNIT_ASSERT( newSdpLines->MdcaCount() == 1 );
+    EUNIT_ASSERT( newSdpLines->MdcaPoint( 0 ) == KMusEngSessionSdpLineBandwidthField() );
     }
     
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+// 
+void UT_CMusEngReceiveSession::UT_CompleteSessionStructureL_SdpBandwidthAttributesL()
+    {
+    CRepository::SetStubGlobal( MusSettingsKeys::KVideoBandwidth,
+                                128 );
+
+    // 1. Session without bandwidth attributes. => b=AS and b=TIAS will be
+    //    taken at media level
+    CMceInSession* inSession = ConstructInSessionLC( 1, 0 );
+
+    iReceiveSession->iSession = inSession; // Transfers ownership
+    CleanupStack::Pop( inSession );
+
+    iReceiveSession->CompleteSessionStructureL();
+
+    // Ensure b=AS and b=TIAS present at media level only
+    MDesC8Array* newSdpLines = iReceiveSession->iSession->iSessionSDPLines;
+    EUNIT_ASSERT( newSdpLines->MdcaCount() == 1 );
+    EUNIT_ASSERT( newSdpLines->MdcaPoint( 0 ) == KMusEngSessionSdpLineXApplication() );
+
+    // Ensure b=AS and b=TIAS present at media level
+    EUNIT_ASSERT( iReceiveSession->iSession->Streams().Count() > 0 );
+    newSdpLines = iReceiveSession->iSession->Streams()[ 0 ]->iMediaSDPLines;
+    EUNIT_ASSERT( newSdpLines );
+    EUNIT_ASSERT( newSdpLines->MdcaCount() == 2 );
+    EUNIT_ASSERT( newSdpLines->MdcaPoint( 0 ).Find(
+                  KMusEngSessionSdpLineBandwidthLine() ) == 0 );
+    EUNIT_ASSERT( newSdpLines->MdcaPoint( 1 ).Find( 
+                  KMusEngSessionSdpLineTiasLine() ) == 0 );    
+    
+    
+    // 2. Session with b=AS bandwidth attribute at session level
+    //     => b=AS and b=TIAS will be taken at session level
+    delete iReceiveSession->iSession;
+    iReceiveSession->iSession = NULL;
+    
+    inSession = ConstructInSessionLC( 1, 0 );
+    //setting session level SDP attributes
+    CDesC8Array* sdpLines = new ( ELeave ) CDesC8ArrayFlat( 1 );
+    CleanupStack::PushL( sdpLines );
+    sdpLines->AppendL( KMusEngSessionSdpLineBandwidthField() );
+    inSession->SetSessionSDPLinesL( sdpLines );
+    CleanupStack::Pop( sdpLines );
+ 
+    // Transfers ownership
+    iReceiveSession->iSession = inSession; 
+    CleanupStack::Pop( inSession );
+    
+    iReceiveSession->CompleteSessionStructureL();
+ 
+    // Ensure b=AS and b=TIAS present at session level only 
+    newSdpLines = iReceiveSession->iSession->iSessionSDPLines;
+    EUNIT_ASSERT( newSdpLines );
+    EUNIT_ASSERT( newSdpLines->MdcaCount() == 3 );
+    EUNIT_ASSERT( newSdpLines->MdcaPoint( 0 ) == KMusEngSessionSdpLineXApplication() );
+    EUNIT_ASSERT( newSdpLines->MdcaPoint( 1 ).Find ( 
+                  KMusEngSessionSdpLineBandwidthLine() ) == 0 );
+    EUNIT_ASSERT( newSdpLines->MdcaPoint( 2 ).Find( 
+                  KMusEngSessionSdpLineTiasLine() ) == 0 );    
+
+    EUNIT_ASSERT( iReceiveSession->iSession->Streams().Count() > 0 );    
+    newSdpLines = iReceiveSession->iSession->Streams()[ 0 ]->iMediaSDPLines;
+    EUNIT_ASSERT( newSdpLines );
+    EUNIT_ASSERT( newSdpLines->MdcaCount() == 0 );
+
+    // 3. Session with b=AS bandwidth attribute at media level
+    //     => b=AS and b=TIAS will be taken at media level
+    delete iReceiveSession->iSession;
+    iReceiveSession->iSession = NULL;
+    
+    inSession = ConstructInSessionLC( 1, 0 );
+    //setting media level SDP attributes
+    sdpLines = new ( ELeave ) CDesC8ArrayFlat( 1 );
+    CleanupStack::PushL( sdpLines );
+    sdpLines->AppendL( KMusEngSessionSdpLineBandwidthField() );
+    inSession->Streams()[ 0 ]->SetMediaAttributeLinesL( sdpLines );
+    CleanupStack::Pop( sdpLines );
+ 
+    // Transfers ownership
+    iReceiveSession->iSession = inSession; 
+    CleanupStack::Pop( inSession );
+    
+    iReceiveSession->CompleteSessionStructureL();
+ 
+    // Ensure b=AS and b=TIAS present only at media level 
+    newSdpLines = iReceiveSession->iSession->iSessionSDPLines;
+    EUNIT_ASSERT( newSdpLines );
+    EUNIT_ASSERT( newSdpLines->MdcaCount() == 1 );
+    EUNIT_ASSERT( newSdpLines->MdcaPoint( 0 ) == KMusEngSessionSdpLineXApplication() );
+
+    EUNIT_ASSERT( iReceiveSession->iSession->Streams().Count() > 0 );    
+    newSdpLines = iReceiveSession->iSession->Streams()[ 0 ]->iMediaSDPLines;
+    EUNIT_ASSERT( newSdpLines );
+    EUNIT_ASSERT( newSdpLines->MdcaCount() == 2 );
+    EUNIT_ASSERT( newSdpLines->MdcaPoint( 0 ).Find ( 
+                  KMusEngSessionSdpLineBandwidthLine() ) == 0 );
+    EUNIT_ASSERT( newSdpLines->MdcaPoint( 1 ).Find( 
+                  KMusEngSessionSdpLineTiasLine() ) == 0 );    
+
+   
+    // 4. Session with b=AS attribute at session level and
+    //    b=AS and b=TIAS at media level
+    //    => b=AS and b=TIAS will be taken at session and media level
+    delete iReceiveSession->iSession;
+    iReceiveSession->iSession = NULL;
+    
+    inSession = ConstructInSessionLC( 1, 0 );
+    //setting session level SDP attributes
+    sdpLines = new ( ELeave ) CDesC8ArrayFlat( 1 );
+    CleanupStack::PushL( sdpLines );
+    sdpLines->AppendL( KMusEngSessionSdpLineBandwidthField() );
+    inSession->SetSessionSDPLinesL( sdpLines );
+    CleanupStack::Pop( sdpLines );
+ 
+    //setting media level SDP attributes
+    sdpLines = new ( ELeave ) CDesC8ArrayFlat( 2 );
+    CleanupStack::PushL( sdpLines );
+    sdpLines->AppendL( KMusEngSessionSdpLineBandwidthField() );
+    sdpLines->AppendL( KMusEngSessionSdpLineTiasLine() );
+    inSession->Streams()[ 0 ]->SetMediaAttributeLinesL( sdpLines );
+    CleanupStack::Pop( sdpLines );
+
+    // Transfers ownership
+    iReceiveSession->iSession = inSession; 
+    CleanupStack::Pop( inSession );
+    
+    iReceiveSession->CompleteSessionStructureL();
+ 
+    // Ensure b=AS and b=TIAS present at session and media level 
+    newSdpLines = iReceiveSession->iSession->iSessionSDPLines;
+    EUNIT_ASSERT( newSdpLines );
+    EUNIT_ASSERT( newSdpLines->MdcaCount() == 3 );
+    EUNIT_ASSERT( newSdpLines->MdcaPoint( 0 ) == KMusEngSessionSdpLineXApplication() );
+    EUNIT_ASSERT( newSdpLines->MdcaPoint( 1 ).Find ( 
+                  KMusEngSessionSdpLineBandwidthLine() ) == 0 );
+    EUNIT_ASSERT( newSdpLines->MdcaPoint( 2 ).Find( 
+                  KMusEngSessionSdpLineTiasLine() ) == 0 );    
+
+    EUNIT_ASSERT( iReceiveSession->iSession->Streams().Count() > 0 );    
+    newSdpLines = iReceiveSession->iSession->Streams()[ 0 ]->iMediaSDPLines;
+    EUNIT_ASSERT( newSdpLines );
+    EUNIT_ASSERT( newSdpLines->MdcaCount() == 2 );
+    EUNIT_ASSERT( newSdpLines->MdcaPoint( 0 ).Find ( 
+                  KMusEngSessionSdpLineBandwidthLine() ) == 0 );
+    EUNIT_ASSERT( newSdpLines->MdcaPoint( 1 ).Find( 
+                  KMusEngSessionSdpLineTiasLine() ) == 0 );
+    }
+
     
 // -----------------------------------------------------------------------------
 //
@@ -1333,6 +1587,88 @@ void UT_CMusEngReceiveSession::UT_ParseAssertedIdentityL()
     EUNIT_ASSERT_EQUALS( iReceiveSession->iIdentity, KNullDesC8 )    
     }
 
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngReceiveSession::UT_ContactSavingLL()
+    {
+    ContactEngineStubHelper::Reset();
+    
+    // Saving of contact is done at destruction phase only if originator value
+    // exists
+    //
+    CMusEngReceiveSession* receiveSession = CMusEngReceiveSession::NewL();
+    receiveSession->SetLcSessionObserver( iLcSessionObserver );    
+    delete receiveSession;
+    receiveSession = NULL;
+    EUNIT_ASSERT( ContactEngineStubHelper::GetCalledFunction() == EContactEngineStubNone );
+    
+    
+    User::LeaveIfError( RProperty::Set( NMusSessionApi::KCategoryUid,
+                                        NMusSessionApi::KContactId,
+                                        2 ) );
+    User::LeaveIfError( RProperty::Set( NMusSessionApi::KCategoryUid,
+                                        NMusSessionApi::KTelNumber,
+                                        _L("12341234") ) );
+    
+    receiveSession = CMusEngReceiveSession::NewL();
+    CleanupStack::PushL( receiveSession );
+    receiveSession->SetLcSessionObserver( iLcSessionObserver );
+    delete receiveSession->iOriginator;
+    receiveSession->iOriginator = NULL;
+    receiveSession->iOriginator = _L8("sip:yep@10.10.10.10").AllocL();
+    CleanupStack::PopAndDestroy( receiveSession );
+    if ( ContactEngineStubHelper::GetCalledFunction() != EContactEngineStubSetText )
+        {
+        // out-of-memory was trap ignored and saving failed because of that
+        User::Leave( KErrNoMemory );
+        }
+    EUNIT_ASSERT( ContactEngineStubHelper::GetCalledFunction() == EContactEngineStubSetText );
+    }
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngReceiveSession::UT_IsDisplayActive()
+    {
+    // Display is active only if receiving and display is explicitly enabled
+    CMceInSession* inSession = ConstructInSessionLC( 1, 1 );
+    iReceiveSession->iSession = inSession; // Transfers ownership
+    CleanupStack::Pop( inSession );
+    iReceiveSession->EnableDisplayL( ETrue );
+    EUNIT_ASSERT( !iReceiveSession->IsDisplayActive() )
+    iReceiveSession->iReceiving = ETrue;
+    EUNIT_ASSERT( iReceiveSession->IsDisplayActive() )
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngReceiveSession::UT_InactivityTimeoutL()
+    {
+    // Not receiving, no effect
+    iReceiveSession->iReceiving = EFalse;
+    CMceVideoStream* videoStream = CMceVideoStream::NewLC();
+    CMceRtpSource* rtpSource = CMceRtpSource::NewLC();
+    iReceiveSession->InactivityTimeout( *videoStream, *rtpSource );
+    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    
+    // Receiving, state change is notified and
+    // receiving and buffering status are cleared
+    iReceiveSession->iBuffered = ETrue;
+    iReceiveSession->iReceiving = ETrue;
+    iReceiveSession->InactivityTimeout( *videoStream, *rtpSource );
+    EUNIT_ASSERT_EQUALS( iLcSessionObserver->iCalledFunction, 
+                         CLcSessionObserverStub::EPlayerStateChanged );
+    EUNIT_ASSERT( !iReceiveSession->iReceiving );
+    EUNIT_ASSERT( !iReceiveSession->iBuffered );
+    CleanupStack::PopAndDestroy( rtpSource );
+    CleanupStack::PopAndDestroy( videoStream );
+    }
+
 
 //  TEST TABLE
 
@@ -1349,11 +1685,39 @@ EUNIT_TEST(
     SetupL, UT_NewLL, Teardown)
 
 EUNIT_TEST(
-    "AcceptInvitationL - test ",
+    "LcSessionState - test ",
     "CMusEngReceiveSession",
-    "AcceptInvitationL",
+    "LcSessionState",
     "FUNCTIONALITY",
-    SetupL, UT_AcceptInvitationLL, Teardown)
+    SetupL, UT_LcSessionStateL, Teardown)
+    
+EUNIT_TEST(
+    "EstablishLcSessionL - test ",
+    "CMusEngReceiveSession",
+    "EstablishLcSessionL",
+    "FUNCTIONALITY",
+    SetupL, UT_EstablishLcSessionL, Teardown)    
+    
+EUNIT_TEST(
+    "TerminateLcSessionL - test ",
+    "CMusEngReceiveSession",
+    "TerminateLcSessionL",
+    "FUNCTIONALITY",
+    SetupL, UT_TerminateLcSessionL, Teardown)
+
+EUNIT_TEST(
+    "RemoteVideoPlayer - test ",
+    "CMusEngReceiveSession",
+    "RemoteVideoPlayer",
+    "FUNCTIONALITY",
+    SetupL, UT_RemoteVideoPlayerL, Teardown)
+    
+EUNIT_TEST(
+    "RemoteDisplayName - test ",
+    "CMusEngReceiveSession",
+    "RemoteDisplayName",
+    "FUNCTIONALITY",
+    SetupL, UT_RemoteDisplayName, Teardown)
 
 EUNIT_TEST(
     "HandleSessionStateChanged - test ",
@@ -1468,13 +1832,40 @@ EUNIT_TEST(
     SetupL, UT_CompleteSessionStructureL_OperatorVariant, Teardown)
    
 EUNIT_TEST(
+    "CompleteSessionStructureL - test SDP bandwidth attributes handling",
+    "CMusEngReceiveSession",
+    "CompleteSessionStructureL",
+    "FUNCTIONALITY",
+    SetupL, UT_CompleteSessionStructureL_SdpBandwidthAttributesL, Teardown)
+
+EUNIT_TEST(
     "ParseAssertedIdentity",
     "CMusEngReceiveSession",
     "ParseAssertedIdentity",
     "FUNCTIONALITY",
     SetupL, UT_ParseAssertedIdentityL, Teardown)
       
-   
+EUNIT_TEST(
+    "ContactSavingL - test",
+    "CMusEngReceiveSession",
+    "ContactSavingL",
+    "FUNCTIONALITY",
+    SetupL, UT_ContactSavingLL, Teardown)
+
+EUNIT_TEST(
+    "IsDisplayActive - test",
+    "CMusEngReceiveSession",
+    "IsDisplayActive",
+    "FUNCTIONALITY",
+    SetupL, UT_IsDisplayActive, Teardown)
+    
+EUNIT_TEST(
+    "InactivityTimeout - test ",
+    "CMusEngReceiveSession",
+    "InactivityTimeout",
+    "FUNCTIONALITY",
+    SetupL, UT_InactivityTimeoutL, Teardown)      
+    
 EUNIT_END_TEST_TABLE
 
 //  END OF FILE

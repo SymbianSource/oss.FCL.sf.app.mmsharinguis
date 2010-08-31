@@ -46,6 +46,7 @@
 #include "UT_CMusAvaSipProfileRegistryObserver.h"
 #include "UT_CMusAvaSipheaderUtil.h"
 #include "UT_CMusAvaClientResolverUtil.h"
+#include "UT_CMusAvaCallEventMonitor.h"
 
 
 //  EXTERNAL INCLUDES
@@ -138,18 +139,13 @@ EXPORT_C MEUnitTest* CreateTestSuiteL()
     
     rootSuite->AddL( UT_CMusAvaClientResolverUtil::NewLC() );
     CleanupStack::Pop();
-    	
+
+	rootSuite->AddL( UT_CMusAvaCallEventMonitor::NewLC() );
+    CleanupStack::Pop();
+
     CleanupStack::Pop(); // rootSuite
 
     return rootSuite;
     }
 
-
-
 //  END OF FILE
-
-
-
-
-
-

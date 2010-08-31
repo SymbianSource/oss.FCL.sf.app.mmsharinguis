@@ -219,12 +219,6 @@ void UT_CMusAvaRegisterAvailability::UT_CMusAvaRegisterAvailability_ProfileRegis
      
     EUNIT_ASSERT( iAvailabilityObserver->iStatus ==  MMusAvaObserver::EMusAvaStatusNotRegistered );                
     EUNIT_ASSERT( iAvailabilityObserver->iName == MMusAvaObserver::EMusAvaNameRegistration );
-    EUNIT_ASSERT( iSharedObj->MusAvaSip().iSipConnection == NULL );
-   
-    iRegisterAvailability->ProfileRegistryEventOccurred( 1, MSIPProfileRegistryObserver::EProfileRegistered );   
-    EUNIT_ASSERT( iAvailabilityObserver->iStatus ==  MMusAvaObserver::EMusAvaStatusAvailable );                
-    EUNIT_ASSERT( iAvailabilityObserver->iName == MMusAvaObserver::EMusAvaNameRegistration );
-    EUNIT_ASSERT( iSharedObj->MusAvaSip().iSipConnection != NULL );
              
     iRegisterAvailability->ProfileRegistryEventOccurred( 1, MSIPProfileRegistryObserver::EProfileDestroyed );   
     EUNIT_ASSERT( iRegisterAvailability->State() ==  MMusAvaObserver::EMusAvaStatusNotRegistered ); 
@@ -276,45 +270,19 @@ void UT_CMusAvaRegisterAvailability::UT_CMusAvaRegisterAvailability_ConnectionSt
 
 void UT_CMusAvaRegisterAvailability::UT_CMusAvaRegisterAvailability_ProfileRegistryErrorOccurredL()
     {
-    iRegisterAvailability->iOperatorVariant = MusSettingsKeys::EOperatorSpecific;
     iRegisterAvailability->ProfileRegistryErrorOccurred(5, -5 );
-    EUNIT_ASSERT( iRegisterAvailability->State() ==  MMusAvaObserver::EMusAvaStatusNotExecuted );
-    iRegisterAvailability->ProfileRegistryErrorOccurred(5, KErrGeneral );
-    EUNIT_ASSERT( iRegisterAvailability->State() ==  MMusAvaObserver::EMusAvaStatusNotExecuted );
-    
-    iRegisterAvailability->iOperatorVariant = MusSettingsKeys::EStandard;
-    iRegisterAvailability->ProfileRegistryErrorOccurred(5, -5 );
-    EUNIT_ASSERT( iRegisterAvailability->State() ==  MMusAvaObserver::EMusAvaStatusNotExecuted );
-    iRegisterAvailability->ProfileRegistryErrorOccurred(5, KErrGeneral );
-    EUNIT_ASSERT( iRegisterAvailability->State() ==  MMusAvaObserver::EMusAvaStatusNotExecuted );
-        
+
     // Test Profile
     TRAPD( error, iSharedObj->MusAvaSip().CreateProfileL() );
     if ( error == KErrNoMemory ) User::Leave( error );
     EUNIT_ASSERT ( error == KErrNone );
     //Profile created
     iRegisterAvailability->ProfileRegistryErrorOccurred(5, -5 );
-    EUNIT_ASSERT( iRegisterAvailability->State() ==  MMusAvaObserver::EMusAvaStatusNotExecuted );
-    
-    iRegisterAvailability->iOperatorVariant = MusSettingsKeys::EOperatorSpecific;
-    iRegisterAvailability->ProfileRegistryErrorOccurred(5, KErrGeneral );
-    EUNIT_ASSERT( iRegisterAvailability->State() ==  MMusAvaObserver::EMusAvaStatusNotExecuted );
-    
-    iRegisterAvailability->iOperatorVariant = MusSettingsKeys::EStandard;
-    iRegisterAvailability->ProfileRegistryErrorOccurred(5, KErrGeneral );
-    EUNIT_ASSERT( iRegisterAvailability->State() ==  MMusAvaObserver::EMusAvaStatusNotExecuted );
     
     MultimediaSharingSettings::SetSipProfileSettingL( 1 );
     
     iRegisterAvailability->ProfileRegistryErrorOccurred(1, -5 );
     EUNIT_ASSERT( iRegisterAvailability->State() ==  MMusAvaObserver::EMusAvaStatusNotRegistered );
-    
-    iRegisterAvailability->ProfileRegistryErrorOccurred(1, KErrGeneral );
-    EUNIT_ASSERT( iRegisterAvailability->State() ==  MMusAvaObserver::EMusAvaStatusNotRegistered );
-    //Operator variant. SIP profile disabled.
-    iRegisterAvailability->iOperatorVariant = MusSettingsKeys::EOperatorSpecific;
-    iRegisterAvailability->ProfileRegistryErrorOccurred(1, KErrGeneral );
-    EUNIT_ASSERT( iRegisterAvailability->State() ==  MMusAvaObserver::EMusActivationError );
     } 
 
 

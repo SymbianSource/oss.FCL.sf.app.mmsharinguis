@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2005 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2007 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -19,23 +19,24 @@
 #ifndef MUSHENGLIVESESSIONOBSERVER_H
 #define MUSHENGLIVESESSIONOBSERVER_H
 
-// INCLUDES
-#include "musengoutsessionobserver.h"
+
 
 // CLASS DECLARATION
 
 /**
-*  An interface to be implemented by users of Multimedia Sharing Engine if 
-*  they wish to receive
-*  events from session state changes.
-*
-*  This observer is set using CMSSession:: function.
-*
-* @lib musengine.lib
-* @since S60 v3.2
+*  An interface to be implemented by clients of Multimedia Sharing Engine if 
+*  they wish to receive events about live sharing specific event.
 */
-class MMusEngLiveSessionObserver : public MMusEngOutSessionObserver
+class MMusEngLiveSessionObserver
     {
+    
+    public:
+    
+        /**    
+    	* Indicates that disk has run out of space during recording.
+    	*/
+    	virtual void DiskFull() = 0;
+		
     };
 
 #endif

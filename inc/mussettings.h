@@ -14,7 +14,7 @@
 * Description:  ?Description
 *  Name        : mussettingskeys.h
 
-*  Version     : %version: 9 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: 10 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -30,6 +30,51 @@
 class MultimediaSharingSettings
     {
 public:
+    
+    /**
+     * Returns the cenrep configured value for KFastStartupMode key.
+     *
+     * @return Current KVideoDirection Key value from cenrep.
+     */
+    static MusSettingsKeys::TFastMode FastStartupModeL();
+    
+    
+    /**
+     * Returns the cenrep configured value for KVideoBandwidth key.
+     *
+     * @return Current KVideoBandwidth Key value from cenrep.
+     */
+    static TInt VideoBandwidthSettingL();
+
+    /**
+     * Returns the cenrep configured value for KVideoDirection key.
+     *
+     * @return Current KVideoDirection Key value from cenrep.
+     */
+    static MusSettingsKeys::TVideoDirection VideoDirectionL();
+    
+
+    /**
+     * Returns the cenrep configured value for KCameraUsage key.
+     *
+     * @return Current KCameraUsage Key value from cenrep.
+     */
+    static MusSettingsKeys::TUseCamera CameraUsageL();
+    
+    /**
+     * Returns the cenrep configured value for AllowedCSOnly key.
+     *
+     * @return Current AllowedCSOnly Key value from cenrep.
+     */
+    static MusSettingsKeys::TAllowedCSOnly AllowedCSOnlySettingL();
+
+    /**
+     * Returns the cenrep configured value for Allowed3GOnly key.
+     *
+     * @return Current Allowed3GOnly Key value from cenrep.
+     */
+    static MusSettingsKeys::TAllowed3GOnly Allowed3GOnlySettingL();
+
     /**
      * Returns current MS activation setting.
      *
@@ -74,6 +119,36 @@ public:
      */
     static void SetAuditoryNotificationSettingL( 
                 MusSettingsKeys::TAuditoryNotification aNotificationSetting );
+
+    /**
+     * Returns 
+     *
+     * @return
+     */
+    static MusSettingsKeys::TPopupNotification PopupNotificationSettingL();
+
+    /**
+     * Sets 
+     *
+     * @param
+     */
+    static void SetPopupNotificationSettingL( 
+                MusSettingsKeys::TPopupNotification aNotificationSetting );
+          
+    /**
+     * Returns 
+     *
+     * @return
+     */
+    static MusSettingsKeys::TPopupNotificationType PopupNotificationTypeSettingL();
+					
+    /**
+     * Sets 
+     *
+     * @param
+     */
+    static void SetPopupNotificationTypeSettingL( 
+                MusSettingsKeys::TPopupNotificationType aNotificationSetting );
 
     /**
      * Returns 
@@ -235,9 +310,7 @@ public:
      * @param
      * @param
      */
-    static void MultimediaSharingSettings::SetPropertyValueL( 
-                                            TUint32 aKey,
-                                            const TDesC& aValue );
+    static void SetPropertyValueL( TUint32 aKey, const TDesC& aValue );
                                             
      /**
      * For internal usage only. Use direct getters/setters for each setting. 
@@ -246,22 +319,15 @@ public:
      * @param
      */
     static void SetPropertyValueL( TUint32 aKey, TInt aValue );
-    
+   
     /**
      * If Encoding device set to KMusDisableAVC (0x0fffffff) returns ETrue 
      * else otherwise.  
      * Means AVC will be disabled when encoding device cenrep configuration 
      * set to 0x0fffffff.
      */
-    static TBool MultimediaSharingSettings::IsAvcDisabled();
-    
-
-     /**
-     * @return ETrue if privacy is requested
-     *         EFalse otherwise, or if an error occurred reading cenrep
-     */
-    static TBool PrivacySetting();
-    
+    static TBool IsAvcDisabled();
+	
     };
     
 #include "mussettings.inl"

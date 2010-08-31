@@ -67,13 +67,15 @@ public: // setup functions
 
 public: // test functions 
 
-    void NewLL();  
     void DefinePropertiesLL();
     void DefinePropertyL_IntPropertyL();
     void DefinePropertyL_DesCPropertyL();
     void DeletePropertiesL();
     
     void UT_HandleServerCommandLL();
+    void UT_StartMusClientL();
+    void UT_StopMusClientL();
+    void UT_MusCallStateChangedL();
        
 private: // data
 

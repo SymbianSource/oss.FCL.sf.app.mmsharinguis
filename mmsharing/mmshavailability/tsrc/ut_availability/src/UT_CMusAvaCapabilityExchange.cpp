@@ -41,7 +41,6 @@
 #include "CSipSseTestTls.h"
 #include "musavaoptionhandler.h"
 #include "musavasettingsimp.h"
-#include "CSipSseTestTls.h"
 #include "musavacapabilityquery.h"
 #include "mussettings.h"
 #include "mussettingskeys.h"
@@ -120,6 +119,8 @@ void UT_CMusAvaCapabilityExchange::SetupL(  )
     
     CSipSseTestTls::OpenL();
     iStorage = CSipSseTestTls::Storage();
+    iStorage->Set( MusSettingsKeys::KFastStartupMode, 
+        MusSettingsKeys::EFastModeOff );
     } 
 
 void UT_CMusAvaCapabilityExchange::Teardown(  )

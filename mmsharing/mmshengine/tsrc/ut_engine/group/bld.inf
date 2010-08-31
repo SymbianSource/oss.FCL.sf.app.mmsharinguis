@@ -15,7 +15,6 @@
 *
 */
 
-PRJ_TESTMMPFILES
-
+PRJ_MMPFILES
 ../../../../../tsrc/mceclientstub/group/mceclientstub.mmp
 ut_musengine.mmp

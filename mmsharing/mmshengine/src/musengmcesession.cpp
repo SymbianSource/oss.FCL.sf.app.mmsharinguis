@@ -20,14 +20,18 @@
 #include "mussettings.h"
 #include "musengmcesession.h"
 #include "musengsessiondurationtimer.h"
-#include "musengsessionobserver.h"
 #include "musengmceutils.h"
 #include "musuid.hrh"
 #include "musenglogger.h"
-#include "musengclipsessionobserver.h"
 #include "mussipprofilehandler.h"
+#include "mussessionproperties.h"
+#include "musenguriparser.h"
+#include "musengtelephoneutils.h"
 
 // SYSTEM
+#include <lcsessionobserver.h>
+#include <lcuiprovider.h>
+#include <lcvideoplayer.h>
 #include <mcedefs.h>
 #include <mcemanager.h>
 #include <mceinsession.h>
@@ -37,10 +41,16 @@
 #include <mcedisplaysink.h>
 #include <mcespeakersink.h>
 #include <mcefilesource.h>
+#include <mcecamerasource.h>
 #include <mcertpsource.h>
 #include <mceaudiocodec.h>
-#include <mcevideocodec.h>
+#include <mceavccodec.h>
 #include <AudioPreference.h>
+#include <e32property.h>
+#include <cntitem.h>
+#include <cntfield.h>
+#include <cntdef.h>
+#include <cntfldst.h>
 
 
 const TInt KMusEngTimerInterval = 1000000; // 1 second
@@ -58,6 +68,64 @@ const TUint KMusEngDedicatedAudioPort = 57344;
 #define MUS_CODEC_ARR_CONST_CAST( codecArr ) \
 ( const_cast< RPointerArray< CMceVideoCodec >& >( codecArr ) )
 
+// Names of AVC levels in string for config keys stored in CenRep 
+_LIT8( KMusAvcBitrateLevel1, "AvcBrL1=" );
+_LIT8( KMusAvcBitrateLevel1b, "AvcBrL1b=" );
+_LIT8( KMusAvcBitrateLevel1_1, "AvcBrL1_1=" );
+_LIT8( KMusAvcBitrateLevel1_2, "AvcBrL1_2=" );
+_LIT8( KMusAvcBitrateLevel1_3, "AvcBrL1_3=" );
+_LIT8( KMusAvcBitrateLevel2, "AvcBrL2=" );
+
+_LIT8( KMusEncoderInfoTokenizer, ";" );
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+CMusEngMceSession::CMusEngMceSession()
+    : iSecondsFromLastRtcpReport ( 0 ),
+      // Although speaker is constructed as muted, it is not explicitly muted
+      iExplicitlyMuted( EFalse ),
+      iBackground( ETrue )
+    {
+    iMceManagerUid.iUid = KMusUiUid;
+    iBackground = IsBackgroundStartup();
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::ConstructL()
+    {
+    MUS_LOG( "mus: [ENGINE]  -> CMusEngMceSession::ConstructL()" )
+    
+    iTelephoneUtils = CMusEngTelephoneUtils::NewL( *this );
+
+    // Creating new MCE Manager and set all needed observers to this class.
+    iManager = CMceManager::NewL( iMceManagerUid,
+                                  &iTransactionDataContainer );
+    iManager->SetSessionObserver( this );
+    iManager->SetInSessionObserver( this );
+    iManager->SetMediaObserver( this );
+    iManager->SetRtpObserver( this );
+
+    // Check if operator specific behavior is expected
+    iOperatorVariant = ( MultimediaSharingSettings::OperatorVariantSettingL() ==
+                         MusSettingsKeys::EOperatorSpecific );
+    
+    // Update timer initialization
+    iUpdateTimer = CMusEngSessionDurationTimer::NewL( *this );
+    
+    iSipProfileHandler = CMusSipProfileHandler::NewL( *this );
+    
+    iRemoteDetails = HBufC::NewL( RProperty::KMaxPropertySize );
+    iRemoteDetails->Des().Copy( KNullDesC );
+    
+    MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::ConstructL()" )
+    }
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -65,107 +133,70 @@ const TUint KMusEngDedicatedAudioPort = 57344;
 CMusEngMceSession::~CMusEngMceSession()
     {
     MUS_LOG( "mus: [ENGINE]  -> CMusEngMceSession::~CMusEngMceSession()" )
+    
     delete iSipProfileHandler;
     delete iSession;
     delete iManager;
     delete iUpdateTimer;
+    delete iTelephoneUtils;
+    delete iRemoteDetails;
+    
+    RProperty::Set( NMusSessionApi::KCategoryUid, 
+                    NMusSessionApi::KFastMode, 
+                    MusSettingsKeys::EFastModeDisabled );
+    
     MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::~CMusEngMceSession()" )
     }
 
-
+// -----------------------------------------------------------------------------
+// From MMusEngDisplayHandler
 // -----------------------------------------------------------------------------
 //
-// -----------------------------------------------------------------------------
-//
-EXPORT_C void CMusEngMceSession::TerminateL()
+TRect CMusEngMceSession::Rect() const
     {
-    MUS_LOG( "mus: [ENGINE]  -> CMusEngMceSession::TerminateL()" )
-    __ASSERT_ALWAYS( iSession, User::Leave( KErrNotReady ) );
-    iSession->TerminateL();
-    MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::TerminateL()" )
+    MUS_LOG( "mus: [ENGINE]  CMusEngMceSession::Rect()" )
+    return iRect;
     }
 
-
 // -----------------------------------------------------------------------------
-// Returns estabilished session time. If not established return
-// value is < 0
+// From MMusEngDisplayHandler
 // -----------------------------------------------------------------------------
 //
-EXPORT_C TTimeIntervalSeconds CMusEngMceSession::GetSessionTime() const
+void CMusEngMceSession::SetRectL( const TRect& aRect )
     {
-    if ( iSession && iSession->State() == CMceSession::EEstablished )
-        {
-        TTime time;
-        TTimeIntervalSeconds seconds;
-        time.HomeTime();
-
-        time.SecondsFrom( iStartTime, seconds );
-
-        return seconds;
-        }
-
-    return TTimeIntervalSeconds( KErrNotReady );
-
+    MUS_LOG( "mus: [ENGINE]  CMusEngSession::SetRectL()" )
+    iRect = aRect;
+    RectChangedL();
     }
 
-
+// -----------------------------------------------------------------------------
+// From MMusEngDisplayHandler
 // -----------------------------------------------------------------------------
 //
-// -----------------------------------------------------------------------------
-//
-EXPORT_C TBool CMusEngMceSession::ConnectionActive() const
+void CMusEngMceSession::SetSecondaryRectL( const TRect& aSecondaryRect )
     {
-    if ( iSession )
-        {
-        return iSession->ConnectionActive();
-        }
-    return EFalse;
-    }
-
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-EXPORT_C TBool CMusEngMceSession::ContainsAudioL()
-    {
-    __ASSERT_ALWAYS( iSession, User::Leave( KErrNotReady ) );
-                                            
-    for ( TInt i = 0; i < iSession->Streams().Count(); ++i )
-        {
-        if ( iSession->Streams()[i]->Type() == KMceAudio )
-            {
-            return ETrue;
-            }
-        }
-
-    return EFalse;
-    }
-       
-        
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-EXPORT_C TBool CMusEngMceSession::IsMutedL()
-    {
-    // Precondition checked in ContainsAudioL
+    MUS_LOG( "mus: [ENGINE]  CMusEngMceSession::SetSecondaryRectL()" )
     
-    if ( ContainsAudioL() && !iExplicitlyMuted )
-        {
-        return EFalse;
-        }
-    
-    return ETrue;
+    // Same rect is set by primary and secondary setters
+    iRect = aSecondaryRect;
+    RectChangedL();
     }
 
+// -----------------------------------------------------------------------------
+// From MMusEngDisplayHandler
+// -----------------------------------------------------------------------------
+//
+TRect CMusEngMceSession::SecondaryRect() const
+    {
+    MUS_LOG( "mus: [ENGINE]  CMusEngMceSession::SecondaryRect()" )
+    return iRect;
+    }
 
 // -----------------------------------------------------------------------------
-//
+// From MMusEngDisplayHandler
 // -----------------------------------------------------------------------------
 //
-EXPORT_C CMusEngMceSession::TDisplayOrientation 
-                                            CMusEngMceSession::OrientationL()
+MMusEngDisplayHandler::TDisplayOrientation CMusEngMceSession::OrientationL()
     {
     MUS_LOG( "mus: [ENGINE]  -> CMusEngMceSession::RotationL()" )
     
@@ -198,8 +229,7 @@ EXPORT_C CMusEngMceSession::TDisplayOrientation
 //
 // -----------------------------------------------------------------------------
 //        
-EXPORT_C void CMusEngMceSession::SetOrientationL( 
-                                        TDisplayOrientation aOrientation )
+void CMusEngMceSession::SetOrientationL( TDisplayOrientation aOrientation )
     {
     MUS_LOG1( "mus: [ENGINE]  -> CMusEngMceSession::SetOrientationL() %d", 
               aOrientation )
@@ -220,55 +250,11 @@ EXPORT_C void CMusEngMceSession::SetOrientationL(
     MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::SetOrientationL()" )
     }
 
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-EXPORT_C void CMusEngMceSession::VolumeUpL()
-    {
-    __ASSERT_ALWAYS( iSession, User::Leave( KErrNotReady ) );
-
-    CMusEngSession::VolumeUpL();
-
-    SetSpeakerVolumeL( VolumeL() );
-    }
-
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-EXPORT_C void CMusEngMceSession::VolumeDownL()
-    {
-    __ASSERT_ALWAYS( iSession, User::Leave( KErrNotReady ) );
-
-    CMusEngSession::VolumeDownL();
-
-    SetSpeakerVolumeL( VolumeL() );
-    }
-
-
-// -----------------------------------------------------------------------------
-// 
-// 
-// -----------------------------------------------------------------------------
-//
-EXPORT_C void CMusEngMceSession::SetVolumeL( TInt aVal )
-    {
-    __ASSERT_ALWAYS( iSession, User::Leave( KErrNotReady ) );
-
-    CMusEngSession::SetVolumeL( aVal );
-
-    SetSpeakerVolumeL( VolumeL() );
-    }
-
-
 // -----------------------------------------------------------------------------
 // 
 // -----------------------------------------------------------------------------
 //
-EXPORT_C void CMusEngMceSession::EnableDisplayL( TBool aEnable )
+void CMusEngMceSession::EnableDisplayL( TBool aEnable )
     {
     MUS_LOG1( "mus: [ENGINE]     -> CMusEngMceSession::EnableDisplay() %d", 
               aEnable )
@@ -325,112 +311,418 @@ EXPORT_C void CMusEngMceSession::EnableDisplayL( TBool aEnable )
 // 
 // -----------------------------------------------------------------------------
 //
-EXPORT_C TBool CMusEngMceSession::IsDisplayEnabledL()
+TBool CMusEngMceSession::IsDisplayEnabled()
     {
-    __ASSERT_ALWAYS( iSession, User::Leave( KErrNotReady ) );
-    if ( iSession->State() == CMceSession::ETerminated || 
-         iSession->State() == CMceSession::EIdle )
+    TBool enabled( EFalse );
+    if ( iSession )
         {
-        return EFalse;   
+        CMceDisplaySink* display = 
+           MusEngMceUtils::GetDisplay( *iSession, ETrue );
+        if ( display )
+           {
+           enabled = display->IsEnabled();
+           }
         }
-    CMceDisplaySink* display = MusEngMceUtils::GetDisplayL( *iSession );
-    return display->IsEnabled();
+    return enabled;
     }
 
-
 // -----------------------------------------------------------------------------
-// Mutes playback of sended audio streams. Audio data is still streamed.
+// From MMusEngDisplayHandler
 // -----------------------------------------------------------------------------
 //
-EXPORT_C void CMusEngMceSession::MuteL()
+TBool CMusEngMceSession::IsDisplayActive()
     {
-    MUS_LOG( "mus: [ENGINE]  -> CMusEngMceSession::Mute()" )
+    return ( IsDisplayEnabled() );
+    }
 
+// -----------------------------------------------------------------------------
+// From MMusEngAudioRoutingObserver
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::AudioRoutingChanged()
+    {
+    InformObserverAboutPlayerUpdate( LocalVideoPlayer() );
+    InformObserverAboutPlayerUpdate( RemoteVideoPlayer() );
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcSession 
+// -----------------------------------------------------------------------------
+//
+MLcSession::TLcSessionState CMusEngMceSession::LcSessionState() const
+    {
+    TLcSessionState lcSessionState = MLcSession::EUninitialized;
+
+    if ( iSession )
+        {
+        switch( iSession->State() )
+            {
+            case CMceSession::EIdle: 
+                {
+                lcSessionState = MLcSession::EInitialized;
+                break;
+                }
+            case CMceSession::EIncoming:
+            case CMceSession::EProceeding:
+            case CMceSession::EReserving:
+                {
+                lcSessionState = MLcSession::EReceived;
+                break;
+                }
+            
+            case CMceSession::EOffering:
+            case CMceSession::EAnswering:
+                {
+                lcSessionState = MLcSession::EOpening;
+                break;
+                }
+            case CMceSession::EEstablished:
+                {
+                lcSessionState = MLcSession::EOpen;
+                break;
+                }
+            case CMceSession::ECancelling:
+            case CMceSession::ETerminating:
+                {
+                lcSessionState = MLcSession::EClosing;
+                break;
+                }
+            case CMceSession::ETerminated:
+                {
+                lcSessionState = MLcSession::EClosed;
+                break;
+                }
+            default:
+               {
+               lcSessionState = MLcSession::EUninitialized;
+               break;
+               }
+            }
+        }
+    return  lcSessionState;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcSession
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::SetLcSessionObserver( MLcSessionObserver* aObserver )
+    {
+    iLcSessionObserver = aObserver;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcSession
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::SetLcUiProvider( MLcUiProvider* aUiProvider )
+    {
+    iLcUiProvider = aUiProvider;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcSession
+// -----------------------------------------------------------------------------
+//
+MLcVideoPlayer* CMusEngMceSession::RemoteVideoPlayer()
+    {
+    return NULL;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcSession
+// -----------------------------------------------------------------------------
+//
+MLcVideoPlayer* CMusEngMceSession::LocalVideoPlayer()
+    {
+    return NULL;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcSession
+// -----------------------------------------------------------------------------
+//
+const TDesC& CMusEngMceSession::LocalDisplayName()
+    {
+    return KNullDesC;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcSession
+// -----------------------------------------------------------------------------
+//
+const TDesC& CMusEngMceSession::RemoteDisplayName()
+    {
+    return KNullDesC;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcSession
+// -----------------------------------------------------------------------------
+//
+TInt CMusEngMceSession::SetParameter( TInt /*aId*/, TInt /*aValue*/ )
+    {
+    return KErrNotSupported;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcSession
+// -----------------------------------------------------------------------------
+//
+TInt CMusEngMceSession::ParameterValue( TInt /*aId*/ )
+    {
+    return KErrNotSupported;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcSession
+// -----------------------------------------------------------------------------
+//
+TBool CMusEngMceSession::IsBackgroundStartup()
+    {
+    TInt fastMode;
+    TInt error = RProperty::Get( NMusSessionApi::KCategoryUid, 
+                                 NMusSessionApi::KFastMode, 
+                                 fastMode );
+    
+    return ( error == KErrNone && 
+             iBackground &&
+             fastMode == MusSettingsKeys::EFastModeOn );
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcSession
+// -----------------------------------------------------------------------------
+//
+TInt CMusEngMceSession::SetForegroundStatus( TBool aIsForeground )
+    {
+    MUS_LOG1( "mus: [ENGINE]     -> CMusEngMceSession::SetForegroundStatus() %d", 
+              aIsForeground )
+
+    if ( aIsForeground )
+        {
+        // Only clear the bg info, do not ever enable it again
+        iBackground = EFalse;
+        }
+    
+    return KErrNone;
+    }
+ 
+// -----------------------------------------------------------------------------
+// From MLcSession
+// -----------------------------------------------------------------------------
+//   
+const TDesC& CMusEngMceSession::RemoteDetails()
+    {
+    // Don't care about error, empty value will be used in that case
+    TPtr ptrDetails( iRemoteDetails->Des() );
+    RProperty::Get( NMusSessionApi::KCategoryUid,
+                    NMusSessionApi::KTelNumber,
+                    ptrDetails ); 
+    return *iRemoteDetails;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcSession
+// -----------------------------------------------------------------------------
+//   
+void CMusEngMceSession::UpdateLcSessionL()
+    {
+    __ASSERT_ALWAYS( iSession, User::Leave( KErrNotReady ) );
+        
+    //In Mus engine, every update of player has immediate effect. Thus, this method
+    //is empty.
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcSession
+// -----------------------------------------------------------------------------
+//
+TBool CMusEngMceSession::SendDialTone( TChar /*aKey*/)
+    {
+    // Handle Key once implemented
+    return ETrue;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcAudioControl
+// -----------------------------------------------------------------------------
+//
+TBool CMusEngMceSession::IsLcAudioMutedL()
+    {
+    __ASSERT_ALWAYS( iSession, User::Leave( KErrNotReady ) );
+              
+    TBool containsAudio( EFalse );
+    for ( TInt i = 0; i < iSession->Streams().Count(); ++i )
+        {
+        if ( iSession->Streams()[i]->Type() == KMceAudio )
+            {
+            containsAudio = ETrue;
+            }
+        }    
+    
+    if ( containsAudio && !iExplicitlyMuted )
+        {
+        return EFalse;
+        }
+    
+    return ETrue;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcAudioControl
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::MuteLcAudioL( TBool aMute )
+    {
+    __ASSERT_ALWAYS( iSession, User::Leave( KErrNotReady ) );
+    
+    DoMuteSpeakerL( aMute );
+    iExplicitlyMuted = aMute;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcAudioControl
+// -----------------------------------------------------------------------------
+//
+TBool CMusEngMceSession::IsLcMicMutedL()
+    {
+    return iTelephoneUtils->IsMicMutedL();
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcAudioControl
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::MuteLcMicL( TBool aMute )
+    {
+    iTelephoneUtils->MuteMicL( aMute );
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcAudioControl
+// -----------------------------------------------------------------------------
+//
+TBool CMusEngMceSession::IsEnablingLcLoudspeakerAllowed()
+    {
+    return iTelephoneUtils->AudioRoutingCanBeChanged();
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcAudioControl
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::EnableLcLoudspeakerL( TBool aEnabled )
+    {
+    TRAPD( error, iTelephoneUtils->LoudspeakerL( aEnabled ) )
+
+    if ( error != KErrNone )
+        {
+        // This is writed for emulator use
+        if ( error != KErrNotSupported )
+            {
+            MUS_LOG1( "mus: [ENGINE] CMusEngSession::EnableLoudspeakerL() Leave: #%d",
+                      error )
+            User::Leave( error );
+            }
+        // Not leave in emulator if KErrNotSupported
+        #if (!defined (__WINS__) && !defined(__WINSCW__))
+        User::Leave( error );
+        #endif
+        }
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcAudioControl
+// -----------------------------------------------------------------------------
+//
+TBool CMusEngMceSession::IsLcLoudspeakerEnabled()
+    {
+    return iTelephoneUtils->IsLoudSpeakerEnabled();
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcAudioControl
+// -----------------------------------------------------------------------------
+//
+TInt CMusEngMceSession::LcVolumeL()
+    {
+    return iTelephoneUtils->GetVolumeL();
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcAudioControl
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::SetLcVolumeL( TInt aValue )
+    {
+    iTelephoneUtils->SetVolumeL( aValue );
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcAudioControl
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::IncreaseLcVolumeL()
+    {
     __ASSERT_ALWAYS( iSession, User::Leave( KErrNotReady ) );
 
-    DoMuteSpeakerL( ETrue );
-    
-    // Mark speaker as explicitly muted instead of muted because of disabling
-    // bundled display
-    iExplicitlyMuted = ETrue; 
-
-    MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::Mute()" )
+    TInt currentVolume = iTelephoneUtils->GetVolumeL();
+    iTelephoneUtils->SetVolumeL( currentVolume  + 1 );
+    SetSpeakerVolumeL( LcVolumeL() );
     }
 
-
 // -----------------------------------------------------------------------------
-// Unmutes playback of sended audio streams.
+// From MLcAudioControl
 // -----------------------------------------------------------------------------
 //
-EXPORT_C void CMusEngMceSession::UnmuteL()
+void CMusEngMceSession::DecreaseLcVolumeL()
     {
-    MUS_LOG( "mus: [ENGINE]  -> CMusEngMceSession::Unmute()" )
-
     __ASSERT_ALWAYS( iSession, User::Leave( KErrNotReady ) );
 
-    DoMuteSpeakerL( EFalse );
-
-    // Mark speaker as explicitly unmuted instead of unmuted because of 
-    // enabling bundled display
-    iExplicitlyMuted = EFalse;
-
-    MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::Unmute()" )
+    TInt currentVolume = iTelephoneUtils->GetVolumeL();
+    iTelephoneUtils->SetVolumeL( currentVolume - 1 );
+    SetSpeakerVolumeL( LcVolumeL() );
     }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
-void CMusEngMceSession::RefreshOrientationL()
-{
-    MUS_LOG( "mus: [ENGINE]  <-> CMusEngMceSession::RefreshOrientationL()" )
-}
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-CMusEngMceSession::CMusEngMceSession( const TRect& aRect,
-                                      MMusEngSessionObserver& aSessionObserver )
-    : CMusEngSession( aRect ),
-      iSessionObserver( aSessionObserver ),
-      iSecondsFromLastRtcpReport ( 0 ),
-      // Although speaker is constructed as muted, it is not explicitly muted
-      iExplicitlyMuted( EFalse ) 
+MLcSessionObserver* CMusEngMceSession::LcSessionObserver()
     {
+    return iLcSessionObserver;
     }
 
-
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
-void CMusEngMceSession::ConstructL()
+MLcUiProvider* CMusEngMceSession::LcUiProvider()
     {
-    MUS_LOG( "mus: [ENGINE]  -> CMusEngMceSession::ConstructL()" )
-    CMusEngSession::ConstructL(); // Base class ConstructL -first
-
-    // Creating new MCE Manager and set all needed observers to this class.
-    iManager = CMceManager::NewL( TUid::Uid( KMusUiUid ),
-                                  &iTransactionDataContainer );
-
-    iManager->SetSessionObserver( this );
-    iManager->SetInSessionObserver( this );
-    iManager->SetMediaObserver( this );
-    iManager->SetRtpObserver( this );
-
-    // Check if operator specific behavior is expected
-    iOperatorVariant = ( MultimediaSharingSettings::OperatorVariantSettingL() ==
-                         MusSettingsKeys::EOperatorSpecific );
-    
-    // Update timer initialization
-    iUpdateTimer = CMusEngSessionDurationTimer::NewL( *this );
-    	
-  	iSipProfileHandler = CMusSipProfileHandler::NewL( *this );
-
-    MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::ConstructL()" )
+    return iLcUiProvider;
     }
 
+// -----------------------------------------------------------------------------
+// Returns estabilished session time. If not established return
+// value is < 0
+// -----------------------------------------------------------------------------
+//
+TTimeIntervalSeconds CMusEngMceSession::GetSessionTime() const
+    {
+    if ( iSession && iSession->State() == CMceSession::EEstablished )
+        {
+        TTime time;
+        TTimeIntervalSeconds seconds;
+        time.HomeTime();
+
+        time.SecondsFrom( iStartTime, seconds );
+
+        return seconds;
+        }
+
+    return TTimeIntervalSeconds( KErrNotReady );
+    }
 
 // -----------------------------------------------------------------------------
 //
@@ -451,15 +743,160 @@ void CMusEngMceSession::RectChangedL()
     MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::RectChangedL()" )
     }
 
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::InformObserverAboutSessionStateChange()
+    {
+    if ( iLcSessionObserver )
+        {
+        iLcSessionObserver->StateChanged( *this );
+        }
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::InformObserverAboutSessionUpdate()
+    {
+    if ( iLcSessionObserver )
+        {
+        iLcSessionObserver->Updated( *this );
+        }
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::InformObserverAboutSessionFailure( TInt aReason )
+    {
+    if ( iLcSessionObserver )
+        {
+        iLcSessionObserver->Failed( *this, aReason );
+        }
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::InformObserverAboutPlayerStateChange( 
+    MLcVideoPlayer* aPlayer )
+    {
+    if ( iLcSessionObserver && aPlayer )
+        {
+        iLcSessionObserver->StateChanged( *aPlayer );
+        }
+    
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::InformUiProviderAboutReceivingStart()
+    {
+    MUS_LOG( "mus: [ENGINE]  -> CMusEngMceSession::InformUiProviderAboutReceivingStart()" )
+    if ( iBackground && iLcUiProvider )
+        {
+        MUS_LOG( "mus: [ENGINE]     receiving started in BG mode, switching to FG" )
+        iLcUiProvider->HandleForegroundStatus( ETrue );
+        }
+    MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::InformUiProviderAboutReceivingStart()" )
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::InformObserverAboutPlayerUpdate( 
+    MLcVideoPlayer* aPlayer )
+    {
+    if ( iLcSessionObserver && aPlayer )
+        {
+        iLcSessionObserver->Updated( *aPlayer );
+        }
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::InformObserverAboutPlayerFailure( 
+    MLcVideoPlayer* aPlayer, 
+    TInt aReason )
+    {
+    if ( iLcSessionObserver && aPlayer )
+        {
+        iLcSessionObserver->Failed( *aPlayer, aReason );
+        }
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+MLcUiProvider& CMusEngMceSession::LcUiProviderL()
+    {
+    __ASSERT_ALWAYS( iLcUiProvider, User::Leave( KErrNotReady ) );
+    return *iLcUiProvider;
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::AddSdpBandwidthAttributesL( CDesC8Array& aSdpLinesArray,
+                                                    TInt aBandwidthAs )
+    {
+    MUS_LOG( "mus: [ENGINE]  -> CMusEngMceSession::AddSdpBandwidthAttributesL()" )
+    const TInt KMusNumberMaxLength = 10;
+    HBufC8* bandwidth = HBufC8::NewLC( 
+            KMusEngSessionSdpLineTiasLine().Length() + KMusNumberMaxLength );
+    
+    bandwidth->Des().Copy( KMusEngSessionSdpLineBandwidthLine() );
+    bandwidth->Des().AppendNum( aBandwidthAs );
+    bandwidth->Des().Append( KMusEngNewLine() );
+    aSdpLinesArray.AppendL( *bandwidth );
+    
+    bandwidth->Des().Copy( KMusEngSessionSdpLineTiasLine() );
+    bandwidth->Des().AppendNum( aBandwidthAs * KMusTiasMultiplier );
+    bandwidth->Des().Append( KMusEngNewLine() );
+    aSdpLinesArray.AppendL( *bandwidth );
+    
+    CleanupStack::PopAndDestroy( bandwidth );  
+    MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::AddSdpBandwidthAttributesL()" )
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+TBool CMusEngMceSession::IsBandwidthAttributeSet( MDesC8Array* aSdpLinesArray )
+    {
+    MUS_LOG( "mus: [ENGINE]  -> CMusEngMceSession::IsBandwidthAttributeSet()" )
+    TBool ret =
+        ContainsText( aSdpLinesArray, KMusEngSessionSdpLineTiasLine() ) ||
+        ContainsText( aSdpLinesArray, KMusEngSessionSdpLineBandwidthLine() );
+    MUS_LOG1( "mus: [ENGINE]  <- CMusEngMceSession::IsBandwidthAttributeSet(): %d",
+            ret )
+    return ret;
+    }
 
 // -----------------------------------------------------------------------------
 // Setting session level sdp lines. Bandwith attribute is always used in
-// operator variant mode and at receiver side (using force). 
-// However, bandwidth attribute is preferred to be used at media level
-// (see SetMediaSdpLinesL method). It is set to session level only if other
-// side is using also session level bandwidth. Media level preference exists
-// because some other manufacturer's videosharing does not understand session
-// level bandwidth attribute.
+// operator variant mode and at receiver side (using force) when TIAS
+// usage is disabled. However, bandwidth attribute is preferred to be used 
+// at media level (see SetMediaSdpLinesL method). It is set to session level
+// only if other side is using also session level bandwidth. Media level
+// preference exists because some other manufacturer's videosharing does not
+// understand session level bandwidth attribute.
+// In non-operator variant mode and when TIAS usage is enabled, both AS and 
+// TIAS are added to session level only if the other side is using session 
+// level bandwidth.
 // -----------------------------------------------------------------------------
 //
 void CMusEngMceSession::SetSessionSdpLinesL( 
@@ -472,8 +909,17 @@ void CMusEngMceSession::SetSessionSdpLinesL(
     CleanupDeletePushL( oldSessionSdpLines );
     TBool bandwidthAtSessionLevel( ContainsText( oldSessionSdpLines, 
                                    KMusEngSessionSdpLineBandwidthLine() ) );
+    TBool tiasAtSessionLevel( ContainsText( oldSessionSdpLines, 
+                                   KMusEngSessionSdpLineTiasLine() ) );    
     CleanupStack::PopAndDestroy( oldSessionSdpLines );
-    
+  
+    TInt bandwidthAs = 0;
+    TRAPD( err, bandwidthAs = 
+                MultimediaSharingSettings::VideoBandwidthSettingL() );
+    __ASSERT_ALWAYS( err == KErrNone || err == KErrNotFound,
+                     User::Leave( err ) );
+    TBool useTias = ( bandwidthAs > 0 );
+
     CDesC8Array* newSessionSDPLines = 
                     new ( ELeave ) CDesC8ArrayFlat( KMusEngArrayGranularity3 );
     CleanupStack::PushL( newSessionSDPLines );
@@ -485,15 +931,22 @@ void CMusEngMceSession::SetSessionSdpLinesL(
         }
     else
     	{
-    	newSessionSDPLines->AppendL( KMusEngSessionSdpLineXApplication() );	
+    	newSessionSDPLines->AppendL( KMusEngSessionSdpLineXApplication() );    	
     	}
-    
-    if ( bandwidthAtSessionLevel && ( iOperatorVariant || aForceBandwidthLine ) )
-	    {
-	    MUS_LOG( "mus: [ENGINE] setting bandwidth to session level" )
+        
+    if ( bandwidthAtSessionLevel && ( iOperatorVariant || 
+         ( aForceBandwidthLine && !useTias ) ) )
+        {        
+        MUS_LOG( "mus: [ENGINE] setting bandwidth to session level" )
         newSessionSDPLines->AppendL( KMusEngSessionSdpLineBandwidthField() );
-	    }
-    	        
+        }
+    else if ( !iOperatorVariant && useTias && aForceBandwidthLine &&
+            ( bandwidthAtSessionLevel || tiasAtSessionLevel ) )
+        {
+        MUS_LOG( "mus: [ENGINE] setting b=AS and b=TIAS to session level" )
+        AddSdpBandwidthAttributesL( *newSessionSDPLines, bandwidthAs );
+        }
+   
     aSession.SetSessionSDPLinesL( newSessionSDPLines );
     
     CleanupStack::Pop( newSessionSDPLines );
@@ -501,9 +954,14 @@ void CMusEngMceSession::SetSessionSdpLinesL(
     MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::SetSessionSdpLinesL()" )
     }
 
+
 // -----------------------------------------------------------------------------
-// Setting media level sdp lines. Bandwidth is not set to media level if
-// it is used already at session level.
+// Setting media level sdp lines. In operator variant mode or when TIAS usage
+// is disabled bandwidth is not set to media level if it is used already at 
+// session level. In non operator variant and TIAS enabled case both AS and
+// TIAS attributes are set to media level if: 1)it is an outcoming sessions
+// or 2) incoming session had bandwidth attributes on media level or didn't
+// have bandwidth attributes at all
 // -----------------------------------------------------------------------------
 //
 void CMusEngMceSession::SetMediaSdpLinesL( 
@@ -516,22 +974,49 @@ void CMusEngMceSession::SetMediaSdpLinesL(
     CleanupDeletePushL( sessionSdpLines );
     TBool bandwidthAtSessionLevel( ContainsText( sessionSdpLines, 
                                    KMusEngSessionSdpLineBandwidthLine() ) );
-    CleanupStack::PopAndDestroy( sessionSdpLines );
-    
-    if ( !bandwidthAtSessionLevel && ( iOperatorVariant || aForceBandwidthLine ) )
+
+    TInt bandwidthAs = 0;
+    TRAPD( error, bandwidthAs = 
+                  MultimediaSharingSettings::VideoBandwidthSettingL() );
+    __ASSERT_ALWAYS( error == KErrNone || error == KErrNotFound,
+                     User::Leave( error ) );
+    TBool useTias = ( bandwidthAs > 0 );
+    TBool tiasOrAsAtSessionLevel = EFalse;
+    TBool tiasOrAsAtMediaLevel = EFalse;
+    if ( useTias )
         {
-    	MUS_LOG( "mus: [ENGINE] setting bandwidth to media level" )
-		
-		//Add media attribute to sdp
-		const TInt KMusMediaSdpLinesGranularity = 1;
-		CDesC8Array* headers = 
-		    new ( ELeave ) CDesC8ArrayFlat( KMusMediaSdpLinesGranularity );
-		CleanupStack::PushL( headers );
-		headers->AppendL( KMusEngSessionSdpLineBandwidthField() );
-		aStream.SetMediaAttributeLinesL( headers );   
-		CleanupStack::Pop( headers );
+        tiasOrAsAtSessionLevel = IsBandwidthAttributeSet( sessionSdpLines );
+        MDesC8Array* mediaSdpLines = aStream.MediaAttributeLinesL();
+        tiasOrAsAtMediaLevel = IsBandwidthAttributeSet( mediaSdpLines );
+        delete mediaSdpLines;        
         }
-		
+
+    CleanupStack::PopAndDestroy( sessionSdpLines );
+
+    TBool setTiasAtMediaLevel = ( tiasOrAsAtMediaLevel || 
+                                ( aForceBandwidthLine && 
+                                  !tiasOrAsAtSessionLevel ) );
+  
+    const TInt KMusMediaSdpLinesGranularity = 2;
+    CDesC8Array* headers = 
+        new ( ELeave ) CDesC8ArrayFlat( KMusMediaSdpLinesGranularity );
+    CleanupStack::PushL( headers );
+    
+    if ( !bandwidthAtSessionLevel && ( iOperatorVariant || 
+         ( aForceBandwidthLine && !useTias ) ) )
+        {
+        MUS_LOG( "mus: [ENGINE] setting bandwidth to media level" )
+        headers->AppendL( KMusEngSessionSdpLineBandwidthField() );
+        }
+    else if ( !iOperatorVariant && useTias && setTiasAtMediaLevel )
+        {
+        MUS_LOG( "mus: [ENGINE] setting b=AS and b=TIAS to media level" )
+        AddSdpBandwidthAttributesL( *headers, bandwidthAs );
+        }
+
+    aStream.SetMediaAttributeLinesL( headers );   
+    CleanupStack::Pop( headers );
+
     MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::SetMediaSdpLinesL()" )
     }
     
@@ -550,30 +1035,17 @@ void CMusEngMceSession::SetSpeakerVolumeL( TInt aNewVolume )
             {
             CMceSpeakerSink* speaker = 
                 MusEngMceUtils::GetSpeaker( *( iSession->Streams()[i] ) );
-
+            
             if ( speaker &&        
-                 aNewVolume >= KMusEngMinVolume &&
-                 aNewVolume <= KMusEngMaxVolume )
+                 aNewVolume >= 1 &&
+                 aNewVolume <= speaker->MaxVolumeL() )
                 {
-                // MCE might have different scale for volume than MUS
-                // so adjust MUS volume to MCE scale before setting.
-                TInt maxVol = speaker->MaxVolumeL();
-                TInt setVol = maxVol * aNewVolume / KMusEngMaxVolume;
-                setVol = Max(setVol, 1);
-                
-                MUS_LOG2(
-"mus: [ENGINE]  -> CMusEngMceSession::SetSpeakerVolumeL() orig:%d, adjusted:%d", 
-aNewVolume, setVol );
-                
-                if ( setVol <= maxVol )
-                    {
-                    speaker->SetVolumeL( setVol );
-                    }
+                speaker->SetVolumeL( aNewVolume );
                 }
+
             }
         }
     }
-
 
 // -----------------------------------------------------------------------------
 //
@@ -600,8 +1072,7 @@ void CMusEngMceSession::AdjustStreamsAndCodecsL()
                 {
                 AdjustVideoStreamL( static_cast<CMceVideoStream&>
                                         ( videoStream->BoundStreamL() ) );
-                }
-            
+                } 
             }
         else // audio
             {
@@ -620,9 +1091,7 @@ void CMusEngMceSession::AdjustStreamsAndCodecsL()
         }
     
     MUS_LOG( "mus: [ENGINE] <- CMusEngMceSession::AdjustStreamsAndCodecsL" )
-    
     }
-
 
 // -----------------------------------------------------------------------------
 //
@@ -637,15 +1106,15 @@ void CMusEngMceSession::AdjustVideoStreamL( CMceVideoStream& aVideoStream )
     DoCodecSelectionL( aVideoStream );
     
     const RPointerArray<CMceVideoCodec>& codecs = aVideoStream.Codecs();
-        
+    
+    __ASSERT_ALWAYS( aVideoStream.Source(), User::Leave( KErrArgument ) );
     for ( TInt codecIndex = 0; codecIndex < codecs.Count(); ++codecIndex )
         {
-        AdjustVideoCodecL( *codecs[codecIndex] );
+        AdjustVideoCodecL( *codecs[codecIndex], aVideoStream.Source()->Type() );
         }
     
     MUS_LOG( "mus: [ENGINE] <- CMusEngMceSession::AdjustVideoStreamL" )
     }
-
 
 // -----------------------------------------------------------------------------
 //
@@ -666,7 +1135,6 @@ void CMusEngMceSession::AdjustAudioStreamL( CMceAudioStream& aAudioStream )
     
     MUS_LOG( "mus: [ENGINE] <- CMusEngMceSession::AdjustAudioStreamL" )
     }
-    
 
 // -----------------------------------------------------------------------------
 // Calls CMceInSession::RejectL() inside TRAP_IGNORE
@@ -695,16 +1163,15 @@ void CMusEngMceSession::Reject( CMceInSession& aSession,
             TRAP_IGNORE( aSession.RejectL() )
             }
         }
-    }
-    
+    }  
 
 // -----------------------------------------------------------------------------
 // By default rejects all incoming sessions immediately without notifying UI
 // -----------------------------------------------------------------------------
 //
 void CMusEngMceSession::IncomingSession( 
-                      CMceInSession* aSession,
-                      TMceTransactionDataContainer* /*aContainer*/ )
+    CMceInSession* aSession,
+    TMceTransactionDataContainer* /*aContainer*/ )
     {
     MUS_LOG( "mus: [ENGINE]  -> CMusEngMceSession::IncomingSession()" )
     
@@ -718,15 +1185,14 @@ void CMusEngMceSession::IncomingSession(
     MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::IncomingSession()" )
     }
 
-
 // -----------------------------------------------------------------------------
 // By default rejects all incoming updates immediately without notifying UI
 // -----------------------------------------------------------------------------
 //
 void CMusEngMceSession::IncomingUpdate( 
-                     CMceSession& aOrigSession, 
-                     CMceInSession* aUpdatedSession,
-                     TMceTransactionDataContainer* /*aContainer*/ )
+    CMceSession& aOrigSession, 
+    CMceInSession* aUpdatedSession,
+    TMceTransactionDataContainer* /*aContainer*/ )
     {
     MUS_LOG( "mus: [ENGINE]  -> CMusEngMceSession::IncomingUpdate()" )
                                     
@@ -748,8 +1214,7 @@ void CMusEngMceSession::IncomingUpdate(
         } 
     
     MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::IncomingUpdate()" )    
-    }
-    
+    }  
 
 // -----------------------------------------------------------------------------
 //
@@ -785,20 +1250,12 @@ void CMusEngMceSession::StreamStateChanged( CMceMediaStream& aStream )
             }
         case CMceMediaStream::EIdle: // Stream is not receiving RTP
             {
-            iSessionObserver.StreamIdle();
+            // NOP
             break;
             }
         case CMceMediaStream::EStreaming: // Stream is streaming
             {
-            // If streaming stream is complete video out- or instream, inform UI 
-            if ( aStream.Type() == KMceVideo &&
-                 aStream.Source() && 
-                 aStream.Sinks().Count() >= 0 &&
-                 ( aStream.Source()->Type() == KMceRTPSource ||
-                   aStream.Sinks()[0]->Type() == KMceRTPSink ) )
-                {
-                iSessionObserver.StreamStreaming();
-                }
+            StreamStreaming( aStream );
             break;
             }
         case CMceMediaStream::EDisabled: // Stream is explicitly disabled
@@ -832,7 +1289,6 @@ void CMusEngMceSession::StreamStateChanged( CMceMediaStream& aStream )
                 
     }
 
-
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -845,7 +1301,6 @@ void CMusEngMceSession::StreamStateChanged( CMceMediaStream& aStream,
     StreamStateChanged( aStream );
     MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::StreamStateChanged( src )" )       
     }
-
 
 // -----------------------------------------------------------------------------
 //
@@ -860,14 +1315,13 @@ void CMusEngMceSession::StreamStateChanged( CMceMediaStream& aStream,
     MUS_LOG( "mus: [ENGINE] <- CMusEngMceSession::StreamStateChanged( sink )" )
     }
 
-
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
 void CMusEngMceSession::SessionStateChanged(
-                        CMceSession& aSession,
-                        TMceTransactionDataContainer* aContainer )
+    CMceSession& aSession,
+    TMceTransactionDataContainer* aContainer )
     {
     MUS_LOG( "mus: [ENGINE]  -> CMusEngMceSession::SessionStateChanged()" )
         
@@ -875,7 +1329,7 @@ void CMusEngMceSession::SessionStateChanged(
         {
         // Container should never be NULL, but if it is, handle as
         // internal error
-        iSessionObserver.SessionFailed();
+        InformObserverAboutSessionFailure( KErrGeneral );
         return;
         }
 
@@ -895,8 +1349,7 @@ void CMusEngMceSession::SessionStateChanged(
         }
     
     MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::SessionStateChanged()" )
-    }
-            
+    }     
     
 // -----------------------------------------------------------------------------
 //
@@ -914,7 +1367,7 @@ void CMusEngMceSession::SessionConnectionStateChanged( CMceSession& aSession,
             {
             MUS_LOG( "mus: [ENGINE]     CMusEngMceSession::\
                      SessionConnectionStateChanged: Notify observer" )
-            iSessionObserver.SessionConnectionLost();
+            InformObserverAboutSessionFailure( MLcSession::EConnectionLost );
             }
         }
 
@@ -922,17 +1375,11 @@ void CMusEngMceSession::SessionConnectionStateChanged( CMceSession& aSession,
              SessionConnectionStateChanged()" )
     }
 
-
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
-
-#if ( defined( _DEBUG ) && !defined( UNIT_TESTING ) ) 
 void CMusEngMceSession::Failed( CMceSession& aSession, TInt aError )
-#else
-void CMusEngMceSession::Failed( CMceSession& aSession, TInt /*aError*/ )
-#endif
     {
     MUS_LOG1( "mus: [ENGINE]     -> CMusEngMceSession::Failed() error #%d", 
               aError )
@@ -940,20 +1387,19 @@ void CMusEngMceSession::Failed( CMceSession& aSession, TInt /*aError*/ )
     if ( iSession && iSession == &aSession )
         {
         MUS_LOG( "mus: [ENGINE]    CMusEngMceSession::Failed: Notify observer" )
-        iSessionObserver.SessionFailed();
+        InformObserverAboutSessionFailure( aError );
         }
 
     MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::Failed()" )
     }
-
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
 void CMusEngMceSession::UpdateFailed(
-                   CMceSession& aSession,
-                   TMceTransactionDataContainer* aContainer )
+    CMceSession& aSession,
+    TMceTransactionDataContainer* aContainer )
     {
     MUS_LOG( "mus: [ENGINE] -> CMusEngMceSession::UpdateFailed()" )
 
@@ -961,7 +1407,7 @@ void CMusEngMceSession::UpdateFailed(
         {
         // Container should never be NULL, but if it is, handle as
         // internal error
-        iSessionObserver.SessionFailed();
+        InformObserverAboutSessionFailure( KErrGeneral );
         return;
         }
 
@@ -969,12 +1415,11 @@ void CMusEngMceSession::UpdateFailed(
         {
         MUS_LOG( "mus: [ENGINE]     CMusEngMceSession::UpdateFailed: \
                  Notify observer" )
-        iSessionObserver.SessionFailed();
+        InformObserverAboutSessionFailure( KErrGeneral );
         }
 
     MUS_LOG( "mus: [ENGINE] <- CMusEngMceSession::UpdateFailed()" )
     }
-
 
 // -----------------------------------------------------------------------------
 //
@@ -1017,8 +1462,7 @@ void CMusEngMceSession::RRReceived( CMceSession& aSession,
                 }
             }
         }
-    }	             
-					             
+    }					             
 
 // -----------------------------------------------------------------------------
 //
@@ -1035,12 +1479,11 @@ void CMusEngMceSession::InactivityTimeout( CMceMediaStream& aStream,
     
     if ( aStream.Type() == KMceVideo )
         {
-        iSessionObserver.StreamIdle();
+        InformObserverAboutPlayerStateChange( RemoteVideoPlayer() );
         }
     
     MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::InactivityTimeout()" )
     }
-
 
 // -----------------------------------------------------------------------------
 //
@@ -1054,7 +1497,6 @@ void CMusEngMceSession::SsrcAdded( CMceMediaStream& /*aStream*/,
     // NOP, We are not at all interested about SSRCs
     }
 
-
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -1066,7 +1508,6 @@ void CMusEngMceSession::SsrcRemoved( CMceMediaStream& /*aStream*/,
     MUS_LOG( "mus: [ENGINE]  CMusEngMceSession::SsrcRemoved(... )" )
     // NOP, We are not at all interested about SSRCs
     }
-
 
 // -----------------------------------------------------------------------------
 //
@@ -1084,6 +1525,14 @@ TBool CMusEngMceSession::IsRoamingBetweenAPsAllowed()
     return allowed;
     }
 
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::ProfileRegistered()
+    {
+    // NOP in base class
+    }
 
 // -----------------------------------------------------------------------------
 //
@@ -1102,58 +1551,47 @@ void CMusEngMceSession::HandleSessionStateChanged( CMceSession& aSession,
         switch ( aSession.State() )
             {
             case CMceSession::EIdle:
-                {
-                MUS_LOG( "mus: [ENGINE] Unexpected asynchronous \
-                         state transition, consider session as failed." )
-                iSessionObserver.SessionFailed();
-                break;
-                }
-            case CMceSession::EOffering :
-                {
-                break;
-                }
             case CMceSession::EIncoming:
                 {
                 MUS_LOG( "mus: [ENGINE] Unexpected asynchronous \
                          state transition, consider session as failed." )
-                iSessionObserver.SessionFailed();
-                break;
-                }
-            case CMceSession::EReserving :
-                {
-                // UpdateL called to incoming session during
-                // session establishment
-                break;
-                }
-            case CMceSession::EAnswering :  // Answering an incoming call
-                {
-                break;
-                }
-            case CMceSession::EProceeding :
-                {
+                InformObserverAboutSessionFailure( KErrGeneral );
                 break;
                 }
             case CMceSession::EEstablished:
                 {
+                if ( iStoreEncoderConfigInfo )
+                    {
+                    iStoreEncoderConfigInfo = EFalse;
+                    TRAPD( error, StoreEncoderConfigInfoL() )
+                    if ( error != KErrNone && error != KErrNotFound )
+                        {
+                        // Only acceptable error is absence of repository entry,
+                        // otherwise we inform user about failed session.
+                        InformObserverAboutSessionFailure( error );
+                        return;
+                        }
+                    }
+                
                 // Check that session timer is not already running, which is 
                 // the case when refreshing the session with session timer 
                 if ( !iUpdateTimer->IsActive() )
                     {
                     iStartTime.HomeTime(); // Start counting session duration              
                     iUpdateTimer->Start( KMusEngTimerInterval );
-                    iSessionObserver.SessionEstablished();
+                    InformObserverAboutSessionStateChange();
                     }
-                    
+                
                 break;
                 }
+            case CMceSession::EOffering:
+            case CMceSession::EReserving:
+            case CMceSession::EAnswering:
+            case CMceSession::EProceeding:              
             case CMceSession::ECancelling:
-                {
-                // MCE has for some reason started to cancel session
-                break;
-                }
             case CMceSession::ETerminating:
                 {
-                // MCE has for some reason started to terminate session
+                // NOP
                 break;
                 }
             case CMceSession::ETerminated:
@@ -1173,7 +1611,6 @@ void CMusEngMceSession::HandleSessionStateChanged( CMceSession& aSession,
     MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::HandleSessionStateChanged" )
     }
 
-
 // -----------------------------------------------------------------------------
 // This function should be called only if sibling classes cannot handle
 // termination reason by themselves.
@@ -1184,28 +1621,28 @@ void CMusEngMceSession::HandleTermination( TInt aStatusCode,
     {
     MUS_LOG( "mus: [ENGINE]  -> CMusEngMceSession::HandleTermination()" )
 
-	iSipProfileHandler->RefreshIapAvailabilities();
-
+    iSipProfileHandler->RefreshIapAvailabilities();
+    
     switch ( aStatusCode )
         {
         case 0:
             {
             // Normal session termination or session by another end.
-            iSessionObserver.SessionTerminated();
+            InformObserverAboutSessionStateChange();
             break;
             }
         case KMusEngSipReasonCodeOk:
             {
             // Normal session termination by this end: We have sent BYE
             // and now received 200 OK to it.
-            iSessionObserver.SessionTerminated();
+            InformObserverAboutSessionStateChange();
             break;
             }
         default:
             {
             // Termination reason cannot be determined, handle as internal
             // error.
-            iSessionObserver.SessionFailed();
+            InformObserverAboutSessionFailure( KErrGeneral );
             break;
             }
         }
@@ -1213,22 +1650,27 @@ void CMusEngMceSession::HandleTermination( TInt aStatusCode,
     MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::HandleTermination()" )
     }
 
-
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
-void CMusEngMceSession::AdjustVideoCodecL( CMceVideoCodec& aVideoCodec )
+void CMusEngMceSession::AdjustVideoCodecL( CMceVideoCodec& aVideoCodec,
+                                           TMceSourceType aSourceType )
     {
     MUS_LOG( "mus: [ENGINE]  -> CMusEngMceSession::AdjustVideoCodecL()" )
     
     aVideoCodec.SetMMFPriorityL( KAudioPrioritySwisPlayback );
     aVideoCodec.SetMMFPriorityPreferenceL( KAudioPrefSwisPlayback );
-    MUS_LOG( "mus: [ENGINE]     Video MMF priority and preference set" )
 
+    if ( aVideoCodec.SdpName() == KMceSDPNameH264() &&
+         aSourceType == KMceCameraSource )
+        {
+        SetCodecConfigKeyL( aVideoCodec );
+        SetEncodingDeviceL( aVideoCodec );     
+        }
+    
     MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::AdjustVideoCodecL()" )
     }
-
  
 // -----------------------------------------------------------------------------
 // 1. Sets MMF audio priority and preference
@@ -1244,7 +1686,6 @@ void CMusEngMceSession::AdjustAudioCodecL( CMceAudioCodec& aAudioCodec )
     
     MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::AdjustAudioCodecL()" )
     }
-
 
 // -----------------------------------------------------------------------------
 // Remove multiples of H.263 codec, prefer H263-2000 over H263-1998.
@@ -1300,18 +1741,14 @@ void CMusEngMceSession::DoCodecSelectionL( CMceVideoStream& aVideoStream )
                 } 
             }
         }        
-    if ( bestBitrateCodec != NULL )
+    if ( bestBitrateCodec )
         {
         DoBitrateBasedRemovalL( aVideoStream, *bestBitrateCodec );
         }
    
-    /* Codec removal based on configuration */
-    DoCodecConfigurationBasedRemovalL( aVideoStream );
-    
     MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::DoCodecSelectionL()" )
     }
     
-
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -1320,19 +1757,17 @@ void CMusEngMceSession::UpdateTimerEvent()
     {
     // Update timer is used also to detect RTCP inactivity
     ++iSecondsFromLastRtcpReport;
-    
-    iSessionObserver.SessionTimeChanged( GetSessionTime() );
 
     if ( iSecondsFromLastRtcpReport >= KMusEngRtcpInactivityThreshold )
         {
-        iSessionObserver.InactivityTimeout();    
+        MUS_LOG( "mus: [ENGINE] CMusEngMceSession::UpdateTimerEvent() ->EMediaInactivityTimeout" )
+        InformObserverAboutSessionFailure( MLcSession::EMediaInactivityTimeout );
         // Disable calling multiple times by reseting timer
         iSecondsFromLastRtcpReport = 0;
         }
 
     iUpdateTimer->Start( KMusEngTimerInterval );
     }
-
 
 // -----------------------------------------------------------------------------
 // Enables or disables all the speaker sinks of all the audio streams
@@ -1346,8 +1781,7 @@ void CMusEngMceSession::DoMuteSpeakerL( TBool aMute )
 
     for ( TInt i = 0; i < streams.Count(); ++i )
         {
-        CMceSpeakerSink* speaker = 
-                MusEngMceUtils::GetSpeaker( *streams[i] );
+        CMceSpeakerSink* speaker = MusEngMceUtils::GetSpeaker( *streams[i] );
             
         if ( speaker )
             {
@@ -1395,7 +1829,6 @@ TBool CMusEngMceSession::ContainsText( MDesC8Array* aArray, const TDesC8& aItem 
         }
     return EFalse;
     }
-    
 
 // -----------------------------------------------------------------------------
 // 
@@ -1455,44 +1888,253 @@ void CMusEngMceSession::DoCodecModeBasedRemovalL( CMceVideoStream& aVideoStream 
     }
 
 // -----------------------------------------------------------------------------
-// 
+//
 // -----------------------------------------------------------------------------
 //
-void CMusEngMceSession::DoCodecConfigurationBasedRemovalL( CMceVideoStream& aVideoStream )
+void CMusEngMceSession::SetEncodingDeviceL( CMceVideoCodec& aVideoCodec )
     {
-    MUS_LOG( "mus: [ENGINE]  -> CMusEngMceSession::DoCodecConfigurationBasedRemovalL()" )
-    if( MultimediaSharingSettings::IsAvcDisabled())
+    MUS_LOG( "mus: [ENGINE] -> CMusEngMceSession::SetEncodingDeviceL()" )
+
+    // We try to read encoding device UID. If we do not succeed, we use default
+    
+    const TUid KDefaultEncodingDevice( TUid::Uid( 0x20001C13 ) );
+    TUid encodingDevice( KDefaultEncodingDevice );
+    TRAPD( error, 
+           encodingDevice = MultimediaSharingSettings::EncodingDeviceL() )
+    __ASSERT_ALWAYS( error == KErrNone || error == KErrNotFound, 
+                     User::Leave( error ) );
+    aVideoCodec.SetPreferredEncodingDecodingDeviceL( encodingDevice );
+    
+    MUS_LOG( "mus: [ENGINE] <- CMusEngMceSession::SetEncodingDeviceL()" )
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::SetCodecConfigKeyL( CMceVideoCodec& aVideoCodec )
+    {
+    MUS_LOG( "mus: [ENGINE] -> CMusEngMceSession::SetCodecConfigKeyL()" )
+    
+    HBufC8* configKey( NULL );
+        
+    // We try to read config key. If we do not succeed, we prepare to
+    // write keys to CenRep for the next time.
+    TRAPD( error, configKey = ReadCodecConfigKeyL( aVideoCodec ) )
+    
+    if ( error == KErrNone )
         {
-        RPointerArray<CMceVideoCodec>& codecs = 
-            MUS_CODEC_ARR_CONST_CAST( aVideoStream.Codecs() );            
-        TInt codecIndex = 0;
-        while ( codecIndex < codecs.Count() )
+        // There is a repository for config keys
+        if ( configKey )
             {
-            CMceVideoCodec& currentCodec = *codecs[codecIndex++];            
-            if ( !currentCodec.SdpName().CompareF( KMceSDPNameH264 ) )
-                {
-                MUS_LOG( "mus: [ENGINE]  - Removing avc from supported codec list" )
-                aVideoStream.RemoveCodecL( currentCodec );
-                codecs = MUS_CODEC_ARR_CONST_CAST( aVideoStream.Codecs() );
-                codecIndex = 0;
-                }
+            // ...and key is found.
+            CleanupStack::PushL( configKey );
+            aVideoCodec.SetConfigKeyL( *configKey );
+            CleanupStack::PopAndDestroy( configKey );
             }
-        }    
-    MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::DoCodecConfigurationBasedRemovalL()" )
+        else
+            {
+            // ...but key is not found, so it must be written to CenRep when
+            // available. 
+            iStoreEncoderConfigInfo = ETrue;
+            }
+        }
+    else if ( error == KErrNotFound )
+        {
+        // There is no repository for config keys so there is no point
+        // trying to write anything there. Session setup can still continue.
+        MUS_LOG1( "mus: [ENGINE]    No repository for config keys [%d]", error )
+        }            
+    else
+        {
+        User::Leave( error );
+        }
+    
+    MUS_LOG( "mus: [ENGINE] <- CMusEngMceSession::SetCodecConfigKeyL()" )
     }
 
-// -----------------------------------------------------------------------------
-// 
 // -----------------------------------------------------------------------------
 //
-void CMusEngMceSession::VolumeChanged( TInt aVolume, TBool aAudioRouteChanged )
+// -----------------------------------------------------------------------------
+//
+HBufC8* CMusEngMceSession::ReadCodecConfigKeyL( 
+    const CMceVideoCodec& aVideoCodec ) const
     {
-    MUS_LOG1( "mus: [ENGINE]  -> CMusEngMceSession::VolumeChanged(): %d", aVolume )
-    if ( iSession )
+    MUS_LOG( "mus: [ENGINE] -> CMusEngMceSession::ReadCodecConfigKeyL()" )
+    
+    HBufC8* key( NULL );
+ 
+    HBufC8* encoderInfo = MultimediaSharingSettings::EncoderConfigInfoLC();
+    __ASSERT_ALWAYS( encoderInfo, User::Leave( KErrNotFound ) );
+    
+    TPtrC8 keyId( ConfigKeyIdL( aVideoCodec ) ); 
+    
+    TInt tokenStartPosition( encoderInfo->FindC( keyId ) );
+    if ( tokenStartPosition > KErrNotFound )
         {
-        CMusEngSession::VolumeChanged( aVolume, aAudioRouteChanged );
-        TRAP_IGNORE( SetSpeakerVolumeL( aVolume ) );
+        TInt tokenLength( encoderInfo->Mid( tokenStartPosition ).FindC( 
+                                                KMusEncoderInfoTokenizer ) );
+        if ( tokenLength > KErrNotFound )
+            {
+            // Separate key from token by removing keyId
+            TInt keyStartPosition = tokenStartPosition + keyId.Length();
+            TInt keyLength = tokenLength - keyId.Length(); 
+            TPtrC8 keyPtr = encoderInfo->Mid( keyStartPosition, keyLength );
+            key = keyPtr.AllocL();
+            }
         }
-
-    MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::VolumeChanged()" )
+    
+    CleanupStack::PopAndDestroy( encoderInfo );
+    
+    MUS_LOG( "mus: [ENGINE] <- CMusEngMceSession::ReadCodecConfigKeyL()" )
+        
+    return key;   
     }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::StoreEncoderConfigInfoL() const
+    {
+    MUS_LOG( "mus: [ENGINE] -> CMusEngMceSession::StoreEncoderConfigInfoL()" )
+    
+    HBufC8* configInfoInCenRep = MultimediaSharingSettings::EncoderConfigInfoLC();
+    __ASSERT_ALWAYS( configInfoInCenRep, User::Leave( KErrNotFound ) );
+    
+    TBuf8<NCentralRepositoryConstants::KMaxBinaryLength> keys;
+    keys.Append( *configInfoInCenRep );
+    
+    CMceVideoStream* stream = MusEngMceUtils::GetVideoOutStreamL( *iSession );
+    const RPointerArray<CMceVideoCodec>& codecs = stream->Codecs();
+    
+    for ( TInt codecIndex = 0; codecIndex < codecs.Count(); ++codecIndex )
+        {
+        if ( codecs[codecIndex]->SdpName().FindF( KMceSDPNameH264 ) >= 0 )
+            {
+            const TPtrC8 keyId = ConfigKeyIdL( *codecs[codecIndex] );
+            HBufC8* configKey = codecs[codecIndex]->ConfigKeyL();
+            CleanupStack::PushL( configKey );
+            
+            if ( configKey &&
+                 keys.FindF( keyId ) == KErrNotFound &&
+                 configInfoInCenRep->FindF( keyId ) == KErrNotFound )
+                {
+                
+                if ( keys.Length() + 
+                     keyId.Length() + 
+                     configKey->Length() +
+                     KMusEncoderInfoTokenizer().Length() <
+                     NCentralRepositoryConstants::KMaxBinaryLength )
+                    {
+                    keys.Append( keyId );                    
+                    keys.Append( *configKey );
+                    keys.Append( KMusEncoderInfoTokenizer );
+                    }
+                }
+                
+            CleanupStack::PopAndDestroy( configKey );
+            }
+        }
+    
+    MultimediaSharingSettings::SetEncoderConfigInfoL( keys );    
+    
+    CleanupStack::PopAndDestroy( configInfoInCenRep );
+        
+    MUS_LOG( "mus: [ENGINE] <- CMusEngMceSession::StoreEncoderConfigInfoL()" )
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+const TPtrC8 CMusEngMceSession::ConfigKeyIdL( 
+                                    const CMceVideoCodec& aVideoCodec ) const
+    {
+    MUS_LOG( "mus: [ENGINE] -> CMusEngMceSession::ConfigKeyIdL()" )
+    
+    // Currently works only for AVC
+    __ASSERT_ALWAYS( aVideoCodec.SdpName().FindF( KMceSDPNameH264 ) >= 0,
+                     User::Leave( KErrArgument ) );
+    
+    TPtrC8 configKeyTokenId;
+    
+    if ( aVideoCodec.AllowedBitrates() & KMceAvcBitrateLevel1 )
+        {
+        configKeyTokenId.Set( KMusAvcBitrateLevel1() );
+        }
+    else if ( aVideoCodec.AllowedBitrates() & KMceAvcBitrateLevel1b )
+        {
+        configKeyTokenId.Set( KMusAvcBitrateLevel1b() );
+        }
+    else if ( aVideoCodec.AllowedBitrates() & KMceAvcBitrateLevel1_1 )
+        {
+        configKeyTokenId.Set( KMusAvcBitrateLevel1_1() );
+        }
+    else if ( aVideoCodec.AllowedBitrates() & KMceAvcBitrateLevel1_2 )
+        {
+        configKeyTokenId.Set( KMusAvcBitrateLevel1_2() );
+        }
+    else if ( aVideoCodec.AllowedBitrates() & KMceAvcBitrateLevel1_3 )
+        {
+        configKeyTokenId.Set( KMusAvcBitrateLevel1_3() );
+        }
+    else if ( aVideoCodec.AllowedBitrates() & KMceAvcBitrateLevel2 )
+        {
+        configKeyTokenId.Set( KMusAvcBitrateLevel2() );
+        }
+    else
+        {
+        User::Leave( KErrNotFound );
+        }
+    
+    MUS_LOG( "mus: [ENGINE] <- CMusEngMceSession::ConfigKeyIdL()" )
+
+    return configKeyTokenId;
+    }
+
+// -----------------------------------------------------------------------------
+// Contact address is saved if all following apply:
+// - standard variant
+// - only one contact entry (mus mgr doesn't provide contact id if multiple
+//   contact entries for other end is found)
+// - no existing sip address info for contact
+// - address is valid sip or tel uri
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::SaveContactL( const TDesC8& /*aAddress*/ )
+    {
+    MUS_LOG( "mus: [ENGINE]  -> CMusEngMceSession::SaveContactL" );
+    
+    
+    MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::SaveContactL" );
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::StreamStreaming( CMceMediaStream& aStream )
+    {
+    if ( aStream.State() == CMceMediaStream::EStreaming &&
+         aStream.Type() == KMceVideo )
+        {
+        MLcVideoPlayer* videoPlayer = NULL;
+        if ( aStream.Source() && 
+             aStream.Source()->Type() == KMceRTPSource )
+            {
+            videoPlayer = RemoteVideoPlayer();
+            }
+        else if ( aStream.Sinks().Count() >= 0 &&
+                  aStream.Sinks()[0]->Type() == KMceRTPSink )
+            {
+            videoPlayer = LocalVideoPlayer();
+            }
+        else
+            {
+            }
+        InformObserverAboutPlayerStateChange( videoPlayer );
+        }
+    }
+
+// End of file

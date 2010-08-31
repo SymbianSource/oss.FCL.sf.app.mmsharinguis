@@ -21,6 +21,7 @@
 #define MUSPROPERTYMONITOR_H
 
 #include "musunittesting.h"
+#include "mmuscallstateobserver.h"
 #include <etelmm.h>
 #include <e32base.h>
 #include <e32property.h>
@@ -40,36 +41,35 @@ class CMusPropertyMonitor : public CActive
         /**
          * Two-phased constructor. Leaves on failure.
          */
-        static CMusPropertyMonitor* NewL();
+        static CMusPropertyMonitor* NewL( MMusCallStateObserver& aCallStateObserver );
 
         /**
          * Destructor.
          */
         ~CMusPropertyMonitor();
+        
+        
+    public: // other public functions
+        
+        /*
+         * Checks from P/S Keys about call state
+         * @return EFalse if call state is ENoCall otherwise ETrue  
+         */
+        TBool IsCallConnected();
+
 
     private:
 
         /**
          * C++ constructor.
          */
-        CMusPropertyMonitor();
+        CMusPropertyMonitor( MMusCallStateObserver& aCallStateObserve );
 
         /**
          * Symbian 2nd-phase constructor.
          */
         void ConstructL();
 
-         /**
-         * Starts Mus Manager Client.In turn it will start Mus Manager
-         * Server and Availability Plugin.
-         */
-        void StartMusClientL();
-
-        /*
-         * Stops Mus Manager Client.
-         */ 
-        void StopMusClient();
-    
 
     private:
 
@@ -98,12 +98,12 @@ class CMusPropertyMonitor : public CActive
         /**
          * Instance of RProperty.
          */
-        RProperty iPropertyEvent;        
-
-        /**
-         * Instance of MusManager Client. Owned.
+        RProperty iPropertyEvent;    
+     
+        /*
+         * Reference of callstate observer not owned
          */
-        CMusManager* iManager;
+        MMusCallStateObserver& iCallStateObserver;
 
         MUS_UNITTEST( UT_CMusPropertyMonitor )
 

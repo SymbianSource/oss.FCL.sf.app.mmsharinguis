@@ -277,7 +277,7 @@ void UT_CMusWpItem::UT_CMusWpItem_SetActivationConditionL()
                   MusSettingsKeys::EAlwaysActive )
     iWpItem->SetActivationCondition( KMusWpParamValue2() ); // Home
     EUNIT_ASSERT( iWpItem->iActivationCondition == 
-                  MusSettingsKeys::EAlwaysActive )
+                  MusSettingsKeys::EActiveInHomeNetworks )
     iWpItem->SetActivationCondition( KMusWpParamValue3() ); // Never
     EUNIT_ASSERT( iWpItem->iActivationCondition == 
                   MusSettingsKeys::ENever )

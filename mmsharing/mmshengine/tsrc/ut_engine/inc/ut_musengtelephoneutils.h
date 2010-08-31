@@ -63,8 +63,6 @@ NONSHARABLE_CLASS( UT_CMusEngTelephoneUtils ): public CEUnitTestSuiteClass
         
         void UT_NewLL();
         void UT_AudioRoutingCanBeChangedL();
-        void UT_IsAudioRoutingHeadsetL();
-        void UT_IsAudioRoutingLoudSpeakerL();
         void UT_LoudspeakerLL();
         void UT_IsLoudSpeakerEnabledL();
         void UT_GetVolumeLL();
@@ -74,8 +72,6 @@ NONSHARABLE_CLASS( UT_CMusEngTelephoneUtils ): public CEUnitTestSuiteClass
         void UT_SetOutputCompleteL();
         void UT_ValidateVolumeL();
         void UT_DestructorL();
-        void UT_UpdateCurrentVolumeL();
-        void UT_HandleNotifyGenericL();
 
     private:    // Data
 

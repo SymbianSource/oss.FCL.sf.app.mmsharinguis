@@ -30,7 +30,6 @@
 #include <sipstrconsts.h>
 #include <sipresponseelements.h>
 
-#include "mussettings.h"
 #include "muslogger.h"
 #include "musavacapabilityexchange.h"
 #include "musavacapabilityquery.h"
@@ -165,25 +164,12 @@ TInt CMusAvaCapabilitySipAgent::IncomingRequest(
     {
     MUS_LOG( "mus: [MUSAVA] -> CMusAvaCapabilitySipAgent::IncomingRequest" )
     TInt retval = KErrNone;
-    MusSettingsKeys::TOperatorVariant variantValue = MusSettingsKeys::EStandard;
-    TRAPD( error, variantValue = 
-                  MultimediaSharingSettings::OperatorVariantSettingL() );
-    if( error )
-    	{
-         MUS_LOG("CMusAvaCapabilitySipAgent::IncomingRequest\
-        		  Get OperatorVariantSettingL worng");
-    	}
-    
     if ( aTransaction->Type() == 
                         SIPStrings::StringF( SipStrConsts::EOptions ) )
         {  
-        // Answer 200OK when CS call remain at Availability States
-        //or at EMusAvaOptionNotAvailable State in operatorspecific mode
+        // Answer 200OK only when CS call remain at Availability States
         if ( MMusAvaObserver::EMusAvaStatusNotExecuted <= 
-             iAvailabilityObserver.AvailabilityPluginState()  
-             ||( ( iAvailabilityObserver.AvailabilityPluginState() ==
-              MMusAvaObserver::EMusAvaOptionNotAvailable ) 
-              && ( variantValue == MusSettingsKeys::EOperatorSpecific  )))
+             iAvailabilityObserver.AvailabilityPluginState() )
             {
             retval = 
              iCapabilityExchange.QueryObserver().CapabilityQueryAnswered() ?

@@ -109,6 +109,7 @@ private:
     void UT_CMusManagerServerCore_AvailabilityChangedLL();
     void UT_CMusManagerServerCore_MonitorAvailabilityLL();
     void UT_CMusManagerServerCore_RegisterObserverL();
+    void UT_CMusManagerServerCore_IsMusEnginePluginL();
 
 
 private: // data

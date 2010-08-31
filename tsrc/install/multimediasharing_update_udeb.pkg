@@ -28,62 +28,81 @@
 
 ; -----------------------------------------------------------------------------------
 
-;MUS FILES
-;for S60 3.2
+;Multimediasharing binaries
 
-;MUS CENREP KEY
-;"\epoc32\DATA\Z\private\10202be9\1028238b.txt"-"!:\private\10202BE9\1028238b.txt"
+; Central repository
+;"\epoc32\data\z\private\10202be9\1028238b.txt"-"!:\private\10202BE9\1028238b.txt"
 
-;MUS UI
-"\epoc32\release\armv5\udeb\musui.exe"-"!:\sys\bin\musui.exe"
-"\epoc32\data\z\resource\apps\musui.mbm"-"!:\resource\apps\musui.mbm"
-"\epoc32\data\z\resource\apps\musui_aif.mif"-"!:\resource\apps\musui_aif.mif"
-"\epoc32\data\z\resource\apps\musuiicons.mif"-"!:\resource\apps\musuiicons.mif"
-"\epoc32\data\z\resource\apps\musuitoolbaricons.mif"-"!:\resource\apps\musuitoolbaricons.mif"
-"\epoc32\data\z\resource\apps\musui.rsc"-"!:\resource\apps\musui.rsc"
-"\epoc32\data\z\private\10003a3f\apps\musui_reg.rsc"-"!:\private\10003a3f\import\apps\musui_reg.rsc"
+; Backup registration and restore
+;"\epoc32\data\z\private\1028238D\backup_registration.xml"-"!:\private\1028238D\backup_registration.xml"
 
-;MUS GENERAL
-"\epoc32\release\armv5\udeb\musmanagerserver.exe"-"!:\sys\bin\musmanagerserver.exe"
-"\epoc32\release\armv5\udeb\musmanagerclient.dll"-"!:\sys\bin\musmanagerclient.dll"
-"\epoc32\release\armv5\udeb\musengine.dll"-"!:\sys\bin\musengine.dll"
-"\epoc32\release\armv5\udeb\musindicator.dll"-"!:\sys\bin\musindicator.dll"
-"\epoc32\data\z\resource\musindicator.rsc"-"!:\resource\musindicator.rsc"
-"\epoc32\data\z\private\1028238D\tone.amr"-"!:\private\1028238D\tone.amr"
-"\epoc32\data\z\resource\apps\musindicatoricons.mif"-"!:\resource\apps\musindicatoricons.mif"
-"\epoc32\data\z\resource\apps\musindicatoricons.mbm"-"!:\resource\apps\musindicatoricons.mbm"
+; User interface
+;"\epoc32\release\armv5\udeb\musui.exe"-"!:\sys\bin\musui.exe"
 
-;MUS ECOM PLUGINS
+"\epoc32\release\armv5\udeb\livecommsui.dll"-"!:\sys\bin\livecommsui.dll"
 
-; Always Online Plugin
-"\epoc32\release\armv5\udeb\musaoplugin.dll"-"!:\sys\bin\musaoplugin.dll"
-"\EPOC32\DATA\Z\Resource\Plugins\musaoplugin.RSC"-"!:\resource\plugins\musaoplugin.RSC"
+;"\epoc32\data\z\resource\apps\musui.rsc"-"!:\resource\apps\musui.rsc"
+;"\epoc32\data\z\private\10003a3f\import\apps\musui_reg.rsc"-"!:\private\10003a3f\import\apps\musui_reg.rsc"
 
-; SIP Client Resolver Plugin
-"\epoc32\release\armv5\udeb\mussipcrplugin.dll"-"!:\sys\bin\mussipcrplugin.dll"
-"\EPOC32\DATA\Z\Resource\Plugins\mussipcrplugin.RSC"-"!:\resource\plugins\mussipcrplugin.RSC"
+; User interface DOCMLs
+;"\epoc32\data\z\data\others\lcidleview.docml"-"!:\data\others\lcidleview.docml"
+;"\epoc32\data\z\data\others\lcreceiveview.docml"-"!:\data\others\lcreceiveview.docml"
+;"\epoc32\data\z\data\others\lcsendview.docml"-"!:\data\others\lcsendview.docml"
+;"\epoc32\data\z\data\others\lctwowayview.docml"-"!:\data\others\lctwowayview.docml"
+;"\epoc32\data\z\data\others\lcvtview.docml"-"!:\data\others\lcvtview.docml"
+;"\epoc32\data\z\data\others\lcreceiveonlyview.docml"-"!:\data\others\lcreceiveonlyview.docml"
 
-; AIW Provider Plugin
-"\epoc32\release\armv5\udeb\musaiwprovider.dll"-"!:\sys\bin\musaiwprovider.dll"
-"\EPOC32\DATA\Z\Resource\Plugins\musaiwprovider.RSC"-"!:\resource\plugins\musaiwprovider.RSC"
-"\EPOC32\DATA\Z\Resource\musaiwproviderui.RSC"-"!:\resource\musaiwproviderui.RSC"
+; General components
+;"\epoc32\release\armv5\udeb\musmanagerserver.exe"-"!:\sys\bin\musmanagerserver.exe"
+;"\epoc32\release\armv5\udeb\musmanagerclient.dll"-"!:\sys\bin\musmanagerclient.dll"
+;"\epoc32\release\armv5\udeb\musindicator.dll"-"!:\sys\bin\musindicator.dll"
+;"\epoc32\data\z\resource\musindicator.rsc"-"!:\resource\musindicator.rsc"
+;"\epoc32\data\z\private\1028238D\tone.amr"-"!:\private\1028238D\tone.amr"
+;"\epoc32\data\z\resource\apps\musindicatoricons.mif"-"!:\resource\apps\musindicatoricons.mif"
+;"\epoc32\data\z\resource\apps\musindicatoricons.mbm"-"!:\resource\apps\musindicatoricons.mbm"
+
+; AlwaysOnline Plugin.
+;"\epoc32\release\armv5\udeb\musaoplugin.dll"-"!:\sys\bin\musaoplugin.dll"
+;"\epoc32\data\z\Resource\Plugins\musaoplugin.RSC"-"!:\resource\plugins\musaoplugin.RSC"
+
+; Sip client resolver Plugin
+; In VOIP terminals, MuS uses same client resolver plugin as VoIP.
+; In all other terminals, a separate resolver plugin is needed.
+; So uncomment the below lines if phone do not have VOIP.
+;"\epoc32\release\armv5\udeb\mussipcrplugin.dll"-"!:\sys\bin\mussipcrplugin.dll"
+;"\epoc32\data\z\Resource\Plugins\mussipcrplugin.RSC"-"!:\resource\plugins\mussipcrplugin.RSC"
+
+; AIW provider Plugin
+;"\epoc32\release\armv5\udeb\musaiwprovider.dll"-"!:\sys\bin\musaiwprovider.dll"
+;"\epoc32\data\z\Resource\Plugins\musaiwprovider.RSC"-"!:\resource\plugins\musaiwprovider.RSC"
+;"\epoc32\data\z\Resource\musaiwproviderui.RSC"-"!:\resource\musaiwproviderui.RSC"
 
 ; Availability Plugin
-"\epoc32\release\armv5\udeb\musavailabilityplugin.dll"-"!:\sys\bin\musavailabilityplugin.dll"
-"\EPOC32\DATA\Z\Resource\Plugins\musavailabilityplugin.RSC"-"!:\resource\plugins\musavailabilityplugin.RSC"
+;"\epoc32\release\armv5\udeb\musavailabilityplugin.dll"-"!:\sys\bin\musavailabilityplugin.dll"
+;"\epoc32\data\z\Resource\Plugins\musavailabilityplugin.RSC"-"!:\resource\plugins\musavailabilityplugin.RSC"
 
-; WirelessProvisioning Adapter
-"\epoc32\release\armv5\udeb\muswpadapter.dll"-"!:\sys\bin\muswpadapter.dll"
-"\EPOC32\DATA\Z\Resource\Plugins\muswpadapter.RSC"-"!:\resource\plugins\muswpadapter.RSC"
-"\EPOC32\DATA\Z\Resource\muswpadapterresource.RSC"-"!:\resource\muswpadapterresource.RSC"
+; Wireless Provisioning Adapter
+;"\epoc32\release\armv5\udeb\muswpadapter.dll"-"!:\sys\bin\muswpadapter.dll"
+;"\epoc32\data\z\Resource\Plugins\muswpadapter.RSC"-"!:\resource\plugins\muswpadapter.RSC"
+;"\epoc32\data\z\Resource\muswpadapterresource.RSC"-"!:\resource\muswpadapterresource.RSC"
 
-;SETTINGS UI
-"\epoc32\release\armv5\udeb\mussettingsui.dll"-"!:\sys\bin\mussettingsui.dll"
-"\EPOC32\DATA\Z\Resource\Plugins\mussettingsui.RSC"-"!:\resource\plugins\mussettingsui.RSC"
-"\EPOC32\DATA\Z\Resource\mussettingsuirsc.RSC"-"!:\resource\mussettingsuirsc.RSC"
-"\EPOC32\DATA\Z\Resource\apps\mussettingsplugin.mif"-"!:\resource\apps\mussettingsplugin.mif"
+; Settings UI
+;"\epoc32\release\armv5\udeb\mussettingsui.dll"-"!:\sys\bin\mussettingsui.dll"
+;"\epoc32\data\z\Resource\Plugins\mussettingsui.RSC"-"!:\resource\plugins\mussettingsui.RSC"
+;"\epoc32\data\z\Resource\mussettingsuirsc.RSC"-"!:\resource\mussettingsuirsc.RSC"
+;"\epoc32\data\z\Resource\apps\mussettingsplugin.mif"-"!:\resource\apps\mussettingsplugin.mif"
 
-;MCC Transcoder
-;"\epoc32\RELEASE\armv5\udeb\mmcctranscoder.dll"-"!:\Sys\Bin\mmcctranscoder.dll"
-;"\epoc32\data\Z\Resource\Plugins\mmcctranscoder.RSC"-"!:\resource\plugins\mmcctranscoder.RSC"
+; MCC Transcoder
+;"\epoc32\release\armv5\udeb\mmcctranscoder.dll"-"!:\Sys\Bin\mmcctranscoder.dll"
+;"\epoc32\data\z\Resource\Plugins\mmcctranscoder.RSC"-"!:\resource\plugins\mmcctranscoder.RSC"
+
+; Help files
+;"\epoc32\data\z\Resource\xhtml\01\0x10282491\contents.zip"-"!:\resource\xhtml\01\0x10282491\contents.zip"
+;"\epoc32\data\z\Resource\xhtml\01\0x10282491\keywords.xml"-"!:\resource\xhtml\01\0x10282491\keywords.xml"
+;"\epoc32\data\z\Resource\xhtml\01\0x10282491\index.xml"-"!:\resource\xhtml\01\0x10282491\index.xml"
+;"\epoc32\data\z\Resource\xhtml\01\0x10282491\meta.xml"-"!:\resource\xhtml\01\0x10282491\meta.xml"
+
+; Engine
+;"\epoc32\release\armv5\udeb\musengineplugin.dll"-"!:\sys\bin\musengineplugin.dll"
+;"\epoc32\data\z\resource\plugins\musengineplugin.rsc"-"!:\resource\plugins\musengineplugin.rsc"
 

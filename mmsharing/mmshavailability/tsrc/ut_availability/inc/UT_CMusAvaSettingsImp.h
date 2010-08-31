@@ -111,11 +111,6 @@ class UT_CMusAvaSettingsImp
              
         void UT_CMusAvaSettingsImp_CopyDescArrayLL();
 
-        void UT_CMusAvaSettingsImp_SetOptionSentNumber();
-        
-        const UT_CMusAvaSettingsImp_OptionSentTelNumber();
-        
-        void UT_CMusAvaSettingsImp_ReleaseOptionSentNumber();
 
 		EUNIT_DECLARE_TEST_TABLE; 
 				

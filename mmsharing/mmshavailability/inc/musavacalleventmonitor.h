@@ -49,16 +49,9 @@ public:
      * @return call direction
      */
     TInt CallDirectionL();
-    
-    /**
-     * get call Privacy
-     *
-     * @return call privacy
-     */
-    TInt CallPrivacyL();
 
 
-    void GetTelNumberL( TDes& aTelNumber );
+    void GetTelNumberL( TDes& aTelNumber, TBool& aIsSipUri );
 
 	 /**
      * Start to monitoring call state events
@@ -117,6 +110,7 @@ private:
      */
     void ConstructL();
 
+    TBool IsSipUri( const TDesC& aTelNumber ) const;
 
 private: // data
 

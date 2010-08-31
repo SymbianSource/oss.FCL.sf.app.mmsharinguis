@@ -20,6 +20,10 @@
 #define __UT_CMusPropertyMonitor_H__
 
 
+// USER INCLUDES
+
+#include "mmuscallstateobserver.h" 
+
 //  EXTERNAL INCLUDES
 #include <digia/eunit/ceunittestsuiteclass.h>
 #include <digia/eunit/eunitmacros.h>
@@ -38,7 +42,8 @@ class CMusPropertyMonitor;
  * Tester class for CMusTsyPropertyMonitor. 
  * 
  */
-NONSHARABLE_CLASS( UT_CMusPropertyMonitor ): public CEUnitTestSuiteClass
+NONSHARABLE_CLASS( UT_CMusPropertyMonitor ): public CEUnitTestSuiteClass,
+                                                    MMusCallStateObserver
     {
     public:     // Constructors and destructors
 
@@ -52,6 +57,12 @@ NONSHARABLE_CLASS( UT_CMusPropertyMonitor ): public CEUnitTestSuiteClass
          * Destructor
          */
         ~UT_CMusPropertyMonitor();
+        
+
+    public:     // MMusCallStateObserver
+
+        virtual void MusCallStateChanged();
+
 
     private: // Constructors and destructors
 
@@ -68,10 +79,13 @@ NONSHARABLE_CLASS( UT_CMusPropertyMonitor ): public CEUnitTestSuiteClass
     
         void UT_CMusPropertyMonitor_RunLL();
         void UT_CMusPropertyMonitor_DoCancelL();
-        void UT_CMusPropertyMonitor_RunErrorL(); 
+        void UT_CMusPropertyMonitor_RunErrorL();
+        void UT_CMusPropertyMonitor_IsCallConnected();
 
     private:    // Data
         CMusPropertyMonitor* iMusPropertyMonitor;
+        TBool iMusCallStateObserverInovked;
+       
 
         EUNIT_DECLARE_TEST_TABLE;
 

@@ -89,14 +89,15 @@ void CMusCallMonitor::ConstructL(TName& aCallName)
 //
 // -----------------------------------------------------------------------------
 //
-void CMusCallMonitor::StartMonitorL(RMobileLine& aLine, MMusTsyPropertyObserver& aObserver)
+void CMusCallMonitor::StartMonitorL(RMobileLine& aLine, 
+                                    MMusTsyPropertyObserver& aObserver,
+                                    MMusCallStateObserver& aCallStateObserver)
     {
     MUS_LOG( "mus: [MUSAO]  -> CMusCallMonitor::StartMonitorL" )
     if(IsMonitored())User::Leave(KErrAlreadyExists);    
     User::LeaveIfError( iCall.OpenExistingCall( aLine, iCallName ) );        
-    iCallStatusMonitor = CMusCallStatusMonitor::NewL( iCall, aObserver );
-    iCallEventMonitor = CMusCallEventMonitor::NewL( iCall, aObserver );
-    
+    iCallStatusMonitor = CMusCallStatusMonitor::NewL( iCall, aObserver, aCallStateObserver );
+    iCallEventMonitor = CMusCallEventMonitor::NewL( iCall, aObserver, aCallStateObserver );    
     MUS_LOG( "mus: [MUSAO]  <- CMusCallMonitor::StartMonitorL" )
     }
 
@@ -187,4 +188,16 @@ void CMusCallMonitor::SetStateL(NMusSessionInformationApi::TMusCallEvent aVal)
     }
 
 
+// --------------------------------------------------------------------------------
+// CMusCallMonitor::IsDataReadyL()
+// Checks if Data is ready CS Call.
+// --------------------------------------------------------------------------------
+
+TBool CMusCallMonitor::IsDataReadyL()
+    {
+    // Wrapper Function for Monitoring CS Call Data
+    return iCallStatusMonitor->IsDataReadyL();
+    }
+
 // End of file
+

@@ -23,14 +23,12 @@
 #include "musengtestdefs.h"
 #include "sipprofilealrcontroller.h"
 
-
 //  SYSTEM INCLUDES
 #include <sipprofile.h>
 #include <digia/eunit/eunitmacros.h>
 #include <uri8.h>
 
 const TUint KSipProfileId( 1 );
-
 
 // -----------------------------------------------------------------------------
 //
@@ -87,25 +85,16 @@ void UT_CMusEngSipProfileHandler::ConstructL()
     // It generates the test case table.
     CEUnitTestSuiteClass::ConstructL();
     }
-    
 
-// -----------------------------------------------------------------------------
-// From MMusSipProfileUser
-// -----------------------------------------------------------------------------
-//
-TBool UT_CMusEngSipProfileHandler::IsRoamingBetweenAPsAllowed()
-    {
-    return iRoamingBetweenAPsAllowed;
-    }
-    
-   
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
 void UT_CMusEngSipProfileHandler::SetupL()
     {
-    iProfileHandler = CMusSipProfileHandler::NewL( *this );
+    iObserver = new( ELeave ) CMusEngObserverStub;
+    iProfileHandler = CMusSipProfileHandler::NewL( *iObserver );
     }
 
 
@@ -116,7 +105,7 @@ void UT_CMusEngSipProfileHandler::SetupL()
 void UT_CMusEngSipProfileHandler::Teardown()
     {
     delete iProfileHandler;
-    iRoamingBetweenAPsAllowed = EFalse;
+    delete iObserver;
     }
 
 
@@ -127,7 +116,7 @@ void UT_CMusEngSipProfileHandler::Teardown()
 //
 // -----------------------------------------------------------------------------
 //
-void UT_CMusEngSipProfileHandler::UT_CMusEngSipProfileHandler_CreateSipProfileLL()
+void UT_CMusEngSipProfileHandler::UT_CreateSipProfileLL()
     {
     // SIP profile ID zero
     iProfileHandler->CreateProfileL( 0 );
@@ -148,7 +137,7 @@ void UT_CMusEngSipProfileHandler::UT_CMusEngSipProfileHandler_CreateSipProfileLL
 //
 // -----------------------------------------------------------------------------
 //
-void UT_CMusEngSipProfileHandler::UT_CMusEngSipProfileHandler_ProfileIdL()
+void UT_CMusEngSipProfileHandler::UT_ProfileIdL()
     {
     // SIP profile does not yet exist
     EUNIT_ASSERT_EQUALS( 0, iProfileHandler->ProfileId() )
@@ -162,7 +151,7 @@ void UT_CMusEngSipProfileHandler::UT_CMusEngSipProfileHandler_ProfileIdL()
 //
 // -----------------------------------------------------------------------------
 //
-void UT_CMusEngSipProfileHandler::UT_CMusEngSipProfileHandler_AlrEventL()
+void UT_CMusEngSipProfileHandler::UT_AlrEventL()
     {
     const TUint32 KSnapId( 1 );
     const TUint32 KIapId( 1 );
@@ -229,7 +218,7 @@ void UT_CMusEngSipProfileHandler::UT_CMusEngSipProfileHandler_AlrEventL()
     iProfileHandler->iProfileAlrController->iLastUsedIap = 0;
     
     // Event is EIapAvailable, SIP profile ID matches, roaming not allowed
-    iRoamingBetweenAPsAllowed = ETrue;
+    iObserver->iRoamingBetweenAPsAllowed = ETrue;
     iProfileHandler->AlrEvent( 
         MSipProfileAlrObserver::EIapAvailable, 
         KSipProfileId, KSnapId, KIapId );
@@ -251,9 +240,10 @@ void UT_CMusEngSipProfileHandler::UT_CMusEngSipProfileHandler_AlrEventL()
 //
 // -----------------------------------------------------------------------------
 //
-void UT_CMusEngSipProfileHandler::UT_CMusEngSipProfileHandler_NullTestsL()
+void UT_CMusEngSipProfileHandler::UT_NullTestsL()
     {
     // Dummies
+    
     CSIPTransactionBase transactionBase;
     CSIPServerTransaction serverTransaction;
     CSIPDialog dialog;
@@ -263,8 +253,7 @@ void UT_CMusEngSipProfileHandler::UT_CMusEngSipProfileHandler_NullTestsL()
     CSIPRefresh refresh;
     
     // Tests
-    iProfileHandler->ProfileRegistryEventOccurred( 0,
-                                MSIPProfileRegistryObserver::EProfileCreated );
+
     iProfileHandler->ProfileRegistryErrorOccurred( 0, 0 );
     iProfileHandler->IncomingRequest( 0, NULL );
     iProfileHandler->TimedOut( serverTransaction );
@@ -290,7 +279,7 @@ void UT_CMusEngSipProfileHandler::UT_CMusEngSipProfileHandler_NullTestsL()
 //
 // -----------------------------------------------------------------------------
 //
-void UT_CMusEngSipProfileHandler::UT_CMusEngSipProfileHandler_UserFromProfileLCL()
+void UT_CMusEngSipProfileHandler::UT_UserFromProfileLCL()
     {
     iProfileHandler->CreateProfileL( KSipProfileId );
     CSIPProfile* profile = iProfileHandler->Profile();
@@ -313,6 +302,58 @@ void UT_CMusEngSipProfileHandler::UT_CMusEngSipProfileHandler_UserFromProfileLCL
     CleanupStack::PopAndDestroy( user );
     }
 
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngSipProfileHandler::UT_IsRegisteredL()
+    {
+    EUNIT_ASSERT( !iProfileHandler->IsRegistered( ) )
+    iProfileHandler->CreateProfileL( KSipProfileId );
+    EUNIT_ASSERT( iProfileHandler->IsRegistered( ) )   
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngSipProfileHandler::UT_ProfileRegistryEventOccurredL()
+    {    
+    // No profile yet
+    iProfileHandler->ProfileRegistryEventOccurred( 0,
+                            MSIPProfileRegistryObserver::EProfileRegistered );
+    EUNIT_ASSERT( iObserver->IsReseted() )
+    
+    // Create profile, but notify about registration of some other profile
+    iProfileHandler->CreateProfileL( 1 );
+    iProfileHandler->ProfileRegistryEventOccurred( 2,
+                            MSIPProfileRegistryObserver::EProfileRegistered );
+    EUNIT_ASSERT( iObserver->IsReseted() )
+    
+    // Normal case
+    iProfileHandler->ProfileRegistryEventOccurred( 1,
+                                MSIPProfileRegistryObserver::EProfileRegistered );
+    EUNIT_ASSERT( iObserver->iProfileRegisteredCalled )
+    iObserver->Reset();
+    
+    // React exclusively to EProfileRegistered
+    iProfileHandler->ProfileRegistryEventOccurred( 1,
+                            MSIPProfileRegistryObserver::EProfileCreated );
+    EUNIT_ASSERT( iObserver->IsReseted() )
+    iProfileHandler->ProfileRegistryEventOccurred( 1,
+                            MSIPProfileRegistryObserver::EProfileUpdated );
+    EUNIT_ASSERT( iObserver->IsReseted() )
+    iProfileHandler->ProfileRegistryEventOccurred( 1,
+                            MSIPProfileRegistryObserver::EProfileDeregistered );
+    EUNIT_ASSERT( iObserver->IsReseted() )
+    iProfileHandler->ProfileRegistryEventOccurred( 1,
+                            MSIPProfileRegistryObserver::EProfileDestroyed );
+    EUNIT_ASSERT( iObserver->IsReseted() )
+    }
+
+
 //  TEST TABLE
 
 EUNIT_BEGIN_TEST_TABLE(
@@ -325,36 +366,50 @@ EUNIT_TEST(
     "CMusSipProfileHandler",
     "CreateSipProfileL",
     "FUNCTIONALITY",
-    SetupL, UT_CMusEngSipProfileHandler_CreateSipProfileLL, Teardown)
-
+    SetupL, UT_CreateSipProfileLL, Teardown)    
+    
 EUNIT_TEST(
     "ProfileId - test ",
     "CMusSipProfileHandler",
     "ProfileId",
     "FUNCTIONALITY",
-    SetupL, UT_CMusEngSipProfileHandler_ProfileIdL, Teardown)
+    SetupL, UT_ProfileIdL, Teardown)
     
 EUNIT_TEST(
     "AlrEventL - test ",
     "CMusEngSipProfileHandler",
     "AlrEventL",
     "FUNCTIONALITY",
-    SetupL, UT_CMusEngSipProfileHandler_AlrEventL, Teardown)
-
+    SetupL, UT_AlrEventL, Teardown)
+    
 EUNIT_TEST(
     "Null tests for NOP functions",
     "CMusEngSipProfileHandler",
     "Several NOP functions",
     "FUNCTIONALITY",
-    SetupL, UT_CMusEngSipProfileHandler_NullTestsL, Teardown)
+    SetupL, UT_NullTestsL, Teardown)
 
 EUNIT_TEST(
     "UserFromProfileLC - test ",
-    "CMusEngOutSession",
+    "CMusEngSipProfileHandler",
     "UserFromProfileLC",
     "FUNCTIONALITY",
-    SetupL, UT_CMusEngSipProfileHandler_UserFromProfileLCL, Teardown)
-        
+    SetupL, UT_UserFromProfileLCL, Teardown)
+
+EUNIT_TEST(
+    "IsRegistered - test ",
+    "CMusEngSipProfileHandler",
+    "IsRegistered",
+    "FUNCTIONALITY",
+    SetupL, UT_IsRegisteredL, Teardown)
+
+EUNIT_TEST(
+    "ProfileRegistryEventOccurred - test ",
+    "CMusEngSipProfileHandler",
+    "ProfileRegistryEventOccurred",
+    "FUNCTIONALITY",
+    SetupL, UT_ProfileRegistryEventOccurredL, Teardown)    
+    
 EUNIT_END_TEST_TABLE
 
 //  END OF FILE

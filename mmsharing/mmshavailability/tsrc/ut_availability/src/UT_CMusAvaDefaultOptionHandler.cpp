@@ -93,6 +93,11 @@ void UT_CMusAvaDefaultOptionHandler::SetupL(  )
     TRAP_IGNORE( SIPStrings::OpenL() )
     CSipSseTestTls::OpenL();
     iStorage = CSipSseTestTls::Storage();
+    iStorage->Set( MusSettingsKeys::KFastStartupMode, 
+        MusSettingsKeys::EFastModeOff );
+
+    iStorage->Set( MusSettingsKeys::KFastStartupMode, 
+         MusSettingsKeys::EFastModeOff );
     MultimediaSharingSettings::SetOperatorVariantSettingL( MusSettingsKeys::EStandard );
     MultimediaSharingSettings::SetEdgeDtmSupportSettingL( MusSettingsKeys::EDtmModeAllowed );
     iAvailabilityObserver = CMusAvaAvailabilityObserverImp::NewL();
@@ -110,6 +115,9 @@ void UT_CMusAvaDefaultOptionHandler::SetupOpSpecificL(  )
     TRAP_IGNORE( SIPStrings::OpenL() )
     CSipSseTestTls::OpenL();
     iStorage = CSipSseTestTls::Storage();
+    iStorage->Set( MusSettingsKeys::KFastStartupMode, 
+        MusSettingsKeys::EFastModeOff );
+
     MultimediaSharingSettings::SetOperatorVariantSettingL( MusSettingsKeys::EOperatorSpecific );
     MultimediaSharingSettings::SetEdgeDtmSupportSettingL( MusSettingsKeys::EDtmModeAllowed );
     iAvailabilityObserver = CMusAvaAvailabilityObserverImp::NewL();

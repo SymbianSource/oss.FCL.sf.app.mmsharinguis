@@ -51,6 +51,23 @@ TBool MusEngMceUtils::IsVideoInStream( CMceMediaStream& aStream )
              aStream.Source()->Type() == KMceRTPSource );
     }
 
+// -----------------------------------------------------------------------------
+// Tells if parameter stream is a video stream with RTP sink
+// -----------------------------------------------------------------------------
+//
+TBool MusEngMceUtils::IsVideoOutStream( CMceMediaStream& aStream )
+    {
+    TBool isOutStream( EFalse );
+    if ( aStream.Type() == KMceVideo )
+        {
+        CMceMediaSink* rtpSink = MusEngMceUtils::GetMediaSink(
+                                                   aStream,
+                                                   KMceRTPSink );
+        
+        isOutStream = ( rtpSink != NULL );
+        }
+    return isOutStream;
+    }
 
 // -----------------------------------------------------------------------------
 // Tells if parameter stream is an audio stream with RTP source
@@ -78,21 +95,22 @@ CMceVideoStream* MusEngMceUtils::GetVideoOutStreamL( CMceSession& aSession )
 
     for ( TInt i = 0; i < streams.Count(); ++i )
         {
-        if ( streams[i]->Type() == KMceVideo )
+        if ( MusEngMceUtils::IsVideoOutStream( *streams[i] ) )      
             {
-            CMceMediaSink* rtpSink = MusEngMceUtils::GetMediaSink(
-                                            *streams[i],
-                                            KMceRTPSink );
-            if ( rtpSink )
-                {
-                __ASSERT_ALWAYS( !videoOut, User::Leave( KErrOverflow ) );
-
-                videoOut = static_cast<CMceVideoStream*>( streams[i] );
-                }
+            __ASSERT_ALWAYS( !videoOut, User::Leave( KErrOverflow ) );
             
-            // There is no need to investigate bound stream since
-            // outstream is always constructed by Mus instead of MCE
+            videoOut = static_cast<CMceVideoStream*>( streams[i] );
             }
+            
+            // Check if bound stream is a video stream with RTP sink.
+        if ( streams[i]->BoundStream() &&
+             MusEngMceUtils::IsVideoOutStream( streams[i]->BoundStreamL() ) )
+            {
+            __ASSERT_ALWAYS( !videoOut, User::Leave( KErrOverflow ) );
+            
+            videoOut = static_cast<CMceVideoStream*>( 
+                                   &streams[i]->BoundStreamL() );
+            }   
         }
 
     __ASSERT_ALWAYS( videoOut, User::Leave( KErrNotFound ) );
@@ -178,12 +196,15 @@ CMceVideoStream* MusEngMceUtils::GetRecordingStream( CMceSession& aSession )
 // -----------------------------------------------------------------------------
 //
 CMceMediaSink* MusEngMceUtils::GetMediaSink( CMceMediaStream& aStream,
-                                             TMceSinkType aType )
+                                             TMceSinkType aType,
+                                             TMceSourceType aAssociatedSourceType )
     {
     const RPointerArray<CMceMediaSink>& sinks = aStream.Sinks();
     for ( TInt i = 0; i < sinks.Count(); ++i )
         {
-        if ( sinks[i]->Type() == aType )
+        if ( sinks[i]->Type() == aType && 
+           ( aAssociatedSourceType == KMusEngNoAssociatedSourceType || 
+             aStream.Source()->Type() == aAssociatedSourceType ) )
             {
             return sinks[i];
             }
@@ -198,10 +219,11 @@ CMceMediaSink* MusEngMceUtils::GetMediaSink( CMceMediaStream& aStream,
 // -----------------------------------------------------------------------------
 //
 CMceMediaSink* MusEngMceUtils::GetMediaSinkL( CMceMediaStream& aStream,
-                                              TMceSinkType aType )
+                                              TMceSinkType aType,
+                                              TMceSourceType aAssociatedSourceType )
     {
 
-    CMceMediaSink* sink = MusEngMceUtils::GetMediaSink( aStream, aType );
+    CMceMediaSink* sink = MusEngMceUtils::GetMediaSink( aStream, aType, aAssociatedSourceType );
 
     __ASSERT_ALWAYS( sink, User::Leave( KErrNotFound ) );
 
@@ -214,11 +236,14 @@ CMceMediaSink* MusEngMceUtils::GetMediaSinkL( CMceMediaStream& aStream,
 // -----------------------------------------------------------------------------
 //
 CMceMediaSink* MusEngMceUtils::GetMediaSink( CMceSession& aSession,
-                                             TMceSinkType aType )
+                                             TMceSinkType aType,
+                                             TMceSourceType aAssociatedSourceType,
+                                             TBool aStrictMatch )
     {
     CMceMediaSink* sink = NULL;
 
-    TRAP_IGNORE( sink = MusEngMceUtils::GetMediaSinkL( aSession, aType ) )
+    TRAP_IGNORE( sink = MusEngMceUtils::GetMediaSinkL( 
+            aSession, aType, aAssociatedSourceType, aStrictMatch ) )
 
     return sink;
     }
@@ -229,7 +254,9 @@ CMceMediaSink* MusEngMceUtils::GetMediaSink( CMceSession& aSession,
 // -----------------------------------------------------------------------------
 //
 CMceMediaSink* MusEngMceUtils::GetMediaSinkL( CMceSession& aSession,
-                                              TMceSinkType aType )
+                                              TMceSinkType aType,
+                                              TMceSourceType aAssociatedSourceType,
+                                              TBool aStrictMatch )
     {
     CMceMediaSink* sink = NULL;
     
@@ -237,7 +264,7 @@ CMceMediaSink* MusEngMceUtils::GetMediaSinkL( CMceSession& aSession,
 
     for ( TInt i = 0; i < streams.Count(); ++i )
         {
-        sink = MusEngMceUtils::GetMediaSink( *streams[i], aType );
+        sink = MusEngMceUtils::GetMediaSink( *streams[i], aType, aAssociatedSourceType );
         if ( sink )
             {
             return sink;
@@ -246,12 +273,19 @@ CMceMediaSink* MusEngMceUtils::GetMediaSinkL( CMceSession& aSession,
         if ( streams[i]->BoundStream() )
             {
             sink = MusEngMceUtils::GetMediaSink( streams[i]->BoundStreamL(), 
-                                                 aType );
+                                                 aType,
+                                                 aAssociatedSourceType );
             if ( sink )
                 {
                 return sink;
                 }
             }
+        }
+    
+    if ( !sink && aAssociatedSourceType != KMusEngNoAssociatedSourceType && !aStrictMatch )
+        {
+        // No preferred match, try without source preference
+        sink = GetMediaSinkL( aSession, aType );
         }
 
     __ASSERT_ALWAYS( sink, User::Leave( KErrNotFound ) );
@@ -342,12 +376,15 @@ CMceFileSource* MusEngMceUtils::GetFileSourceL( CMceSession& aSession )
 // Gets handle to a display sink.
 // -----------------------------------------------------------------------------
 //
-CMceDisplaySink* MusEngMceUtils::GetDisplay( CMceSession& aSession )
+CMceDisplaySink* MusEngMceUtils::GetDisplay( 
+    CMceSession& aSession, TBool aPreferViewFinder  )
     {
     MUS_LOG( "mus: [ENGINE]  -> MusEngMceUtils::GetDisplay()" )
     MUS_LOG( "mus: [ENGINE]  <- MusEngMceUtils::GetDisplay()" )
+    TMceSourceType preferredSource = 
+        aPreferViewFinder ? KMceCameraSource : KMusEngNoAssociatedSourceType;
     return static_cast<CMceDisplaySink*>(
-            MusEngMceUtils::GetMediaSink( aSession, KMceDisplaySink ) );
+            MusEngMceUtils::GetMediaSink( aSession, KMceDisplaySink, preferredSource ) );
 
     }
 
@@ -356,11 +393,12 @@ CMceDisplaySink* MusEngMceUtils::GetDisplay( CMceSession& aSession )
 // Gets handle to a display sink.
 // -----------------------------------------------------------------------------
 //
-CMceDisplaySink* MusEngMceUtils::GetDisplayL( CMceSession& aSession )
+CMceDisplaySink* MusEngMceUtils::GetDisplayL( 
+    CMceSession& aSession, TBool aPreferViewFinder )
     {
     MUS_LOG( "mus: [ENGINE]  -> MusEngMceUtils::GetDisplayL()" )
 
-    CMceDisplaySink* display = MusEngMceUtils::GetDisplay( aSession );
+    CMceDisplaySink* display = MusEngMceUtils::GetDisplay( aSession, aPreferViewFinder );
 
     __ASSERT_ALWAYS( display, User::Leave( KErrNotFound ) );
 
@@ -368,6 +406,51 @@ CMceDisplaySink* MusEngMceUtils::GetDisplayL( CMceSession& aSession )
     return display;
     }
 
+// -----------------------------------------------------------------------------
+// Gets handle to a display sink displaying received video.
+// -----------------------------------------------------------------------------
+//
+CMceDisplaySink* MusEngMceUtils::GetReceivingDisplay( CMceSession& aSession )
+    {
+    MUS_LOG( "mus: [ENGINE]  -> MusEngMceUtils::GetReceivingDisplay()" )
+    MUS_LOG( "mus: [ENGINE]  <- MusEngMceUtils::GetReceivingDisplay()" )
+    
+    // Search display which is connected with rtp source
+    TMceSourceType preferredSource = KMceRTPSource;
+    return static_cast<CMceDisplaySink*>( MusEngMceUtils::GetMediaSink( 
+                aSession, KMceDisplaySink, preferredSource, ETrue ) );
+    }
+
+// -----------------------------------------------------------------------------
+// Gets handle to a display sink displaying received video.
+// -----------------------------------------------------------------------------
+//
+CMceDisplaySink* MusEngMceUtils::GetReceivingDisplayL( CMceSession& aSession )
+    {
+    MUS_LOG( "mus: [ENGINE]  -> MusEngMceUtils::GetReceivingDisplayL()" )
+
+    CMceDisplaySink* display = GetReceivingDisplay( aSession );
+    __ASSERT_ALWAYS( display != NULL, User::Leave( KErrNotFound ) );
+    
+    MUS_LOG( "mus: [ENGINE]  <- MusEngMceUtils::GetReceivingDisplay()" )
+    
+    return display;
+    }
+
+// -----------------------------------------------------------------------------
+// Gets handle to a display sink displaying viewfinder content.
+// -----------------------------------------------------------------------------
+//
+CMceDisplaySink* MusEngMceUtils::GetVfDisplay( CMceSession& aSession )
+    {
+    MUS_LOG( "mus: [ENGINE]  -> MusEngMceUtils::GetVfDisplay()" )
+    MUS_LOG( "mus: [ENGINE]  <- MusEngMceUtils::GetVfDisplay()" )
+    
+    // Search display which is connected with camera
+    TMceSourceType preferredSource = KMceCameraSource;
+    return static_cast<CMceDisplaySink*>( MusEngMceUtils::GetMediaSink( 
+                aSession, KMceDisplaySink, preferredSource, ETrue ) );
+    }
 
 // -----------------------------------------------------------------------------
 // Adds display sink to specified stream if one does not exist already.
@@ -376,7 +459,8 @@ CMceDisplaySink* MusEngMceUtils::GetDisplayL( CMceSession& aSession )
 //
 void MusEngMceUtils::AddDisplayL( CMceMediaStream& aStream, 
                                   CMceManager& aManager,
-                                  const TRect& aDisplayRect )
+                                  const TRect& aDisplayRect,
+                                  TBool aDisabled )
     {
     MUS_LOG( "mus: [ENGINE]  -> MusEngMceUtils::AddDisplayL()" )
     
@@ -394,6 +478,11 @@ void MusEngMceUtils::AddDisplayL( CMceMediaStream& aStream,
         CleanupStack::Pop( display );
         }
 
+    if ( aDisabled )
+        {
+        MUS_LOG( "mus: [ENGINE]     Initially disabled display" )
+        display->DisableL();
+        }
     display->SetDisplayRectL( aDisplayRect );
     
     MUS_LOG( "mus: [ENGINE]  <- MusEngMceUtils::AddDisplayL()" )
@@ -449,9 +538,63 @@ void MusEngMceUtils::DisableStreamL( CMceMediaStream& aStream )
     MUS_LOG( "mus: [ENGINE]  -> MusEngMceUtils::DisableStreamL()" )
     }
 
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
+void MusEngMceUtils::DoEnableDisplayL( CMceDisplaySink& aDisplay, TBool aEnable )
+    {
+    MUS_LOG1( "mus: [ENGINE]     -> MusEngMceUtils::DoEnableDisplayL() %d", 
+              aEnable )
+    
+    if ( aEnable )
+        {
+        if ( !aDisplay.IsEnabled() )
+            {
+            aDisplay.EnableL();
+            MUS_LOG( "                  Display enabled" )
+            }
+        else
+            {
+            MUS_LOG( "                  Display already enabled, ignore" )
+            }
+        }
+    else
+        {
+        if ( aDisplay.IsEnabled() )
+            {
+            aDisplay.DisableL();
+            MUS_LOG( "                  Display disabled" )
+            }
+        else
+            {
+            MUS_LOG( "                  Display already disabled, ignore" )
+            }
+        }  
+        
+    MUS_LOG( "mus: [ENGINE]  <- MusEngMceUtils::DoEnableDisplayL()")
+    }
 
-
-
-
-
-
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
+TInt MusEngMceUtils::EnableInactivityTimer( 
+    CMceSession& aSession, 
+    TUint32 aInactivityTimeout )
+    {
+    TInt err( KErrNotFound );
+    CMceVideoStream* stream = NULL;
+    TRAP_IGNORE( stream = MusEngMceUtils::GetVideoInStreamL( aSession ) )
+    if ( stream )
+        {
+        // Instream has always RTP source
+        err = KErrNone;
+        CMceRtpSource* rtpSource = static_cast<CMceRtpSource*>( stream->Source() );
+        TRAP( err, rtpSource->EnableInactivityTimerL( aInactivityTimeout ) ) 
+        }
+    
+    return err;
+    }
+      
+// End of file

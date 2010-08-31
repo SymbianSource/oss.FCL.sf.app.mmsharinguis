@@ -275,14 +275,15 @@ class CMceSession : public CBase
         */
         IMPORT_C void SetModifierL( TMceSessionModifier aModifier, 
                                     TUint aValue );  
-
-		/**
+                                         
+        /**
          * Returns the identifier of profile used by the sesison.
          * @return TUint32 Identifier of the used profile. 0, 
          *         if session is setup without profile.
          */
         IMPORT_C TUint32 Profile() const;
-
+        
+        
     public:
         
         CMceManager& Manager() const;

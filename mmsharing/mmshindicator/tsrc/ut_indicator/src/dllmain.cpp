@@ -19,6 +19,7 @@
 
 #include "ut_cmusindicatorapi.h"
 #include "ut_cmussoundplayer.h"
+#include "ut_cmusindicatordsa.h"
 #include <digia/eunit/ceunittestsuite.h>
 
 
@@ -36,6 +37,9 @@ EXPORT_C MEUnitTest* CreateTestSuiteL()
     CleanupStack::Pop();
 
     rootSuite->AddL( UT_CMusSoundPlayer::NewLC() );
+    CleanupStack::Pop();
+
+    rootSuite->AddL( UT_CMusIndicatorDsa::NewLC() );
     CleanupStack::Pop();
 
     CleanupStack::Pop( rootSuite );

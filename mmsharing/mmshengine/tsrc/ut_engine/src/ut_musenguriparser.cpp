@@ -25,7 +25,7 @@
 
 //  SYSTEM INCLUDES
 #include <digia/eunit/eunitmacros.h>
-
+#include <e32property.h>
 
 
 // -----------------------------------------------------------------------------
@@ -101,7 +101,9 @@ void UT_TMusEngUriParser::SetupL()
 //
 void UT_TMusEngUriParser::Teardown()
     {
-    
+    MultimediaSharingSettings::SetOperatorVariantSettingL(
+                             MusSettingsKeys::EStandard );
+    PropertyHelper::Close();
     }
 
 
@@ -245,7 +247,7 @@ void UT_TMusEngUriParser::UT_TMusEngUriParser_ParseUriLL()
     parser.iUri = KTestRecipientRandomText8();
     TRAPD( error, parser.ParseUriL() );
     MUS_TEST_FORWARD_ALLOC_FAILURE( error );
-    EUNIT_ASSERT_EQUALS( error, KErrCorrupt );
+    EUNIT_ASSERT_EQUALS( error, KErrArgument );
     
     // Unsuccessful case, tel prefix and at sign present
     parser.iUri = KTestRecipientTelUriWithAtSign8();

@@ -17,7 +17,6 @@
 
 
 #include "muspropertymonitor.h"
-#include "musmanager.h"
 #include "mussesseioninformationapi.h"
 #include "muslogger.h"
 
@@ -26,10 +25,10 @@
 // Symbian two-phase constructor.
 // -----------------------------------------------------------------------------
 //
-CMusPropertyMonitor* CMusPropertyMonitor::NewL()
+CMusPropertyMonitor* CMusPropertyMonitor::NewL( MMusCallStateObserver& aCallStateObserver )  
     {
     MUS_LOG( "mus: [MUSAO]  -> CMusPropertyMonitor::NewL" )
-    CMusPropertyMonitor* self = new (ELeave) CMusPropertyMonitor();
+    CMusPropertyMonitor* self = new (ELeave) CMusPropertyMonitor( aCallStateObserver );
     CleanupStack::PushL( self );
     self->ConstructL();
     CleanupStack::Pop( self );
@@ -41,8 +40,8 @@ CMusPropertyMonitor* CMusPropertyMonitor::NewL()
 // C++ constructor.
 // -----------------------------------------------------------------------------
 //
-CMusPropertyMonitor::CMusPropertyMonitor()
-    :CActive( EPriorityNormal )
+CMusPropertyMonitor::CMusPropertyMonitor( MMusCallStateObserver& aCallStateObserver )
+    :CActive( EPriorityNormal ), iCallStateObserver ( aCallStateObserver )
     {
     }
 
@@ -73,7 +72,6 @@ CMusPropertyMonitor::~CMusPropertyMonitor()
     MUS_LOG( "mus: [MUSAO]  -> CMusPropertyMonitor::~CMusPropertyMonitor" )
     Cancel();
     iPropertyEvent.Close(); 
-    delete iManager;        
     MUS_LOG( "mus: [MUSAO]  -> <- CMusPropertyMonitor::~CMusPropertyMonitor" )
     }
 
@@ -86,40 +84,14 @@ CMusPropertyMonitor::~CMusPropertyMonitor()
 void CMusPropertyMonitor::RunL()
     {
     MUS_LOG( "mus: [MUSAO]  -> CMusPropertyMonitor::RunL" )
+
     // resubscribe before processing new value to prevent missing updates
     iPropertyEvent.Subscribe( iStatus );
     SetActive();    
-    TInt value = NMusSessionInformationApi::ENoCall;
-    User::LeaveIfError(iPropertyEvent.Get( value ));     
-    switch(value)
-        {      
-        /* CallHold and ConferenceCall are Error Cases.Will be handled by
-           Availability Plugin and Inform to AIW.
-         */           
-        case NMusSessionInformationApi::ECallHold:
-             MUS_LOG( "mus: [MUSAO]  CallEvent  = ECallHold" )                 
-             break;
-        case NMusSessionInformationApi::EConferenceCall:
-             MUS_LOG( "mus: [MUSAO]  CallEvent  = EConferenceCall" )                 
-             break;
-        /* When Call is connected , start the MusClient */
-        case NMusSessionInformationApi::ECallConnected:
-             MUS_LOG( "mus: [MUSAO]  CallEvent  = ECallConnected" )
-             StartMusClientL();
-             break;
-        /* When Call is disconnected , stop the MusClient */
-        case NMusSessionInformationApi::ENoCall:
-             MUS_LOG( "mus: [MUSAO]  CallEvent  = ENoCall" )
-             StopMusClient();
-             break;     
-        case NMusSessionInformationApi::EConferenceTerminated:
-             MUS_LOG( "mus: [MUSAO]  CallEvent  = EConferenceTerminated" ) 
-             break;
-        
-        default:
-             MUS_LOG( "mus: [MUSAO]  CallEvent  = default. Treated ENoCall" )
-             StopMusClient();
-        }
+
+    //Check if preconditions are met to start or stop the MushClient.
+    iCallStateObserver.MusCallStateChanged();
+
     MUS_LOG( "mus: [MUSAO]  <- CMusPropertyMonitor::RunL" )
     }
 
@@ -137,41 +109,6 @@ void CMusPropertyMonitor::DoCancel()
     }
 
 // -----------------------------------------------------------------------------
-// CMusPropertyMonitor::StartMusClient()
-// This will start the MusManager Client which inturn should start
-// MusManager Server and Availability Plugin.
-// -----------------------------------------------------------------------------
-//
-void CMusPropertyMonitor::StartMusClientL()
-    {
-    MUS_LOG( "mus: [MUSAO]  -> CMusPropertyMonitor::StartMusClient" )
-    if( !iManager )
-        {
-        iManager = CMusManager::NewL();
-        }
-    iManager->ExamineAvailabilityL();   
-    MUS_LOG( "mus: [MUSAO]  <- CMusPropertyMonitor::StartMusClient" ) 
-    }
-
-// -----------------------------------------------------------------------------
-// CMusPropertyMonitor::StopMusClient()
-// This will stop the MusManager Client which inturn should stop
-// MusManager Server and Availability Plugin.
-// -----------------------------------------------------------------------------
-//
-void CMusPropertyMonitor::StopMusClient()
-    {
-    MUS_LOG( "mus: [MUSAO]  -> CMusPropertyMonitor::StopMusClient" )
-    if( iManager )
-        {
-        delete iManager;
-        iManager = NULL;
-        }
-    MUS_LOG( "mus: [MUSAO]  <- CMusPropertyMonitor::StopMusClient" )
-    
-    }
-
-// -----------------------------------------------------------------------------
 // CMusPropertyMonitor::RunError()
 // Implemented for CActive.It will be called automatically
 // when a leave occurs in RunL()
@@ -180,14 +117,37 @@ void CMusPropertyMonitor::StopMusClient()
 TInt CMusPropertyMonitor::RunError(TInt aError)
     {
     MUS_LOG1( "mus: [MUSAO]  -> CMusPropertyMonitor::RunError = %d",aError )
-    if( iManager )
-        {
-        delete iManager;
-        iManager = NULL;
-        }    
+    
+    // Monitoring Error Occurred, Terminate the MushSession.
+    TInt err = RProperty::Set( NMusSessionInformationApi::KCategoryUid,
+                          NMusSessionInformationApi::KMusCallEvent,
+                          NMusSessionInformationApi::ENoCall);
+
+    iCallStateObserver.MusCallStateChanged();
+
     aError = KErrNone; // We handled this error already. So return KErrNone.
     MUS_LOG( "mus: [MUSAO]  <- CMusPropertyMonitor::RunError " )    
     return aError;
+    }
+
+// -----------------------------------------------------------------------------
+// CMusPropertyMonitor::IsCallConnected()
+// Checks if the call is connected: 
+// -----------------------------------------------------------------------------
+//
+TBool CMusPropertyMonitor::IsCallConnected()
+    {
+    MUS_LOG( "mus: [MUSAO]  -> CMusPropertyMonitor::IsCallConnected" )
+    TInt callState = ( TInt ) NMusSessionInformationApi::ENoCall;
+    TInt err = KErrNone;
+    
+    err = RProperty::Get( NMusSessionInformationApi::KCategoryUid,
+                          NMusSessionInformationApi::KMusCallEvent,
+                          callState );
+    
+    MUS_LOG( "mus: [MUSAO]  <- CMusPropertyMonitor::IsCallConnected" )
+    
+    return ( err == KErrNone && callState != NMusSessionInformationApi::ENoCall );
     }
 
 // End of file

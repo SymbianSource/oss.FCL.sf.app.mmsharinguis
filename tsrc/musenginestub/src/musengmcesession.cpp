@@ -18,118 +18,6 @@
 
 // USER
 #include "musengmcesession.h"
-#include "musengsessiondurationtimer.h"
-#include "musengoutsessionobserver.h"
-//#include "musengmceutils.h"
-//#include "musuid.hrh"
-#include "musengclipsessionobserver.h"
-
-// SYSTEM
-/*
-#include <mcemanager.h>
-#include <mcesession.h>
-#include <mcevideostream.h>
-#include <mceaudiostream.h>
-#include <mcertpsink.h>
-#include <mcedisplaysink.h>
-#include <mcespeakersink.h>
-#include <mcefilesource.h>
-*/
-
-const TInt KMusEngTimerInterval = 1000000; // 1 second
-const TInt KMusEngRtcpInactivityThreshold = 20; // seconds
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-CMusEngMceSession::~CMusEngMceSession()
-    {
-    }
-
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-EXPORT_C void CMusEngMceSession::TerminateL()
-    {
-    }
-
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-EXPORT_C void CMusEngMceSession::ReleaseInternalObservers()
-    {
-    }
-
-
-// -----------------------------------------------------------------------------
-// Returns estabilished session time. If not established return
-// value is < 0
-// -----------------------------------------------------------------------------
-//
-EXPORT_C TTimeIntervalSeconds CMusEngMceSession::GetSessionTime() const
-    {
-    }
-
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-EXPORT_C TBool CMusEngMceSession::ConnectionActive() const
-    {
-    return EFalse;
-    }
-
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-EXPORT_C void CMusEngMceSession::VolumeUpL()
-    {
-    }
-
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-EXPORT_C void CMusEngMceSession::VolumeDownL()
-    {
-    }
-
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-EXPORT_C void CMusEngMceSession::EnableDisplayL( TBool aEnable )
-    {
-    iDisplayEnabled = aEnable;
-    }
-
-
-// -----------------------------------------------------------------------------
-// Mutes playback of sended audio streams. Audio data is still streamed.
-// -----------------------------------------------------------------------------
-//
-EXPORT_C void CMusEngMceSession::MuteL()
-    {
-    }
-
-
-// -----------------------------------------------------------------------------
-// Unmutes playback of sended audio streams.
-// -----------------------------------------------------------------------------
-//
-EXPORT_C void CMusEngMceSession::UnmuteL()
-    {
-    }
 
 
 // -----------------------------------------------------------------------------
@@ -137,8 +25,7 @@ EXPORT_C void CMusEngMceSession::UnmuteL()
 // -----------------------------------------------------------------------------
 //
 CMusEngMceSession::CMusEngMceSession( const TRect& aRect )
-    : CMusEngSession( aRect ),
-      iSecondsFromLastRtcpReport ( 0 )
+    : iRect ( aRect )
     {
     }
 
@@ -149,71 +36,267 @@ CMusEngMceSession::CMusEngMceSession( const TRect& aRect )
 //
 void CMusEngMceSession::ConstructL()
     {
+    CMusEngSession::ConstructL(); // Base class ConstructL -first
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+CMusEngMceSession::~CMusEngMceSession()
+    {
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcSession 
+// -----------------------------------------------------------------------------
+//
+
+MLcSession::TLcSessionState CMusEngMceSession::LcSessionState() const
+    {
+    TLcSessionState lcSessionState = MLcSession::EUninitialized;
+    return lcSessionState;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcSession
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::EstablishLcSessionL()
+    {
+    User::Leave( KErrNotSupported );
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcSession
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::TerminateLcSessionL()
+    {
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcSession
+// -----------------------------------------------------------------------------
+//
+MLcVideoPlayer* CMusEngMceSession::RemoteVideoPlayer()
+    {
+    return NULL;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcSession
+// -----------------------------------------------------------------------------
+//
+MLcVideoPlayer* CMusEngMceSession::LocalVideoPlayer()
+    {
+    return NULL;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcSession
+// -----------------------------------------------------------------------------
+//
+const TDesC& CMusEngMceSession::LocalDisplayName()
+    {
+    return KNullDesC;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcSession
+// -----------------------------------------------------------------------------
+//
+const TDesC& CMusEngMceSession::RemoteDisplayName()
+    {
+    return KNullDesC;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcSession
+// -----------------------------------------------------------------------------
+//
+TInt CMusEngMceSession::SetParameter( TInt /*aId*/, TInt /*aValue*/ )
+    {
+    return KErrNotSupported;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcSession
+// -----------------------------------------------------------------------------
+//
+TInt CMusEngMceSession::ParameterValue( TInt /*aId*/ )
+    {
+    return KErrNotSupported;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcWindow
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::EnableLcWindowL( TBool aEnable )
+    {
+    iWindowEnabled = aEnable;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcWindow
+// -----------------------------------------------------------------------------
+//
+TBool CMusEngMceSession::IsLcWindowEnabled()
+    {
+    return iWindowEnabled;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcWindow
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::SetLcWindowRectL( TRect aRect )
+    {
+    iRect = aRect;
     }
 
 
 // -----------------------------------------------------------------------------
-//
+// From MLcWindow
 // -----------------------------------------------------------------------------
 //
-void CMusEngMceSession::RectChangedL()
+TRect CMusEngMceSession::LcWindowRect()
+    {
+    return iRect;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcWindow
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::SetLcWindowOrientationL( 
+    TLcWindowOrientation aOrientation )
+    {
+    iOrientation = aOrientation;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcWindow
+// -----------------------------------------------------------------------------
+//
+MLcWindow::TLcWindowOrientation CMusEngMceSession::LcWindowOrientationL()
+    {
+    MLcWindow::TLcWindowOrientation orientation;
+    if ( iOrientation == ELandscape )
+        {
+        orientation = MLcWindow::ELandscape;
+        }
+    else
+        {
+        orientation = MLcWindow::EPortrait;
+        }
+    return orientation;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcAudioControl
+// -----------------------------------------------------------------------------
+//
+TBool CMusEngMceSession::IsLcAudioMutedL()
+    {
+    return iMuted;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcAudioControl
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::MuteLcAudioL( TBool aMute )
+    {
+    iMuted = aMute;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcAudioControl
+// -----------------------------------------------------------------------------
+//
+TBool CMusEngMceSession::IsEnablingLcLoudspeakerAllowed()
+    {
+    return iEnablingLoudspeakerAllowed;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcAudioControl
+// -----------------------------------------------------------------------------
+//
+TBool CMusEngMceSession::IsLcMicMutedL()
+    {
+    return iMicMuted;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcAudioControl
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::MuteLcMicL( TBool aMute )
+    {
+    iMicMuted = aMute;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcAudioControl
+// -----------------------------------------------------------------------------
+//
+TBool CMusEngMceSession::IsLcLoudspeakerEnabled()
+    {
+    return iLoudspeakerEnabled;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcAudioControl
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::EnableLcLoudspeakerL( TBool aEnabled )
+    {
+    iLoudspeakerEnabled = aEnabled;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcAudioControl
+// -----------------------------------------------------------------------------
+//
+TInt CMusEngMceSession::LcVolumeL()
+    {
+    return iVolume;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcAudioControl
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::SetLcVolumeL( TInt aValue )
+    {
+    iVolume = aValue;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcAudioControl
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::IncreaseLcVolumeL()
+    {
+    iVolume++;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcAudioControl
+// -----------------------------------------------------------------------------
+//
+void CMusEngMceSession::DecreaseLcVolumeL()
+    {
+    iVolume--;
+    }
+
+void CMusEngMceSession::UpdateLcSessionL()
     {
     }
 
 
 
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-TBool CMusEngMceSession::IsRtpcInactivityTimoutSupported()
-{
-    return EFalse;
-}
-
-// -----------------------------------------------------------------------------
-// Initializes session timer to current time
-// -----------------------------------------------------------------------------
-//
-void CMusEngMceSession::InitializeSessionTimer()
-    {
-    }
-
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void CMusEngMceSession::UpdateTimerEvent()
-    {
-    }
-
-
-// -----------------------------------------------------------------------------
-// Enables or disables all the speaker and rtp sinks of all the audio streams
-// -----------------------------------------------------------------------------
-//
-void CMusEngMceSession::DoMuteL( TBool aMute )
-    {
-    }
-
-
-// -----------------------------------------------------------------------------
-// Changes volume of all speaker sinks in the session structure
-// -----------------------------------------------------------------------------
-//
-void CMusEngMceSession::ChangeVolumeByOneL( TBool aIncreaseVolume )
-    {
-    }
-
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void CMusEngMceSession::CheckClipEndL()
-    {
-    }
-
-
+// End of file

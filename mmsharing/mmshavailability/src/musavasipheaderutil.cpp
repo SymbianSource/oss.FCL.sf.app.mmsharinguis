@@ -19,8 +19,6 @@
 
 #include "musavasipheaderutil.h"
 #include "muscleanupresetanddestroy.h"
-#include "mussesseioninformationapi.h"
-#include <e32property.h>
 #include <escapeutils.h>
 #include <sipconnection.h>
 #include <sipprofile.h>
@@ -228,29 +226,6 @@ void CMusAvaSipheaderUtil::AddAcceptSdpHeaderL(
     "mus: [MUSAVA] <- CMusAvaSipheaderUtil::AddAcceptSDPHeaderL" )
     }
 
-// --------------------------------------------------------------------------
-// CMusAvaSipheaderUtil::AddPrivacyHeaderL
-// --------------------------------------------------------------------------
-//
-void CMusAvaSipheaderUtil::AddPrivacyHeaderL( 
-                         RPointerArray<CSIPHeaderBase>& aRequestHeaders )
-    {    
-    MUS_LOG( "mus: [MUSAVA]  -> AddPrivacyHeaderL()" )
-    NMusSessionInformationApi::TMusClirSetting clir =
-		NMusSessionInformationApi::ESendOwnNumber;
-    // Ignore RProperty::Get return value.Incase of error it should behave default.
-    RProperty::Get( NMusSessionInformationApi::KCategoryUid,
-                    NMusSessionInformationApi::KMusClirSetting,
-                    reinterpret_cast<TInt&>( clir ) );
-    MUS_LOG1( "mus: [MUSAVA]  - clir setting = %d", clir )
-    if ( clir == NMusSessionInformationApi::EDoNotSendOwnNumber )
-        {
-        _LIT8( KMusPrivacyHeader, "Privacy" );
-        _LIT8( KMusPrivacyHeaderValue, "id" );
-        CSIPExtensionHeader* header = CSIPExtensionHeader::NewLC( 
-            KMusPrivacyHeader, KMusPrivacyHeaderValue );
-        aRequestHeaders.AppendL( header );
-        CleanupStack::Pop( header );
-        }
-    MUS_LOG( "mus: [MUSAVA]  <- AddPrivacyHeaderL()" )
-    }
+
+
+

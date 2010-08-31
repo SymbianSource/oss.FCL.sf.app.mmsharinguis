@@ -1,36 +1,3 @@
 EXPORTS
-	?CreateTestSuiteL@@YAPAVMEUnitTest@@XZ @ 1 NONAME ; class MEUnitTest * __cdecl CreateTestSuiteL(void)
-	?KillTask@TApaTask@@QAEXXZ @ 2 NONAME ; void TApaTask::KillTask(void)
-	?Complete@RMessagePtr2@@QBEXH@Z @ 3 NONAME ; void RMessagePtr2::Complete(int) const
-	?FindApp@TApaTaskList@@QAE?AVTApaTask@@VTUid@@@Z @ 4 NONAME ; class TApaTask TApaTaskList::FindApp(class TUid)
-	?ReStart@CServer2@@QAEXXZ @ 5 NONAME ; void CServer2::ReStart(void)
-	?ListImplementationsL@REComSession@@SAXVTUid@@AAV?$RPointerArray@VCImplementationInformation@@@@@Z @ 6 NONAME ; void REComSession::ListImplementationsL(class TUid, class RPointerArray<class CImplementationInformation> &)
-	?Connect@RApaLsSession@@QAEHXZ @ 7 NONAME ; int RApaLsSession::Connect(void)
-	?StartDocument@RApaLsSession@@QAEHABVTDesC16@@VTUid@@AAVTThreadId@@W4TLaunchType@1@@Z @ 8 NONAME ; int RApaLsSession::StartDocument(class TDesC16 const &, class TUid, class TThreadId &, enum RApaLsSession::TLaunchType)
-	?Client@RMessagePtr2@@QBEHAAVRThread@@W4TOwnerType@@@Z @ 9 NONAME ; int RMessagePtr2::Client(class RThread &, enum TOwnerType) const
-	?Exists@TApaTask@@QAEHXZ @ 10 NONAME ; int TApaTask::Exists(void)
-	?NewLC@CApaCommandLine@@SAPAV1@XZ @ 11 NONAME ; class CApaCommandLine * CApaCommandLine::NewLC(void)
-	??0TApaTask@@QAE@AAVRWsSession@@@Z @ 12 NONAME ; TApaTask::TApaTask(class RWsSession &)
-	?DestroyedImplementation@REComSession@@SAXVTUid@@@Z @ 13 NONAME ; void REComSession::DestroyedImplementation(class TUid)
-	?GetAppInfo@RApaLsSession@@QBEHAAVTApaAppInfo@@VTUid@@@Z @ 14 NONAME ; int RApaLsSession::GetAppInfo(class TApaAppInfo &, class TUid) const
-	?CreateImplementationL@REComSession@@SAPAXVTUid@@J@Z @ 15 NONAME ; void * REComSession::CreateImplementationL(class TUid, long)
-	?Install@CActiveScheduler@@SAXPAV1@@Z @ 16 NONAME ; void CActiveScheduler::Install(class CActiveScheduler *)
-	??0RApaLsSession@@QAE@XZ @ 17 NONAME ; RApaLsSession::RApaLsSession(void)
-	?FindApp@TApaTaskList@@QAE?AVTApaTask@@ABVTDesC16@@@Z @ 18 NONAME ; class TApaTask TApaTaskList::FindApp(class TDesC16 const &)
-	?StartApp@RApaLsSession@@QAEHABVCApaCommandLine@@AAVTThreadId@@@Z @ 19 NONAME ; int RApaLsSession::StartApp(class CApaCommandLine const &, class TThreadId &)
-	?StartApp@RApaLsSession@@QAEHABVCApaCommandLine@@AAVTThreadId@@PAVTRequestStatus@@@Z @ 20 NONAME ; int RApaLsSession::StartApp(class CApaCommandLine const &, class TThreadId &, class TRequestStatus *)
-	??0TApaTaskList@@QAE@AAVRWsSession@@@Z @ 21 NONAME ; TApaTaskList::TApaTaskList(class RWsSession &)
-	?FindDoc@TApaTaskList@@QAE?AVTApaTask@@ABVTDesC16@@@Z @ 22 NONAME ; class TApaTask TApaTaskList::FindDoc(class TDesC16 const &)
-	?SetExecutableNameL@CApaCommandLine@@QAEXABVTDesC16@@@Z @ 23 NONAME ; void CApaCommandLine::SetExecutableNameL(class TDesC16 const &)
-	?RequestComplete@RThread@@QBEXAAPAVTRequestStatus@@H@Z @ 24 NONAME ; void RThread::RequestComplete(class TRequestStatus * &, int) const
-	?Version@RApaLsSession@@QBE?AVTVersion@@XZ @ 25 NONAME ; class TVersion RApaLsSession::Version(void) const
-	?BringToForeground@TApaTask@@QAEXXZ @ 26 NONAME ; void TApaTask::BringToForeground(void)
-	?EndTask@TApaTask@@QAEXXZ @ 27 NONAME ; void TApaTask::EndTask(void)
-	?SendToBackground@TApaTask@@QAEXXZ @ 28 NONAME ; void TApaTask::SendToBackground(void)
-	?WriteL@RMessagePtr2@@QBEXHABVTDesC8@@H@Z @ 29 NONAME ; void RMessagePtr2::WriteL(int, class TDesC8 const &, int) const
-	?ReadL@RMessagePtr2@@QBEXHAAVTDes8@@H@Z @ 30 NONAME ; void RMessagePtr2::ReadL(int, class TDes8 &, int) const
-	?StartApp@RApaLsSession@@QAEHABVCApaCommandLine@@@Z @ 31 NONAME ; int RApaLsSession::StartApp(class CApaCommandLine const &)
-	?GetDesMaxLength@RMessagePtr2@@QBEHH@Z @ 32 NONAME ; int RMessagePtr2::GetDesMaxLength(int) const
-	?FindByPos@TApaTaskList@@QAE?AVTApaTask@@H@Z @ 33 NONAME ; class TApaTask TApaTaskList::FindByPos(int)
-	?Close@RApaLsSession@@QAEXXZ @ 34 NONAME ; void RApaLsSession::Close(void)
+	?CreateTestSuiteL@@YAPAVMEUnitTest@@XZ @ 1 NONAME ; class MEUnitTest * CreateTestSuiteL(void)
 

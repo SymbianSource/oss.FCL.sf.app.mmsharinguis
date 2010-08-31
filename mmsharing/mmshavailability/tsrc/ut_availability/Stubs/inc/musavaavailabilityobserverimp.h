@@ -118,9 +118,6 @@ public:
         
         
     virtual MMusAvaObserver::TAvailabilityStatus AvailabilityPluginState();
-    
-    
-    virtual void AvailabilitiesAbleToShowIndicator();
 
      
      /**

@@ -26,6 +26,8 @@
 
 //  FORWARD DECLARATIONS
 class CMusEngLiveSession;
+class CLcSessionObserverStub;
+class CLcUiProviderStub;
 class CMusEngObserverStub;
 
 // CONSTANTS
@@ -69,21 +71,29 @@ NONSHARABLE_CLASS( UT_CMusEngOutSession ): public CEUnitTestSuiteClass
 
     private: // Test methdods
     
-        void UT_CMusEngOutSession_InviteLL();
-        void UT_CMusEngOutSession_CancelInviteLL();
-        void UT_CMusEngOutSession_EstablishSessionLL();
-        void UT_CMusEngOutSession_HandleTerminationL();
-        void UT_CMusEngOutSession_AdjustVideoCodecLL();
-        void UT_CMusEngOutSession_AdjustAudioCodecLL();
-        void UT_CMusEngOutSession_CreateMceSessionStructureLL();
+        void UT_EstablishLcSessionL();
+        void UT_EstablishLcSession_RecipientResolvingL();
+        void UT_EstablishLcSession_RegistrationPendingL();
+        void UT_TerminateLcSessionL();
+        void UT_EstablishSessionLL();
+        void UT_HandleTerminationL();
+        void UT_HandleRecipientNotFoundTerminationL();
+        void UT_AdjustVideoCodecLL();
+        void UT_AdjustAudioCodecLL();
+        void UT_CreateMceSessionStructureLL();
+        void UT_ConstructLL();
+        void UT_ContactSavingLL();
+        void UT_RemoteAddressLL();
+        void UT_RemoteDisplayNameL();
 
     private:    // Data
 
         CMusEngLiveSession* iLiveSession;
-        CMusEngObserverStub* iObserver;
+        CLcSessionObserverStub* iLcSessionObserver;
+        CLcUiProviderStub* iLcUiProvider;
+        CMusEngObserverStub* iAudioRoutingObserver;
 
         EUNIT_DECLARE_TEST_TABLE;
-
     };
 
 #endif      //  __UT_MUSENGOUTSESSION_H__

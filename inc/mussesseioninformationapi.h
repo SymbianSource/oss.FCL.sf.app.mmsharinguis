@@ -51,8 +51,7 @@ namespace NMusSessionInformationApi
         ENoCall,
         ECallConnected,
         ECallHold,       
-        EConferenceCall,
-        EConferenceTerminated
+        EConferenceCall
         };
 
     /**  Contains the call direction */
@@ -74,25 +73,11 @@ namespace NMusSessionInformationApi
         EMUSAllowed = 1,
         EMUSForbidden
         };
-    
-    /**  Contains the call privacy */
-    const TInt KMUSPrivacy( 0x102823A4 );
-    /**  Contains the possible values for call privacy*/
-    enum TMusCallPrivacy
-        {
-        EPrivacyOn = 1,
-        EPrivacyOff
-        };
-    
-    /**  Phone's CLIR setting. This is used in MO case to determine if the
-     *   caller's phone number/id is sent to remote party */
-    const TInt KMusClirSetting( 0x102823A5 );
-    /**  Possible values for KMusClirSetting */
-    enum TMusClirSetting
-        {
-        ESendOwnNumber,
-        EDoNotSendOwnNumber
-        };
+    /**  Contains the call provider information. ( For example Skype )      
+      *  This string will be used to parse the corresponding ecom plugin
+      *  which implements the livecomms engine api
+      */
+    const TInt KMUSCallProvider( 0x102823A4 );
     }
 
 #endif // MUSRESOURCEPROPERTIES_H

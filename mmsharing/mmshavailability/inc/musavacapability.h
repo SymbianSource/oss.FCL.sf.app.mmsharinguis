@@ -25,7 +25,7 @@
 #include <sdpcodecstringpool.h>
 #include <badesca.h>
 #include "musunittesting.h"
-
+#include "mussettingskeys.h"
 
 class CMusAvaCapabilityExchange;
 class CSIPServerTransaction;
@@ -47,6 +47,7 @@ _LIT8( KCapabilitySDPAttributeCodecH263, "H263-2000" );
 _LIT8( KCapabilitySwisFormatList, "98 96" );
 _LIT8( KCapabilitySwisFormatListH263Only, "96" );
 _LIT8( KCapabilitySDPAttributeCodecH264, "H264" );
+_LIT8( KCapabilitySDPAttributeFastMode, "fastmode" ); //a=keywds:fastmode, see RFC 4566
 
 const TUint64 KCapabilitySDPAttributeClockrate = 90000;
 const TUint64 KCapabilitySDPAttributePayloadType = 96;
@@ -169,6 +170,18 @@ public: //static API
     static const CSdpAttributeField* Attribute( const RStringF& aMedia,
                                         const RStringF& aAttribute,
                                         CSdpDocument& aSDP );
+    
+    /**
+     * Finds fast mode value from the SDP document
+     */
+    static MusSettingsKeys::TFastMode ResolveFastModeL( CSdpDocument& aSdp );
+    
+    /**
+     * Add fast mode related attribute to SDP, if fast mode is supported
+     */
+    static void AddFastModeL( CSdpDocument& aSdp );
+    
+    
 public://new functions
 
     /**

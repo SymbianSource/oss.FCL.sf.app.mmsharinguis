@@ -16,10 +16,9 @@
 */
 #include <aknnotewrappers.h>
 #include <akntextsettingpage.h> 
-#include "cenrepeditorListbox2.h"
 
 #include "cenrepeditorListbox2.h"
-#include <e32debug.h>
+
 
 CAknSettingItem* COtherResourcesListbox::CreateSettingItemL( TInt aIdentifier )
     {
@@ -49,9 +48,6 @@ CAknSettingItem* COtherResourcesListbox::CreateSettingItemL( TInt aIdentifier )
     case EOtherResourceSessionSetupMethod:        
         settingItem=ConstructByValueL( aIdentifier,iOtherResources->iSessionSetupMethod);
         break;
-    case EOtherRResourcePrivacyVariationMode:
-        settingItem=ConstructByValueL( aIdentifier, iOtherResources->iPrivacyVariation ); 
-        break;  
     case EOtherResourceAutoRecord:        
         settingItem=ConstructByValueL( aIdentifier,iOtherResources->iAutoRecord);
         break;
@@ -81,8 +77,28 @@ CAknSettingItem* COtherResourcesListbox::CreateSettingItemL( TInt aIdentifier )
         break;   
     case EOtherResourceEncodingDevice:
         settingItem = new (ELeave) 
-           CAknTextSettingItem( aIdentifier, iOtherResources->iEncodingDeviceStr ); 
-    	break;             
+            CAknTextSettingItem( aIdentifier, iOtherResources->iEncodingDeviceStr );
+        settingItem->SetSettingPageFlags(CAknTextSettingPage::EZeroLengthAllowed);
+        break;        
+    case EOtherResourceAllowOnlyWithActiveCSCall:        
+        settingItem=ConstructByValueL( aIdentifier,iOtherResources->iOnlyWithActiveCSCall );
+        break;    
+    case EOtherResourceAllowOnlyIn3GNetwork:        
+        settingItem=ConstructByValueL( aIdentifier,iOtherResources->iOnlyIn3GNetwork );
+        break;
+    case EOtherResourceCameraUsage:        
+        settingItem=ConstructByValueL( aIdentifier,iOtherResources->iCameraUsage );
+        break;
+    case EOtherResourceVideoDirection:        
+        settingItem=ConstructByValueL( aIdentifier,iOtherResources->iVideoDirection );
+        break;
+    case EOtherResourceVideoBandwidth:        
+        settingItem = new (ELeave) 
+            CAknIntegerEdwinSettingItem( aIdentifier,iOtherResources->iVideoBandwidth );
+        break;
+    case EOtherResourceFastMode:        
+        settingItem = ConstructByValueL( aIdentifier, iOtherResources->iFastMode );
+        break;
     default:
         break;
         }
@@ -104,47 +120,9 @@ void COtherResourcesListbox::SizeChanged()
     }
 
 
-// ------------------------------------------------------------------
-// CPhoneResourcesListbox::ConstructByValueL( aIdentifier, )
-// ------------------------------------------------------------------
-//
-
-CAknSettingItem* COtherResourcesListbox::ConstructByValueL( TInt aIdentifier,  
-                                            TInt& aVal )
+CAknSettingItem* COtherResourcesListbox::ConstructByValueL( 
+    TInt aIdentifier,
+    TInt& aVal)
     {    
-    CAknSettingItem* settingItem = NULL ;
-    if(aVal<0 )
-        {        
-        settingItem = new (ELeave) CAknSettingItem(aIdentifier);
-        settingItem->SetProtectionState(CAknSettingItem::ESettingItemProtected);
-        }
-    else
-        {
-        settingItem = new (ELeave) 
-            CAknEnumeratedTextPopupSettingItem(aIdentifier,aVal);
-        }
-    return settingItem ;
-    }
-
-
-void COtherResourcesListbox::EditItemL(TInt aIndex, TBool aCalledFromMenu)
-    {
-    CAknSettingItemList::EditItemL(aIndex, aCalledFromMenu);
-    
-    CAknSettingItem* currentItem = SettingItemArray()->At(aIndex);
-    if ( currentItem->Identifier() == EOtherResourceEncodingDevice )
-        {
-        TLex lex( currentItem->SettingTextL() );
-        TUint uid;
-        TInt err = lex.Val(uid, EHex);
-        
-        if ( (err != KErrNone) || !lex.Eos() )
-            {
-            currentItem->LoadL();
-            currentItem->UpdateListBoxTextL();
-
-            CAknWarningNote* warningNote = new (ELeave) CAknWarningNote;
-            warningNote->ExecuteLD(_L("Invalid value"));
-            }
-         }
+    return new (ELeave) CAknEnumeratedTextPopupSettingItem(aIdentifier,aVal);
     }

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2005-2007 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -11,9 +11,10 @@
 *
 * Contributors:
 *
-* Description:
+* Description:  
 *
 */
+
 
 #ifndef CSIPPROFILEALRCONTROLLER_H
 #define CSIPPROFILEALRCONTROLLER_H
@@ -45,7 +46,7 @@ class CSipProfileAlrController : public CBase
     {
     public: // Data only in MuS Engine's unit testing stub
     
-		TBool iAllowMigrationCalled;
+        TBool iAllowMigrationCalled;
         TBool iDisallowMigrationCalled;
         TUint32 iLastUsedIap;
         

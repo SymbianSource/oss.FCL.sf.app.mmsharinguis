@@ -40,7 +40,6 @@ enum TPSCTsyKodiakPtt
 
 CPhoneResources* CPhoneResources::NewLC()
     {
-    // create a new expense object
     CPhoneResources* self = new (ELeave) CPhoneResources();
     CleanupStack::PushL(self);
     self->ConstructL();
@@ -54,112 +53,79 @@ CPhoneResources* CPhoneResources::NewL()
     return self;
     }
 
+CPhoneResources::~CPhoneResources()
+    {
+    }
+
 void CPhoneResources::ConstructL()
 	{
-    iCameraAvailability = -1;
-    iKeypadAvailability = -1 ;
-    iVideoPlayerAvailability = -1;
-    iCameraInformation = -1;
-    iKodiakPhoneCall = -1;
-    iDummy = 1; // just a postive value , dirty idea but just works at this time 
-	}
+    // If a P&S key is not found, set it to KErrNotFound.
+	// This is why the RProperty::Get return values are not handled below.
+	iCameraAvailability = KErrNotFound;
+    RProperty::Get(NMusResourceApi::KCategoryUid, 
+                   NMusResourceApi::KCameraAvailability, 
+                   iCameraAvailability);
 
-void CPhoneResources::ReadL()
-	{
-    TInt err = KErrNone;
-            // 1. camera property
-    err = RProperty::Get( NMusResourceApi::KCategoryUid, 
-                             NMusResourceApi::KCameraAvailability, 
-                              iCameraAvailability);
-    if(err)HandleError(ETrue,err,_L("CameraAvailability"));
-            // 2. keypad property
-    err = RProperty::Get( NMusResourceApi::KCategoryUid, 
-                               NMusResourceApi::KKeypadAvailability, 
-                               iKeypadAvailability );
-    if(err)HandleError(ETrue , err,_L("KeypadAvailability"));
-            // 3. video player property
-    err = RProperty::Get( NMusResourceApi::KCategoryUid, 
-                               NMusResourceApi::KVideoPlayerAvailability, 
-                               iVideoPlayerAvailability );
-    if(err)HandleError( ETrue, err ,_L("VideoPlayerAvailability"));
-            // 3. video player property
-    err = RProperty::Get( NMusResourceApi::KCategoryUid, 
-                               NMusResourceApi::KCameraInformation, 
-                               iCameraInformation );
-    if(err)HandleError( ETrue, err ,_L("CameraInformation"));    
-    err = RProperty::Get( KPSUidCtsyCallInformation, 
-                               KCTsyKodiakPtt, 
-                               iKodiakPhoneCall );
-    if(err)
+    iKeypadAvailability = KErrNotFound;
+    RProperty::Get(NMusResourceApi::KCategoryUid, 
+                   NMusResourceApi::KKeypadAvailability, 
+                   iKeypadAvailability);
+
+    iVideoPlayerAvailability = KErrNotFound;  
+    RProperty::Get(NMusResourceApi::KCategoryUid, 
+                   NMusResourceApi::KVideoPlayerAvailability, 
+                   iVideoPlayerAvailability );
+
+    iCameraInformation = KErrNotFound;    
+    RProperty::Get(NMusResourceApi::KCategoryUid, 
+                   NMusResourceApi::KCameraInformation, 
+                   iCameraInformation );   
+    
+    iKodiakPhoneCall = KErrNotFound;
+    TInt err = RProperty::Get(KPSUidCtsyCallInformation, 
+                              KCTsyKodiakPtt, 
+                              iKodiakPhoneCall );
+    if (err != KErrNone)
         {  
         iKodiakPhoneCall = EPSCTsyKodiakPttNotActive;        
         RProperty::Define(KPSUidCtsyCallInformation,KCTsyKodiakPtt,EPSCTsyKodiakPttNotActive);
-        }   
-	}
-
-
-CPhoneResources::~CPhoneResources()
-	{
+        }
 	}
 
 void CPhoneResources::SaveL()
     {
-    //TInt err = KErrNone;
+    SetValueL(NMusResourceApi::KCategoryUid, 
+              NMusResourceApi::KCameraAvailability, 
+              iCameraAvailability);
 
-    User::LeaveIfError(SetValueL( NMusResourceApi::KCategoryUid, 
-                             NMusResourceApi::KCameraAvailability, 
-                              iCameraAvailability));
-    //if(err)HandleError( EFalse, err ,_L("CameraAvailability"));
-            // 2. keypad property
-    User::LeaveIfError(SetValueL( NMusResourceApi::KCategoryUid, 
-                               NMusResourceApi::KKeypadAvailability, 
-                               iKeypadAvailability ));
-    //if(err)HandleError(EFalse, err,_L("KeypadAvailability"));
-          // 3. video player property
-    User::LeaveIfError(SetValueL( NMusResourceApi::KCategoryUid, 
-                               NMusResourceApi::KVideoPlayerAvailability, 
-                               iVideoPlayerAvailability ));
-    //if(err)HandleError(EFalse, err,_L("VideoPlayerAvailability"));
-          // 3. video player property
-    User::LeaveIfError(SetValueL( NMusResourceApi::KCategoryUid, 
-                               NMusResourceApi::KCameraInformation, 
-                                iCameraInformation ));
-    //if(err)HandleError(EFalse, err,_L("CameraInformation"));
-             // 4. Kodiak PS Key    
-    User::LeaveIfError(SetValueL( KPSUidCtsyCallInformation, 
-                               KCTsyKodiakPtt, 
-                                iKodiakPhoneCall ));
-    //if(err)HandleError( EFalse, err ,_L("KodiakPSKeyInformation"));                 
+    SetValueL(NMusResourceApi::KCategoryUid, 
+              NMusResourceApi::KKeypadAvailability, 
+              iKeypadAvailability);
+
+    SetValueL(NMusResourceApi::KCategoryUid, 
+              NMusResourceApi::KVideoPlayerAvailability, 
+              iVideoPlayerAvailability);
+
+    SetValueL(NMusResourceApi::KCategoryUid, 
+              NMusResourceApi::KCameraInformation, 
+              iCameraInformation);
+
+    SetValueL(KPSUidCtsyCallInformation, 
+              KCTsyKodiakPtt, 
+              iKodiakPhoneCall);                
     }
 
-TInt CPhoneResources::SetValueL(TUid aCategory, TUint aKey, TInt aValue)
+void CPhoneResources::SetValueL(TUid aCategory, TUint aKey, TInt aValue)
     {
-    if(aValue<0)return KErrNone; // dont care if the key is not read intially
-    return RProperty::Set( aCategory, aKey, aValue );
-    }
-
-
-void CPhoneResources::HandleError(TBool aType ,TInt aError , TPtrC aKeyName )
-    {
-    CAknErrorNote *dlg = new CAknErrorNote(ETrue);
-    TBuf<100> buf;
-    if(aType)
+    // Don't care if the key is not found initially
+    if (aValue >= 0)
         {
-        buf.Append(_L("Unable to Read Key "));
+        User::LeaveIfError(RProperty::Set(aCategory, aKey, aValue));
         }
-    else
-        {
-        buf.Append(_L("Unable to Save "));
-        }
-    buf.Append(aKeyName);
-    buf.Append(_L(" Error "));
-    buf.AppendNum(aError);
-    dlg->ExecuteLD(buf); 
     }
 
 COtherResources* COtherResources::NewLC()
     {
-    // create a new expense object
     COtherResources* self = new (ELeave) COtherResources();
     CleanupStack::PushL(self);
     self->ConstructL();
@@ -175,185 +141,157 @@ COtherResources* COtherResources::NewL()
 
 void COtherResources::ConstructL()
     {
-    iActivation = -1 ;
-    iOperatorVariant = -1 ;
-    iAuditoryNotification = -1;
-    iPopupNotification = -1 ;
-    iPopupNotificationType = -1 ;
-    iEdgeDtmSupport = -1 ;
-    iSessionSetupMethod = -1 ;
-    iAutoRecord = -1 ;
-    iVideoLocation = -1 ;
-    iSipProfileId = -1 ;
-    iUiOrientation = -1 ;
-    iCapabilityQuery = -1;  
-    iProductModeVariation=-1;
-    iEncodingDevice = -1;
-    iPrivacyVariation = -1;
-    iDummy = 1; // just a postive value      
+    iRepository = CRepository::NewL(MusSettingsKeys::KRepositoryUid);
+    
+    // If a CenRep key is not found, set it to KErrNotFound.
+    // This is why the CRepository::Get return values are not handled below.
+    iActivation = KErrNotFound;
+    iRepository->Get(MusSettingsKeys::KActivation, iActivation);
+    
+    iOperatorVariant = KErrNotFound;
+    iRepository->Get(MusSettingsKeys::KOperatorVariant,iOperatorVariant);
+    
+    iAuditoryNotification = KErrNotFound;
+    iRepository->Get(MusSettingsKeys::KAuditoryNotification, iAuditoryNotification);
+    
+    iPopupNotification = KErrNotFound;
+    iRepository->Get(MusSettingsKeys::KPopupNotification, iPopupNotification);
+    
+    iPopupNotificationType = KErrNotFound;
+    iRepository->Get(MusSettingsKeys::KPopupNotificationType, iPopupNotificationType);
+    
+    iEdgeDtmSupport = KErrNotFound;
+    iRepository->Get(MusSettingsKeys::KEdgeDtmSupport, iEdgeDtmSupport);
+    
+    iSessionSetupMethod = KErrNotFound;
+    iRepository->Get(MusSettingsKeys::KForceInternetSignaling, iSessionSetupMethod);
+    
+    iAutoRecord = KErrNotFound;
+    iRepository->Get(MusSettingsKeys::KAutoRecord, iAutoRecord);
+    
+    iVideoLocation = KErrNotFound;
+    iRepository->Get(MusSettingsKeys::KVideoLocation, iVideoLocation);
+    
+    iSipProfileId = KErrNotFound;
+    iRepository->Get(MusSettingsKeys::KSipProfileId, iSipProfileId);
+    
+    iUiOrientation = KErrNotFound;
+    iRepository->Get(MusSettingsKeys::KUiOrientation, iUiOrientation);
+    
+    iCapabilityQuery = KErrNotFound;
+    iRepository->Get(MusSettingsKeys::KCapabilityQuery, iCapabilityQuery);
+    
+    iProductModeVariation = KErrNotFound;
+    iRepository->Get(MusSettingsKeys::KProductModeVariation, iProductModeVariation);    
+    
+    iRepository->Get(MusSettingsKeys::KEncoderConfigurationInfo, iEncoderInfo );
+    
+    iEncodingDevice = KErrNotFound;
+    iRepository->Get(MusSettingsKeys::KEncodingDevice, iEncodingDevice );
+    iEncodingDeviceStr.Zero();
+    if ( iEncodingDevice >= 0 )
+        {
+        iEncodingDeviceStr.AppendNum(iEncodingDevice, EHex); 
+        }
+    
+    iOnlyWithActiveCSCall = KErrNotFound;
+    iRepository->Get(MusSettingsKeys::KAllowOnlyWithActiveCSCall, iOnlyWithActiveCSCall);
+    
+    iOnlyIn3GNetwork = KErrNotFound;
+    iRepository->Get(MusSettingsKeys::KAllowOnlyIn3GNetwork, iOnlyIn3GNetwork); 
+    
+    iCameraUsage = KErrNotFound;
+    iRepository->Get(MusSettingsKeys::KCameraUsage, iCameraUsage); 
+    
+    iVideoDirection = KErrNotFound;
+    iRepository->Get(MusSettingsKeys::KVideoDirection, iVideoDirection);
+    
+    iVideoBandwidth = KErrNotFound;
+    iRepository->Get(MusSettingsKeys::KVideoBandwidth, iVideoBandwidth);
+    
+    iFastMode = KErrNotFound;
+    iRepository->Get(MusSettingsKeys::KFastStartupMode, iFastMode);
     }
 
-void COtherResources::ReadL()
-	{     
-    
-    TRAPD(err,ReadCRKeyValuesL());
-    if(err) HandleError (ETrue,err,_L("Read Error"));
-    
-	}
-	
-void COtherResources::ReadCRKeyValuesL()
-{
-
-	TInt err=KErrNone;
-    CRepository* cr = NULL ;
-    TRAP(err,cr = CRepository::NewL( MusSettingsKeys::KRepositoryUid ));
-    cr->CleanupCancelTransactionPushL();
-    if(err)
-        {
-        CAknErrorNote *dlg = new CAknErrorNote(ETrue);
-        dlg->ExecuteLD(_L(\
-                   "Unable to Construct CRepository for UID 0x1028238B"));        
-        return ; // dont leave 
-        }    
-   
-    ReadKeyValueL( cr, MusSettingsKeys::KActivation,iActivation ); 
-	ReadKeyValueL( cr, MusSettingsKeys::KOperatorVariant,iOperatorVariant);
-  	ReadKeyValueL( cr, MusSettingsKeys::KAuditoryNotification, iAuditoryNotification);
-   	ReadKeyValueL( cr, MusSettingsKeys::KPopupNotification, iPopupNotification);
-    ReadKeyValueL( cr, MusSettingsKeys::KPopupNotificationType, iPopupNotificationType);
-    ReadKeyValueL( cr, MusSettingsKeys::KEdgeDtmSupport, iEdgeDtmSupport);
-    ReadKeyValueL( cr, MusSettingsKeys::KForceInternetSignaling, iSessionSetupMethod);
-   	ReadKeyValueL( cr, MusSettingsKeys::KAutoRecord, iAutoRecord);
-	ReadKeyValueL( cr, MusSettingsKeys::KVideoLocation, iVideoLocation);
- 	ReadKeyValueL( cr, MusSettingsKeys::KSipProfileId, iSipProfileId);
-  	ReadKeyValueL( cr, MusSettingsKeys::KUiOrientation, iUiOrientation);    
- 	ReadKeyValueL( cr, MusSettingsKeys::KCapabilityQuery, iCapabilityQuery);     	
- 	ReadKeyValueL( cr, MusSettingsKeys::KProductModeVariation, iProductModeVariation);    
- 	ReadKeyValueL( cr, MusSettingsKeys::KEncoderConfigurationInfo, iEncoderInfo );
- 	ReadKeyValueL( cr, MusSettingsKeys::KEncodingDevice, iEncodingDevice );
- 	ReadKeyValueL( cr, MusSettingsKeys::KPrivacyExchange, iPrivacyVariation ); 
-
- 	iEncodingDeviceStr.Zero();
- 	iEncodingDeviceStr.AppendNum(iEncodingDevice, EHex); 	    
- 	
- 	CleanupStack::PopAndDestroy(cr);
-   	delete cr;
-
-}
-
-
 COtherResources::~COtherResources()
-	{
-	}
+    {
+    delete iRepository;
+    }
 
 void COtherResources::SaveL()
     {
-   
-   	TRAPD(err,SaveCRKeyValuesL());
-   	if(err) HandleError (ETrue,err,_L("Save Error"));
+    User::LeaveIfError(
+        iRepository->StartTransaction(CRepository::EConcurrentReadWriteTransaction));    
+    iRepository->CleanupCancelTransactionPushL();
     
-    }
-
-void COtherResources::SaveCRKeyValuesL()
-    {
-	CRepository* cr = NULL ;
-    TRAPD(err,cr = CRepository::NewL( MusSettingsKeys::KRepositoryUid ));        
-    cr->CleanupCancelTransactionPushL();
-    if(err)
-        {
-        CAknErrorNote *dlg = new CAknErrorNote(ETrue);
-        dlg->ExecuteLD(_L(\
-                   "Unable to Construct CRepository for UID 0x1028238B"));  
-        User::Leave(err);        
-        }      
-    SetKeyValueL( cr,MusSettingsKeys::KActivation, iActivation);
- 	SetKeyValueL( cr,MusSettingsKeys::KOperatorVariant, iOperatorVariant);
- 	SetKeyValueL( cr,MusSettingsKeys::KAuditoryNotification,  iAuditoryNotification);
-	SetKeyValueL( cr,MusSettingsKeys::KPopupNotification, iPopupNotification);
-	SetKeyValueL( cr,MusSettingsKeys::KPopupNotificationType, iPopupNotificationType);
-	SetKeyValueL( cr,MusSettingsKeys::KEdgeDtmSupport, iEdgeDtmSupport);
-	SetKeyValueL( cr,MusSettingsKeys::KForceInternetSignaling, iSessionSetupMethod);
-	SetKeyValueL( cr,MusSettingsKeys::KAutoRecord, iAutoRecord);
-	SetKeyValueL( cr,MusSettingsKeys::KVideoLocation, iVideoLocation);
-	SetKeyValueL( cr,MusSettingsKeys::KSipProfileId,  iSipProfileId);
-	SetKeyValueL( cr,MusSettingsKeys::KUiOrientation, iUiOrientation);    
-	SetKeyValueL( cr,MusSettingsKeys::KCapabilityQuery, iCapabilityQuery);    
-    SetKeyValueL( cr,MusSettingsKeys::KProductModeVariation, iProductModeVariation);    
-    SetKeyValueL( cr,MusSettingsKeys::KEncoderConfigurationInfo, iEncoderInfo );
-    SetKeyValueL( cr,MusSettingsKeys::KPrivacyExchange, iPrivacyVariation );
-    
+    SetKeyValueL(MusSettingsKeys::KActivation, iActivation);
+ 	SetKeyValueL(MusSettingsKeys::KOperatorVariant, iOperatorVariant);
+ 	SetKeyValueL(MusSettingsKeys::KAuditoryNotification, iAuditoryNotification);
+	SetKeyValueL(MusSettingsKeys::KPopupNotification, iPopupNotification);
+	SetKeyValueL(MusSettingsKeys::KPopupNotificationType, iPopupNotificationType);
+	SetKeyValueL(MusSettingsKeys::KEdgeDtmSupport, iEdgeDtmSupport);
+	SetKeyValueL(MusSettingsKeys::KForceInternetSignaling, iSessionSetupMethod);
+	SetKeyValueL(MusSettingsKeys::KAutoRecord, iAutoRecord);
+	SetKeyValueL(MusSettingsKeys::KVideoLocation, iVideoLocation);
+	SetKeyValueL(MusSettingsKeys::KSipProfileId, iSipProfileId);
+	SetKeyValueL(MusSettingsKeys::KUiOrientation, iUiOrientation);    
+	SetKeyValueL(MusSettingsKeys::KCapabilityQuery, iCapabilityQuery);    
+    SetKeyValueL(MusSettingsKeys::KProductModeVariation, iProductModeVariation);    
+    User::LeaveIfError( 
+        iRepository->Set(MusSettingsKeys::KEncoderConfigurationInfo, iEncoderInfo));
     TLex lex( iEncodingDeviceStr );
-    TUint uid;
-    err = lex.Val(uid, EHex);    
-    if ( (err == KErrNone) && lex.Eos() )
+    TUint tmpUid;
+    lex.SkipSpace();
+    if ( lex.Val(tmpUid, EHex) == KErrNone )
         {
-        iEncodingDevice = uid;
-        SetKeyValueL( cr, MusSettingsKeys::KEncodingDevice, iEncodingDevice );        
-        }
-           
-    CleanupStack::PopAndDestroy(cr);
-	delete cr;
-    }
-
-void COtherResources::SetKeyValueL(CRepository* repository, const TInt & aKey , TInt & aVal)
-    {  
-    if(aVal<0)  return; // dont care if key is not intially read
-    TUint32 key(aKey);
-    User::LeaveIfError(repository->StartTransaction(
-                        CRepository::EConcurrentReadWriteTransaction));    
-    User::LeaveIfError(repository->Set(key,aVal));
-    User::LeaveIfError(repository->CommitTransaction(key));    
-    }
-
-void COtherResources::ReadKeyValueL(CRepository* repository, const TInt & aKey , TInt & aVal)
-    {
-    TUint32 key(aKey);
-    User::LeaveIfError(repository->StartTransaction(
-                        CRepository::EConcurrentReadWriteTransaction));
-    User::LeaveIfError(repository->Get(key,aVal));
-    User::LeaveIfError(repository->CommitTransaction(key));
-    }
-
-void COtherResources::SetKeyValueL(CRepository* repository, TInt aKey, const TDesC& aVal)
-    {
-    TUint32 key(aKey);
-    User::LeaveIfError(repository->StartTransaction(
-                        CRepository::EConcurrentReadWriteTransaction));    
-    User::LeaveIfError(repository->Set(key,aVal));
-    User::LeaveIfError(repository->CommitTransaction(key));
-    }
-
-void COtherResources::ReadKeyValueL(CRepository* repository, TInt aKey, TDes& aVal)
-    {
-    TUint32 key(aKey);
-    User::LeaveIfError(repository->StartTransaction(
-                        CRepository::EConcurrentReadWriteTransaction));
-    User::LeaveIfError(repository->Get(key,aVal));
-    User::LeaveIfError(repository->CommitTransaction(key));
-    }
-
-void COtherResources::HandleError(TBool aType ,
-                                    TInt aError , TPtrC aKeyName )
-    {
-    CAknErrorNote *dlg = new CAknErrorNote(ETrue);
-    TBuf<100> buf;
-    if(aType)
-        {
-        buf.Append(_L("Unable to Read Key "));
+        iEncodingDevice = tmpUid;     
         }
     else
         {
-        buf.Append(_L("Unable to Save Key "));
+        iEncodingDevice = KErrNotFound;
         }
-    buf.Append(aKeyName);
-    buf.Append(_L(" Error "));
-    buf.AppendNum(aError);
-    dlg->ExecuteLD(buf); 
+    SetKeyValueL(MusSettingsKeys::KEncodingDevice, iEncodingDevice);     
+    SetKeyValueL(MusSettingsKeys::KAllowOnlyWithActiveCSCall, iOnlyWithActiveCSCall);
+    SetKeyValueL(MusSettingsKeys::KAllowOnlyIn3GNetwork, iOnlyIn3GNetwork);
+    SetKeyValueL(MusSettingsKeys::KCameraUsage, iCameraUsage);
+    SetKeyValueL(MusSettingsKeys::KVideoDirection, iVideoDirection);
+    SetKeyValueL(MusSettingsKeys::KVideoBandwidth, iVideoBandwidth);
+    SetKeyValueL(MusSettingsKeys::KFastStartupMode, iFastMode);
+    
+    TUint32 modifiedKeyCount(0);
+    User::LeaveIfError(iRepository->CommitTransaction(modifiedKeyCount));
+    CleanupStack::Pop(); // transaction
+    }
+
+void COtherResources::SetKeyValueL(
+    const TUint32& aKey, 
+    TInt& aVal)
+    {     
+    TBool keyExistsInRepository(EFalse);
+    TInt tmpVal(0);
+    keyExistsInRepository = (iRepository->Get(aKey,tmpVal) == KErrNone);
+    if (aVal < 0)
+        {
+        if (keyExistsInRepository)
+            {
+            User::LeaveIfError(iRepository->Delete(aKey));
+            }
+        }
+    else
+        {
+        if (keyExistsInRepository)
+            {
+            User::LeaveIfError(iRepository->Set(aKey,aVal));
+            }
+        else
+            {
+            User::LeaveIfError(iRepository->Create(aKey,aVal));
+            }
+        }    
     }
 
 CMusApplication* CMusApplication::NewLC()
     {
-    // create a new expense object
     CMusApplication* self = new (ELeave) CMusApplication();
     CleanupStack::PushL(self);
     self->ConstructL();
@@ -370,8 +308,8 @@ CMusApplication* CMusApplication::NewL()
 void CMusApplication::ConstructL()
     {
     iUseCase = MultimediaSharing::EMusLiveVideo;     
-    //iMultimediasharing=CMusManager::NewL();    
-    //iMultimediasharing->ExamineAvailabilityL();
+    iMultimediasharing=CMusManager::NewL();    
+    iMultimediasharing->ExamineAvailabilityL();
     }
 
 CMusApplication::~CMusApplication()
@@ -392,10 +330,10 @@ void CMusApplication::HandleError(TInt aError , TPtrC aVal )
 
 TBool CMusApplication::Start(TInt aUseCase)
     {
-    /*TRAPD(err,iMultimediasharing->StartApplicationL(
+    TRAPD(err,iMultimediasharing->StartApplicationL(
                             MultimediaSharing::TMusUseCase(aUseCase)));
     if(err)HandleError(err,_L("MusStart "));    
-    return (err)?EFalse :ETrue; */       
+    return (err)?EFalse :ETrue;        
     }
      
 TBool CMusApplication::Stop()
@@ -414,20 +352,8 @@ TInt CMusApplication::Availability()
     }
 TInt CMusApplication::MonitorAvailability()
     {
-    TInt status = KErrGeneral;
-    /*TRequestStatus requestStatus;
-    TRAPD(err,iMultimediasharing->
-            MonitorAvailabilityL(
-                requestStatus,
-                MultimediaSharing::TMusAvailabilityStatus(status))
-                                );
-    if(err)HandleError(err,_L("MusAvailability "));
-    User::WaitForRequest(requestStatus);    
-    */
-    return status;        
+    return KErrGeneral;        
     }
-
-
 
 TBool CMusApplication::AvailabilityInfo()
     {                                   
@@ -516,8 +442,6 @@ void CMusApplication::MusUseCaseInfo(TBool aStart)
     (aStart) ? buf.Append(_L("Started")) : buf.Append(_L("Stoped"));
     dlg->ExecuteLD(buf);      
     }
-       
 
-  
 // End of File  
 

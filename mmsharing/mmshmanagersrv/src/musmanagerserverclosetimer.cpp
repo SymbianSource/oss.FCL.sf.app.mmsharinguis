@@ -101,18 +101,6 @@ void CMusManagerServerCloseTimer::RunL ()
 	CActiveScheduler::Stop();
     }
 
-// -------------------------------------------------------------------------
-//  If RunL() leaves,It should be handled here.
-// -------------------------------------------------------------------------
-//
-TInt CMusManagerServerCloseTimer::RunError( TInt aError )
-    {
-    // Nothing can be done here.
-    aError = KErrNone;
-
-    return aError;
-    }
-
 // ----------------------------------------------------------------------------
 // CMusManagerServerCloseTimer::DoCancel
 // ----------------------------------------------------------------------------

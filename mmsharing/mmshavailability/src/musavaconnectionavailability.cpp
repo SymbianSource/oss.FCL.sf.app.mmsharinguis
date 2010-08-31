@@ -30,6 +30,7 @@
 #include "mussettings.h"
 #include "mussettingskeys.h"
 #include "muslogger.h"
+#include "musfactorysettings.h"
 
 #include <e32base.h>
 #include <rconnmon.h>
@@ -126,9 +127,10 @@ void CMusAvaConnectionAvailability::ConstructL()
 
 // ---------------------------------------------------------------------------
 // From CMusAvaAvailability.
-// Executes for the availability.
+// Executes for the availability
 // ---------------------------------------------------------------------------
 //
+
 void CMusAvaConnectionAvailability::DoExecuteL()
     {
     MUS_LOG( "mus: [MUSAVA]  -> CMusAvaConnectionAvailability::DoExecuteL()" )
@@ -136,36 +138,23 @@ void CMusAvaConnectionAvailability::DoExecuteL()
     MUS_LOG( "mus: [MUSAVA]  Check network mode" )
     RMobilePhone::TMobilePhoneNetworkMode networkmode = 
                                         iNetworkModeStatus->PhoneNetworkMode();
-    if ( networkmode == RMobilePhone::ENetworkModeWcdma||
-         networkmode == RMobilePhone::ENetworkModeTdcdma ||
-         networkmode == RMobilePhone::ENetworkModeCdma95 ||
-         networkmode == RMobilePhone::ENetworkModeCdma2000 )
+
+	TBool SupportedNetwork = EFalse; 
+	
+	TRAPD( err, SupportedNetwork = MusFactorySettings::IsSupportedL(networkmode) );
+	
+	
+	if ( err != KErrNone )
+		{
+	    MUS_LOG1( "mus: [MUSAVA]  Reading activation setting error:%d", err )
+    	SetState( MMusAvaObserver::EMusActivationError );
+		}
+
+	else if ( SupportedNetwork )
         {
-        status = NetworkRegistrationAndSettingsL();
-    	if ( status == MMusAvaObserver::EMusAvaStatusAvailable )
-	        {
-	        MUS_LOG( "mus: [MUSAVA]  Network available" )
-	        SetState( status );
-	        }
-        else
-            {
-            MUS_LOG1( "mus: [MUSAVA] Activation error: %d", status )
-            SetState( status );
-            }        
-        }
-    else if( networkmode == RMobilePhone::ENetworkModeGsm)
-    	{
-    	TInt edgeDtmSupport = KErrNone;
-        TRAPD( err, edgeDtmSupport = 
-                       MultimediaSharingSettings::EdgeDtmSupportSettingL() );
-        if( err != KErrNone )
-            {
-            MUS_LOG1( "mus: [MUSAVA]  Reading activation setting error:%d", err )
-            SetState( MMusAvaObserver::EMusActivationError );
-            }
-        else if( edgeDtmSupport == MusSettingsKeys::EDtmModeAllowed )
-            { 
-            MUS_LOG( "mus: [MUSAVA]  Edge Network Mode allowed in settings " )     
+        if (  networkmode == RMobilePhone::ENetworkModeGsm )
+        	{
+        	MUS_LOG( "mus: [MUSAVA]  Edge Network Mode allowed in settings " )     
             if( iConnectionMonitor->ConnectionCount() > 0)       
                 {
                 MUS_LOG( "mus: [MUSAVA]  Atlease one packect connection exists " )     
@@ -175,37 +164,25 @@ void CMusAvaConnectionAvailability::DoExecuteL()
                 {
                 MUS_LOG( "mus: [MUSAVA]  No Packet connection exists now." )     
                 SetState( MMusAvaObserver::EMusAvaEdgeDtmStatusUnknown );                    
-                }            
-            }
-        else
-            {
-            MUS_LOG( "mus: [MUSAVA]  Edge Network Mode Not allowed in settings " )     
-            SetState( MMusAvaObserver::EMusAvaNetworkType );    
-            }
-    	}
-    else
-        {
+                }
+        	}
+
+		 else
+        	{
+       		status = NetworkRegistrationAndSettingsL();
+        	MUS_LOG1( "mus: [MUSAVA] Activation Status: %d", status )
+        	SetState( status );
+        	}
+        }
+	else 
+    	{    	
         MUS_LOG( "mus: [MUSAVA] Network not available" )
         SetState( MMusAvaObserver::EMusAvaNetworkType );
-        }
-    
+    	}
+
     MUS_LOG( "mus: [MUSAVA]  <- CMusAvaConnectionAvailability::DoExecuteL()" )
     }
 
-
-// ---------------------------------------------------------------------------
-// ---------------------------------------------------------------------------
-//
-TBool CMusAvaConnectionAvailability::OperatorVariant()
-    {
-    MusSettingsKeys::TOperatorVariant variantValue = MusSettingsKeys::EStandard;
-    TRAPD( error, variantValue = 
-                  MultimediaSharingSettings::OperatorVariantSettingL() );
-    
-    return ( variantValue == MusSettingsKeys::EOperatorSpecific && 
-             error == KErrNone );
-     
-    }
 
 // ---------------------------------------------------------------------------
 // From CMusAvaAvailability.
@@ -235,9 +212,8 @@ MMusAvaObserver::TAvailabilityName CMusAvaConnectionAvailability::Name()
     return MMusAvaObserver::EMusAvaBearerStatus;
     }
 
-
 // ---------------------------------------------------------------------------
-// CMusAvaConnectionAvailability::PhoneNetworkModeStatus
+// CMusAvaConnectionAvailability::PhoneNetworkModeStatus  
 // 
 // ---------------------------------------------------------------------------
 //
@@ -247,50 +223,27 @@ void CMusAvaConnectionAvailability::PhoneNetworkModeStatus(
     MUS_LOG( "mus: [MUSAVA]  -> CMusAvaConnectionAvailability::\
     PhoneNetworkModeStatus()" )
     MUS_LOG1( "mus: [MUSAVA] Mobile Phone Network Status = ", aStatus )
+    
+   	TBool SupportedNetwork = EFalse; 
+	
+	TRAPD( err, SupportedNetwork = MusFactorySettings::IsSupportedL(aStatus) );
+    
+    if ( err != KErrNone || !SupportedNetwork )
+    	{
+        MUS_LOG( "mus: [MUSAVA] Network not available" )
+        SetState( MMusAvaObserver::EMusAvaNetworkType );
+    	}
+	else
+		{
+		MMusAvaObserver::TAvailabilityStatus status = 
+		                   MMusAvaObserver::EMusActivationError;
+        TRAP_IGNORE( status = NetworkRegistrationAndSettingsL() );
+        SetState( status );
+		}    
 
-    switch ( aStatus )
-        {
-        case RMobilePhone::ENetworkModeWcdma :
-        case RMobilePhone::ENetworkModeTdcdma :
-        case RMobilePhone::ENetworkModeCdma95:
-        case RMobilePhone::ENetworkModeCdma2000:
-            {
-            MMusAvaObserver::TAvailabilityStatus status = 
-                                        MMusAvaObserver::EMusActivationError;
-            TRAP_IGNORE( status = NetworkRegistrationAndSettingsL() );
-            SetState( status );
-            break;
-            }
-        case RMobilePhone::ENetworkModeGsm : // For EDGE /DTM support
-            {
-            TInt edgeDtmSupport = 0;
-            TRAPD( err, edgeDtmSupport = 
-                       MultimediaSharingSettings::EdgeDtmSupportSettingL() );
-            if( err != KErrNone )
-                {
-                MUS_LOG1( "mus: [MUSAVA]  Reading activation setting error:%d", err )
-                SetState( MMusAvaObserver::EMusActivationError );
-                }
-            else if( edgeDtmSupport == MusSettingsKeys::EDtmModeAllowed )
-                { 
-                MUS_LOG( "mus: [MUSAVA]  Edge Network supported " )            
-                SetState( MMusAvaObserver::EMusAvaEdgeDtmStatusUnknown );                               
-                }
-            else
-                {
-                SetState( MMusAvaObserver::EMusAvaNetworkType );    
-                }
-            break;
-            }
-         default :
-            {
-            SetState( MMusAvaObserver::EMusAvaNetworkType );
-            }
-        }
     MUS_LOG( "mus: [MUSAVA]  <- CMusAvaConnectionAvailability::\
     PhoneNetworkModeStatus()" )
     }
-
 
 // ---------------------------------------------------------------------------
 // CMusAvaConnectionAvailability::NetworkRegistrationStatus
@@ -301,18 +254,30 @@ void CMusAvaConnectionAvailability::NetworkRegistrationStatus(
                     RMobilePhone::TMobilePhoneRegistrationStatus aRegStatus )
     {
     MUS_LOG( "mus: [MUSAVA]  -> CMusAvaConnectionAvailability::\
-NetworkRegistrationStatus()" )
+    NetworkRegistrationStatus()" )
     MUS_LOG1( "Mobile Phone Network Status = ", aRegStatus )
-    
-    if( OperatorVariant() &&
-        aRegStatus != RMobilePhone::ERegisteredOnHomeNetwork )
+
+    MusSettingsKeys::TActivation activation  = MusSettingsKeys::ENever;
+
+    TRAPD( err, activation = MultimediaSharingSettings::ActivationSettingL() );
+    if( err != KErrNone )
         {
-        MUS_LOG( "mus: [MUSAVA]  Roaming not allowed" )
-        SetState( MMusAvaObserver::EMusAvaRoamingError );
+        MUS_LOG1( "mus: [MUSAVA]  Reading activation setting error:%d", err )
+        SetState( MMusAvaObserver::EMusActivationError );
+        }
+    else
+        {
+        if( activation == MusSettingsKeys::EActiveInHomeNetworks &&
+        aRegStatus != RMobilePhone::ERegisteredOnHomeNetwork )
+            {
+            MUS_LOG( "mus: [MUSAVA]  -> CMusAvaConnectionAvailability::\
+            NetworkRegistrationStatus()" )
+            SetState( MMusAvaObserver::EMusAvaRoamingError );
+            }
         }
 
     MUS_LOG( "mus: [MUSAVA]  <- CMusAvaConnectionAvailability::\
-NetworkRegistrationStatus()" )
+    NetworkRegistrationStatus()" )
     }
 
 
@@ -349,9 +314,9 @@ void CMusAvaConnectionAvailability::EventL(
                     SetState( MMusAvaObserver::EMusAvaConnectionErr );
                     }
                	else
-                    {
-                    iConnectionMonitor->SetConnectionID( connectionId );
-                    }
+               		{
+               		iConnectionMonitor->SetConnectionID( connectionId );
+               		}
                 }
             break;
             }
@@ -362,12 +327,13 @@ void CMusAvaConnectionAvailability::EventL(
                 {
                 SetState( MMusAvaObserver::EMusAvaConnectionErr );
                 }
-                break;
-                }
-         case EConnMonConnectionStatusChange:
+            break;
+            }
+
+		 case EConnMonConnectionStatusChange:
             {
             MUS_LOG( "mus: [MUSAVA] Event type = \
-EConnMonConnectionStatusChange" )
+                EConnMonConnectionStatusChange" )
             const CConnMonConnectionStatusChange* connectionStatusChange
                  = (const CConnMonConnectionStatusChange*)(&aConnMonEvent);
             TInt connStatus = connectionStatusChange->ConnectionStatus();
@@ -391,7 +357,7 @@ EConnMonConnectionStatusChange" )
                 }
             break;
             }
-        case EConnMonNetworkStatusChange:
+		case EConnMonNetworkStatusChange:
             {
             MUS_LOG( "mus: [MUSAVA] Event type = EConnMonNetworkStatusChange" )
             const CConnMonNetworkStatusChange* networkStatusChange
@@ -402,36 +368,36 @@ EConnMonConnectionStatusChange" )
             	{
             	if( EConnMonStatusAttached == networkStatus ||
             	    EConnMonStatusActive == networkStatus )
-                    {
-                    SetState( NetworkRegistrationAndSettingsL() );
-                    }
+	            	{
+	            	SetState( NetworkRegistrationAndSettingsL() );
+	            	}
              	else
-                    {
-                    SetState( MMusAvaObserver::EMusAvaConnectionErr );
-                    }
+	                {
+	                SetState( MMusAvaObserver::EMusAvaConnectionErr );
+	                }
             	}
             break;
             }
         case EConnMonNetworkRegistrationChange:
             {
             MUS_LOG( "mus: [MUSAVA] Event type = \
-EConnMonNetworkRegistrationChange" )
+                EConnMonNetworkRegistrationChange" )
             const CConnMonNetworkRegistrationChange* registrationChange
                  = (const CConnMonNetworkRegistrationChange*)(&aConnMonEvent);
             TInt registrationStatus = registrationChange->RegistrationStatus();
             MUS_LOG1( "mus: [MUSAVA] RegistrationStatus =  %d", 
                     registrationStatus )
-            if( connId == EBearerIdWCDMA || connId == EBearerIdWcdmaCSD )
-                {
-                if ( ENetworkRegistrationRoaming == registrationStatus )
-                {
-                SetState( MMusAvaObserver::EMusAvaRoamingError );
+           	if( connId == EBearerIdWCDMA || connId == EBearerIdWcdmaCSD )
+           	    {
+           	    if ( ENetworkRegistrationRoaming == registrationStatus )
+                    {
+                    SetState( MMusAvaObserver::EMusAvaRoamingError );
+                    }
+                else
+                    {
+                    SetState( NetworkRegistrationAndSettingsL() );
+                    }
                 }
-            else
-                {
-                SetState( NetworkRegistrationAndSettingsL() );
-                }
-            }
             break;
             }
         case EConnMonBearerChange:
@@ -467,8 +433,17 @@ EConnMonNetworkRegistrationChange" )
 
         case EConnMonPacketDataUnavailable:
             {
-            SetState( MMusAvaObserver::EMusAvaNetworkType );
-            MUS_LOG( "mus: [MUSAVA] EConnMonPacketDataUnavailable" )
+			if( connId == musConnID )
+            	{
+            	SetState( MMusAvaObserver::EMusAvaNetworkType );
+            	MUS_LOG( "mus: [MUSAVA] EConnMonPacketDataUnavailable" )	
+            	}
+            else
+                {
+                MUS_LOG2(
+"mus: [MUSAVA] different connId (%d,%d) ignore EConnMonPacketDataUnavailable",
+                          musConnID, connId )
+                }
             break;
             }
 
@@ -495,44 +470,48 @@ EConnMonNetworkRegistrationChange" )
 //    
 MMusAvaObserver::TAvailabilityStatus CMusAvaConnectionAvailability::
     ManualActivationL()
-    {
+	{
     MUS_LOG( "mus: [MUSAVA]  -> CMusAvaConnectionAvailability::\
-ManualActivationL()" )
+    ManualActivationL()" )
 
-    if( OperatorVariant() )
+    MusSettingsKeys::TOperatorVariant operatorVariant = 
+    	MusSettingsKeys::EStandard;
+    operatorVariant = MultimediaSharingSettings::OperatorVariantSettingL(); 
+    
+    if( operatorVariant ==  MusSettingsKeys::EOperatorSpecific )
     	{
     	MUS_LOG( "mus: [MUSAVA] Operator Specific No Manual query" )
     	MUS_LOG( "mus: [MUSAVA]  <- CMusAvaConnectionAvailability::\
-NetworkRegistrationAndSettingsL()" )
+    	NetworkRegistrationAndSettingsL()" )
     	return MMusAvaObserver::EMusActivationError;	
     	}
-    else
-        {
-        if ( iSettings.ManualActivation() == 
-            MMusAvaSettings::EActivationAllowed )
-            {
-            MUS_LOG( "mus: [MUSAVA] Manual activation allowed" )
-            MUS_LOG( "mus: [MUSAVA]  <- CMusAvaConnectionAvailability::\
-ManualActivationL()" )
-            return MMusAvaObserver::EMusAvaStatusAvailable;	
-            }
-        else if ( iSettings.ManualActivation() == 
-            MMusAvaSettings::EActivationNotExecuted )
-            {
-            MUS_LOG( "mus: [MUSAVA] Manual activation is not executed" )
-            MUS_LOG( "mus: [MUSAVA]  <- CMusAvaConnectionAvailability::\
-ManualActivationL()" )
-            return MMusAvaObserver::EMusAvaManualActivation;	
-            }
-        else
-            {
-            MUS_LOG( "mus: [MUSAVA] Activation error" )
-            MUS_LOG( "mus: [MUSAVA]  <- CMusAvaConnectionAvailability::\
-ManualActivationL()" )
-            return MMusAvaObserver::EMusActivationError;	
-            }
-        }
-    }
+  	else
+  		{
+  		if ( iSettings.ManualActivation() == 
+  		    MMusAvaSettings::EActivationAllowed )
+  			{
+  			MUS_LOG( "mus: [MUSAVA] Manual activation allowed" )
+  			MUS_LOG( "mus: [MUSAVA]  <- CMusAvaConnectionAvailability::\
+    		ManualActivationL()" )
+  			return MMusAvaObserver::EMusAvaStatusAvailable;	
+  			}
+  		else if ( iSettings.ManualActivation() == 
+  		    MMusAvaSettings::EActivationNotExecuted )
+  			{
+  			MUS_LOG( "mus: [MUSAVA] Manual activation is not executed" )
+  			MUS_LOG( "mus: [MUSAVA]  <- CMusAvaConnectionAvailability::\
+    		ManualActivationL()" )
+  			return MMusAvaObserver::EMusAvaManualActivation;	
+  			}
+  		else
+  			{
+  			MUS_LOG( "mus: [MUSAVA] Activation error" )
+  			MUS_LOG( "mus: [MUSAVA]  <- CMusAvaConnectionAvailability::\
+    		ManualActivationL()" )
+  			return MMusAvaObserver::EMusActivationError;	
+  			}
+  		}
+	}
 
 // -------------------------------------------------------------------------
 // CMusAvaConnectionAvailability::NetworkRegistrationAndSettingsL
@@ -543,7 +522,7 @@ MMusAvaObserver::TAvailabilityStatus CMusAvaConnectionAvailability::
     NetworkRegistrationAndSettingsL()
     {
     MUS_LOG( "mus: [MUSAVA]  -> CMusAvaConnectionAvailability::\
-NetworkRegistrationAndSettingsL()" )
+    NetworkRegistrationAndSettingsL()" )
     MUS_LOG( "mus: [MUSAVA]  Check registration network status" )
     MUS_LOG( "mus: [MUSAVA]  Check roaming" )
 
@@ -556,35 +535,33 @@ NetworkRegistrationAndSettingsL()" )
     MusSettingsKeys::TActivation activation = MusSettingsKeys::EAlwaysActive;
   
     activation = MultimediaSharingSettings::ActivationSettingL();
-    TBool operatorVariant = OperatorVariant();
-    
+
     MUS_LOG1( "mus: [MUSAVA]     ActivationSetting returned %d", 
         activation )
-    
-    //VS off
-    if ( activation != MusSettingsKeys::EAlwaysActive )
+
+	if ( activation == MusSettingsKeys::EAlwaysActive )
+    	{
+    	status = MMusAvaObserver::EMusAvaStatusAvailable;	
+    	}
+   	else if ( activation == MusSettingsKeys::EActiveInHomeNetworks &&
+        regStatus == RMobilePhone::ERegisteredOnHomeNetwork )
+    	{
+    	status = MMusAvaObserver::EMusAvaStatusAvailable;	
+    	}
+    else if( activation == MusSettingsKeys::EActiveInHomeNetworks &&
+        regStatus == RMobilePhone::ERegisteredRoaming )
+        {
+        status = ManualActivationL();        
+        } 
+    else
         {
         status = MMusAvaObserver::EMusActivationError;
         }
-    //VS on
-    else
-        {
-        //roaming
-        if( regStatus == RMobilePhone::ERegisteredRoaming )
-            {
-            status = ManualActivationL();        
-            }
-        //other states including also not registered states, thus
-        //failing of PDP context activation will be detected elsewhere
-        else
-            {
-            status = MMusAvaObserver::EMusAvaStatusAvailable;   
-            }
-        }
     
     MUS_LOG( "mus: [MUSAVA]  <- CMusAvaConnectionAvailability::\
-NetworkRegistrationAndSettingsL()" )
+            NetworkRegistrationAndSettingsL()" )
     return status;
     }
 
+// End of File	
 

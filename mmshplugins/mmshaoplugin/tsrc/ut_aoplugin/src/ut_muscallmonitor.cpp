@@ -135,12 +135,12 @@ void UT_CMusCallMonitor::UT_CMusCallMonitor_StartMonitorLL()
 
     EUNIT_ASSERT( !iCallMonitor->iCallStatusMonitor );
     EUNIT_ASSERT( !iCallMonitor->iCallEventMonitor );
-    iCallMonitor->StartMonitorL( iLine, *this );
+    iCallMonitor->StartMonitorL( iLine, *this, *this );
 
     EUNIT_ASSERT( iCallMonitor->iCallStatusMonitor );
     EUNIT_ASSERT( iCallMonitor->iCallEventMonitor );
 
-    EUNIT_ASSERT_LEAVE( iCallMonitor->StartMonitorL( iLine, *this ) );
+    EUNIT_ASSERT_LEAVE( iCallMonitor->StartMonitorL( iLine, *this , *this) );
     }
 
 
@@ -158,7 +158,7 @@ void UT_CMusCallMonitor::UT_CMusCallMonitor_StopMonitorLL()
     EUNIT_ASSERT( !iCallMonitor->iCallStatusMonitor );
     EUNIT_ASSERT( !iCallMonitor->iCallEventMonitor );
 
-    iCallMonitor->StartMonitorL( iLine, *this );
+    iCallMonitor->StartMonitorL( iLine, *this, *this );
 
     EUNIT_ASSERT( iCallMonitor->iCallStatusMonitor );
     EUNIT_ASSERT( iCallMonitor->iCallEventMonitor );
@@ -193,13 +193,21 @@ void UT_CMusCallMonitor::UT_CMusCallMonitor_IsMonitoredL()
     
     EUNIT_ASSERT( !iCallMonitor->IsMonitored() );
     
-    iCallMonitor->StartMonitorL( iLine, *this );
+    iCallMonitor->StartMonitorL( iLine, *this, *this );
     EUNIT_ASSERT( iCallMonitor->IsMonitored() );
     
     
     }
 
 
+// -----------------------------------------------------------------------------
+//  MusCallStateChanged from the MusCallStateObserver 
+// -----------------------------------------------------------------------------
+//
+void UT_CMusCallMonitor::MusCallStateChanged()
+    {
+    // NOP
+    }   
    
 
 

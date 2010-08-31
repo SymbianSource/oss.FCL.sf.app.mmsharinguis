@@ -21,14 +21,16 @@
 
 
 //  EXTERNAL INCLUDES
-#include "mussipprofileuser.h"
 #include <digia/eunit/ceunittestsuiteclass.h>
 #include <digia/eunit/eunitmacros.h>
+
 
 //  FORWARD DECLARATIONS
 class CMceManager;
 class CMusSipProfileHandler;
 class CMceSession;
+class CMusEngObserverStub;
+class CMceDisplaySink;
 
 #ifndef NONSHARABLE_CLASS
     #define NONSHARABLE_CLASS(x) class x
@@ -39,9 +41,8 @@ class CMceSession;
  * Tester class for MusEngMceUtils. 
  * 
  */
-NONSHARABLE_CLASS( UT_MusEngMceUtils ):
-	public CEUnitTestSuiteClass,
-    public MMusSipProfileUser
+NONSHARABLE_CLASS( UT_MusEngMceUtils ): 
+    public CEUnitTestSuiteClass
     {
     public:     // Constructors and destructors
 
@@ -55,11 +56,8 @@ NONSHARABLE_CLASS( UT_MusEngMceUtils ):
          * Destructor
          */
         ~UT_MusEngMceUtils();
-
-	public: // From MMusSipProfileUser    
         
-        TBool IsRoamingBetweenAPsAllowed();
-
+        
     private: // Constructors and destructors
 
         UT_MusEngMceUtils();
@@ -68,35 +66,44 @@ NONSHARABLE_CLASS( UT_MusEngMceUtils ):
     private: // Test case setup and teardown
 
         void SetupL();
+        void Setup2L();
 
         void Teardown();
 
     private: // Test methdods
     
-        void UT_MusEngMceUtils_IsVideoInStreamL();
-        void UT_MusEngMceUtils_IsAudioInStreamL();
-        void UT_MusEngMceUtils_GetVideoOutStreamLL();
-        void UT_MusEngMceUtils_GetVideoInStreamLL();
-        void UT_MusEngMceUtils_GetRecordingStreamL();
-        void UT_MusEngMceUtils_GetMediaSinkL();  // From stream
-        void UT_MusEngMceUtils_GetMediaSinkLL(); // From stream
-        void UT_MusEngMceUtils_GetMediaSink2L(); // From session
-        void UT_MusEngMceUtils_GetMediaSinkL2L(); // From session
-        void UT_MusEngMceUtils_GetCameraLL();
-        void UT_MusEngMceUtils_GetFileSourceLL();
-        void UT_MusEngMceUtils_GetDisplayL();
-        void UT_MusEngMceUtils_GetDisplayLL();
-        void UT_MusEngMceUtils_AddDisplayLL();
-        void UT_MusEngMceUtils_AddSpeakerLL();
-        void UT_MusEngMceUtils_DisableStreamLL();
+        void UT_IsVideoInStreamL();
+        void UT_IsVideoOutStreamL();
+        void UT_IsAudioInStreamL();
+        void UT_GetVideoOutStreamLL();
+        void UT_GetVideoInStreamLL();
+        void UT_GetRecordingStreamL();
+        void UT_GetMediaSinkFromStreamL();
+        void UT_GetMediaSinkLFromStreamL();
+        void UT_GetMediaSinkFromSessionL();
+        void UT_GetMediaSinkLFromSessionL();
+        void UT_GetCameraLL();
+        void UT_GetFileSourceLL();
+        void UT_GetDisplayL();
+        void UT_GetDisplayLL();
+        void UT_AddDisplayLL();
+        void UT_AddSpeakerLL();
+        void UT_DisableStreamLL();
+        void UT_GetReceivingDisplayL();
+        void UT_GetReceivingDisplayLL();
+        void UT_GetVfDisplayL();
+        void UT_EnableInactivityTimerL();
         
     private:    // Data
 
         CMceManager* iManager;
         CMusSipProfileHandler* iProfileHandler;
+        CMusEngObserverStub* iObserver;
         CMceSession* iEmptySession;
         CMceSession* iVideoOutSession;
         CMceSession* iVideoInSession;
+        
+        CMceDisplaySink* iReceivingDisplay; // Not owned
 
         EUNIT_DECLARE_TEST_TABLE;
 

@@ -1,0 +1,46 @@
+;
+; Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+; All rights reserved.
+; This component and the accompanying materials are made available
+; under the terms of "Eclipse Public License v1.0"
+; which accompanies this distribution, and is available
+; at the URL "http://www.eclipse.org/legal/epl-v10.html".
+;
+; Initial Contributors:
+; Nokia Corporation - initial contribution.
+;
+; Contributors:
+;
+; Description:
+;
+; A package file for creating an installation file for Multimediasharing 
+; which updates Multimediasharing binaries from ROM (eclipsing)
+
+; Supported languages
+&EN
+
+; Header
+#{"MultimediaSharing"},(0x10282491),1,0,0,TYPE=PU
+
+; Localised Vendor name
+%{"Symbian"}
+
+; Unique Vendor name
+:"Symbian"
+
+; -----------------------------------------------------------------------------------
+
+;Multimediasharing binaries
+
+; User interface XMLs
+"\epoc32\data\z\data\others\lcidleview.docml"-"!:\data\others\lcidleview.docml"
+"\epoc32\data\z\data\others\lcreceiveview.docml"-"!:\data\others\lcreceiveview.docml"
+"\epoc32\data\z\data\others\lcsendview.docml"-"!:\data\others\lcsendview.docml"
+"\epoc32\data\z\data\others\lctwowayview.docml"-"!:\data\others\lctwowayview.docml"
+"\epoc32\data\z\data\others\lcvtview.docml"-"!:\data\others\lcvtview.docml"
+"\epoc32\data\z\data\others\lcreceiveonlyview.docml"-"!:\data\others\lcreceiveonlyview.docml"
+
+; Engine
+;"\epoc32\release\armv5\urel\musengineplugin.dll"-"!:\sys\bin\musengineplugin.dll"
+;"\epoc32\data\z\resource\plugins\musengineplugin.rsc"-"!:\resource\plugins\musengineplugin.rsc"
+

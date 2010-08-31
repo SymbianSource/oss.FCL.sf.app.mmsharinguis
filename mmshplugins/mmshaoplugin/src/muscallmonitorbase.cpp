@@ -19,16 +19,12 @@
 #include "mussesseioninformationapi.h"
 #include "muscallmonitorbase.h"
 #include "muslogger.h"
-#include "mussettings.h"
 
 #include <etel.h>
 #include <etelmm.h>
 #include <e32svr.h>
 #include <mmtsy_names.h>
 #include <e32property.h>
-
-_LIT( KDoNotSendOwnNumber, "#31#" );
-_LIT( KDoSendOwnNumber, "*31#" );
 
 
 // -----------------------------------------------------------------------------
@@ -45,8 +41,12 @@ CMusCallMonitorBase::~CMusCallMonitorBase()
 // C++ constructor.
 // -----------------------------------------------------------------------------
 //
-CMusCallMonitorBase::CMusCallMonitorBase(const RMobileCall& aCall, MMusTsyPropertyObserver& aObserver ) 
-        : CActive( EPriorityNormal ),iCall(aCall),iTsyObserver( aObserver )
+CMusCallMonitorBase::CMusCallMonitorBase(const RMobileCall& aCall, 
+        MMusTsyPropertyObserver& aObserver, 
+        MMusCallStateObserver& aCallStateObserver ) 
+        : CActive( EPriorityNormal ),iCall(aCall),iTsyObserver( aObserver ), 
+        iCallStateObserver( aCallStateObserver )
+        
         
     {   
 	// Intialize the remote call event state to Resume , means connected.
@@ -67,6 +67,16 @@ void CMusCallMonitorBase::SetStateL(NMusSessionInformationApi::TMusCallEvent aVa
     User::LeaveIfError(RProperty::Get( NMusSessionInformationApi::KCategoryUid,
                             NMusSessionInformationApi::KMusCallCount,callCount));
     MUS_LOG1( "mus: [MUSAO]  - CallCount = %d",callCount )
+    
+    RMobileCall::TMobileCallInfoV3 callInfo;
+    RMobileCall::TMobileCallInfoV3Pckg pckg( callInfo );
+    iCall.GetMobileCallInfo( pckg );
+    if( callInfo.iEmergency )
+    	{
+    	User::LeaveIfError(RProperty::Set( NMusSessionInformationApi::KCategoryUid,
+    				 NMusSessionInformationApi::KMusCallEvent,
+    				 ( TInt ) NMusSessionInformationApi::ENoCall ));
+    	}
     /*
     * CountOfCallMonitors is number of CallMonitor Objects.Static Reference Count.
     * = No of active calls . 
@@ -74,22 +84,12 @@ void CMusCallMonitorBase::SetStateL(NMusSessionInformationApi::TMusCallEvent aVa
     * if call count is more than one , should be taken care by conference call or
     * multicall criteria.
     */
-     if( callCount == 1) 
+    else if( callCount == 1 ) 
         {
         TInt currentVal;
         User::LeaveIfError(RProperty::Get( NMusSessionInformationApi::KCategoryUid,
                             NMusSessionInformationApi::KMusCallEvent,currentVal));
         MUS_LOG1( "mus: [MUSAO]  - Remote State = %d",iRemoteCallEvent )
-        
-        
-        /*
-         If Call is Connected then set the Call info.
-         */
-        if( aVal==NMusSessionInformationApi::ECallConnected ) 
-            {
-            SetCallInfoL();
-            }
-        
         /* If current event is callconnected and remote is not in hold set the
            property value to CallConnected.Else set it to CallHold.
            Note : We can be sure about Local is connected when it goes to
@@ -109,33 +109,37 @@ void CMusCallMonitorBase::SetStateL(NMusSessionInformationApi::TMusCallEvent aVa
                                                  NMusSessionInformationApi::KMusCallEvent,
                                                  aVal ));    
                 }
-            }
-    	else if( aVal==NMusSessionInformationApi::EConferenceCall)
-    			{
-                User::LeaveIfError(RProperty::Set( NMusSessionInformationApi::KCategoryUid,
-                                                   NMusSessionInformationApi::KMusCallEvent,
-                                                   NMusSessionInformationApi::EConferenceCall   ));  
-    			}
+            } 
         else if( aVal==NMusSessionInformationApi::ECallHold || iRemoteCallEvent==RMobileCall::ERemoteHold )
             {            
             User::LeaveIfError(RProperty::Set( NMusSessionInformationApi::KCategoryUid,
                                                NMusSessionInformationApi::KMusCallEvent,
                                                NMusSessionInformationApi::ECallHold   ));  
             }          
-        if( aVal != NMusSessionInformationApi::ENoCall)
+         else if( aVal==NMusSessionInformationApi::ENoCall )
+            {            
+            User::LeaveIfError(RProperty::Set( NMusSessionInformationApi::KCategoryUid,
+                                               NMusSessionInformationApi::KMusCallEvent,
+                                               NMusSessionInformationApi::ENoCall ));  
+            }  
+          else if( aVal==NMusSessionInformationApi::EConferenceCall )
+            {            
+            User::LeaveIfError(RProperty::Set( NMusSessionInformationApi::KCategoryUid,
+                                               NMusSessionInformationApi::KMusCallEvent,
+                                               NMusSessionInformationApi::EConferenceCall ));  
+            }  
+         	  
+        /*
+         If Call is Connected then set the Call info.
+         */
+        if( aVal==NMusSessionInformationApi::ECallConnected ) 
             {
-            RMobileCall::TMobileCallInfoV3 callInfo;
-            RMobileCall::TMobileCallInfoV3Pckg pckg( callInfo );
-    
-            User::LeaveIfError(iCall.GetMobileCallInfo( pckg ));  
-            if( callInfo.iEmergency )
-                    {
-                    User::LeaveIfError(RProperty::Set( NMusSessionInformationApi::KCategoryUid,
-                                             NMusSessionInformationApi::KMusCallEvent,
-                                             ( TInt ) NMusSessionInformationApi::ENoCall ));
-                    }
+            SetCallInfoL();
             }
 
+        // All P/S Keys are Set
+        //Check if preconditions are met to start or stop the MushClient.
+        iCallStateObserver.MusCallStateChanged();
         }   
  
     MUS_LOG( "mus: [MUSAO]  <- CMusCallMonitorBase::SetStateL" )    
@@ -155,7 +159,6 @@ void CMusCallMonitorBase::SetCallInfoL()
                                            callInfo.iRemoteParty.iRemoteNumber;
      // Set telephone number
     HBufC* telNo( NULL );
-    HBufC* cleanTelNo( NULL );
     if( remoteNumber.iTelNumber.Length() > 0 )
         {
         MUS_LOG( "mus: [MUSAO]     remoteNumber.iTelNumber.Lenght > 0" )
@@ -163,27 +166,18 @@ void CMusCallMonitorBase::SetCallInfoL()
         }
     else
         {
-        MUS_LOG( "mus: [MUSAO]     remoteNumber.iTelNumber.Lenght =< 0" )
+        MUS_LOG( "mus: [CALLMN]     remoteNumber.iTelNumber.Lenght =< 0" )
         RMobilePhone::TMobileAddress dialledParty = callInfo.iDialledParty;
         telNo = dialledParty.iTelNumber.AllocLC();
-        
         }
-    if ( MultimediaSharingSettings::PrivacySetting() )
-        {
-        SetClirSetting( *telNo );
-        }
-    cleanTelNo = RemovePrefix( *telNo );
-    CleanupStack::PushL( cleanTelNo );  
-    
     User::LeaveIfError(RProperty::Set( 
                                       NMusSessionInformationApi::KCategoryUid,
                                       NMusSessionInformationApi::KMusTelNumber,
-                                      *cleanTelNo ));  
-    MUS_LOG_TDESC("mus: [MUSAO]     telNo = ", (*cleanTelNo))
-    CleanupStack::PopAndDestroy(cleanTelNo);
+                                      *telNo ));  
+    MUS_LOG_TDESC("mus: [MUSAO]     telNo = ", (*telNo))
     CleanupStack::PopAndDestroy(telNo);
     
-    // Set call direction.
+    // Set call direction.     
     RMobileCall::TMobileCallDirection direction =
                                             callInfo.iRemoteParty.iDirection;
     MUS_LOG1( "mus: [MUSAO]  Call Direction = %d",direction )
@@ -196,7 +190,6 @@ void CMusCallMonitorBase::SetCallInfoL()
         }
     else if ( direction  == RMobileCall::EMobileTerminated )
         {
-        SetTerminatingPrivacy( iCall );
         User::LeaveIfError(RProperty::Set( 
                         NMusSessionInformationApi::KCategoryUid,
                         NMusSessionInformationApi::KMusCallDirection,
@@ -208,8 +201,14 @@ void CMusCallMonitorBase::SetCallInfoL()
                         NMusSessionInformationApi::KCategoryUid,
                         NMusSessionInformationApi::KMusCallDirection,
                         ( TInt ) NMusSessionInformationApi::ENoDirection ));
-        }
+        } 
     
+    
+    /* Set the call provider information to some dummy Value */
+    User::LeaveIfError(RProperty::Set( 
+                            NMusSessionInformationApi::KCategoryUid,
+                            NMusSessionInformationApi::KMUSCallProvider,
+                            KNullDesC));
     
     MUS_LOG( "mus: [MUSAO]  <- CMusCallMonitorBase::SetCallInfoL" )  
     }
@@ -242,90 +241,42 @@ void CMusCallMonitorBase::NotifyCallStateChanged( NMusSessionInformationApi::TMu
     iTsyObserver.NotifyCallStateChanged( aVal, callInfo.iCallName );
     }
 
-// --------------------------------------------------------------------------
-// void CMusCallMonitorBase::SetClirSetting()
-// Determine CLIR setting from dialled digits
-// --------------------------------------------------------------------------
-//
-void CMusCallMonitorBase::SetClirSetting( const TDesC& aDialledNumber ) const
+
+// --------------------------------------------------------------------------------
+// CMusCallConferenceMonitor::IsDataReadyL()
+// Checks if Data is ready CS Call.
+// --------------------------------------------------------------------------------
+
+TBool CMusCallMonitorBase::IsDataReadyL()
     {
-    MUS_LOG( "mus: [MUSAO]  -> CMusCallMonitorBase::SetClirSetting" );
+    // This function need to be updated when new 
+    // P/S key is published in Call monitor 
 
-    NMusSessionInformationApi::TMusClirSetting 
-        sendNumber( NMusSessionInformationApi::ESendOwnNumber );
-
-    TPtrC prefix = aDialledNumber.Left( KDoNotSendOwnNumber().Length() );
-    if ( prefix == KDoNotSendOwnNumber() )
-        {
-        sendNumber = NMusSessionInformationApi::EDoNotSendOwnNumber;
-        }
-    RProperty::Set( NMusSessionInformationApi::KCategoryUid, 
-                    NMusSessionInformationApi::KMusClirSetting, sendNumber );
-    MUS_LOG1( "mus: [MUSAO]  <- CMusCallMonitorBase::SetClirSetting send nbr=%d",
-    sendNumber == NMusSessionInformationApi::ESendOwnNumber );
-    }
-
-
-// --------------------------------------------------------------------------
-// void CMusCallMonitorBase::RemovePrefix()
-// --------------------------------------------------------------------------
-//
-HBufC* CMusCallMonitorBase::RemovePrefix( const TDesC& aOriginator ) const
-    {
-    MUS_LOG( "mus: [MUSAO]  -> CMusCallMonitorBase::removePrefix" );
-
-    HBufC * withoutPrefix(NULL);
+    MUS_LOG( "mus: [MUSAO]  -> CMusCallMonitorBase::IsDataReadyL" )
     
-    TPtrC prefix = aOriginator.Left( KDoNotSendOwnNumber().Length() );
-    if ( prefix == KDoNotSendOwnNumber()|| prefix == KDoSendOwnNumber() )
-        {
-        MUS_LOG( "Number have a prefix" );
-        withoutPrefix = aOriginator.AllocL();
-        *withoutPrefix = aOriginator;
-        TPtr ptr = withoutPrefix->Des();
-        ptr.Delete(0,KDoNotSendOwnNumber().Length());
-        }
-    else
-        {
-        withoutPrefix = aOriginator.AllocL();
-        }
+    // Ensure there is tel Number.
+    HBufC* telNumInfo = HBufC::NewLC( RProperty::KMaxPropertySize );
+    TPtr ptelInfo = telNumInfo->Des();
+    TInt err  = KErrNone;
+       
+    err = RProperty::Get( NMusSessionInformationApi::KCategoryUid,
+                            NMusSessionInformationApi::KMusTelNumber,
+                            ptelInfo );
+
+    TBool telInfoExisit ( err == KErrNone && telNumInfo->Des().Length() > 0 );
+    CleanupStack::PopAndDestroy( telNumInfo );
     
-    MUS_LOG( "mus: [MUSAO]  <- CMusCallMonitorBase::RemovePrefix" );
-    return withoutPrefix;
-    }
-
-
-// --------------------------------------------------------------------------
-// void CMusCallMonitorBase::SetTerminatingPrivacy()
-// --------------------------------------------------------------------------
-//
-void CMusCallMonitorBase::SetTerminatingPrivacy( const RMobileCall& aCall ) const
-    {
-    MUS_LOG( "mus: [MUSAO]  -> CMusCallMonitorBase::SetTerminatingPrivacy" )
-    RMobileCall::TMobileCallInfoV3 callInfo;
-    RMobileCall::TMobileCallInfoV3Pckg callInfoPckg( callInfo );
-    if( aCall.GetMobileCallInfo( callInfoPckg ) != KErrNone )
-        {
-        return; // error cannot do
-        }
-    MUS_LOG( "mus: [MUSAO] Get remote status" )
-    RMobileCall::TMobileCallRemoteIdentityStatus remoteStatus = 
-                    callInfo.iRemoteParty.iRemoteIdStatus;
-            
-    if( remoteStatus == RMobileCall::ERemoteIdentitySuppressed )
-        {
-         RProperty::Set( NMusSessionInformationApi::KCategoryUid,
-                        NMusSessionInformationApi::KMUSPrivacy,
-                        ( TInt ) NMusSessionInformationApi::EPrivacyOn );
-        }
-    else
-        {
-        RProperty::Set( NMusSessionInformationApi::KCategoryUid,
-                        NMusSessionInformationApi::KMUSPrivacy,
-                        ( TInt ) NMusSessionInformationApi::EPrivacyOff );
-        }
-    MUS_LOG1( "mus: [MUSAO] Remote status = %d",remoteStatus )
-    MUS_LOG( "mus: [MUSAO]  <- CMusCallMonitorBase::SetTerminatingPrivacy" )
+    // Ensure Call direction info is there
+    TInt callDirection = NMusSessionInformationApi::ENoDirection;
+    err = RProperty::Get( 
+                    NMusSessionInformationApi::KCategoryUid,
+                    NMusSessionInformationApi::KMusCallDirection,
+                    callDirection );
+    
+    TBool callInfoExisit ( err == KErrNone && callDirection != NMusSessionInformationApi::ENoDirection );
+    
+    MUS_LOG( "mus: [MUSAO]  <- CMusCallMonitorBase::IsDataReadyL" )
+    return telInfoExisit && callInfoExisit;
     }
 
 // End of file

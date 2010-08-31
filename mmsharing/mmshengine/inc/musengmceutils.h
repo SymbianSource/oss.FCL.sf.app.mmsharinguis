@@ -24,6 +24,7 @@
 
 #include <mcemediastream.h>
 #include <mcemediasink.h>
+#include <mcemediasource.h>
 
 
 class CMceSession;
@@ -33,6 +34,7 @@ class CMceFileSource;
 class CMceVideoStream;
 class CMceSpeakerSink;
 
+const TUint KMusEngNoAssociatedSourceType = KMaxTUint;
 
 /**
 * Static class including utility methods to locate and manipulate MCE 
@@ -52,6 +54,14 @@ class MusEngMceUtils
         */
         static TBool IsVideoInStream( CMceMediaStream& aStream );
 
+        /**
+        * Tells if a stream is a video stream with rtp sink.
+        *
+        * @param aStream Stream to be investigated
+        * @return ETrue if parameter is a video stream with a RTP sink
+        */
+        static TBool IsVideoOutStream( CMceMediaStream& aStream );
+        
         /**
         * Tells if a stream is an audio stream with rtp source.
         *
@@ -93,44 +103,62 @@ class MusEngMceUtils
         /**
         * Gets handle to a media sink of spesified type contained by
         * a mediastream. If there are several sink instances, first one is 
-        * returned. Ownership is not transferred.
+        * returned. If associated source type is defined, sink in stream having
+        * the source is tried to be searched. If no such match, first matching 
+        * sink is returned. Ownership is not transferred.
         *
         * @return Media sink of the spesified type. NULL if none exists
         */
-        static CMceMediaSink* GetMediaSink( CMceMediaStream& aStream, 
-                                            TMceSinkType aType );
+        static CMceMediaSink* GetMediaSink( 
+                CMceMediaStream& aStream, 
+                TMceSinkType aType,
+                TMceSourceType aAssociatedSourceType = KMusEngNoAssociatedSourceType );
         
         /**
         * Gets handle to a media sink of spesified type contained by
         * a mediastream. If there are several sink instances, first one is 
-        * returned. Ownership is not transferred.
+        * returned. If associated source type is defined, sink in stream having
+        * the source is tried to be searched. If no such match, first matching 
+        * sink is returned. Ownership is not transferred.
         *
         * @return Media sink of the spesified type.
         * @leave KErrNotFound if there is no sink of spesified type
         */
-        static CMceMediaSink* GetMediaSinkL( CMceMediaStream& aStream, 
-                                             TMceSinkType aType );
+        static CMceMediaSink* GetMediaSinkL( 
+                CMceMediaStream& aStream, 
+                TMceSinkType aType,
+                TMceSourceType aAssociatedSourceType = KMusEngNoAssociatedSourceType );
 
         /**
         * Gets handle to a media sink of spesified type contained by
         * a session. If there are several sink instances, first one is 
-        * returned. Ownership is not transferred.
+        * returned. If associated source type is defined, sink in stream having
+        * the source is tried to be searched. If no such match, first matching 
+        * sink is returned. Ownership is not transferred.
         *
         * @return Media sink of the spesified type. NULL if none exists
         */
-        static CMceMediaSink* GetMediaSink( CMceSession& aSession, 
-                                            TMceSinkType aType );
+        static CMceMediaSink* GetMediaSink( 
+                CMceSession& aSession, 
+                TMceSinkType aType,
+                TMceSourceType aAssociatedSourceType = KMusEngNoAssociatedSourceType,
+                TBool aStrictMatch = EFalse );
         
         /**
         * Gets handle to a media sink of spesified type contained by
         * a session. If there are several sink instances, first one is 
-        * returned. Ownership is not transferred.
+        * returned. If associated source type is defined, sink in stream having
+        * the source is tried to be searched. If no such match, first matching 
+        * sink is returned. Ownership is not transferred.
         *
         * @return Media sink of the spesified type.
         * @leave KErrNotFound if there is no sink of spesified type
         */
-        static CMceMediaSink* GetMediaSinkL( CMceSession& aSession, 
-                                             TMceSinkType aType );
+        static CMceMediaSink* GetMediaSinkL( 
+                CMceSession& aSession, 
+                TMceSinkType aType,
+                TMceSourceType aAssociatedSourceType = KMusEngNoAssociatedSourceType,
+                TBool aStrictMatch = EFalse );
         
         /**
         * Gets handle to a speaker sink contained by specified stream 
@@ -161,18 +189,43 @@ class MusEngMceUtils
         *
         * @return Display sink, NULL if none exists
         */
-        static CMceDisplaySink* GetDisplay( CMceSession& aSession );        
+        static CMceDisplaySink* GetDisplay( CMceSession& aSession,
+                                            TBool aPreferViewFinder = ETrue );        
 
         /**
         * Gets handle to a display sink. If there are several display
-        * sink instances, first one is returned.
+        * sink instances view finder is preferred with default arguments.
         * Ownership is not transferred.
         *
         * @return Display sink
         * @leave KErrNotFound if there is no display
         */
-        static CMceDisplaySink* GetDisplayL( CMceSession& aSession );     
+        static CMceDisplaySink* GetDisplayL( CMceSession& aSession, 
+                                             TBool aPreferViewFinder = ETrue );     
 
+        /**
+        * Gets handle to a display sink. Ownership is not transferred.
+        *
+        * @return Display sink, NULL if none exists
+        */
+        static CMceDisplaySink* GetReceivingDisplay( CMceSession& aSession );          
+        
+        /**
+        * Gets handle to a receiving display sink. Ownership is not transferred.
+        *
+        * @return Display sink
+        * @leave KErrNotFound if there is no display
+        */
+        static CMceDisplaySink* GetReceivingDisplayL( CMceSession& aSession );    
+        
+        /**
+        * Gets handle to a viewfinder display sink. Ownership is not transferred.
+        *
+        * @return Display sink
+        * @leave KErrNotFound if there is no display
+        */
+        static CMceDisplaySink* GetVfDisplay( CMceSession& aSession );
+        
         /**
         * Adds display sink to specified stream if one does not exist already.
         * Display rect is set in both cases to a specified one.
@@ -185,7 +238,8 @@ class MusEngMceUtils
         */
         static void AddDisplayL( CMceMediaStream& aStream, 
                                  CMceManager& aManager, 
-                                 const TRect& aDisplayRect );
+                                 const TRect& aDisplayRect,
+                                 TBool aDisable = EFalse );
 
         /**
         * Adds speaker sink to specified stream if one does not exist already.
@@ -202,6 +256,18 @@ class MusEngMceUtils
         * @param aStream is a stream to be disabled
         */
         static void DisableStreamL( CMceMediaStream& aStream );
+        
+        /**
+        * Enables or disables display sink. If the state is already correct,
+        * nothing is done.
+        */
+        static void DoEnableDisplayL( CMceDisplaySink& aDisplay, TBool aEnable );
+        
+        /**
+        * Enables inactivity timer if possible.
+        */
+        static TInt EnableInactivityTimer( CMceSession& aSession, 
+                                           TUint32 aInactivityTimeout );
         
     };
 

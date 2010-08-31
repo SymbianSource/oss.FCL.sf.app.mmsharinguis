@@ -20,37 +20,46 @@
 #ifndef __MULTIMEDIASHARINGRESOURCES_IBY__
 #define __MULTIMEDIASHARINGRESOURCES_IBY__
 
+#if defined(__MULTIMEDIA_SHARING) || defined(__CS_VIDEO_TELEPHONY)
+data=DATAZ_\data\others\lcvtview.docml data\others\lcvtview.docml
+#endif
+
 #ifdef __MULTIMEDIA_SHARING
 
 /*========================================================================
-* MUS UI
+* MUS UI DOCML
 * ========================================================================
 */
-S60_APP_RESOURCE( musui )
+data=DATAZ_\data\others\lcidleview.docml data\others\lcidleview.docml
+data=DATAZ_\data\others\lcreceiveview.docml data\others\lcreceiveview.docml
+data=DATAZ_\data\others\lcsendview.docml data\others\lcsendview.docml
+data=DATAZ_\data\others\lctwowayview.docml data\others\lctwowayview.docml
+data=DATAZ_\data\others\lcreceiveonlyview.docml data\others\lcreceiveonlyview.docml
+
 
 /*========================================================================
 * MUS Settings UI
 * ========================================================================
 */
-data=DATAZ_\RESOURCE_FILES_DIR\mussettingsuirsc.rsc RESOURCE_FILES_DIR\mussettingsuirsc.rsc
+//data=DATAZ_\RESOURCE_FILES_DIR\mussettingsuirsc.rsc RESOURCE_FILES_DIR\mussettingsuirsc.rsc
 
 /*========================================================================
 * MUS wireless provisioning adapter
 * ========================================================================
 */
-data=DATAZ_\RESOURCE_FILES_DIR\muswpadapterresource.rsc RESOURCE_FILES_DIR\muswpadapterresource.rsc
+//data=DATAZ_\RESOURCE_FILES_DIR\muswpadapterresource.rsc RESOURCE_FILES_DIR\muswpadapterresource.rsc
 
 /*========================================================================
 * MUS AIW Provider Ecom Plugin
 * ========================================================================
 */
-data=DATAZ_\RESOURCE_FILES_DIR\musaiwproviderui.rsc RESOURCE_FILES_DIR\musaiwproviderui.rsc
+//data=DATAZ_\RESOURCE_FILES_DIR\musaiwproviderui.rsc RESOURCE_FILES_DIR\musaiwproviderui.rsc
 
 /*========================================================================
 * MUS Indicator dll
 * ========================================================================
 */
-data=DATAZ_\RESOURCE_FILES_DIR\musindicator.rsc RESOURCE_FILES_DIR\musindicator.rsc
+//data=DATAZ_\RESOURCE_FILES_DIR\musindicator.rsc RESOURCE_FILES_DIR\musindicator.rsc
 
 #endif
 

@@ -94,6 +94,7 @@ public:
     virtual TBool ExtensionAvailability();
     virtual TBool Available( MMusAvaObserver::TAvailabilityName aAvailability );
     virtual MMusAvaObserver::TAvailabilityStatus AvailabilityState( MMusAvaObserver::TAvailabilityName aAvailability );
+    virtual void PrepareForReceivedInviteL();
     
 public: //From MMusAvaObserver
 

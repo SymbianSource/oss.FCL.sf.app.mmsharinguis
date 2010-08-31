@@ -18,16 +18,15 @@
 
 
 // USER INCLUDES
-
 #include "musengreceivesession.h"
-#include "musengsessionobserver.h"
-#include "musengreceivesessionobserver.h"
 #include "musengmceutils.h"
 #include "musenglogger.h"
-#include "mussettings.h"
 #include "mussipprofilehandler.h"
+#include "mussessionproperties.h"
+#include "musengremotevideoplayer.h"
 
 // SYSTEM INCLUDES
+#include <lcsessionobserver.h>
 #include <mcemanager.h>
 #include <mceinsession.h>
 #include <mcestreambundle.h>
@@ -39,25 +38,20 @@
 #include <mcespeakersink.h>
 #include <mceaudiocodec.h>
 #include <mceavccodec.h>
+#include <e32property.h>
 
 #include <utf.h>
-
-
-const TUint8 KMusEngRtpKeepAliveTimer = 5; // this should be 30 sec, this a temporary fix
-const TUint8 KMusEngKeepAlivePayloadTypeVideoH263 = 96;
-const TUint8 KMusEngKeepAlivePayloadTypeAudio = 97;
-const TUint8 KMusEngKeepAlivePayloadTypeVideoAvc = 98;
 
 const TInt KMusEngJitterBufferLength = 51; //Must be bigger than treshold
 // Using following value increases treshold buffer to 1 second from 
 // default 100 ms
 const TInt KMusEngJitterBufferTreshold = 50;
 const TInt KMusEngTresholdToSecondsFactor = 20;
-const TInt KMusEngOneSecondInMilliSeconds = 1000; 
+const TInt KMusEngTwoSecondInMilliSeconds = 2000; 
 // Use inactivity timer value that is a little bigger than treshold in seconds
 const TUint KMusEngInactivityTimer = KMusEngTresholdToSecondsFactor * 
                                      KMusEngJitterBufferTreshold + 
-                                     KMusEngOneSecondInMilliSeconds;
+                                     KMusEngTwoSecondInMilliSeconds;
 
 _LIT8( KMusEngSwisIdentifier, "Require: precondition" );
 _LIT8( KMusEngAssertedIdentity, "P-Asserted-Identity" );
@@ -70,28 +64,11 @@ _LIT8( KMusEngSipReasonPhraseBusy, "Busy" );
 //
 // -----------------------------------------------------------------------------
 //
-CMusEngReceiveSession::~CMusEngReceiveSession()
-    {
-    MUS_LOG( "mus: [ENGINE]  -> CMusEngReceiveSession::~CMusEngReceiveSession()" )
-    MUS_LOG( "mus: [ENGINE]  <- CMusEngReceiveSession::~CMusEngReceiveSession()" )
-    }
-
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-EXPORT_C CMusEngReceiveSession* CMusEngReceiveSession::NewL(
-                        const TRect& aRect,
-                        MMusEngSessionObserver& aSessionObserver,
-                        MMusEngReceiveSessionObserver& aReceiveSessionObserver )
+CMusEngReceiveSession* CMusEngReceiveSession::NewL()
     {
     MUS_LOG( "mus: [ENGINE]  -> CMusEngReceiveSession::NewL(...)" )
 
-    CMusEngReceiveSession* self = new( ELeave ) CMusEngReceiveSession( 
-                                                        aSessionObserver, 
-                                                        aReceiveSessionObserver,
-                                                        aRect );
+    CMusEngReceiveSession* self = new( ELeave )CMusEngReceiveSession();
     CleanupStack::PushL( self );
     self->ConstructL();
     CleanupStack::Pop( self );
@@ -100,27 +77,101 @@ EXPORT_C CMusEngReceiveSession* CMusEngReceiveSession::NewL(
     return self;
     }
 
-
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
-EXPORT_C void CMusEngReceiveSession::AcceptInvitationL(
-                        const TBool& aAccept )
+CMusEngReceiveSession::CMusEngReceiveSession()
+    : CMusEngMceSession()
     {
-    MUS_LOG1( "mus: [ENGINE]     -> CMusEngReceiveSession::\
-              AcceptInvitationL( %d )", aAccept )
+    }
 
-    __ASSERT_ALWAYS( iSession && iSession->State() == CMceSession::EProceeding,
-                     User::Leave( KErrNotReady ) );
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngReceiveSession::ConstructL()
+    {
+    MUS_LOG( "mus: [ENGINE]  -> CMusEngReceiveSession::ConstructL()" )
 
-    // Accept or reject
-    if ( aAccept )
+    CMusEngMceSession::ConstructL();
+    
+    iOriginator = HBufC8::NewL( KMaxUriLength );
+    
+    iRemoteDisplayName = HBufC::NewL( KMaxUriLength );
+
+    iRemoteVideoPlayer = CMusEngRemoteVideoPlayer::NewL( *this, *this );
+    
+    iReceivingInactivityTimeout = KMusEngInactivityTimer;
+    
+    iKeepaliveTimer = KMusEngRtpKeepAliveTimer;
+    
+    MUS_LOG( "mus: [ENGINE]  <- CMusEngReceiveSession::ConstructL()" )
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+CMusEngReceiveSession::~CMusEngReceiveSession()
+    {
+    MUS_LOG( "mus: [ENGINE]  -> CMusEngReceiveSession::~CMusEngReceiveSession()" )
+    
+    if ( iOriginator )
         {
-        InSession()->AcceptL();
+        TRAP_IGNORE( SaveContactL( *iOriginator ) )
         }
-    else
+    delete iOriginator;
+    
+    delete iRemoteDisplayName;
+    
+    delete iRemoteVideoPlayer;
+    
+    MUS_LOG( "mus: [ENGINE]  <- CMusEngReceiveSession::~CMusEngReceiveSession()" )
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcSession
+// -----------------------------------------------------------------------------
+//
+MLcSession::TLcSessionState CMusEngReceiveSession::LcSessionState() const
+    {
+    TLcSessionState state = CMusEngMceSession::LcSessionState();
+    if ( !iSession && state == MLcSession::EUninitialized )
         {
+        state = MLcSession::EReceived;
+        }
+    return state;
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcSession
+// -----------------------------------------------------------------------------
+//
+void CMusEngReceiveSession::EstablishLcSessionL()
+    {
+    MUS_LOG( "mus: [ENGINE]  -> CMusEngReceiveSession::EstablishLcSessionL" )
+
+    __ASSERT_ALWAYS( iSession, User::Leave( KErrNotReady ) );
+    InSession()->AcceptL();
+    
+    MUS_LOG( "mus: [ENGINE]  <- CMusEngReceiveSession::EstablishLcSessionL" )
+    }
+
+// -----------------------------------------------------------------------------
+// From MLcSession
+// -----------------------------------------------------------------------------
+//
+void CMusEngReceiveSession::TerminateLcSessionL()
+    {
+    MUS_LOG( "mus: [ENGINE]  -> CMusEngReceiveSession::EstablishLcSessionL" )
+
+    __ASSERT_ALWAYS( iSession, User::Leave( KErrNotReady ) );
+
+    if ( iSession->State() == CMceSession::EIncoming ||
+         iSession->State() == CMceSession::EProceeding )
+        {
+        // Reject
         if ( iOperatorVariant )
             {
             // In operator variant, session is rejected with 486 instead of 603.
@@ -133,11 +184,45 @@ EXPORT_C void CMusEngReceiveSession::AcceptInvitationL(
             InSession()->RejectL();
             }
         }
-
-    MUS_LOG( "mus: [ENGINE]  <- CMusEngReceiveSession::\
-             AcceptInvitationL(...)" )
+    else
+        {
+        iSession->TerminateL();
+        }
+    
+    MUS_LOG( "mus: [ENGINE]  <- CMusEngReceiveSession::EstablishLcSessionL" )
     }
 
+// -----------------------------------------------------------------------------
+// From MLcSession
+// -----------------------------------------------------------------------------
+//
+MLcVideoPlayer* CMusEngReceiveSession::RemoteVideoPlayer()
+    {
+    return iRemoteVideoPlayer;
+    }
+    
+// -----------------------------------------------------------------------------
+// From MLcSession
+// -----------------------------------------------------------------------------
+//
+const TDesC& CMusEngReceiveSession::RemoteDisplayName()
+    {
+    TBuf<RProperty::KMaxPropertySize> buffer;
+
+    TInt error = RProperty::Get( NMusSessionApi::KCategoryUid,
+                                 NMusSessionApi::KContactName,
+                                 buffer );
+    if ( error == KErrNone && buffer.Length() )
+        {
+        iRemoteDisplayName->Des().Copy( buffer );
+        }
+    
+    else if ( iOriginator )
+        {
+        iRemoteDisplayName->Des().Copy(*iOriginator);   
+        }
+    return *iRemoteDisplayName;
+    }
 
 // -----------------------------------------------------------------------------
 // When reserving resources is ready, this function reports observer about
@@ -154,7 +239,8 @@ void CMusEngReceiveSession::HandleSessionStateChanged(
 
     MUS_ENG_LOG_SESSION_STATE_AND_STATUS( aSession, aStatusCode, aReasonPhrase )
 
-    if ( iSession && iSession == &aSession &&
+    if ( iSession && 
+         iSession == &aSession &&
          aSession.State() == CMceSession::EProceeding )
         {
         // Indicates that resource reservation is ready, user can be notified
@@ -165,16 +251,9 @@ void CMusEngReceiveSession::HandleSessionStateChanged(
             // Notify other end terminal
             TRAP_IGNORE( InSession()->RingL() )
             iRingLCalled = ETrue;
-            
-            // Notify user
-            TBuf16<KMaxUriLength> originator;
-            CnvUtfConverter::ConvertToUnicodeFromUtf8( originator,
-                                                       iSession->Originator() );
-                                                       
-            TBuf16<KMaxUriLength> identity;
-            CnvUtfConverter::ConvertToUnicodeFromUtf8( identity,
-                                                       iIdentity );                                                       
-            iReceiveSessionObserver.IncomingSession( originator, identity );
+            TPtr8 ptrOriginator( iOriginator->Des() );
+            ptrOriginator.Copy( iSession->Originator() );
+            InformObserverAboutSessionStateChange();
             }
         else
             {
@@ -194,18 +273,19 @@ void CMusEngReceiveSession::HandleSessionStateChanged(
              HandleSessionStateChanged()" )
     }
 
-
 // -----------------------------------------------------------------------------
 // Sets keepalive timer for video and calls base class variant of this function
 // -----------------------------------------------------------------------------
 //
-void CMusEngReceiveSession::AdjustVideoCodecL( CMceVideoCodec& aVideoCodec )
+void CMusEngReceiveSession::AdjustVideoCodecL( CMceVideoCodec& aVideoCodec,
+                                               TMceSourceType aSourceType )
     {
     MUS_LOG( "mus: [ENGINE]  -> CMusEngReceiveSession::AdjustVideoCodecL()" )
     
-    CMusEngMceSession::AdjustVideoCodecL( aVideoCodec );
+    CMusEngMceSession::AdjustVideoCodecL( aVideoCodec, aSourceType );
     
-    aVideoCodec.SetKeepAliveTimerL( KMusEngRtpKeepAliveTimer );
+    MUS_LOG1( "mus: [ENGINE]     Keepalive timer:%d", iKeepaliveTimer )
+    aVideoCodec.SetKeepAliveTimerL( iKeepaliveTimer );
     if ( aVideoCodec.SdpName() == KMceSDPNameH263() ||
          aVideoCodec.SdpName() == KMceSDPNameH2632000() )
         {
@@ -225,7 +305,6 @@ void CMusEngReceiveSession::AdjustVideoCodecL( CMceVideoCodec& aVideoCodec )
     MUS_LOG( "mus: [ENGINE]  <- CMusEngReceiveSession::AdjustVideoCodecL()" )
     }
         
-
 // -----------------------------------------------------------------------------
 // Sets keepalive timer for audio and calls base class variant of this function
 // -----------------------------------------------------------------------------
@@ -236,13 +315,12 @@ void CMusEngReceiveSession::AdjustAudioCodecL( CMceAudioCodec& aAudioCodec )
 
     CMusEngMceSession::AdjustAudioCodecL( aAudioCodec );
     
-    aAudioCodec.SetKeepAliveTimerL( KMusEngRtpKeepAliveTimer );
+    aAudioCodec.SetKeepAliveTimerL( iKeepaliveTimer );
     aAudioCodec.SetKeepAlivePayloadTypeL( KMusEngKeepAlivePayloadTypeAudio );
     aAudioCodec.SetKeepAliveDataL( KNullDesC8() );
     
     MUS_LOG( "mus: [ENGINE]  <- CMusEngReceiveSession::AdjustAudioCodecL()" )
     }
-
 
 // -----------------------------------------------------------------------------
 // 
@@ -259,8 +337,7 @@ void CMusEngReceiveSession::DoCodecSelectionL( CMceVideoStream& aVideoStream )
     
     for ( TInt codecIndex = 0; codecIndex < codecs.Count(); ++codecIndex )
         {
-        if ( codecs[codecIndex]->SdpName() == KMceSDPNameH264() && 
-             !MultimediaSharingSettings::IsAvcDisabled() )
+        if ( codecs[codecIndex]->SdpName() == KMceSDPNameH264() )
             { 
             if ( codecs[codecIndex]->CodecMode() == KMceAvcModeSingleNal )
                 {
@@ -323,7 +400,6 @@ void CMusEngReceiveSession::DoCodecSelectionL( CMceVideoStream& aVideoStream )
                
     MUS_LOG( "mus: [ENGINE]  <- CMusEngReceiveSession::DoCodecSelectionL()" )
     }
-    
 
 // -----------------------------------------------------------------------------
 // If incoming session does not have valid structure and cannot be reconstructed
@@ -331,8 +407,8 @@ void CMusEngReceiveSession::DoCodecSelectionL( CMceVideoStream& aVideoStream )
 // -----------------------------------------------------------------------------
 //
 void CMusEngReceiveSession::IncomingSession(
-                      CMceInSession* aSession,
-                      TMceTransactionDataContainer* aContainer )
+    CMceInSession* aSession,
+    TMceTransactionDataContainer* aContainer )
     {
     MUS_LOG( "mus: [ENGINE]  -> CMusEngReceiveSession::IncomingSession(...)" )
 
@@ -349,8 +425,6 @@ void CMusEngReceiveSession::IncomingSession(
                  session already exists. New session rejected and deleted. )" )
         return;
         }
-
-    iReceiveSessionObserver.IncomingSessionPreNotification();
 
     delete iSession; // possibly existing terminated session
     iSession = aSession;
@@ -377,15 +451,14 @@ void CMusEngReceiveSession::IncomingSession(
     MUS_LOG( "mus: [ENGINE]  <- CMusEngReceiveSession::IncomingSession()" )
     }
 
-
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
 void CMusEngReceiveSession::IncomingUpdate(
-                     CMceSession& aOrigSession,
-                     CMceInSession* aUpdatedSession,
-                     TMceTransactionDataContainer* aContainer )
+    CMceSession& aOrigSession,
+    CMceInSession* aUpdatedSession,
+    TMceTransactionDataContainer* aContainer )
     {
     MUS_LOG( "mus: [ENGINE]  -> CMusEngReceiveSession::IncomingUpdate(...)" )
 
@@ -415,7 +488,6 @@ void CMusEngReceiveSession::IncomingUpdate(
     MUS_LOG( "mus: [ENGINE]  <- CMusEngReceiveSession::IncomingUpdate(...)" )
     }
 
-
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -435,33 +507,20 @@ void CMusEngReceiveSession::StreamStateChanged( CMceMediaStream& aStream )
          aStream.Source() &&
          aStream.Source()->Type() == KMceRTPSource )
         {
-        
         if ( aStream.State() == CMceMediaStream::EBuffering )
             {
-            iReceiveSessionObserver.StreamBuffering();
+            iBuffered = ETrue;
+            InformObserverAboutPlayerStateChange( iRemoteVideoPlayer );
             }
         else if ( aStream.State() == CMceMediaStream::EStreaming )
             {
-            CMceRtpSource* rtpSource = 
-                            static_cast<CMceRtpSource*>( aStream.Source() );
-            TRAPD( err , 
-                  rtpSource->EnableInactivityTimerL( KMusEngInactivityTimer ) );
-            if ( err != KErrNone )
-                {
-                MUS_LOG1("mus: [ENGINE] EnableInactivityTimerL Fails %d",err)
-                iSessionObserver.SessionFailed();    
-                }
-            else
-                {
-                iSessionObserver.StreamStreaming();
-                }            
+            ReceivingStarted();          
             }
         else
             {
             // Cannot handle, forward to CMusEngMceSession
             CMusEngMceSession::StreamStateChanged( aStream );
             }
-        
         }
     else
         {
@@ -472,35 +531,6 @@ void CMusEngReceiveSession::StreamStateChanged( CMceMediaStream& aStream )
     MUS_LOG( "mus: [ENGINE] <- CMusEngReceiveSession::StreamStateChanged()" )
     }
 
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-CMusEngReceiveSession::CMusEngReceiveSession(
-                        MMusEngSessionObserver& aSessionObserver,
-                        MMusEngReceiveSessionObserver& aReceiveSessionObserver,
-                        const TRect& aRect )
-    : CMusEngMceSession( aRect, aSessionObserver ),
-      iReceiveSessionObserver( aReceiveSessionObserver )
-    {
-    }
-
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void CMusEngReceiveSession::ConstructL()
-    {
-    MUS_LOG( "mus: [ENGINE]  -> CMusEngReceiveSession::ConstructL()" )
-
-    CMusEngMceSession::ConstructL();
-
-    MUS_LOG( "mus: [ENGINE]  <- CMusEngReceiveSession::ConstructL()" )
-    }
-
-
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -510,7 +540,6 @@ CMceInSession* CMusEngReceiveSession::InSession()
     return static_cast<CMceInSession*>(iSession);
     }
 
-
 // -----------------------------------------------------------------------------
 // Check if incoming session is originated from VideoSharing 2.2 client, 
 // which sends PRACK for 180 Ringing whether it is required or not. In 
@@ -519,7 +548,7 @@ CMceInSession* CMusEngReceiveSession::InSession()
 // -----------------------------------------------------------------------------
 //
 void CMusEngReceiveSession::PrepareToRequire100RelL( 
-                    TMceTransactionDataContainer* aContainer)
+    TMceTransactionDataContainer* aContainer)
     {
     MUS_LOG( "mus: [ENGINE]  -> CMusEngReceiveSession::PrepareToRequire100RelL()" )
     
@@ -538,15 +567,13 @@ void CMusEngReceiveSession::PrepareToRequire100RelL(
                 iSession->SetModifierL( KMce100Rel, KMce100RelRequired );
                 MUS_LOG( "mus: [ENGINE]     Forced to require 100rel" )
                 }   
-            }
-            
+            }     
         }
     
     CleanupStack::PopAndDestroy( headers );
    
     MUS_LOG( "mus: [ENGINE]  <- CMusEngReceiveSession::PrepareToRequire100RelL()" )
-    }
-        
+    }      
 
 // -----------------------------------------------------------------------------
 // Check that incoming session contains only incoming video and audio
@@ -673,13 +700,14 @@ void CMusEngReceiveSession::CompleteSessionStructureL()
     iSession->UpdateL();
 
     // Now session state is right to adjust volume
-    SetSpeakerVolumeL( VolumeL() );
+    SetSpeakerVolumeL( LcVolumeL() );
 
-	iSipProfileHandler->CreateProfileL( iSession->Profile() );
-
+    iSipProfileHandler->CreateProfileL( iSession->Profile() );
+    
+    iRemoteVideoPlayer->SetMceSession( iSession );
+    
     MUS_LOG( "mus: [ENGINE]  <- CMusEngReceiveSession::CompleteSessionStructureL()" )
     }
-    
     
 // -----------------------------------------------------------------------------
 // Parse P-Asserted-Identity Header
@@ -754,3 +782,67 @@ void CMusEngReceiveSession::ParseAssertedIdentity(
     delete headers;  
     MUS_LOG( "mus: [ENGINE]  <- CMusEngReceiveSession::AssertedIdentity()" )      
     }
+
+// -----------------------------------------------------------------------------
+// RTP Inactivity timeout event
+// Once inactivity timeout occurs, state change is notified and receiving
+// and buffering statuses are cleared. That is safe to do as once receiving
+// again continues for real, buffering and streaming events will occur always 
+// sequentially. If buffering status would not be cleared, some unwanted
+// sreaming events would be passed towards client when it disables/enables
+// display sink of remote stream while inactivity timer has expired.
+// -----------------------------------------------------------------------------
+//
+void CMusEngReceiveSession::InactivityTimeout( CMceMediaStream& aStream,
+                                                  CMceRtpSource& /*aSource*/ )
+    {
+    MUS_LOG( "mus: [ENGINE]  -> CMusEngTwoWayRecvSession::InactivityTimeout()" )
+    
+    if ( aStream.Type() == KMceVideo && iReceiving )
+        {
+        iReceiving = EFalse;
+        iBuffered = EFalse;
+        InformObserverAboutPlayerStateChange( iRemoteVideoPlayer );
+        }
+    
+    MUS_LOG( "mus: [ENGINE]  <- CMusEngTwoWayRecvSession::InactivityTimeout()" )
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngReceiveSession::ReceivingStarted()
+    {
+    if ( iSession && iBuffered )
+        {
+        MUS_LOG( "mus: [ENGINE]  -> CMusEngReceiveSession::ReceivingStarted()" )
+        
+        TInt err = MusEngMceUtils::EnableInactivityTimer( 
+                *iSession, iReceivingInactivityTimeout );
+        
+        if ( err != KErrNone )
+            {
+            MUS_LOG1("mus: [ENGINE] ReceivingStarted failed %d", err)
+            InformObserverAboutSessionFailure( err );
+            }
+        else
+            {
+            iReceiving = ETrue;
+            InformObserverAboutPlayerStateChange( iRemoteVideoPlayer );
+            InformUiProviderAboutReceivingStart();
+            }
+        
+        MUS_LOG( "mus: [ENGINE]  <- CMusEngReceiveSession::ReceivingStarted()" )
+        }
+    }
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
+TBool CMusEngReceiveSession::IsDisplayActive()
+    {
+    return ( IsDisplayEnabled() && iReceiving );
+    }
+// End of File

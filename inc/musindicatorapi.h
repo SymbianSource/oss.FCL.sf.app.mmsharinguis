@@ -29,14 +29,28 @@
 #include <e32property.h>
 
 
-
+class CMusIndicatorDsa;
 class CAknGlobalMsgQuery;
 class CMusSoundPlayer;
 
 
 /**
- *  MusIndicatorApi provides means to indicate availability
+ *  MusIndicatorApi provides means to show notes and indicate availability
  *  of videosharing to user.
+ *
+ *  @code
+ *   // Shows roaming activation query
+ *  if ( MusIndicatorApi::ConfirmationQueryL(
+ *          MusIndicatorApi::EVsRoamingActivationQuery ) )
+ *      {
+ *      // respond to user response "yes"
+ *      }
+ *  else
+ *      {
+ *      // respond to user response "no"
+ *      }
+ *  @endcode
+ *
  *  @lib musindicator.lib
  */
 class CMusIndicatorApi : public CActive, MMusSoundPlayerObserver
@@ -83,6 +97,14 @@ public:
      * Destructor.
      */
     ~CMusIndicatorApi();
+
+    /**
+     * Shows a global query to user.
+     *
+     * @param aQuery Identifies displayed query.
+     * @return Boolean value indicating if user accepted the query.
+     */
+    IMPORT_C static TBool ConfirmationQueryL( TVsPopupQuery aQuery );
 
     /**
      * Indicates availability of video sharing.
@@ -141,11 +163,39 @@ private:
      */
     void PlayToneL();
 
+    /**
+     * Returns text from a resource file for a specified note/query.
+     *
+     * @param aQuery Identifies displayed query.
+     * @return Text associated with specified query. Ownership is transferred.
+     */
+    static HBufC* NoteTextLC( TVsPopupQuery aQuery );
+
+    /**
+     * Asynchronous query. Result returned via observer interface.
+     */
+    void ShowLiveSharingQueryL( TBool aPlayTone );
+
+    static TInt LiveSharingQueryTimeout( TAny* aThis );
+
     void StartLiveSharingL();
+    void ToggleIndicatorL();
+    TBool IsSubscriber() const;
     
         
 private: // data
 
+    /**
+     * Pointer to indicator window
+     * Own.
+     */
+    CMusIndicatorDsa* iIndicatorWindow;
+
+    /**
+     * Pointer to global msg query.
+     * Own.
+     */
+    CAknGlobalMsgQuery* iQuery;
 
     /**
      * Sound player.
@@ -158,6 +208,8 @@ private: // data
      * Own.
      */
     MMusIndicatorObserver* iObserver;
+
+    CPeriodic* iLiveSharingQueryTimeout;
     
     RProperty iProperty;
             

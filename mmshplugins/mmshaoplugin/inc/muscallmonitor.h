@@ -22,6 +22,7 @@
 
 #include "musunittesting.h"
 #include "mustsypropertymonitor.h"
+#include "mmuscallstateobserver.h"
 #include <etelmm.h>
 #include <e32base.h>
 
@@ -54,7 +55,8 @@ class CMusCallMonitor : public CBase
         /**
          * Starts to monitor call status,event and conference.
          */
-        void StartMonitorL( RMobileLine& aLine, MMusTsyPropertyObserver& aObserver );
+        void StartMonitorL( RMobileLine& aLine, MMusTsyPropertyObserver& aObserver,
+                            MMusCallStateObserver& aCallStateObserver );
 
         /**
          * Stops monitoring call status,event and conference.
@@ -88,6 +90,11 @@ class CMusCallMonitor : public CBase
          */
         void SetStateL(NMusSessionInformationApi::TMusCallEvent aVal);
         
+       /**
+        * Checks from CS call f required data is ready.
+        */
+        TBool IsDataReadyL();
+
         
     private:
 
@@ -106,6 +113,7 @@ class CMusCallMonitor : public CBase
          * ETrue to increase. EFalse to decrease. 
          */        
         void SetCallCountL(TBool aIncrease);
+        
 
     private:            
 

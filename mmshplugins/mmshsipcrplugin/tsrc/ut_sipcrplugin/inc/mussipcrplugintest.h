@@ -63,6 +63,8 @@ private: // constructors
 
 public: // Test functions
 
+    void UT_ConstructL();
+    
     void UT_ChannelL();
    
     void UT_ConnectL();
@@ -71,6 +73,7 @@ public: // Test functions
 
     void UT_ImplementationGroupProxy();
 
+    void UT_CheckForSendRecvAttributeL();
 
 public:
     void SetupL();

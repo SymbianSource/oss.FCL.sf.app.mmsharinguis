@@ -131,10 +131,10 @@ void CMusAvaSettingAvailability::CheckActivationState()
         switch( activation )
             {                
             case MusSettingsKeys::ENever:
-            case MusSettingsKeys::EActiveInHomeNetworks: 
                  iState = MMusAvaObserver::EMusActivationError ;    
                  break;
-            case MusSettingsKeys::EAlwaysActive:  
+            case MusSettingsKeys::EAlwaysActive:
+            case MusSettingsKeys::EActiveInHomeNetworks:  
             default:                 
                 if ( !IsForbiddenByOptionsResponse())  
                     {

@@ -37,41 +37,43 @@ enum TAiwTestAppCommandIds
     EAknSoftKeySave=1,
    	EAknSoftKeyExit,
    	EAknSoftKeyStart,
-
-
-
-
-
-
    	EAknSoftKeyStop
     };
+
 enum TAvkonSettingsItemCommand
-		{
-		EPhoneResouceCamera = 1,
-		EPhoneResouceKeypad,
-		EPhoneResouceVideoPlayer,
-		EPhoneResouceCameraInformation,
-        EKodiakPhoneCall        
-		};
+    {
+    EPhoneResouceCamera = 1,
+    EPhoneResouceKeypad,
+    EPhoneResouceVideoPlayer,
+    EPhoneResouceCameraInformation,
+    EKodiakPhoneCall        
+    };
+
 enum TAvkonSettingsItemCommandOther
-		{
-		EOtherResourceActivation=1,
-		EOtherResourceOperatorVariant,
-		EOtherResourceAuditoryNotification,
-		EOtherResourcePopupNotification,
-		EOtherResourcePopupNotificationType,
-		EOtherResourceEdgeDtmSupport,
-		EOtherResourceSessionSetupMethod,
-		EOtherResourceAutoRecord,
-		EOtherResourceVideoLocation,
-		EOtherResourceSipProfileId,
-		EOtherResourceUiOrientation,
-		EOtherResourceCapabilityQuery,
-		EOtherResourceProductModeVariationKey,
-		EOtherResourceEncoderConfigurationInfo,
-		EOtherResourceEncodingDevice,
-		EOtherRResourcePrivacyVariationMode
-		};
+    {
+    EOtherResourceActivation=1,
+    EOtherResourceOperatorVariant,
+    EOtherResourceAuditoryNotification,
+    EOtherResourcePopupNotification,
+    EOtherResourcePopupNotificationType,
+    EOtherResourceEdgeDtmSupport,
+    EOtherResourceSessionSetupMethod,
+    EOtherResourceAutoRecord,
+    EOtherResourceVideoLocation,
+    EOtherResourceSipProfileId,
+    EOtherResourceUiOrientation,
+    EOtherResourceCapabilityQuery,
+    EOtherResourceProductModeVariationKey,
+    EOtherResourceEncoderConfigurationInfo,
+    EOtherResourceEncodingDevice,
+    EOtherResourceAllowOnlyWithActiveCSCall,
+    EOtherResourceAllowOnlyIn3GNetwork,
+    EOtherResourceCameraUsage,
+    EOtherResourceVideoDirection,
+    EOtherResourceVideoBandwidth,
+    EOtherResourceFastMode
+    };
+
 enum TAvkonViewApplicationStartStop
     {
     EApplicationStartStop=1

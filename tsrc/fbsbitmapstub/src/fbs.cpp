@@ -35,17 +35,38 @@ TInt CFbsBitmap::Create( const TSize& /*aSizeInPixels*/, TDisplayMode /*aDispMod
     return KErrNone;
 	}
 
-TInt CFbsBitmap::Load(const TDesC& /*aFileName*/,
-                      TInt32 /*aId*/,TBool /*aShareIfLoaded*/)
+TInt CFbsBitmap::Load(const TDesC& aFileName,
+                      TInt32 aId,TBool aShareIfLoaded)
     {
     return KErrNone;
     }
 
 
-TInt CFbsBitmap::Load(const TDesC& /*aFileName*/,
-                      TInt32 /*aId*/,TBool /*aShareIfLoaded*/,
-                      TUint /*aFileOffset*/)
+TInt CFbsBitmap::Load(const TDesC& aFileName,
+                      TInt32 aId,TBool aShareIfLoaded,
+                      TUint aFileOffset)
     {
     return KErrNone;
     }
+	
+TInt CFbsBitmap::Load(RFile& aFile,TInt32 aId,TBool aShareIfLoaded)
+    {
+    return KErrNone;
+    }
+    
+TInt CFbsBitmap::Load(RFile& aFile,TInt32 aId,TBool aShareIfLoaded,TUint aFileOffset)
+    {
+    return KErrNone;
+    }
+    
+TInt CFbsBitmap::Resize(const TSize& aSizeInPixels)
+    {
+    value =  aSizeInPixels  ; 
+    return KErrNone;
+    }  
+    
+TSize CFbsBitmap::SizeInPixels() const
+    {
+    return value;
+    } 	
     

@@ -72,6 +72,7 @@ class UT_CMusAvaConnectionAvailability
         void UT_CMusAvaConnectionAvailability_NewLL();   
 		
         void UT_CMusAvaConnectionAvailability_DoExecuteLL();
+        void UT_CMusAvaConnectionAvailability_DoExecuteLL2();
          		
         void UT_CMusAvaConnectionAvailability_NameL();
           

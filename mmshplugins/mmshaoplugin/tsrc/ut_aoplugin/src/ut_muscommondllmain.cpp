@@ -17,6 +17,7 @@
 
 //  USER INCLUDES
 #include "ut_muscallmonitor.h"
+#include "ut_musvoipcallmonitor.h"
 #include "ut_muscallstatusmonitor.h"
 #include "ut_muscalleventmonitor.h"
 #include "ut_muscallconferenceeventmonitor.h"
@@ -24,6 +25,7 @@
 #include "ut_muscallmonitorbase.h"  
 #include "ut_musresourcefinderutil.h"
 #include "ut_mustsypropertymonitor.h"
+#include "ut_musfactorysettings.h"
 
 //  SYSTEM INCLUDES
 #include <digia/eunit/ceunittestsuite.h>
@@ -52,7 +54,6 @@ EXPORT_C MEUnitTest* CreateTestSuiteL()
 
     rootSuite->AddL( UT_CMusTsyPropertyMonitor::NewLC() );
     CleanupStack::Pop();  
-
     
     rootSuite->AddL( UT_MusResourceFinderUtil::NewLC() );
     CleanupStack::Pop();  
@@ -63,6 +64,12 @@ EXPORT_C MEUnitTest* CreateTestSuiteL()
     rootSuite->AddL( UT_CMusCallMonitorBase::NewLC() );
     CleanupStack::Pop();  
     
+    rootSuite->AddL( UT_CMusVoipCallMonitor::NewLC() );
+    CleanupStack::Pop();
+    
+    rootSuite->AddL( UT_CMusFactorySettings::NewLC() );
+    CleanupStack::Pop();
+        
     CleanupStack::Pop( rootSuite );
 
     return rootSuite;

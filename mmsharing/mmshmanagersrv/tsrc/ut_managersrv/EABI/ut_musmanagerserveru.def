@@ -1,19 +1,4 @@
 EXPORTS
 	_Z16CreateTestSuiteLv @ 1 NONAME
-	_ZTI16CMusAvaSettings2 @ 2 NONAME ; #<TI>#
-	_ZTI17CMusAvaInterface2 @ 3 NONAME ; #<TI>#
-	_ZTI17CMusManagerServer @ 4 NONAME ; #<TI>#
-	_ZTI21CMusManagerServerCore @ 5 NONAME ; #<TI>#
-	_ZTI22CMusApplicationManager @ 6 NONAME ; #<TI>#
-	_ZTI24CMusManagerServerSession @ 7 NONAME ; #<TI>#
-	_ZTI27CMusManagerServerCloseTimer @ 8 NONAME ; #<TI>#
-	_ZTI29CMusAvailabilityPluginManager @ 9 NONAME ; #<TI>#
-	_ZTV16CMusAvaSettings2 @ 10 NONAME ; #<VT>#
-	_ZTV17CMusAvaInterface2 @ 11 NONAME ; #<VT>#
-	_ZTV17CMusManagerServer @ 12 NONAME ; #<VT>#
-	_ZTV21CMusManagerServerCore @ 13 NONAME ; #<VT>#
-	_ZTV22CMusApplicationManager @ 14 NONAME ; #<VT>#
-	_ZTV24CMusManagerServerSession @ 15 NONAME ; #<VT>#
-	_ZTV27CMusManagerServerCloseTimer @ 16 NONAME ; #<VT>#
-	_ZTV29CMusAvailabilityPluginManager @ 17 NONAME ; #<VT>#
+
 

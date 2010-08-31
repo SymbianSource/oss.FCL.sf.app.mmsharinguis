@@ -197,28 +197,6 @@ void UT_CMusAvaSettingsImp::UT_CMusAvaSettingsImp_SetTelNumberLL()
     EUNIT_ASSERT( iSettingsImp->iTelNumber->Compare( KNumber ) == 0 );    
     }
 
-
-void UT_CMusAvaSettingsImp::UT_CMusAvaSettingsImp_SetOptionSentNumber()
-	{
-    _LIT( KNumber ,   "123456789" );
-    iSettingsImp->SetOptionSentNumber( KNumber );
-    EUNIT_ASSERT( iSettingsImp->iOptionSentTelNumber->Compare( KNumber ) == 0 ); 
-	}
-
-const UT_CMusAvaSettingsImp::UT_CMusAvaSettingsImp_OptionSentTelNumber()
-	{
-	EUNIT_ASSERT( iSettingsImp->OptionSentTelNumber().Length() == 0 );
-	}
-
-void UT_CMusAvaSettingsImp::UT_CMusAvaSettingsImp_ReleaseOptionSentNumber()
-	{
-    _LIT( KNumber ,   "123456789" );
-    iSettingsImp->SetOptionSentNumber( KNumber );
-    EUNIT_ASSERT( iSettingsImp->iOptionSentTelNumber->Compare( KNumber ) == 0 );    
-    iSettingsImp->ReleaseOptionSentNumber(); 
-    EUNIT_ASSERT( iSettingsImp->iOptionSentTelNumber->Length() == 0 )
-	}
-
 void UT_CMusAvaSettingsImp::UT_CMusAvaSettingsImp_SetSipAddressProposalLL( )
     {
     _LIT( KNumber ,   "123456789" );
@@ -536,28 +514,6 @@ EUNIT_TEST(
     "Sip",
     "FUNCTIONALITY",
     SetupL, UT_CMusAvaSettingsImp_CopyDescArrayLL, Teardown)    
-    
-EUNIT_TEST(
-    "SetOptionSentNumber - test ",
-    "CMusAvaSettingsImp",
-    "SetOptionSentNumber",
-    "FUNCTIONALITY",
-    SetupL, UT_CMusAvaSettingsImp_SetOptionSentNumber, Teardown) 
-    
-EUNIT_TEST(
-    "OptionSentTelNumber - test ",
-    "CMusAvaSettingsImp",
-    "OptionSentTelNumber",
-    "FUNCTIONALITY",
-    SetupL, UT_CMusAvaSettingsImp_OptionSentTelNumber, Teardown) 
-    
-EUNIT_TEST(
-    "ReleaseOptionSentNumber - test ",
-    "CMusAvaSettingsImp",
-    "ReleaseOptionSentNumber",
-    "FUNCTIONALITY",
-    SetupL, UT_CMusAvaSettingsImp_ReleaseOptionSentNumber, Teardown) 
-    
 
 EUNIT_END_TEST_TABLE
 

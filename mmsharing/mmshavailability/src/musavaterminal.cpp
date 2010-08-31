@@ -189,15 +189,7 @@ void CMusAvaTerminal::ExecuteQueryL( CMusAvaCapabilityQueryBase* aQuery )
 
     ResetAndDestroyQuery();
                   
-    if( aQuery->ValidateUri() )
-    	{
-		aQuery->ExecuteL();
-    	}
-    
-    else
-    	{
-		User::Leave( KErrNotSupported );
-    	}
+    aQuery->ExecuteL();
     
     iQuery = aQuery;                           
         
@@ -521,7 +513,12 @@ TBool CMusAvaTerminal::PopulateResponseL( CSIPServerTransaction& aQuery,
             CleanupStack::PushL( videoCodecs );
             capability->Exchange().QueryObserver().VideoCodecsResolvedL( *videoCodecs );
             CleanupStack::PopAndDestroy( videoCodecs );                    
-        
+            
+            //store fast startup mode if present
+            MusSettingsKeys::TFastMode mode = 
+                CMusAvaCapability::ResolveFastModeL( *sdp );
+            capability->Exchange().QueryObserver().FastModeResolved( mode );
+            
             CleanupStack::PopAndDestroy( sdp );
             
             capability->PopulateResponseL( aQuery,

@@ -79,10 +79,13 @@ void CIndicatorTestAppAppUi::HandleCommandL(TInt aCommand)
             
         case EIndicatorTestAppSharingAvailable:
             {
+
+            MultimediaSharingSettings::SetPopupNotificationSettingL( EPopupNotificationOn );
             break;
             }
         case EIndicatorTestAppSharingNotAvailable:
             {
+            MultimediaSharingSettings::SetPopupNotificationSettingL( EPopupNotificationOff );
             break;
             }
         default:
@@ -106,7 +109,15 @@ void CIndicatorTestAppAppUi::StartLiveSharingL()
 void CIndicatorTestAppAppUi::DynInitMenuPaneL(TInt aResourceId, CEikMenuPane* aMenuPane)
     {
     if( aResourceId == R_INDICATORTESTAPP_MENU ) 
-        {        
+        {
+        if( MultimediaSharingSettings::PopupNotificationSettingL() == EPopupNotificationOn )
+            {
+            aMenuPane->DeleteMenuItem( EIndicatorTestAppNoPopUpNotification );
+            }
+        else
+            {
+            aMenuPane->DeleteMenuItem( EIndicatorTestAppPopUpNotification );
+            }
         if( MultimediaSharingSettings::AuditoryNotificationSettingL() == EAuditoryNotificationOn )
             {
             aMenuPane->DeleteMenuItem( EIndicatorTestAppNoAudiotoryNotification );

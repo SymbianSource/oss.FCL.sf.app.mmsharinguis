@@ -19,18 +19,20 @@
 #ifndef MUSHENGREVEIVESESSION_H
 #define MUSHENGREVEIVESESSION_H
 
-
-
+// INCLUDES
 #include "musengmcesession.h"
 #include "musenguriparser.h"
 #include "musunittesting.h"
-
 #include <mcemediasink.h>
 
+// FORWARD DECLARATIONS
 class MMusEngReceiveSessionObserver;
 class CMceInSession;
+class CMusEngRemoteVideoPlayer;
 
-class CMusEngReceiveSession : public CMusEngMceSession
+
+class CMusEngReceiveSession : 
+    public CMusEngMceSession
     {
     MUS_UNITTEST( UT_CMusEngMceSession )
     MUS_UNITTEST( UT_CMusEngReceiveSession )
@@ -39,36 +41,30 @@ class CMusEngReceiveSession : public CMusEngMceSession
 
        /**
         * Creates new MultimediaSharing Receive session.
-        *
-        * @param aRect UI drawing area. It is allowed handle from engine
-        * @param aEngObserver Engine specific callbacks
-        * @param aSessionObserver Session specific callbacks
         * @return CMusEngReceiveSession* New instanse of specified class
         */
-        IMPORT_C static CMusEngReceiveSession* NewL( 
-                    const TRect& aRect,
-                    MMusEngSessionObserver& aSessionObserver,
-                    MMusEngReceiveSessionObserver& aReceiveSessionObserver );
+        static CMusEngReceiveSession* NewL();
+        
        /**
         * Destructor
         *
         * @since S60 v3.2
         */
         ~CMusEngReceiveSession();
-      
-        
-    public: // API
-
-       /**
-        * Accept or deny processed invitation
-        *
-        * @param aAccept ETrue if session is to be accepted and EFalse if 
-        *        to be rejected.
-        */
-        IMPORT_C void AcceptInvitationL(const TBool& aAccept);
    
-
-    private: // Overrides function in CMusEngMceSession
+    public: // From MLcSession
+        
+        TLcSessionState LcSessionState() const;
+        
+        void EstablishLcSessionL();
+        
+        void TerminateLcSessionL(); 
+        
+        MLcVideoPlayer* RemoteVideoPlayer();    
+        
+        const TDesC& RemoteDisplayName();         
+        
+    protected: // Overrides function in CMusEngMceSession
     
         /**
         * The state of the session has changed.
@@ -86,7 +82,8 @@ class CMusEngReceiveSession : public CMusEngMceSession
         * session. This function overrides function in base class. 
         * Function calls also overridden version.
         */ 
-        virtual void AdjustVideoCodecL( CMceVideoCodec& aVideoCodec );
+        virtual void AdjustVideoCodecL( CMceVideoCodec& aVideoCodec,
+                                        TMceSourceType aSourceType );
         
         /**
         * Sets Multimediasharing specific audio codec settings like keepalive
@@ -104,10 +101,9 @@ class CMusEngReceiveSession : public CMusEngMceSession
         * @param aVideoStream
         */
         virtual void DoCodecSelectionL( CMceVideoStream& aVideoStream );
-                         
-                         
-    private: // from MMceInSessionObserver
-             // overrides the function in CMusEngMceSession
+        
+    protected: // from MMceInSessionObserver
+               // overrides the function in CMusEngMceSession
 
         /**
 	    * Incoming session invitation. The CMCEInSession is given to the
@@ -138,7 +134,7 @@ class CMusEngReceiveSession : public CMusEngMceSession
     				TMceTransactionDataContainer* aContainer );
 
 
-    private: // from MMceStreamObserver, 
+    protected: // from MMceStreamObserver, 
              // overrides the function in CMusEngMceSession
 
         /**
@@ -148,25 +144,28 @@ class CMusEngReceiveSession : public CMusEngMceSession
         * @param aStream, the stream that uses the source.
         */
         void StreamStateChanged( CMceMediaStream& aStream );
-
-
-    private: // CONSTRUCTORS
     
-        CMusEngReceiveSession(  
-                        MMusEngSessionObserver& aSessionObserver,
-                        MMusEngReceiveSessionObserver& aReceiveSessionObserver,
-                        const TRect& aRect );
+    protected: // from MMceRtpObserver
+
+        void InactivityTimeout( CMceMediaStream& aStream,
+                                CMceRtpSource& aSource );
+
+
+
+    protected: // CONSTRUCTORS
+    
+        CMusEngReceiveSession();
 
 		void ConstructL();
 		
-    private: // HELPERS
+    protected: // HELPERS
     
         CMceInSession* InSession();
         
         void PrepareToRequire100RelL( 
-                        TMceTransactionDataContainer* aContainer);
+            TMceTransactionDataContainer* aContainer );
         
-        void CompleteSessionStructureL();
+        virtual void CompleteSessionStructureL();
         
          /**
          * Parse P-Asserted-Identity header. 
@@ -174,18 +173,50 @@ class CMusEngReceiveSession : public CMusEngMceSession
          * if tel uri not found it suppose that telephone number
          * is in sip url. 
          */
-        void ParseAssertedIdentity(
-                        TMceTransactionDataContainer* aContainer );
+        void ParseAssertedIdentity( TMceTransactionDataContainer* aContainer );
+        /*
+         * Checks for buffering event happened & receiving already not started
+         *      If yes, start the RTP inactivity timer and indicate to observer
+         *              about videoplayer state change.
+         *      else will not do anything. Bascially ignores the event.
+         */
+        void ReceivingStarted();
         
-    private: // DATA
-    
-        MMusEngReceiveSessionObserver& iReceiveSessionObserver;
+        /**
+        * Checks for receiving already started and display sink is enabled
+        *        If yes ETrue else otherwise.
+        */
+        TBool IsDisplayActive();
+        
+    protected: // DATA
     
         // Set to ETrue if CMceInSession::RingL has already been called
         TBool iRingLCalled;
         
         // identity of originator parsed form P-Asserted-Identity field
         TBuf8<KMaxUriLength> iIdentity;
+        
+        HBufC8* iOriginator;
+        
+        HBufC* iRemoteDisplayName;
+       
+        /// The remote video player implementing MLcVideoPlayer
+        CMusEngRemoteVideoPlayer* iRemoteVideoPlayer;
+        
+        TUint32 iReceivingInactivityTimeout;
+        
+        TUint8 iKeepaliveTimer;
+        
+    private:
+        /* Flag for whether receiving started. It will go EFalse
+         * when RTP inactivity timeout happen.
+         */
+        TBool iReceiving;               
+        /* Flag to indicate buffering event happened. This flag is for
+         * optimization purpose since buffering event is the only place 
+         * we can be sure about some packets were received.
+         */
+        TBool iBuffered;
     };
 
 #endif

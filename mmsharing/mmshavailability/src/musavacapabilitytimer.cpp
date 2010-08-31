@@ -56,18 +56,6 @@ void CMusAvaCapabilityTimer::RunL()
     {
     iNotify->OnExpiredL( iStatus.Int() );
     }
-
-// -------------------------------------------------------------------------
-//  If RunL() leaves,It should be handled here.
-// -------------------------------------------------------------------------
-//
-TInt CMusAvaCapabilityTimer::RunError( TInt aError )
-    {    
-    // Nothing can be done here.
-    aError = KErrNone;
-
-    return aError;
-    }
     
 
 // ---------------------------------------------------------------------------

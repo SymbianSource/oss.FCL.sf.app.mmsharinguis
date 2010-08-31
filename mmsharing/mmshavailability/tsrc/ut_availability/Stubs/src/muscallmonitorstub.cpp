@@ -35,8 +35,10 @@ CMusCallMonitorBase::~CMusCallMonitorBase()
 // C++ constructor.
 // -----------------------------------------------------------------------------
 //
-CMusCallMonitorBase::CMusCallMonitorBase(const RMobileCall& aCall, MMusTsyPropertyObserver& aObserver ) 
-        : CActive( EPriorityNormal ),iCall(aCall),iTsyObserver( aObserver )
+CMusCallMonitorBase::CMusCallMonitorBase(const RMobileCall& aCall, 
+                                            MMusTsyPropertyObserver& aObserver,
+                                            MMusCallStateObserver& aCallStateObserver ) 
+        : CActive( EPriorityNormal ),iCall(aCall),iTsyObserver( aObserver ),iCallStateObserver( aCallStateObserver )
         
     {   
     }
@@ -72,7 +74,14 @@ void CMusCallMonitorBase::NotifyCallStateChanged( NMusSessionInformationApi::TMu
     {
     }
 
-CMusCallStatusMonitor* CMusCallStatusMonitor::NewL(const RMobileCall&, MMusTsyPropertyObserver& )
+
+// -----------------------------------------------------------------------------
+// MusCallStatusMonitor
+// -----------------------------------------------------------------------------
+//
+
+CMusCallStatusMonitor* CMusCallStatusMonitor::NewL(const RMobileCall&, MMusTsyPropertyObserver&, 
+        MMusCallStateObserver& )
     {
     return NULL;
     }

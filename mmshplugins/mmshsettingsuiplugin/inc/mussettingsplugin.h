@@ -12,7 +12,6 @@
 * Contributors:
 *
 * Description:  MUSSettingsPlugin implementation.
-*  Version     : %version: 21 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -128,7 +127,7 @@ public: // From CGSPluginInterface.
      *         TGSPluginProviderCategory.
      */
     virtual TInt PluginProviderCategory() const;
-	
+    
 
 public: // From MEikMenuObserver    
     
@@ -142,9 +141,6 @@ protected:
     CMusSettingsPlugin();
 
     void ConstructL();
-    
-    void OpenResourceFileL();
-    void CloseResourceFile();
 
     /**
     * Hides non-virtual member from base class CGSBaseView.
@@ -183,6 +179,16 @@ protected:
     virtual void NewContainerL();
 
 private:
+
+    /**
+    * Shows VS activation Setting dialog.
+    */
+    void ShowVSSettingsActivationSettingDialogL();
+
+    /**
+    * Shows Operator specific VS activation Setting dialog.
+    */
+    void ShowOperatorSpecificActivationSettingDialogL();
 
     /**
     * Shows Profile Setting dialog.
@@ -232,15 +238,16 @@ private:
 
 protected: // data
 
-	HBufC* iCaption;
-	bool iResourceFileOpen;
-
     /**
      * Instance of SIP profile handler to manage SIP profiles.
      * Own.
      */
     CMusSIPProfileModel* iHandler;
 
+    /**
+     * Instance of SIP profile handler to manage SIP profiles.
+     * Own.
+     */
 
     /**
      * Pointer of model class of this application.

@@ -1,10 +1,13 @@
 EXPORTS
-	_ZN16CMusIndicatorApi21IndicateAvailabilityLEv @ 1 NONAME
-	_ZN16CMusIndicatorApi4NewLER21MMusIndicatorObserver @ 2 NONAME
-	_ZN16CMusIndicatorApi4NewLEv @ 3 NONAME
+	_ZN16CMusIndicatorApi18ConfirmationQueryLENS_13TVsPopupQueryE @ 1 NONAME
+	_ZN16CMusIndicatorApi21IndicateAvailabilityLEv @ 2 NONAME
+	_ZN16CMusIndicatorApi4NewLER21MMusIndicatorObserver @ 3 NONAME
 	_ZN16CMusIndicatorApi5NewLCER21MMusIndicatorObserver @ 4 NONAME
-	_ZTI15CMusSoundPlayer @ 5 NONAME
-	_ZTI16CMusIndicatorApi @ 6 NONAME
-	_ZTV15CMusSoundPlayer @ 7 NONAME
-	_ZTV16CMusIndicatorApi @ 8 NONAME
+	_ZTI15CMusSoundPlayer @ 5 NONAME ; #<TI>#
+	_ZTI16CMusIndicatorApi @ 6 NONAME ; #<TI>#
+	_ZTI16CMusIndicatorDsa @ 7 NONAME ; #<TI>#
+	_ZTV15CMusSoundPlayer @ 8 NONAME ; #<VT>#
+	_ZTV16CMusIndicatorApi @ 9 NONAME ; #<VT>#
+	_ZTV16CMusIndicatorDsa @ 10 NONAME ; #<VT>#
+	_ZN16CMusIndicatorApi4NewLEv @ 11 NONAME
 

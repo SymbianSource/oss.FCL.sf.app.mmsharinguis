@@ -80,6 +80,8 @@ NONSHARABLE_CLASS( UT_CMusAvaNetworkAvailability )
         
         void UT_CMusAvaNetworkAvailability_DoExecuteLL();
         
+        void UT_CMusAvaNetworkAvailability_DoExecuteL_SipUriL();
+        
         void UT_CMusAvaNetworkAvailability_StopL();
 
         void UT_CMusAvaNetworkAvailability_NameL();
@@ -91,6 +93,8 @@ NONSHARABLE_CLASS( UT_CMusAvaNetworkAvailability )
         void UT_CMusAvaNetworkAvailability_CallHoldLL();
 
         void UT_CMusAvaNetworkAvailability_NoActiveCallLL();
+        
+        void UT_CMusAvaNetworkAvailability_SetRemoteHostLL();
 
     private:    // Data
 

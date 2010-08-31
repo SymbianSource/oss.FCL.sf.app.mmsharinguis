@@ -24,7 +24,6 @@
 
 //  INTERNAL INCLUDES
 #include <e32def.h>
-#include <PbkFields.hrh>
 
 //  FORWARD DECLARATIONS
 class CMusAvaAvailabilityObserverImp;

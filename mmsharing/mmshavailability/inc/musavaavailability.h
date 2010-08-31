@@ -147,16 +147,7 @@ public:
             }
         MUS_LOG( "mus: [MUSAVA]  <- CMusAvaAvailability::SetState" )
         }
-
-	/**
-	* Calculate the availabilited to decide to show the toolbar or not.
-	*
-	*/
-    void AvailabilitiesAbleToShowIndicator()
-    	{
-    	iObserver.AvailabilitiesAbleToShowIndicator();
-    	}
-
+   
    /**
 	* Returns specific availability state.
 	*
@@ -167,7 +158,14 @@ public:
         return iObserver.Available( aAvailability );
         }
         
-
+    /**
+    * Invitation has been received.
+    */  
+    virtual void PrepareForReceivedInviteL()
+        {
+        MUS_LOG( "mus: [MUSAVA]  <-> CMusAvaAvailability::PrepareForReceivedInviteL" )
+        }
+    
     virtual ~CMusAvaAvailability() {};
 
 protected:

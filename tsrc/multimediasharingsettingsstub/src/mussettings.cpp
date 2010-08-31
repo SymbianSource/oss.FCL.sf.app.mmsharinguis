@@ -25,7 +25,7 @@ HBufC* MultimediaSharingSettings::iVideoFolder = NULL;
 
 MusSettingsKeys::TAutoRecord MultimediaSharingSettings::iAutoRecord = MusSettingsKeys::TAutoRecord( 0 );
 TInt MultimediaSharingSettings::iVideoLocation = 2; // phone memory C:
-
+MusSettingsKeys::TVideoDirection MultimediaSharingSettings::iVideoDirection = MusSettingsKeys::EOneWayVideo;
 
 HBufC* MultimediaSharingSettings::VideoFolderSettingLC()
     {
@@ -34,6 +34,23 @@ HBufC* MultimediaSharingSettings::VideoFolderSettingLC()
 
     }
 
+MusSettingsKeys::TAuditoryNotification
+    MultimediaSharingSettings::AuditoryNotificationSettingL()
+    {
+    //EAuditoryNotificationOn,
+    //EAuditoryNotificationOff    
+    TInt value(MusSettingsKeys::EAuditoryNotificationOn);
+    return ( MusSettingsKeys::TAuditoryNotification ) value;
+    }
+    
+MusSettingsKeys::TPopupNotification
+    MultimediaSharingSettings::PopupNotificationSettingL()
+    {
+    //EPopupNotificationOn    
+    //EPopupNotificationOff
+    TInt value(MusSettingsKeys::EPopupNotificationOn);
+    return ( MusSettingsKeys::TPopupNotification ) value;
+    }
 
 MusSettingsKeys::TAutoRecord MultimediaSharingSettings::AutoRecordSettingL()
     {
@@ -46,3 +63,8 @@ TInt MultimediaSharingSettings::VideoLocationSettingL()
     return iVideoLocation;
     }
         
+MusSettingsKeys::TVideoDirection MultimediaSharingSettings::VideoDirectionL()
+    {
+    return iVideoDirection;
+    }
+

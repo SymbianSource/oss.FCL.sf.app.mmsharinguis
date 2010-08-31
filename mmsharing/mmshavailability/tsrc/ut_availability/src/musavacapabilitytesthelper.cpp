@@ -26,7 +26,7 @@ CSIPServerTransaction* CapabilityTestHelper::OptionsRequestL(
                                            const TDesC8& aAcceptContact, 
                                            const TDesC8& aContact,
                                            const TDesC8& aAccept,
-                                           const TDesC8& aUserAgent)
+                                           const TDesC8& aUserAgent )
     {
     
     CSIPServerTransaction* srvtransaction = 
@@ -113,7 +113,8 @@ CSIPServerTransaction* CapabilityTestHelper::OptionsRequestL(
     CleanupStack::Pop( fromheader );
     requestelements->SetToHeaderL(toheader); 
     CleanupStack::Pop( toheader );
-  
+
+    
     requestelements->SetMethodL( SIPStrings::StringF( SipStrConsts::EOptions ) );
     
     srvtransaction->SetRequestElements( requestelements );
@@ -132,8 +133,7 @@ CSIPServerTransaction* CapabilityTestHelper::OptionsRequestL(
                                            const TDesC8& aContact,
                                            const TDesC8& aAccept,
                                            const TDesC8& aUserAgent,
-                                           const TDesC8& aAssertId,
-                                           const TDesC8& aSdp)
+                                           const TDesC8& aAssertId )
     {
     
     CSIPServerTransaction* srvtransaction = 
@@ -232,19 +232,6 @@ CSIPServerTransaction* CapabilityTestHelper::OptionsRequestL(
 
     
     requestelements->SetMethodL( SIPStrings::StringF( SipStrConsts::EOptions ) );
-    
-    CSIPMessageElements& message = requestelements->MessageElements();
-    if ( aSdp.Length() > 0 )
-        {
-        CSIPContentTypeHeader* contenttype = 
-            CSIPContentTypeHeader::NewLC( KMUSAVASIPMediaTypeApplication,
-                                         KMUSAVASIPMediaSubTypeSDP );
-        HBufC8* content = aSdp.AllocLC();
-        
-        message.SetContentL( content, contenttype );
-        CleanupStack::Pop( content );
-        CleanupStack::Pop( contenttype );      
-        }
     
     srvtransaction->SetRequestElements( requestelements );
     CleanupStack::Pop( requestelements );

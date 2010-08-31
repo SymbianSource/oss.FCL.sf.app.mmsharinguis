@@ -21,7 +21,6 @@
 
 #include "musavaavailability.h"
 #include "muscallmonitorobserver.h"
-#include "musunittesting.h"
 #include <sipprofileregistryobserver.h>
 
 #include <e32base.h>
@@ -46,8 +45,6 @@ class CMusAvaSettingsImp;
 class CMusAvaNetworkAvailability : public CMusAvaAvailability,
                                    public MMusCallMonitorObserver
 	{
-	MUS_UNITTEST( UT_CMusAvaNetworkAvailability )
-	
 public:
 	/**
      * Two-phased constructor
@@ -126,7 +123,7 @@ public: // from MMusCallMonitorObserver
      * @since  S60 v3.2
      * @return
      */
-    void CallConnectedL( const TDesC& aTelNumber );
+    void CallConnectedL( const TDesC& aTelNumber, TBool aIsSipUri );
 
      /**
      * Call on hold
@@ -134,7 +131,7 @@ public: // from MMusCallMonitorObserver
      * @since  S60 v3.2
      * @return
      */
-    virtual void CallHoldL( const TDesC& aTelNumber );
+    virtual void CallHoldL( const TDesC& aTelNumber, TBool aIsSipUri );
 
     /**
      * Call disconnected
@@ -151,15 +148,10 @@ public: // from MMusCallMonitorObserver
      * @return
      */
     virtual void ConferenceCallL();
-    
-    
-    /**
-     * Call on conf Terminated
-     *
-     * @since  S60 v3.2
-     * @return
-     */
-    virtual void ConferenceCallLTerminated();
+
+private:
+
+	void SetRemoteHostL( const TDesC& aTelNumber, TBool aIsSipUri );
 
 private: // data
 
@@ -178,7 +170,7 @@ private: // data
     */
     CMusAvaSettingsImp& iSettings;
     
-    TBool iConfcall;
+    MUS_UNITTEST( UT_CMusAvaNetworkAvailability )
     };
 
 

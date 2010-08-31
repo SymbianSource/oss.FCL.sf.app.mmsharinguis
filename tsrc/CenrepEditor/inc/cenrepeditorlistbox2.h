@@ -40,12 +40,6 @@ class COtherResourcesListbox : public CAknSettingItemList
     public:
         CAknSettingItem* CreateSettingItemL( TInt identifier );
         void SetData(COtherResources* iOtherResources); 
-
-    public: // Implementation from base class
-      //  void HandleListBoxEventL(CEikListBox* aListBox, TListBoxEvent aEventType);            
-      // TKeyResponse OfferKeyEventL(const TKeyEvent& aKeyEvent,TEventCode aType);            
-
-        void EditItemL(TInt aIndex, TBool aCalledFromMenu);
         
     private:        
         void SizeChanged();

@@ -15,49 +15,15 @@
 *
 */
 
-#ifndef __FBSBITMAP__
-#define __FBSBITMAP__
+#ifndef __FBS_H__
+#define __FBS_H__
 
 #include <e32base.h>
-
-enum TDisplayMode
-    {
-    ///No display mode
-    ENoneCopy,
-    ///Monochrome display mode (1 bpp)
-    EGray2Copy,
-    ///Four grayscales display mode (2 bpp)
-    EGray4Copy,
-    ///16 grayscales display mode (4 bpp)
-    EGray16Copy,
-    ///256 grayscales display mode (8 bpp)
-    EGray256Copy,
-    ///Low colour EGA 16 colour display mode (4 bpp)
-    EColor16Copy,
-    ///256 colour display mode (8 bpp)
-    EColor256Copy,
-    ///64,000 colour display mode (16 bpp)
-    EColor64KCopy,
-    ///True colour display mode (24 bpp)
-    EColor16MCopy,
-    ///(Not an actual display mode used for moving buffers containing bitmaps)
-    ERgbCopy,
-    ///4096 colour display (12 bpp).
-    EColor4KCopy,
-    EColor16MUCopy,
-    ///Display mode with alpha (24bpp colour plus 8bpp alpha)
-    EColor16MACopy,
-    //Any new display mode should be insterted here!
-    //There might be up to 255 display modes, so value of the last
-    //inserted EColorXXX enum item should be less than 256 -
-    //BC reasons!
-    EColorLastCopy,
-    };
+#include <gdi.h>
+#include <bitmap.h>
     
 class CFbsBitmap
 	{
-
-
 	public:
 	
 		CFbsBitmap();
@@ -66,16 +32,30 @@ class CFbsBitmap
 	
 	TInt Create( const TSize& aSizeInPixels, TDisplayMode aDispMode);
  
-	TInt CFbsBitmap::Load(const TDesC& /*aFileName*/,
-	                      TInt32 /*aId*/,TBool /*aShareIfLoaded*/);
+TInt Load(const TDesC& aFileName,TInt32 aId=0,TBool aShareIfLoaded=ETrue);
+	TInt Load(const TDesC& aFileName,TInt32 aId,TBool aShareIfLoaded,TUint aFileOffset);
+	TInt Load(RFile& aFile,TInt32 aId=0,TBool aShareIfLoaded=ETrue);
+	TInt Load(RFile& aFile,TInt32 aId,TBool aShareIfLoaded,TUint aFileOffset);		  
+    
+	TInt Resize(const TSize& aSizeInPixels);
+	TSize SizeInPixels() const;
+	TSize value;
 
-
-	TInt CFbsBitmap::Load(const TDesC& /*aFileName*/,
-	                      TInt32 /*aId*/,TBool /*aShareIfLoaded*/,
-	                      TUint /*aFileOffset*/);
 	
 
 	
 	};
+
+class CFbsFont
+	{
+	};
+
+class RFbsSession
+    {
+    };
+
+class CFbsTypefaceStore
+    {
+    };
 
 #endif

@@ -159,8 +159,6 @@ public:
     virtual void AvailabilityError(
         TAvailabilityName aName,
         TAvailabilityStatus aStatus ) = 0;
-    
-    virtual void AvailabilitiesAbleToShowIndicator() = 0;
         
     };
 

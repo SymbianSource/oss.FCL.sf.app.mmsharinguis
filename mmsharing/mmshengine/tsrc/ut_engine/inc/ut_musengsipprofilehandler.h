@@ -20,13 +20,13 @@
 #define __UT_MUSENGSIPPROFILEHANDLER_H__
 
 
-//  INCLUDES
-#include "mussipprofileuser.h"
+// INCLUDES
 #include <digia/eunit/ceunittestsuiteclass.h>
 #include <digia/eunit/eunitmacros.h>
 
 //  FORWARD DECLARATIONS
 class CMusSipProfileHandler;
+class CMusEngObserverStub;
 
 
 //  CLASS DEFINITION
@@ -34,9 +34,8 @@ class CMusSipProfileHandler;
  * Tester class for CMusSipProfileHandler. 
  * 
  */
-NONSHARABLE_CLASS( UT_CMusEngSipProfileHandler ):
-	public CEUnitTestSuiteClass,
-    public MMusSipProfileUser
+NONSHARABLE_CLASS( UT_CMusEngSipProfileHandler ): 
+    public CEUnitTestSuiteClass
     {
     public:     // Constructors and destructors
 
@@ -50,11 +49,7 @@ NONSHARABLE_CLASS( UT_CMusEngSipProfileHandler ):
          * Destructor
          */
         ~UT_CMusEngSipProfileHandler();
-
-	public: // From MMusSipProfileUser    
         
-        TBool IsRoamingBetweenAPsAllowed();
-
     private: // Constructors and destructors
 
         UT_CMusEngSipProfileHandler();
@@ -66,18 +61,20 @@ NONSHARABLE_CLASS( UT_CMusEngSipProfileHandler ):
 
         void Teardown();
 
-    private: // Test methods
+    private: // Test methdods
     
-        void UT_CMusEngSipProfileHandler_CreateSipProfileLL();
-        void UT_CMusEngSipProfileHandler_ProfileIdL();
-        void UT_CMusEngSipProfileHandler_AlrEventL();
-        void UT_CMusEngSipProfileHandler_NullTestsL();
-        void UT_CMusEngSipProfileHandler_UserFromProfileLCL();
+        void UT_CreateSipProfileLL();
+        void UT_ProfileIdL();
+        void UT_AlrEventL();
+        void UT_NullTestsL();
+        void UT_UserFromProfileLCL();
+        void UT_IsRegisteredL();
+        void UT_ProfileRegistryEventOccurredL();
         
     private:    // Data
 
         CMusSipProfileHandler* iProfileHandler;
-        TBool iRoamingBetweenAPsAllowed;
+        CMusEngObserverStub* iObserver;
         
         EUNIT_DECLARE_TEST_TABLE;
     };

@@ -30,11 +30,12 @@
 //
 CMusCallStatusMonitor* CMusCallStatusMonitor::NewL( 
     const RMobileCall& aCall, 
-    MMusTsyPropertyObserver& aObserver )
+    MMusTsyPropertyObserver& aObserver,
+    MMusCallStateObserver& aCallStateObserver )
     {
     MUS_LOG( "mus: [MUSAO]  -> CMusCallStatusMonitor::NewL" )
     CMusCallStatusMonitor* self = 
-        new( ELeave )CMusCallStatusMonitor( aCall, aObserver );
+        new( ELeave )CMusCallStatusMonitor( aCall, aObserver, aCallStateObserver );
     CleanupStack::PushL( self );
     self->ConstructL();
     CleanupStack::Pop( self );
@@ -75,8 +76,9 @@ void CMusCallStatusMonitor::ConstructL()
 //
 CMusCallStatusMonitor::CMusCallStatusMonitor(
     const RMobileCall& aCall, 
-    MMusTsyPropertyObserver& aObserver ) 
-    : CMusCallMonitorBase( aCall, aObserver )  
+    MMusTsyPropertyObserver& aObserver,
+    MMusCallStateObserver& aCallStateObserver ) 
+    : CMusCallMonitorBase( aCall, aObserver, aCallStateObserver )  
     {    
     }
 

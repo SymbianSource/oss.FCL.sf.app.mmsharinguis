@@ -20,6 +20,9 @@
 #define __UT_CMusTsyPropertyMonitor_H__
 
 
+// USER INCLUDE
+#include "mmuscallstateobserver.h"
+
 //  EXTERNAL INCLUDES
 #include <digia/eunit/ceunittestsuiteclass.h>
 #include <digia/eunit/eunitmacros.h>
@@ -27,6 +30,7 @@
 //  FORWARD DECLARATIONS
 class CMusCommonObserverStub;
 class CMusTsyPropertyMonitor;
+class CRepository;
 
 // Next row is to disable warning emerging from EUnit code.
 // Placement is due to a fact that most test case files
@@ -39,7 +43,8 @@ class CMusTsyPropertyMonitor;
  * Tester class for CMusTsyPropertyMonitor. 
  * 
  */
-NONSHARABLE_CLASS( UT_CMusTsyPropertyMonitor ): public CEUnitTestSuiteClass
+NONSHARABLE_CLASS( UT_CMusTsyPropertyMonitor ): public CEUnitTestSuiteClass,
+                                                       MMusCallStateObserver
     {
     public:     // Constructors and destructors
 
@@ -48,11 +53,17 @@ NONSHARABLE_CLASS( UT_CMusTsyPropertyMonitor ): public CEUnitTestSuiteClass
          */
         static UT_CMusTsyPropertyMonitor* NewL();
         static UT_CMusTsyPropertyMonitor* NewLC();
-                
+
         /**
          * Destructor
          */
         ~UT_CMusTsyPropertyMonitor();
+        
+    
+    public:     // MMusCallStateObserver
+
+        virtual void MusCallStateChanged();
+
 
     private: // Constructors and destructors
 
@@ -62,7 +73,6 @@ NONSHARABLE_CLASS( UT_CMusTsyPropertyMonitor ): public CEUnitTestSuiteClass
     private: // Test case setup and teardown
 
         void SetupL();
-        void Setup2L();
         void Teardown();
 
     private: // Test methdods
@@ -73,14 +83,17 @@ NONSHARABLE_CLASS( UT_CMusTsyPropertyMonitor ): public CEUnitTestSuiteClass
         void UT_CMusTsyPropertyMonitor_RunErrorL(); 
         void UT_CMusTsyPropertyMonitor_AddCallMonitorLL();
         void UT_CMusTsyPropertyMonitor_RemoveCallMonitorL();
+        void UT_CMusTsyPropertyMonitor_MonitorCSCallLL();
+        void UT_CMusTsyPropertyMonitor_MonitorVoipCallLL();
         void UT_CMusTsyPropertyMonitor_MonitorCallLL();
-        void UT_CMusTsyPropertyMonitor_MonitorCallL_2L();
         void UT_CMusTsyPropertyMonitor_RemoveUnUsedCallMonitorsL();
+        void UT_CMusTsyPropertyMonitor_CheckCallCriteriaLL();
+        void UT_CMusTsyPropertyMonitor_IsDataReadyLL();
 
     private:    // Data
         CMusTsyPropertyMonitor* iMusTsyPropertyMonitor;
         RMobilePhone iPhone;
-        
+        CRepository* iMusCentralRepository ; 
         
 
         EUNIT_DECLARE_TEST_TABLE;

@@ -20,7 +20,7 @@
 #include "mussettingsplugin.h"
 #include <ecom/implementationproxy.h>
 #include <e32std.h>
-#include "muslogger.h"
+
 
 // ======== LOCAL FUNCTIONS ========
 
@@ -41,7 +41,7 @@ const TImplementationProxy KGSVSSettingsPluginImplementationTable[] =
 EXPORT_C const TImplementationProxy* ImplementationGroupProxy(
     TInt& aTableCount )
 	{
-    MUS_LOG( "[GSLog] ImplementationGroupProxy()" );
+    RDebug::Print(_L("[GSLog] ImplementationGroupProxy()" ));
 	aTableCount = sizeof(KGSVSSettingsPluginImplementationTable)
         / sizeof(TImplementationProxy);
 	return KGSVSSettingsPluginImplementationTable;

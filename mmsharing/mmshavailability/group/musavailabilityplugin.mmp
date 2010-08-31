@@ -91,8 +91,6 @@ LIBRARY                 sipclient.lib
 LIBRARY                 sipprofile.lib
 LIBRARY                 sipprofilecli.lib
 LIBRARY                 centralrepository.lib
-LIBRARY                 pbkeng.lib
-LIBRARY                 phoneengine.lib
 LIBRARY                 cntmodel.lib            // Contact Model
 LIBRARY                 sipcodec.lib
 LIBRARY                 sdpcodec.lib            // SDP Codec
@@ -104,6 +102,6 @@ LIBRARY                 charconv.lib
 LIBRARY                 inetprotutil.lib
 LIBRARY                 estor.lib
 DEBUGLIBRARY            flogger.lib
-LIBRARY                 insock.lib
+LIBRARY                 insock.lib 
 
 PAGED

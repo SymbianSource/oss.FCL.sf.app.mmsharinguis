@@ -30,6 +30,8 @@
 #include <apgtask.h>
 #include <digia/eunit/eunitmacros.h>
 
+_LIT8( KMusEngineName, "MultimediaSharing" );
+_LIT8( KAnotherEngineName, "AnotherEngine" );
 
 // ======== MEMBER FUNCTIONS ========
 
@@ -118,8 +120,7 @@ void UT_CMusManagerServerCore::SetupL()
     iCore = CMusManagerServerCore::NewL( *this );
     iStopServerCalled = EFalse;
     iAvailabilityChangedLCalled = EFalse;
-    iSessionCount = 0;    
-    TApaTask::iApaTaskCalledFunction = TApaTask::ENone;
+    iSessionCount = 0;
     }
 
 
@@ -130,7 +131,8 @@ void UT_CMusManagerServerCore::SetupL()
 void UT_CMusManagerServerCore::Teardown()
     {
     delete iCore;
-    PropertyHelper::Close(); 
+    PropertyHelper::Close();
+    Dll::FreeTls(); // Used by the RProcess and TFindProcess stubs 
     }
 
 
@@ -190,17 +192,32 @@ void UT_CMusManagerServerCore::
 //
 void UT_CMusManagerServerCore::UT_CMusManagerServerCore_InvitationReceivedLL()
     {
+    // 1. The cases with MuS engine
+    iCore->iPluginName = KMusEngineName;
+    
     TUid uid = { 0x10101010 }; // Not a valid UID in musmanager.h
     // since used UID is not in appropriate, this should leave
     EUNIT_ASSERT_SPECIFIC_LEAVE(
         iCore->InvitationReceivedL( uid ), KErrNotReady );
 
     uid.iUid = 0x1028238D; // ESipInviteNotDesired from musmanager.h
-    EUNIT_ASSERT_NO_LEAVE( iCore->InvitationReceivedL( uid ) );
+    iCore->InvitationReceivedL( uid );
 
     uid.iUid = 0x10282391; // ESipInviteDesired from musmanager.h
     EUNIT_ASSERT_SPECIFIC_LEAVE(
         iCore->InvitationReceivedL( uid ), KErrNotReady );
+
+    // 2. The cases with non-MuS engine
+    iCore->iPluginName = KAnotherEngineName;
+    
+    uid.iUid = 0x10101010; // Not a valid UID in musmanager.h
+    iCore->InvitationReceivedL( uid );
+
+    uid.iUid = 0x1028238D; // ESipInviteNotDesired from musmanager.h
+    iCore->InvitationReceivedL( uid );
+
+    uid.iUid = 0x10282391; // ESipInviteDesired from musmanager.h
+    iCore->InvitationReceivedL( uid );    
     }
 
 
@@ -211,16 +228,22 @@ void UT_CMusManagerServerCore::UT_CMusManagerServerCore_InvitationReceivedLL()
 void UT_CMusManagerServerCore::UT_CMusManagerServerCore_OptionsReceivedLL()
     {
     TUid uid = { 0x10101010 };
+    iCore->iPluginName = KMusEngineName;
+    iCore->iPluginManager->iPluginStarted = EFalse;
     iCore->OptionsReceivedL( uid );
     EUNIT_ASSERT( iCore->iPluginManager->iPluginStarted );
+    
+    iCore->iPluginName = KAnotherEngineName;
+    iCore->iPluginManager->iPluginStarted = EFalse;
+    iCore->OptionsReceivedL( uid );
+    EUNIT_ASSERT ( !(iCore->iPluginManager->iPluginStarted) );
     }
 
 
 // ---------------------------------------------------------------------------
 // Asserts that tested method does not leave. In certain case it could leave
 // with KErrPermissionDenied, but with this this test, used capabilities
-// and used stubs, tested method shouldn't leave. Checks also that
-// TApaTask function TaskExists is called.
+// and used stubs, tested method shouldn't leave.
 // ---------------------------------------------------------------------------
 //
 void UT_CMusManagerServerCore::
@@ -241,10 +264,6 @@ void UT_CMusManagerServerCore::
     // Test for "if( !iApplicationManager->ApplicationRunning() &&
     // iPluginManager->ApplicationAllowed() ) branch ->
     // -----------------------------------------------------------------------
-	
-    // CMusApplicationManager::ApplicationRunning = EFalse
-    TApaTask::iApplicationExist = EFalse;
-
     // CMusAvailabilityPluginManager::ApplicationAllowed = ETrue
     abilityStub->iNameStub = MMusAvaObserver::EMusAvaNameRegistration;
     abilityStub->iStatusStub = MMusAvaObserver::EMusAvaStatusAvailable;
@@ -263,7 +282,6 @@ void UT_CMusManagerServerCore::
     MUS_EUNIT_ASSERT_NO_LEAVE(
         iCore->StartMultimediaSharingL( MultimediaSharing::EMusLiveVideo ) );
     EUNIT_ASSERT( PropertyHelper::GetCalledFunction() == RProperty::EDefine );
-    EUNIT_ASSERT( TApaTask::iApaTaskCalledFunction == TApaTask::EExists );
 
     // <- Test for "if( !iApplicationManager->ApplicationRunning() &&
     // iPluginManager->ApplicationAllowed() ) branch
@@ -279,12 +297,8 @@ void UT_CMusManagerServerCore::
 
 
     // CMusApplicationManager::ApplicationRunning = EFalse
-    TApaTask::iApplicationExist = EFalse;
     MUS_EUNIT_ASSERT_NO_LEAVE(
         iCore->StartMultimediaSharingL( MultimediaSharing::EMusLiveVideo ) );
-    EUNIT_ASSERT( TApaTask::iApaTaskCalledFunction == TApaTask::EExists );
-
-    // <- Test for else branch
     }
 
 
@@ -296,15 +310,17 @@ void UT_CMusManagerServerCore::
 void UT_CMusManagerServerCore::
     UT_CMusManagerServerCore_StopMultimediaSharingLL()
     {
-    TApaTask::iApplicationExist = EFalse;
+    // MuS not running
     iCore->StopMultimediaSharingL();
-    EUNIT_ASSERT( TApaTask::iApaTaskCalledFunction == TApaTask::EExists )
     
-    TApaTask::iApplicationExist = ETrue;
+    // MuS running
+    User::LeaveIfError( 
+        Dll::SetTls( reinterpret_cast< TAny* >( 1 ) ) ); 
+    // TLS is used by TFindProcess stub
     iCore->StopMultimediaSharingL();
     TInt availability = MultimediaSharing::EMultimediaSharingAvailable;
-    TUint key(NMusSessionApi::KStatus);
-    RProperty::Get( key,availability);
+    TUint key( NMusSessionApi::KStatus );
+    RProperty::Get( key, availability );
     EUNIT_ASSERT_EQUALS( PropertyHelper::GetCalledFunction(), RProperty::EDefine ) 
     EUNIT_ASSERT_EQUALS( availability, 
                          MultimediaSharing::EMultimediaSharingNotAvailable )
@@ -318,7 +334,16 @@ void UT_CMusManagerServerCore::
 //
 void UT_CMusManagerServerCore::UT_CMusManagerServerCore_EventNoSessionsL()
     {
+    iCore->iPluginName = KMusEngineName;
+    iCore->iPluginManager->iPluginStarted = ETrue;
     iCore->EventNoSessions();
+    EUNIT_ASSERT ( !(iCore->iPluginManager->iPluginStarted) );
+    EUNIT_ASSERT( iStopServerCalled );
+
+    iCore->iPluginName = KAnotherEngineName;
+    iCore->iPluginManager->iPluginStarted = ETrue;
+    iCore->EventNoSessions();
+    EUNIT_ASSERT ( iCore->iPluginManager->iPluginStarted );
     EUNIT_ASSERT( iStopServerCalled );
     }
 
@@ -349,11 +374,15 @@ void UT_CMusManagerServerCore::UT_CMusManagerServerCore_PluginStoppedL()
 void UT_CMusManagerServerCore::
     UT_CMusManagerServerCore_AvailabilityChangedLL()
     {
+    iCore->iPluginName = KMusEngineName;
     MUS_EUNIT_ASSERT_NO_LEAVE( iCore->AvailabilityChangedL(
         (MultimediaSharing::TMusAvailabilityStatus) KErrNone ) );
-
     EUNIT_ASSERT( iCore->iAvailabilityMonitors.Count() == 0 );
 
+    iCore->iPluginName = KAnotherEngineName;
+    MUS_EUNIT_ASSERT_NO_LEAVE( iCore->AvailabilityChangedL(
+        (MultimediaSharing::TMusAvailabilityStatus) KErrNone ) );
+    EUNIT_ASSERT( iCore->iAvailabilityMonitors.Count() == 0 );
     }
 
 
@@ -368,6 +397,15 @@ void UT_CMusManagerServerCore::UT_CMusManagerServerCore_RegisterObserverL()
     EUNIT_ASSERT( iCore->iAvailabilityMonitors.Count() == monitors + 1 );
     iCore->RemoveObserver( this );
     EUNIT_ASSERT( iCore->iAvailabilityMonitors.Count() == monitors );
+    }
+
+void UT_CMusManagerServerCore::UT_CMusManagerServerCore_IsMusEnginePluginL()
+    {
+    iCore->iPluginName = KMusEngineName;
+    EUNIT_ASSERT( iCore->IsMusEnginePlugin() );
+    
+    iCore->iPluginName = KAnotherEngineName;
+    EUNIT_ASSERT( !(iCore->IsMusEnginePlugin()) );
     }
 
 
@@ -464,5 +502,11 @@ EUNIT_TEST(
     "FUNCTIONALITY",
     SetupL, UT_CMusManagerServerCore_AvailabilityChangedLL, Teardown)
 
+EUNIT_TEST(
+    "IsMusEnginePlugin - test ",
+    "CMusManagerServerCore",
+    "IsMusEnginePlugin",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusManagerServerCore_IsMusEnginePluginL, Teardown)
 
 EUNIT_END_TEST_TABLE

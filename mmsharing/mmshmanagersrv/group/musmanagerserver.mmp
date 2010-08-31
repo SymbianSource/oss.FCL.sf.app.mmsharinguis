@@ -30,6 +30,9 @@ CAPABILITY              CAP_SERVER
 VENDORID                VID_DEFAULT
 VERSION                 KMusBinaryVersionNumber
 
+// Stack Size 20K 
+EPOCSTACKSIZE 0x5000
+
 SOURCEPATH              ../src
 SOURCE                  musmanagerserver.cpp
 SOURCE                  musmanagerservercore.cpp
@@ -44,6 +47,7 @@ USERINCLUDE             ../inc
 USERINCLUDE             ../../mmshshared/inc
 USERINCLUDE             ../../inc
 USERINCLUDE             ../../../inc
+USERINCLUDE             ../../cenrep
 
 
 APP_LAYER_SYSTEMINCLUDE
@@ -56,5 +60,7 @@ LIBRARY                 euser.lib
 LIBRARY                 flogger.lib
 LIBRARY                 ws32.lib 
 LIBRARY                 musindicator.lib
+LIBRARY                 centralrepository.lib
+LIBRARY					charconv.lib
 
 PAGED

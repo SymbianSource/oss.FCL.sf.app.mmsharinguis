@@ -15,7 +15,6 @@
 *
 */
 
-
 //  EXTERNAL INCLUDES
 #include <digia/eunit/ceunittestsuite.h>
 
@@ -30,7 +29,8 @@
 #include "ut_muscallmonitorbase.h"  
 #include "ut_musresourcefinderutil.h"
 #include "ut_mustsypropertymonitor.h"
-#include "ut_musclirmonitor.h"
+#include "ut_musvoipcallmonitor.h"
+#include "ut_musfactorysettings.h"
 
 /**
  * Test suite factory function.
@@ -71,9 +71,9 @@ EXPORT_C MEUnitTest* CreateTestSuiteL()
 
     rootSuite->AddL( UT_CMusCallMonitorBase::NewLC() );
     CleanupStack::Pop();  
-   
-    rootSuite->AddL( UT_CMusClirMonitor::NewLC() );
-    CleanupStack::Pop();
+    
+    rootSuite->AddL( UT_CMusFactorySettings::NewLC() );
+    CleanupStack::Pop();  
 
     CleanupStack::Pop( rootSuite );
     return rootSuite;
@@ -82,6 +82,8 @@ EXPORT_C MEUnitTest* CreateTestSuiteL()
 
 
 //  END OF FILE
+
+
 
 
 

@@ -19,17 +19,23 @@
 #ifndef MUSHENGREVEIVESESSION_H
 #define MUSHENGREVEIVESESSION_H
 
-
-
+// INCLUDES
 #include "musengmcesession.h"
+#include "musenguriparser.h"
+#include "musunittesting.h"
+#include "lcvideoplayer.h"
+#include <mcemediasink.h>
 
-
+// FORWARD DECLARATIONS
 class MMusEngReceiveSessionObserver;
+class CMceInSession;
 
-class CMusEngReceiveSession : public CMusEngMceSession
 
+class CMusEngReceiveSession : 
+    public CMusEngMceSession,
+    public MLcVideoPlayer
     {
-
+    
     public: // Contructors and destructor
 
        /**
@@ -40,70 +46,71 @@ class CMusEngReceiveSession : public CMusEngMceSession
         * @param aSessionObserver Session specific callbacks
         * @return CMusEngReceiveSession* New instanse of specified class
         */
-        IMPORT_C static CMusEngReceiveSession* NewL(
-                            const TRect& aRect,
-                            MMusEngReceiveSessionObserver* aSessionObserver );
+        static CMusEngReceiveSession* NewL( const TRect& aRect );
        /**
         * Destructor
         *
         * @since S60 v3.2
         */
         ~CMusEngReceiveSession();
+      
 
+    public: // from MLcSession
+        
+        void EstablishLcSessionL();
+    
+        MLcVideoPlayer* RemoteVideoPlayer();    
+        
+        const TDesC& RemoteDisplayName();
+        
+        
+    public: // from MLcVideoPlayer
+        
+        TLcVideoPlayerState LcVideoPlayerState() const;
+        
+        TBool LcIsPlayingL();
+        
+        void LcPlayL();
+        
+        void LcPauseL();
+    
+        MLcWindow* LcWindow();
 
-    public: // API
+        MLcCameraControl* LcCameraControl();
+        
+        MLcFileControl* LcSourceFile();
+        
+        MLcFileControl* LcDestinationFile();
+        
+        MLcAudioControl* LcAudioControl();
+    
+        MLcZoomControl* LcZoomControl();
+    
+        MLcBrightnessControl* LcBrightnessControl();
 
-       /**
-        * Accept or deny processed invitation
-        *
-        * @param aAccept ETrue if session is to be accepted and EFalse if
-        *        to be rejected.
+        RPointerArray< MLcValueControl >& LcExtensionControls(); 
+        
+
+    protected: // CONSTRUCTORS
+    
+        CMusEngReceiveSession( const TRect& aRect );
+
+		void ConstructL();
+		
+       
+    protected: // DATA
+    
+        // identity of originator parsed form P-Asserted-Identity field
+        TBuf8<KMaxUriLength> iIdentity;
+        
+        HBufC8* iOriginator;
+        
+        HBufC* iRemoteDisplayName;
+       
+        /** 
+        * Dummy member variable to implement MLcVideoPlayer::LcExtensionControls
         */
-        IMPORT_C void AcceptInvitationL(const TBool& aAccept);
-
-
-    public:
-
-       /**
-        * Sets callback interface pointer
-        *
-        * @param aSessionObserver Pointer to class which implements interface
-        */
-        IMPORT_C void SetSessionObserver(
-                                MMusEngReceiveSessionObserver* aSessionObserver );
-
-
-
-    protected: // internal API
-
-        /**
-        *
-        * @since S60 v3.2
-        */
-        TBool IsRtpcInactivityTimoutSupported();
-
-
-    private: // CONSTRUCTORS
-
-        CMusEngReceiveSession( MMusEngReceiveSessionObserver* aSessionObserver,
-                               const TRect& aRect );
-
-        void ConstructL();
-
-    public: // HELPERS
-
-        //CMceInSession* InSession();
-
-        MMusEngReceiveSessionObserver* ReceiveSessionObserver();
-
-        // void CompleteSessionStructureL( CMceInSession& aInSession );
-
-
-    public: // DATA
-
-       // CMceInSession* iTemporaryInSession; // Owned
-       TBool iAccepInvitation;
-
+        RPointerArray< MLcValueControl > iValueControls; 
     };
 
 #endif

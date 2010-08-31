@@ -53,6 +53,12 @@ namespace Mus
         ESipOptionsFailed       // sip options revealed that the remote host is 
                                 // not capable of video sharing -> error
         };
+    
+    // values for application startup behavior (have same effect as command
+    // enumerations of CApaCommandLine)
+    const TUint KMusCommandLetterRun = 'R';
+    const TUint KMusCommandLetterBackground = 'B';
+    
     }
 
 #endif // MUSMANAGERCOMMON_H

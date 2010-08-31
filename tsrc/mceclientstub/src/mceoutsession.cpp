@@ -31,10 +31,16 @@
 //
 EXPORT_C CMceOutSession* CMceOutSession::NewL(
                         CMceManager& aManager,
-                        CSIPProfile& /*aProfile*/,
+                        CSIPProfile& aProfile,
                         const TDesC8& aRecipient,
 						HBufC8* aOriginator )
     {
+    // Check that profile has been registered
+    TBool profileRegistered = EFalse;   
+        
+    aProfile.GetParameter( KSIPProfileRegistered, profileRegistered  );  
+    __ASSERT_ALWAYS( profileRegistered, User::Leave( KErrCouldNotConnect ) );        
+    
     CMceOutSession* self = new (ELeave) CMceOutSession( &aManager, 0 );
     CleanupStack::PushL( self );
     self->ConstructL( aRecipient, aOriginator );
@@ -60,6 +66,14 @@ EXPORT_C CMceOutSession* CMceOutSession::NewL( CMceRefer& /*aRefer*/ )
     return NULL;
     }
 
+// -----------------------------------------------------------------------------
+// CMceOutSession::NewL
+// -----------------------------------------------------------------------------
+//
+EXPORT_C CMceOutSession* CMceOutSession::NewL()
+    {
+    return new( ELeave )CMceOutSession( NULL, 0 );
+    }
 
 // -----------------------------------------------------------------------------
 // CMceOutSession::~CMceOutSession
@@ -104,10 +118,7 @@ EXPORT_C void CMceOutSession::EstablishL(
     delete aContent;
     delete aContentHeaders;
 
-	iState = CMceSession::EOffering;
-    
-    
-    
+	iState = CMceSession::EOffering; 
     }
 
 
@@ -160,7 +171,6 @@ CMceOutSession::CMceOutSession( CMceManager* aManager, TUint32 aProfileId )
 //
 void CMceOutSession::ConstructL( const TDesC8& aRecipient, HBufC8* aOriginator )
     {
-  
     delete iRecipient;
     iRecipient = NULL;
     iRecipient = aRecipient.AllocL();
@@ -174,6 +184,4 @@ void CMceOutSession::ConstructL( const TDesC8& aRecipient, HBufC8* aOriginator )
         }
         
     CMceSession::ConstructL();
-    
-    
     }

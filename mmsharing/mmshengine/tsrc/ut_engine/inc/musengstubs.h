@@ -20,17 +20,18 @@
 #ifndef UT_MUSSTUBS_H
 #define UT_MUSSTUBS_H
 
-
-#include "musengsessionobserver.h"
-#include "musengoutsessionobserver.h"
-#include "musenglivesessionobserver.h"
-#include "musengclipsessionobserver.h"
-#include "musengreceivesessionobserver.h"
 #include "musengsessiondurationtimerobserver.h"
 #include "musengaudioroutingobserver.h"
-#include "musengvolumechangeobserver.h"
+#include "musengdisplayhandler.h"
+#include "mussipprofileuser.h"
+#include "muspropertyobserver.h"
 
+#include <lcsessionobserver.h>
+#include <lcuiprovider.h>
+#include <lcwindow.h>
+#include <lcaudiocontrol.h>
 #include <e32base.h>
+#include <ecom.h>
 
 // DUMMY CLASSES
 
@@ -67,91 +68,26 @@ class CSIPRefresh
 */        
 class CMusEngObserverStub : public CBase, 
                             public MMusEngSessionDurationTimerObserver,
-                            public MMusEngSessionObserver,
-                            public MMusEngOutSessionObserver,
-                            public MMusEngLiveSessionObserver,
-                            public MMusEngClipSessionObserver,
-                            public MMusEngReceiveSessionObserver,
                             public MMusEngAudioRoutingObserver,
-                            public MMusEngVolumeChangeObserver
+                            public MMusSipProfileUser
     {
-    
-    public:
+    public: // Constructors and destructor
 
         CMusEngObserverStub();
-            
         ~CMusEngObserverStub();
-        
-        // From MMusEngSessionDurationTimerObserver
-        
-        void UpdateTimerEvent();
-        
-        // From MMusEngSessionObserver
-        
-        void SessionEstablished();
-        void SessionTerminated(); 
-        void SessionConnectionLost();
-        void SessionFailed();
-        void StreamIdle();
-        void StreamStreaming();
-        void SessionTimeChanged( const TTimeIntervalSeconds& aSeconds );
-        void InactivityTimeout();
 
-
-        // From MMusEngOutSessionObserver
-
-        void SessionRejected();
-    	void SessionBadRequest(); // 400 
-    	void SessionUnauthorized(); // 401 
-    	void SessionPaymentRequired(); // 402
-    	void SessionRecipientNotFound(); // 404 
-    	void SessionProxyAuthenticationRequired(); // 407
-    	void SessionRequestTimeOut(); // 408
-    	void SessionUnsupportedMediaType(); // 415
-    	void SessionBusyHere(); // 486
-    	void SessionRequestCancelled(); // 487 
-    	void SessionTemporarilyNotAvailable(); // 480
-
-        // From MMusEngLiveSessionObserver
-        
-        void DiskFull();
-        void OrientationRefreshEnded();
-        
-        // From MMusEngClipSessionObserver    
-        
-        void EndOfClip(); 
-        
-        void TranscodingNeeded(TBool aDueUnknowCapas);
-        
-        void TranscodingProgressed( TInt aPercentage );     
-
-        void TranscodingCompletedInit();
-
-        void TranscodingCompletedFinalize();
-
-        void TranscodingFailed();
-        
-        void RewindFromEndL();
-
-
-        // From MMusEngReceiveSessionObserver    
-        
-        void IncomingSessionPreNotification();
-
-        void IncomingSession( const TDesC& aOriginator, 
-                              const TDesC& aOriginatorIdentity );
-        
-        void StreamBuffering();
+    public: // From MMusEngSessionDurationTimerObserver
     
-    
-        // From MMusEngAudioRoutingObserver
+        void UpdateTimerEvent();        
         
-        void AudioRoutingChanged( TBool aShowNote );
+    public: // From MMusEngAudioRoutingObserver
         
-        TBool AudioRouteChangeAllowed() const;
+        void AudioRoutingChanged();
         
-        // From MMusEngVolumeChangeObserver
-        void VolumeChanged( TInt aVolume, TBool aAudioRouteChanged );
+    public: // From MMusSipProfileUser    
+            
+        TBool IsRoamingBetweenAPsAllowed();
+        void ProfileRegistered();
         
     public: // Helper
     
@@ -170,50 +106,238 @@ class CMusEngObserverStub : public CBase,
     public: // Data  
         
         TBool iUpdateTimerEventCalled;
+        TBool iAudioRoutingChangedCalled;       
+        TBool iRoamingBetweenAPsAllowed;
+        TBool iProfileRegisteredCalled;
+    };
+
+class TMusEngDisplayHandlerStub : public MMusEngDisplayHandler
+    {
+public:
+    
+    TMusEngDisplayHandlerStub();
+    
+    void Reset();
+    
+public: // From MMusEngDisplayHandler
+    
+    TRect Rect() const;
+
+    void SetRectL( const TRect& aRect );
+            
+    void SetSecondaryRectL( const TRect& aSecondaryRect );
+            
+    TRect SecondaryRect() const;
+            
+    void EnableDisplayL( TBool aEnable );
+            
+    TBool IsDisplayEnabled();
+            
+    TDisplayOrientation OrientationL();
+            
+    void SetOrientationL( TDisplayOrientation aOrientation );
+            
+    TBool IsDisplayActive();
+
+public:
+    
+    TRect iRect;
+    TRect iSecondaryRect;
+    TBool iIsEnabled;
+    TDisplayOrientation iOrientation;
+    TBool iIsActive;
+    };
+
+class CLcSessionObserverStub : public CBase, public MLcSessionObserver
+    {
+    public: // Constructors and destructor
+
+        CLcSessionObserverStub();
+        ~CLcSessionObserverStub();
         
-        TBool iSessionEstablishedCalled;
-        TBool iSessionTerminatedCalled;
-        TBool iSessionConnectionLostCalled;
-        TBool iSessionFailedCalled;
-        TBool iStreamIdleCalled;
-        TBool iStreamStreamingCalled;
-        TBool iSessionTimeChangedCalled;
-        TBool iInactivityTimeoutCalled;
+    public: // From MLcSessionObserver
         
-        TBool iSessionRejectedCalled;
-    	TBool iSessionBadRequestCalled;
-    	TBool iSessionUnauthorizedCalled;
-    	TBool iSessionPaymentRequiredCalled;
-    	TBool iSessionRecipientNotFoundCalled;
-    	TBool iSessionProxyAuthenticationRequiredCalled;
-    	TBool iSessionRequestTimeOutCalled;
-    	TBool iSessionUnsupportedMediaTypeCalled;
-    	TBool iSessionBusyHereCalled;
-    	TBool iSessionRequestCancelledCalled;
-    	TBool iDiskFullCalled;
-    	
-    	TBool iEndOfClipCalled;
-    	TBool iRewindFromEnd;
-    	TBool iTranscodingNeededCalled;
-    	TBool iTranscodingCompletedInitCalled;
-    	TBool iTranscodingCompletedFinalizeCalled;
-    	TBool iTranscodingFailedCalled;
-    	
-    	TBool iIncomingSessionPreNotificationCalled;
-        TBool iIncomingSessionCalled;
-        TBool iStreamBufferingCalled;
+        void StateChanged( MLcSession& aSession );
+    
+        void StateChanged( MLcVideoPlayer& aPlayer );
+    
+        void Updated( MLcSession& aSession );
+
+        void Updated( MLcVideoPlayer& aPlayer );
+    
+        void Failed( 
+            MLcSession& aSession,
+            TInt aError );
+    
+        void Failed( 
+            MLcVideoPlayer& aPlayer, 
+            TInt aError );
+    
+        void SessionTimeChanged( 
+            MLcSession& aSession,
+            const TTimeIntervalSeconds& aSeconds );
+
+    public: // New functions
         
-        TBool iAudioRoutingChangedCalled;
-        TBool iShowNote;
-        TBool iAudioRouteChangeAllowed;
+        void Reset();    
+        TBool IsReseted();
         
-        TInt iTranscodingProgressedPercentage;
-        TBool iSessionTemporarilyNotAvailable;
-        HBufC* iIncomingSessionOriginator;
+    public: // Data
         
+        enum TCalledFunction
+            {
+            EUnknown,
+            ESessionStateChanged,
+            EPlayerStateChanged,
+            ESessionUpdated,
+            EPlayerUpdated,
+            ESessionFailed,
+            EPlayerFailed,
+            ESessionTimeChanged
+            };  
+        
+        TInt iCalledFunction;
+        MLcSession* iCurrentSession;
+        MLcVideoPlayer* iCurrentPlayer;
+        TInt iSessionTime;
+        TInt iError;
+    }; 
+
+
+class CLcUiProviderStub : public CBase, public MLcUiProvider
+    {
+    public: // Constructors and destructor
+
+        CLcUiProviderStub();
+        ~CLcUiProviderStub();
+        
+    public: // From MLcUiProvider
+        
+        TBool SelectRecipient( 
+            MDesCArray& aRecipientAddresses, 
+            TDes& aSelectedRecipientAddress );        
+        
+        TBool InputRecipient( TDes& aRecipientAddress );
+        
+        void HandleForegroundStatus( TBool aForeground );
+        
+        void BlockUi( TBool aBlocked );
+        
+    public: // New functions
+        
+        void Reset();
+        
+    public: // Data
+        
+        enum TCalledFunction
+            {
+            EUnknown,
+            ESelectRecipient,
+            EInputRecipient,
+            EHandleForegroundStatus
+            };  
+        
+        TInt iForeground;
+        TInt iCalledFunction;
+        TPtrC iRecipient;
+        TBool iSimulatedReturnValue;     
+    };
+
+
+class TLcWindowStub : public MLcWindow
+    {
+    public: // Constructor     
+        TLcWindowStub();
+    
+    public: // From MLcWindow      
+        void EnableLcWindowL( TBool aEnable );
+        TBool IsLcWindowEnabled();    
+        void SetLcWindowRectL( TRect aRect );
+        TRect LcWindowRect();
+        void SetLcWindowOrientationL( TLcWindowOrientation aOrientation );
+        TLcWindowOrientation LcWindowOrientationL();
+        
+    public: // New functions
+        
+        void Reset();
+        
+    private: // Data
+        TBool iEnabled;
+        TRect iRect;
+        TLcWindowOrientation iOrientation;
+    };
+
+
+class TLcAudioControlStub : public MLcAudioControl
+    {
+    public: // Constructor
+        TLcAudioControlStub();    
+    
+    public:
+        TBool IsLcAudioMutedL();
+        void MuteLcAudioL( TBool aMute );       
+        TBool IsLcMicMutedL();    
+        void MuteLcMicL( TBool aMute );
+        TBool IsEnablingLcLoudspeakerAllowed();   
+        void EnableLcLoudspeakerL( TBool aEnabled );
+        TBool IsLcLoudspeakerEnabled();
+        TInt LcVolumeL();
+        void SetLcVolumeL( TInt aValue );    
+        void IncreaseLcVolumeL();
+        void DecreaseLcVolumeL();
+ 
+    public: // New functions
+        
+        void Reset();        
+        
+    private: // Data      
+        TBool iAudioMuted;
+        TBool iMicMuted;
+        TBool iEnablingLoudspeakerAllowed;
+        TBool iLoudspeakerEnabled;
         TInt iVolume;
-        TBool iDueUnknowCapas;
-        TBool iOrientationRefreshEndedCalled;
+    };
+
+class TMusPropertyObserverStub : public MMusPropertyObserver
+    {
+    public:
+    
+        enum TMusPropertyObserverFunction
+            {
+            ENone, // default value
+            EPropertyChanged,
+            EHandlePropertyError
+            };
+
+    
+        TMusPropertyObserverStub()
+            {
+            iCalledFunction = ENone;
+            iKey = 0;
+            iValue = 0;
+            iReason = 0;
+            }
+    
+        void PropertyChanged( const TUint aKey, const TInt aValue )
+            {
+            iCalledFunction = EPropertyChanged;
+            iKey = aKey;
+            iValue = aValue;
+            }
+
+
+        void HandlePropertyError( const TInt aReason )
+            {
+            iCalledFunction = EHandlePropertyError;
+            iReason = aReason;
+            }
+
+    public: // data
+
+        TMusPropertyObserverFunction iCalledFunction;
+        TInt iKey;
+        TInt iValue;
+        TInt iReason;
     };
 
 

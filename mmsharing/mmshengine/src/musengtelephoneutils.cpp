@@ -19,31 +19,74 @@
 // USER
 #include "musengtelephoneutils.h"
 #include "musengaudioroutingobserver.h"
-#include "musengmcesession.h"
-#include "musengvolumechangeobserver.h"
 #include "muslogger.h"
 
 // SYSTEM
 #include <centralrepository.h>
-#include <telephonydomaincrkeys.h>
+#include <telincallvolcntrlcrkeys.h>
 #include <e32property.h>
 #include <telephonydomainpskeys.h>
 #include <CPhCltCommandHandler.h> // for CPhCltCommandHandler
 
+// Constants
+const TInt KMusEngMaxVolume = 10;
+const TInt KMusEngMinVolume = 0;
+
+
+
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
-CMusEngTelephoneUtils* CMusEngTelephoneUtils::NewL()
+CMusEngTelephoneUtils* CMusEngTelephoneUtils::NewL( 
+    MMusEngAudioRoutingObserver& aAudioRoutingObserver )
     {
-    CMusEngTelephoneUtils* self = new( ELeave ) CMusEngTelephoneUtils();
+    CMusEngTelephoneUtils* self = 
+        new( ELeave )CMusEngTelephoneUtils( aAudioRoutingObserver );
     CleanupStack::PushL( self );
     self->ConstructL();
     CleanupStack::Pop( self );
     return self;
     }
 
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+CMusEngTelephoneUtils::CMusEngTelephoneUtils( 
+    MMusEngAudioRoutingObserver& aAudioRoutingObserver ) 
+    : CActive( CActive::EPriorityStandard ),
+      iAudioRoutingObserver( aAudioRoutingObserver )
+    {
+    iAudioOutputAtStartup = CTelephonyAudioRouting::ENotActive;
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngTelephoneUtils::ConstructL()
+    {
+    MUS_LOG( "mus: [ENGINE]  -> CMusEngTelephoneUtils::ConstructL()" )
+
+    // Volume control
+    iRepository = CRepository::NewL( KCRUidInCallVolume );
+
+    // Audio routing control
+    iTelephonyAudioRouting = CTelephonyAudioRouting::NewL( *this );
+
+    iAudioOutputAtStartup = iTelephonyAudioRouting->Output();
+    
+    // Phone
+    MUS_LOG( "mus: [ENGINE]     Use static DLL" )
+    iPhoneCommandHandler = CPhCltCommandHandler::NewL();
+        
+    CActiveScheduler::Add( this );
+
+    MUS_LOG( "mus: [ENGINE]  <- CMusEngTelephoneUtils::ConstructL()" )
+    }
 
 // -----------------------------------------------------------------------------
 //
@@ -61,43 +104,34 @@ CMusEngTelephoneUtils::~CMusEngTelephoneUtils()
         {
         CTelephonyAudioRouting::TAudioOutput currentMode =
                                             iTelephonyAudioRouting->Output();
-        MUS_LOG1( "mus: [ENGINE] iAudioOutputAtStartup: %d", iAudioOutputAtStartup );
-        MUS_LOG1( "mus: [ENGINE] currentMode: %d", currentMode );
-        // When active call is dropped, audio output is set to ENotActive,
-        // but in some cases Mush engine get deleted before OutputChanged()
-        // notification comes. In that case we shouldn't touch output. 
-        if( currentMode != iAudioOutputAtStartup && 
-            currentMode != CTelephonyAudioRouting::ENotActive )
+        if( currentMode != iAudioOutputAtStartup )
             {
             // As going down, let audiorouting api to show notification
             iTelephonyAudioRouting->SetShowNote( ETrue );
-            TRAPD( err, DoSetOutputL( iAudioOutputAtStartup ) );
+            TRAPD( err, 
+                iTelephonyAudioRouting->SetOutputL( iAudioOutputAtStartup ) )
             MUS_LOG1( "mus: [ENGINE]    final route change completed: %d", err )
             err++;
-            }
+        	}
         }
-
-    if ( iNotifier )
-        {
-        iNotifier->StopListening();
-        delete iNotifier;
-        }    
 
     delete iRepository;
     delete iTelephonyAudioRouting;
     MUS_LOG( "mus: [ENGINE]  <- CMusEngTelephoneUtils::~CMusEngTelephoneUtils()" )
     }
 
-
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
-TBool CMusEngTelephoneUtils::AudioRoutingCanBeChanged() const
+TBool CMusEngTelephoneUtils::AudioRoutingCanBeChanged()
     {
     MUS_LOG( "mus: [ENGINE]  -> CMusEngTelephoneUtils::AudioRoutingCanBeChanged" )
     
-    TBool retValue = ( 
+    TBool retValue = ( iTelephonyAudioRouting->Output() !=
+                       CTelephonyAudioRouting::EWiredAudioAccessory &&
+                       iTelephonyAudioRouting->Output() !=
+                       CTelephonyAudioRouting::EBTAudioAccessory &&
                        iTelephonyAudioRouting->Output() !=
                        CTelephonyAudioRouting::ETTY );
     
@@ -107,106 +141,45 @@ TBool CMusEngTelephoneUtils::AudioRoutingCanBeChanged() const
     return retValue;
     }
 
-
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
-TBool CMusEngTelephoneUtils::IsAudioRoutingHeadset() const
-    {
-    MUS_LOG( "mus: [ENGINE]  -> CMusEngTelephoneUtils::IsAudioRoutingHeadset" )
-	    
-    TBool retValue = ( iTelephonyAudioRouting->Output() ==
-                       CTelephonyAudioRouting::EBTAudioAccessory ||
-                       iTelephonyAudioRouting->Output() ==
-                       CTelephonyAudioRouting::EWiredAudioAccessory );
-	    
-    MUS_LOG1( "mus: [ENGINE]  <- CMusEngTelephoneUtils::IsAudioRoutingHeadset: %d",
-               retValue )
-	              
-    return retValue;
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-TBool CMusEngTelephoneUtils::IsAudioRoutingLoudSpeaker() const
-    {
-    MUS_LOG( "mus: [ENGINE]  -> CMusEngTelephoneUtils::IsAudioRoutingLoudSpeaker" )
-    TBool retValue = EFalse;
-    
-    CTelephonyAudioRouting::TAudioOutput currentMode =
-                                            iTelephonyAudioRouting->Output();
-    MUS_LOG1( "mus: [ENGINE] iAudioOutputAtStartup: %d", iAudioOutputAtStartup );
-    MUS_LOG1( "mus: [ENGINE] currentMode: %d", currentMode );
-    
-    if( currentMode != iAudioOutputAtStartup && 
-        currentMode == CTelephonyAudioRouting::ELoudspeaker )
-    	{
-    
-         retValue = ETrue;
-    
-    	}
-    	
-    MUS_LOG1( "mus: [ENGINE]  <- CMusEngTelephoneUtils::IsAudioRoutingLoudSpeaker: %d",
-               retValue )
-	              
-    return retValue;
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void CMusEngTelephoneUtils::LoudspeakerL( TBool aEnable, TBool aShowDialog )
+void CMusEngTelephoneUtils::LoudspeakerL( TBool aEnable )
     {
     MUS_LOG1( "mus: [ENGINE]  -> CMusEngTelephoneUtils::LoudspeakerL(%d)",
               aEnable )
     
+    // Disable note shown by audiorouting api as it causes
+    // application going to background for a while. Instead, display
+    // note by ourselves once setting output completes. This mechanism
+    // is needed only for loudspeaker enabling as going to background
+    // causes problems only at beginning of sharing session.
+    iTelephonyAudioRouting->SetShowNote( EFalse );              
     if ( aEnable )
         {
         if ( iTelephonyAudioRouting->Output() == 
-             CTelephonyAudioRouting::EHandset || 
-             iTelephonyAudioRouting->Output() == 
-             CTelephonyAudioRouting::EBTAudioAccessory|| 
-             iTelephonyAudioRouting->Output() == 
-             CTelephonyAudioRouting::EWiredAudioAccessory )  
+             CTelephonyAudioRouting::EHandset )
             {
-            // Disable note shown by audiorouting api as it causes
-            // application going to background for a while. Instead, display
-            // note by ourselves once setting output completes. This mechanism
-            // is needed only for loudspeaker enabling as going to background
-            // causes problems only at beginning of sharing session.
-            if ( aShowDialog )
-                {   
-                iTelephonyAudioRouting->SetShowNote( EFalse );
-                
-                iShowDialog = aShowDialog;
-                }
-    
-            DoSetOutputL( CTelephonyAudioRouting::ELoudspeaker );
+            iTelephonyAudioRouting->SetOutputL( 
+                CTelephonyAudioRouting::ELoudspeaker );
             }
         }
     else
-        {
-        iTelephonyAudioRouting->SetShowNote( aShowDialog );
-        
+        {        
         if ( iAudioOutputAtStartup == CTelephonyAudioRouting::ELoudspeaker )
             {
-            DoSetOutputL( CTelephonyAudioRouting::EHandset );
+            iTelephonyAudioRouting->SetOutputL( 
+                CTelephonyAudioRouting::EHandset );
             }
         else
             {
-            DoSetOutputL( iAudioOutputAtStartup );
+            iTelephonyAudioRouting->SetOutputL( iAudioOutputAtStartup );
             }
         }
-
-    
                                 
     MUS_LOG( "mus: [ENGINE]  <- CMusEngTelephoneUtils::LoudspeakerL(...)" )
     }
-
 
 // -----------------------------------------------------------------------------
 //
@@ -219,16 +192,7 @@ TBool CMusEngTelephoneUtils::IsLoudSpeakerEnabled() const
     }
 
 // -----------------------------------------------------------------------------
-// Returns locally cached the CS call volume level.
-// -----------------------------------------------------------------------------
-//
-TInt CMusEngTelephoneUtils::GetVolume() const
-    {
-    return iCurrentVolume;
-    }
-        
-// -----------------------------------------------------------------------------
-// Gets the CS call volume level from central repository.
+// Gets the CS call volume level.
 // Leaves if error occurs when accessing central repository.
 // -----------------------------------------------------------------------------
 //
@@ -245,10 +209,8 @@ TInt CMusEngTelephoneUtils::GetVolumeL() const
         User::LeaveIfError( iRepository->Get( KTelIncallEarVolume,
                                               currentVolume ) );
         }
-
     return ValidateVolume( currentVolume );
     }
-
 
 // -----------------------------------------------------------------------------
 // Sets the CS call volume level.
@@ -258,8 +220,8 @@ TInt CMusEngTelephoneUtils::GetVolumeL() const
 void CMusEngTelephoneUtils::SetVolumeL( TInt aVolume )
     {
     TInt newVolume = ValidateVolume( aVolume );
-    MUS_LOG1( "mus: [ENGINE]  -> CMusEngTelephoneUtils::SetVolumeL(), %d", newVolume )
-    if ( iCurrentVolume != newVolume )
+
+    if ( GetVolumeL() != newVolume )
         {
         if ( IsLoudSpeakerEnabled() )
             {
@@ -271,10 +233,8 @@ void CMusEngTelephoneUtils::SetVolumeL( TInt aVolume )
             User::LeaveIfError( iRepository->Set( KTelIncallEarVolume, 
                                                   newVolume ) );
             }
-        iCurrentVolume = newVolume;
         }
     }
-
 
 // -----------------------------------------------------------------------------
 //
@@ -296,7 +256,6 @@ void CMusEngTelephoneUtils::MuteMicL( TBool aMute )
     MUS_LOG( "mus: [ENGINE]  <- CMusEngTelephoneUtils::MuteMicL()" )
     }
 
-
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -316,27 +275,6 @@ TBool CMusEngTelephoneUtils::IsMicMutedL()
     return ( psVal == EPSTelMicMuteOn );
     }
 
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void CMusEngTelephoneUtils::SetAudioRoutingObserver( 
-                                    MMusEngAudioRoutingObserver* aObserver )
-    {
-    iAudioRoutingObserver = aObserver;
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void CMusEngTelephoneUtils::SetVolumeChangeObserver( 
-                                    MMusEngVolumeChangeObserver* aObserver )
-    {
-    iVolumeObserver = aObserver;
-    }
-
 // -----------------------------------------------------------------------------
 // 
 // -----------------------------------------------------------------------------
@@ -352,23 +290,6 @@ void CMusEngTelephoneUtils::RunL()
     MUS_LOG( "mus: [ENGINE]  <- CMusEngTelephoneUtils::RunL()" )
     }
 
-// -------------------------------------------------------------------------
-//  If RunL() leaves,It should be handled here.
-// -------------------------------------------------------------------------
-//
-TInt CMusEngTelephoneUtils::RunError( TInt aError )
-    {
-    MUS_LOG1( "mus: [ENGINE]     -> CMusEngTelephoneUtils::\
-              RunError() return #%d", aError )
-    
-    // Nothing can be done here.
-    aError = KErrNone;
-
-    MUS_LOG( "mus: [ENGINE]  <- CMusEngTelephoneUtils::RunError()" )
-    return aError;
-    }
-
-
 // -----------------------------------------------------------------------------
 // 
 // -----------------------------------------------------------------------------
@@ -383,26 +304,24 @@ void CMusEngTelephoneUtils::DoCancel()
         }
         
     MUS_LOG( "mus: [ENGINE]  <- CMusEngTelephoneUtils::DoCancel()" )
-    }
-    
+    } 
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
 void CMusEngTelephoneUtils::AvailableOutputsChanged( 
-                        CTelephonyAudioRouting& /*aTelephonyAudioRouting*/ )
+    CTelephonyAudioRouting& /*aTelephonyAudioRouting*/ )
     {
     // NOP
     }
-
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
 void CMusEngTelephoneUtils::OutputChanged( 
-                CTelephonyAudioRouting& aTelephonyAudioRouting )
+    CTelephonyAudioRouting& aTelephonyAudioRouting )
     {
     MUS_LOG( "mus: [ENGINE]  -> CMusEngTelephoneUtils::OutputChanged()" )
 
@@ -413,13 +332,8 @@ void CMusEngTelephoneUtils::OutputChanged(
     
     MUS_LOG1( "mus: [ENGINE]     New audio routing is %d", iAudioOutputAtStartup )
     
-    if ( iAudioRoutingObserver )
-        {
-        iAudioRoutingObserver->AudioRoutingChanged( EFalse );
-        }
-    
-    UpdateCurrentVolume(ETrue);
-    
+    iAudioRoutingObserver.AudioRoutingChanged();
+        
     MUS_LOG( "mus: [ENGINE]  <- CMusEngTelephoneUtils::OutputChanged()" )
     }
     
@@ -429,97 +343,18 @@ void CMusEngTelephoneUtils::OutputChanged(
 // -----------------------------------------------------------------------------
 //
 void CMusEngTelephoneUtils::SetOutputComplete( 
-                    CTelephonyAudioRouting& /*aTelephonyAudioRouting*/,
-                    TInt aError )
+    CTelephonyAudioRouting& /*aTelephonyAudioRouting*/,
+    TInt aError )
     {
     MUS_LOG( "mus: [ENGINE]  -> CMusEngTelephoneUtils::SetOutputComplete()" )
 
     if ( aError == KErrNone )
         {
-        if ( iAudioRoutingObserver )
-            {
-            // If audio routing api didn't shown note and show dialog mode is on,
-            // we know that this completion is for such setoutput call for which
-            // we need to show the note. Show note mode is turned off only in that
-            // case.
-            TBool dialogShownByUs( EFalse );
-            TBool dialogShownByAudioRouting( EFalse );     
-            aError = iTelephonyAudioRouting->GetShowNote( dialogShownByAudioRouting );
-            if ( aError == KErrNone && !dialogShownByAudioRouting && iShowDialog )
-                {
-                dialogShownByUs = iShowDialog;
-                iShowDialog = EFalse;
-                }
-        
-            iAudioRoutingObserver->AudioRoutingChanged( dialogShownByUs );
-            }
-
-        UpdateCurrentVolume(ETrue);
+        iAudioRoutingObserver.AudioRoutingChanged();
         }
     
     MUS_LOG( "mus: [ENGINE]  <- CMusEngTelephoneUtils::SetOutputComplete()" )
     }
-                            
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void CMusEngTelephoneUtils::UpdateCurrentVolume( TBool aAudioRouteChanged )
-    {
-    TInt volume(0);
-    TRAPD(error, volume = GetVolumeL() );
-    if( (KErrNone == error) && (iCurrentVolume != volume) )
-         {
-         iCurrentVolume = volume;
-         if ( iVolumeObserver )
-             {
-             iVolumeObserver->VolumeChanged( volume, aAudioRouteChanged );
-             }
-         }
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-CMusEngTelephoneUtils::CMusEngTelephoneUtils() 
-	: CActive( CActive::EPriorityStandard )
-    {
-    iAudioOutputAtStartup = CTelephonyAudioRouting::ENotActive;
-    }
-
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void CMusEngTelephoneUtils::ConstructL()
-    {
-    MUS_LOG( "mus: [ENGINE]  -> CMusEngTelephoneUtils::ConstructL()" )
-
-    // Volume control
-    iRepository = CRepository::NewL( KCRUidInCallVolume );
-    
-    iNotifier = CCenRepNotifyHandler::NewL( *this, *iRepository );
-    iNotifier->StartListeningL();
-    
-    // Audio routing control
-    iTelephonyAudioRouting = CTelephonyAudioRouting::NewL( *this );
-
-    iAudioOutputAtStartup = iTelephonyAudioRouting->Output();
-    MUS_LOG1( "mus: [ENGINE] iAudioOutputAtStartup: %d", iAudioOutputAtStartup );
-    // Phone
-    MUS_LOG( "mus: [ENGINE]     Use static DLL" )
-    iPhoneCommandHandler = CPhCltCommandHandler::NewL();
-     
-    iCurrentVolume = GetVolumeL();
-    
-    CActiveScheduler::Add( this );
-
-    MUS_LOG( "mus: [ENGINE]  <- CMusEngTelephoneUtils::ConstructL()" )
-    }
-
 
 // -----------------------------------------------------------------------------
 // Validates that requested volume level is valid (between 1-10) and if it is
@@ -542,62 +377,4 @@ TInt CMusEngTelephoneUtils::ValidateVolume( const TInt aVolume ) const
         }
         
     return aVolume;
-    }
-
-
-// -----------------------------------------------------------------------------
-// Set output if setting is currently allowed.
-// -----------------------------------------------------------------------------
-//
-void CMusEngTelephoneUtils::DoSetOutputL( 
-    CTelephonyAudioRouting::TAudioOutput aAudioOutput )
-    {
-    MUS_LOG( "mus: [ENGINE]  -> CMusEngTelephoneUtils::DoSetOutputL()" )
-    if ( iAudioRoutingObserver && !iAudioRoutingObserver->AudioRouteChangeAllowed() )
-        {
-        MUS_LOG( "mus: [ENGINE]     change not allowed!" )
-        User::Leave( KErrAccessDenied );
-        }
-    iTelephonyAudioRouting->SetOutputL( aAudioOutput );
-    MUS_LOG( "mus: [ENGINE]  <- CMusEngTelephoneUtils::DoSetOutputL()" )
-    }
-
-
-// ---------------------------------------------------------------------------
-// CMusEngTelephoneUtils::HandleNotifyGeneric
-// ---------------------------------------------------------------------------
-//
-void CMusEngTelephoneUtils::HandleNotifyGeneric( TUint32 aId )
-    {
-    MUS_LOG( "mus: [ENGINE] -> CMusEngTelephoneUtils::HandleNotifyGeneric()" )
-    TInt error = KErrArgument;
-    TInt volume = 0;
-    if ( KTelIncallEarVolume == aId )
-        {
-        error = iRepository->Get( KTelIncallEarVolume, volume );        
-        MUS_LOG1( "mus: [ENGINE] EAR volume: %d", volume );
-        }
-    else if ( KTelIncallLoudspeakerVolume == aId )
-        {
-        error = iRepository->Get( KTelIncallLoudspeakerVolume, volume );        
-        MUS_LOG1( "mus: [ENGINE] Loudspeakers volume: %d", volume );
-        }
-    
-    volume = ValidateVolume(volume);
-    if ( (KErrNone == error) && (iCurrentVolume != volume) )
-        {
-        MUS_LOG1( "mus: [ENGINE] volume changed: %d!, notifying UI...", volume )
-        iCurrentVolume = volume;
-        if( iVolumeObserver  )
-            {
-            iVolumeObserver->VolumeChanged( volume, EFalse );
-            }
-        }
-    else
-        {
-        MUS_LOG( "mus: [ENGINE] volume hasn't changed!, do nothing..." )    
-        }
-        
-    MUS_LOG1( "mus: [ENGINE] <- CMusEngTelephoneUtils::HandleNotifyGeneric(), error:%d",
-            error );
     }

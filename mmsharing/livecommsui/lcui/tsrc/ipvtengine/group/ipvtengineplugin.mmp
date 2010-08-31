@@ -1,0 +1,65 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies). 
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+* 
+* Description:
+*
+*/
+
+#include <platform_paths.hrh>
+
+TARGET         ipvtengineplugin.dll
+TARGETTYPE     PLUGIN
+UID            0x10009D8D 0x20029876
+VENDORID       VID_DEFAULT
+CAPABILITY     CAP_ECOM_PLUGIN
+
+SOURCEPATH     ../data
+START RESOURCE 20029876.rss
+TARGET         ipvtengineplugin.rsc
+END
+
+SOURCEPATH  	../src
+SOURCE      	musenginepluginentry.cpp
+SOURCE      	musengsessionmanager.cpp
+
+
+SOURCE      	musengmcesession.cpp
+SOURCE          musengtwowaysession.cpp
+SOURCE          musengcamerahandler.cpp
+SOURCE          musengvideoplayerbase.cpp
+SOURCE          musenglocalvideoplayer.cpp
+SOURCE          musenglivevideoplayer.cpp
+SOURCE          musengremotevideoplayer.cpp
+SOURCE          svptimer.cpp
+SOURCE          mccdatasender.cpp
+SOURCE          mccdatareceiver.cpp
+SOURCE          mccscreen.cpp
+
+USERINCLUDE     ../inc
+USERINCLUDE 	../../../../../../inc
+
+
+APP_LAYER_SYSTEMINCLUDE
+SYSTEMINCLUDE 	/epoc32/include/ecom
+
+LIBRARY         euser.lib
+LIBRARY         bafl.lib
+LIBRARY		centralrepository.lib
+LIBRARY		charconv.lib
+LIBRARY         cntmodel.lib ecom.lib
+LIBRARY ws32.lib
+LIBRARY bitgdi.lib
+LIBRARY fbscli.lib
+LIBRARY cone.lib
+LIBRARY lcvtindicatorcontroller.lib
+DEBUGLIBRARY    flogger.lib

@@ -82,8 +82,6 @@ class UT_CMusAvaCapabilityQuery
         
         void UT_CMusAvaCapabilityQuery_ExecuteLL();
         
-        void UT_CMusAvaCapabilityQuery_ValidateUriL();
-        
         void UT_CMusAvaCapabilityQuery_CanceledL();
         
         void UT_CMusAvaCapabilityQuery_CompletedLL();
@@ -103,8 +101,6 @@ class UT_CMusAvaCapabilityQuery
         void UT_CMusAvaCapabilityQuery_DoCompletedLL();
         
         void UT_CMusAvaCapabilityQuery_DoCompleted200OKLL();
-        
-        void UT_CMusAvaCapabilityOtherSDPHeadersLL();
         
 		EUNIT_DECLARE_TEST_TABLE; 
 				

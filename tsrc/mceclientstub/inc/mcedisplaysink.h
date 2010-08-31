@@ -71,6 +71,12 @@ class CMceDisplaySink : public CMceMediaSink
 	    */
 		IMPORT_C static CMceDisplaySink* NewLC( CMceManager& aManager );
 
+		/// Not in the real implementation
+        IMPORT_C static CMceDisplaySink* NewL();
+
+        /// Not in the real implementation
+        IMPORT_C static CMceDisplaySink* NewLC();		
+		
 	    /**
 	    * Destructor.
 	    */
@@ -168,11 +174,6 @@ class CMceDisplaySink : public CMceMediaSink
 	     * C++ constructor.
 	     */
 		CMceDisplaySink();
-
-	    /**
-	    * second-phase constructor
-	    */
-		void ConstructL( CMceManager* aManager );
 
     private: // Reserved for future use
     

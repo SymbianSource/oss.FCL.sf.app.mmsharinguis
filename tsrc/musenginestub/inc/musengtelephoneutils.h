@@ -20,111 +20,183 @@
 #define MUSENGTELEPHONEUTILS_H
 
 
-//#include "musunittesting.h"
+#include "musunittesting.h"
 
 // SYSTEM
 #include <e32base.h>
-//#include <mtelephonyaudioroutingobserver.h>
-//#include <telephonyaudiorouting.h>
+#include <mtelephonyaudioroutingobserver.h>
+#include <telephonyaudiorouting.h>
+#include <rphcltserver.h>
 
 // FORWARD DECLARATIONS
-//class CRepository;
-//class CTelephonyAudioRouting;
+class CRepository;
+class CTelephonyAudioRouting;
+class CPhCltCommandHandler;
+class MMusEngAudioRoutingObserver;
 
 /**
-*
-* @lib musengine.lib
-* @since S60 v3.2
+* Utility class to handle all phone related requests:
+* Audio routing, volume control and microphone muting.
 */
-class CMusEngTelephoneUtils : public CBase
-                              //public MTelephonyAudioRoutingObserver
+class CMusEngTelephoneUtils : public CActive,
+                              public MTelephonyAudioRoutingObserver
     {
-    public:
-
-        /**
-        *
-        * @since S60 v3.2
+    MUS_UNITTEST( UT_CMusEngTelephoneUtils )
+    MUS_UNITTEST( UT_CMusEngSession )
+	
+	public: 
+		
+		/**
+   		*
         */
-        static CMusEngTelephoneUtils* NewL();
+		static CMusEngTelephoneUtils* NewL();
 
-        /**
-        *
-        * @since S60 v3.2
+		/**
+   		*
         */
-        ~CMusEngTelephoneUtils();
+		~CMusEngTelephoneUtils();
 
 
-    public: // API
+	public: // API
+	
+	    /**
+        * Checks if audio routing can be changed using LoudspeakerL
+        * 
+        * @return ETrue if audio routing can be changed using LoudspeakerL
+        */
+        TBool AudioRoutingCanBeChanged();
 
-        /**
-        *
-        * @since S60 v3.2
+		/**
+   		* Changes the audio routing between loudspeaker and handset.
+   		*  
+   		* @param aShowDialog if ETrue, user is notified about new audio routing
         */
         void LoudspeakerL( TBool aEnable, TBool aShowDialog );
 
-        /**
-        *
-        * @since S60 v3.2
+		/**
+   		*
         */
-        TBool IsLoudSpeakerEnabled() const;
+		TBool IsLoudSpeakerEnabled() const;
+		
+		/**
+   		*
+        */
+		TInt GetVolumeL() const;
+
+		/**
+   		*
+        */
+		void SetVolumeL( TInt aVolume );
+		
+		/**
+        * Mutes CS call microphone.
+        */
+        void MuteMicL( TBool aMute );
+        
+        /**
+        * Returns current CS call mic mute state.
+        */
+        TBool IsMicMutedL();
+    
+        /**
+        * Sets audio routing observer. Can be set to NULL in order to indicate
+        * ending of observing changes in audio routing.
+        */
+        void SetAudioRoutingObserver( MMusEngAudioRoutingObserver* aObserver );
+                                        
+    
+    private: // inherited from CActive
+
+		/**
+   		*
+        */
+        void RunL();
+        
+		/**
+   		* Cancels outstanding request to phone client
+        */
+        void DoCancel();
+            
+		
+    private: // MTelephonyAudioRoutingObserver functions
 
         /**
-        *
-        * @since S60 v3.2
-        */
-        TInt GetVolumeL() const;
-
+         * Available outputs have changed
+         */
+        void AvailableOutputsChanged( 
+                        CTelephonyAudioRouting& aTelephonyAudioRouting );
+    
         /**
-        *
-        * @since S60 v3.2
+         * Some other application has changed audio output routing
+         */
+        void OutputChanged( 
+                        CTelephonyAudioRouting& aTelephonyAudioRouting );
+    
+        /**
+         * Our request to change audio output routing has completed
+         */
+        void SetOutputComplete( 
+                        CTelephonyAudioRouting& aTelephonyAudioRouting,
+                        TInt aError );
+    
+        /**
+        * Set output if setting is currently allowed. Leaves with KErrAccessDenied
+        * if setting is not allowed.
         */
-        void SetVolumeL( TInt aVolume );
-
-
-
+        void DoSetOutputL( CTelephonyAudioRouting::TAudioOutput aAudioOutput );
+        
     private:
 
-        /**
-        *
-        * @since S60 v3.2
+		/**
+   		* Default C++ constructor
         */
-        CMusEngTelephoneUtils();
+		CMusEngTelephoneUtils();
 
-        /**
-        *
-        * @since S60 v3.2
+		/**
+   		* 2nd phase constructor
         */
-        void ConstructL();
+		void ConstructL();
 
 
-    private: // HELPER
-
-        /**
-        *
-        * @since S60 v3.2
+	private: // HELPER
+	
+		/**
+   		* Checks that volume value is between 1 and 10.
+   		*
+   		* @return validated volume value
         */
-        TInt ValidateVolume( const TInt aVolume ) const;
+		TInt ValidateVolume( const TInt aVolume ) const;
+		
 
-
-    public: // DATA
+    private: // DATA
 
         /**
-         *  Stores the audio routing state at startup.
-         */
-        //CTelephonyAudioRouting::TAudioOutput iAudioOutputAtStartup;
-
+        *  Stores the audio routing state at startup.
+        */
+        CTelephonyAudioRouting::TAudioOutput iAudioOutputAtStartup;
+        
         /**
         * Telephony audio routing instance. Owned.
         */
-        //CTelephonyAudioRouting* iTelephonyAudioRouting;
+        CTelephonyAudioRouting* iTelephonyAudioRouting;
 
         /**
         * Central repository. Owned.
-        *
-        * @since S60 v3.2
         */
-        //CRepository* iRepository;
+        CRepository* iRepository;
 
+        /**
+        * Command handler for muting the microphone
+        */        
+        CPhCltCommandHandler* iPhoneCommandHandler;
+        
+        /**
+        * Not owned.
+        */
+        MMusEngAudioRoutingObserver* iAudioRoutingObserver;
+
+        TBool iShowDialog;
+        
     };
 
 
