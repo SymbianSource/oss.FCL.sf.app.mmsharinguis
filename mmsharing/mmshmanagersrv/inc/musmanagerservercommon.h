@@ -19,7 +19,7 @@
 #ifndef MUSMANAGERSERVERCOMMON_H
 #define MUSMANAGERSERVERCOMMON_H
 
-const TInt KParameterCount = 8;
+const TInt KParameterCount = 7;
 
 enum EMusManagerServerParameter
     {
@@ -30,7 +30,7 @@ enum EMusManagerServerParameter
     KVideoCodec,
     KSipProfileId,
     KContactName,
-    KFastMode
+    KPrivacyStatus
     };
 
 #endif // ? MUSMANAGERSERVERCOMMON_H

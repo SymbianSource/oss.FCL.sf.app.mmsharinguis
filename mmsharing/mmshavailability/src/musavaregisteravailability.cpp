@@ -5,6 +5,7 @@
 * under the terms of "Eclipse Public License v1.0"
 * which accompanies this distribution, and is available
 * at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*  Version     : %version: be1sipx1#42.1.4.1.4 % << Don't touch! Updated by Synergy at check-out.
 *
 * Initial Contributors:
 * Nokia Corporation - initial contribution.
@@ -94,6 +95,7 @@ void CMusAvaRegisterAvailability::ConstructL()
     {
     iSharedObj = CMusAvaSharedObject::GetSingletonL();
     iSharedObj->MusAvaSip().AddAdapterL( *this );
+    iOperatorVariant = MultimediaSharingSettings::OperatorVariantSettingL();
     }
 
 
@@ -118,7 +120,11 @@ void CMusAvaRegisterAvailability::DoExecuteL()
     {
     MUS_LOG( "mus: [MUSAVA]  -> CMusAvaRegisterAvailability::DoExecuteL " )
     SetState( MMusAvaObserver::EMusAvaStatusInProgress );
-    RegisterL();
+    TRAPD( err, RegisterL() );
+    if( err != KErrNone )
+       {
+   		SetState( MMusAvaObserver::EMusAvaStatusNotRegistered );
+       }
     // TBD: SetState( MMusAvaObserver::EMusAvaNameRegistration );
 
     MUS_LOG( "mus: [MUSAVA]  <- CMusAvaRegisterAvailability::DoExecuteL " )
@@ -278,6 +284,7 @@ void CMusAvaRegisterAvailability::ProfileRegistryEventOccurred(
                 {
                 MUS_LOG( "mus: [MUSAVA]     Profile is deregistered" )
                 SetState( MMusAvaObserver::EMusAvaStatusNotRegistered );
+                iSharedObj->MusAvaSip().DeleteSIPConnection();
                 }
                 break;
 
@@ -310,7 +317,7 @@ void CMusAvaRegisterAvailability::ProfileRegistryEventOccurred(
 //
 void CMusAvaRegisterAvailability::ProfileRegistryErrorOccurred(
     TUint32 aProfileId,
-    TInt /* aError */ )
+    TInt aError )
     {
     MUS_LOG( "mus: [MUSAVA]  -> CMusAvaRegisterAvailability::\
              ProfileRegistryErrorOccurred" )
@@ -327,7 +334,17 @@ void CMusAvaRegisterAvailability::ProfileRegistryErrorOccurred(
 
     if( profileId == aProfileId )
         {
-        SetState( MMusAvaObserver::EMusAvaStatusNotRegistered );
+        if ( iOperatorVariant == MusSettingsKeys::EOperatorSpecific &&
+                aError == KErrGeneral )
+            {
+            MUS_LOG( "SIP profile is disabled by the user" )
+            SetState( MMusAvaObserver::EMusActivationError );
+            }
+        else
+            {
+            MUS_LOG1("Error %d",aError )
+            SetState( MMusAvaObserver::EMusAvaStatusNotRegistered );
+            }
         }
 
     MUS_LOG( "mus: [MUSAVA]  <- CMusAvaRegisterAvailability::\
@@ -486,29 +503,29 @@ void CMusAvaRegisterAvailability::EnableRegisterL()
     MUS_LOG( "mus: [MUSAVA]  -> CMusAvaRegisterAvailability::EnableRegisterL " )		
  	MUS_LOG( "mus: [MUSAVA]   Fetch SIP ProfileRegistry" )
  	
-    CSIPProfileRegistry& registry = iSharedObj->MusAvaSip().ProfileRegistryL();
+   CSIPProfileRegistry& registry = iSharedObj->MusAvaSip().ProfileRegistryL();
     MUS_LOG( "mus: [MUSAVA]   Profile status" )
     if ( !registry.IsEnabled( *iSharedObj->MusAvaSip().Profile() ) )
-        {
-        MUS_LOG("mus: [MUSAVA]     Calling EnableL()" )
-        registry.EnableL( *iSharedObj->MusAvaSip().Profile(), 
-                        iSharedObj->MusAvaSip().ConnectionObserver() );
-        }
-       
+       {
+       MUS_LOG("mus: [MUSAVA]     Calling EnableL()" )
+       registry.EnableL( *iSharedObj->MusAvaSip().Profile(), 
+                       iSharedObj->MusAvaSip().ConnectionObserver() );
+       }
+      
     // Try to write client information to CenRep of client resolver.
     // This functionality is needed in __VOIP enabled terminals.
     // In __VOIP disabled builds this will fail because of a lack of needed 
     // CenRep UID. To avoid branching, we just try to do this and let it fail 
     // in normal build.
     CMusAvaClientResolverUtil* resolver = 
-                                iSharedObj->MusAvaSip().ClientResolverUtil();
+                               iSharedObj->MusAvaSip().ClientResolverUtil();
     if ( resolver )
-        {
-        TRAP_IGNORE( resolver->RegisterClientWithUserL( 
-                *iSharedObj->MusAvaSip().Profile() ) )
-        }
-                    
-    MUS_LOG( "mus: [MUSAVA]  <- CMusAvaRegisterAvailability::EnableRegisterL " )		
+       {
+       TRAP_IGNORE( resolver->RegisterClientWithUserL( 
+               *iSharedObj->MusAvaSip().Profile() ) )
+       }
+                   
+    MUS_LOG( "mus: [MUSAVA]  <- CMusAvaRegisterAvailability::EnableRegisterL " )         
     }
 
 
@@ -584,4 +601,3 @@ TBool CMusAvaRegisterAvailability::RegistrationStatusL()
         }
     }
   
-   

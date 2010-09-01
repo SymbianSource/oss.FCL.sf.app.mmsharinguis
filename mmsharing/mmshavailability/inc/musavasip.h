@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  This is client interface class for SIP-server 
-*  Version     : %version: 24 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: 23 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -223,6 +223,11 @@ public:
      *         that this pointer is NULL.
      */
     CMusAvaClientResolverUtil* ClientResolverUtil() const;
+    
+    /**
+    * Deletes unnecessary CSIPConnection   
+    */
+    void DeleteSIPConnection();
 
 
 private:

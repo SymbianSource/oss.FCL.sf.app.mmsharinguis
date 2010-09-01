@@ -58,12 +58,6 @@ class CMusCallConferenceMonitor : public CActive
           */
         void SetStateL();  
 
-         /**
-          * Get Conference Call Status
-          */
-        
-        RMobileConferenceCall::TMobileConferenceStatus GetConfStatus();
-
     private:
 
         /**
@@ -140,8 +134,8 @@ class CMusCallConferenceMonitor : public CActive
          */
         CMusCallConferenceEventMonitor* iConfCallEvent;
       
-        MUS_UNITTEST( UT_CMusCallConferenceMonitor )   
-        MUS_UNITTEST( UT_CMusTsyPropertyMonitor )
+        MUS_UNITTEST( UT_CMusCallConferenceMonitor )        
+        
     };
 
 #endif // MUSCALLCONFERENCEMONITOR_H

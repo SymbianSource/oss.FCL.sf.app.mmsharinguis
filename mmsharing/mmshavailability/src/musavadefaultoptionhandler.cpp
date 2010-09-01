@@ -26,7 +26,6 @@
 #include "musavacapability.h"
 #include "musavacapabilitycontext.h"
 #include "musavanetworkmodestatus.h"
-
 #include <sipstrings.h>
 #include <siptransactionbase.h>
 #include <sipheaderbase.h>
@@ -420,6 +419,9 @@ CSdpDocument* CMusAvaDefaultOptionHandler::CreateSDPL(
 	LocalHostL( aTransaction,localHost,hostType);
 	CSdpOriginField* originField = CreateOriginFieldL(localHost,hostType);
 	sdpDocument->SetOriginField(originField);
+	//session name
+	_LIT8(KSessionName, "-");
+	sdpDocument->SetSessionNameL(KSessionName);
 	// Connection field
 	CSdpConnectionField* connectionField =
         CSdpConnectionField::NewL( netType, hostType, localHost );
@@ -447,8 +449,6 @@ CSdpDocument* CMusAvaDefaultOptionHandler::CreateSDPL(
     sdpDocument->AttributeFields().AppendL( type );
     CleanupStack::Pop( type );
 
-    // Fast startup mode
-    CMusAvaCapability::AddFastModeL( *sdpDocument );
 
     MUS_LOG( "mus: [MUSAVA] Adding media line to SDP" )
     //media line

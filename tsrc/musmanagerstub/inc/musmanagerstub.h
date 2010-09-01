@@ -46,7 +46,6 @@ public:
         {
         ESipOptions = 0x1028238D,
         ESipInviteDesired = 0x10282391,
-        ESipInviteDesired2WayVideo = 0x10282392,
         ESipInviteNotDesired = 0x1028238D
         };
     

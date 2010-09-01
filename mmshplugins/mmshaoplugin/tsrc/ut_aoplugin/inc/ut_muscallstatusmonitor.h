@@ -26,7 +26,6 @@
 #include "etelmm.h"
 #include "mussesseioninformationapi.h"
 #include "mmustsypropertyobserver.h"
-#include "mmuscallstateobserver.h"
 
 //  FORWARD DECLARATIONS
 class CMusCommonObserverStub;
@@ -44,9 +43,7 @@ class CMusCallStatusMonitor;
  * 
  */
 NONSHARABLE_CLASS( UT_CMusCallStatusMonitor ): public CEUnitTestSuiteClass,
-													 MMusTsyPropertyObserver,
-                                                     MMusCallStateObserver
-													 
+													 MMusTsyPropertyObserver
     {
     public:     // Constructors and destructors
 
@@ -70,10 +67,6 @@ NONSHARABLE_CLASS( UT_CMusCallStatusMonitor ): public CEUnitTestSuiteClass,
      */
     virtual void NotifyCallStateChanged( NMusSessionInformationApi::TMusCallEvent aVal,
     									 TName& aCallName );
-    
-    public:    // from MMusCallStateObserver.
-    
-    virtual void MusCallStateChanged();
 
     private: // Constructors and destructors
 

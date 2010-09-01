@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  ?Description
-*  Version     : %version: 20 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: 19 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -184,66 +184,6 @@ inline void MultimediaSharingSettings::SetAuditoryNotificationSettingL(
               ( TInt ) aNotificationSetting )
     SetPropertyValueL( MusSettingsKeys::KAuditoryNotification, ( TInt ) aNotificationSetting );
     MUS_LOG( "mus: [MUSSET]  <- MultimediaSharingSettings::SetAuditoryNotificationSettingL()" )
-    }
-
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-inline MusSettingsKeys::TPopupNotification
-    MultimediaSharingSettings::PopupNotificationSettingL()
-    {
-    MUS_LOG( "mus: [MUSSET]  -> MultimediaSharingSettings::PopupNotificationSettingL()" )
-    TInt value = GetPropertyValueL( MusSettingsKeys::KPopupNotification );
-    MUS_LOG1( "mus: [MUSSET]     <- MultimediaSharingSettings::PopupNotificationSettingL( %d )",
-              value )
-    return ( MusSettingsKeys::TPopupNotification ) value;
-    }
-
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-inline void MultimediaSharingSettings::SetPopupNotificationSettingL(
-                MusSettingsKeys::TPopupNotification aNotificationSetting )
-    {
-    MUS_LOG1( "mus: [MUSSET]     -> MultimediaSharingSettings::SetPopupNotificationSettingL( %d )",
-              ( TInt ) aNotificationSetting )
-    SetPropertyValueL( MusSettingsKeys::KPopupNotification,
-                       ( TInt ) aNotificationSetting );
-    MUS_LOG( "mus: [MUSSET]  <- MultimediaSharingSettings::SetPopupNotificationSettingL()" )
-    }
-
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-inline MusSettingsKeys::TPopupNotificationType
-    MultimediaSharingSettings::PopupNotificationTypeSettingL()
-    {
-    MUS_LOG( "mus: [MUSSET]  -> MultimediaSharingSettings::PopupNotificationTypeSettingL()" )
-    TInt value = GetPropertyValueL( MusSettingsKeys::KPopupNotificationType );
-    MUS_LOG1( "mus: [MUSSET]     <- MultimediaSharingSettings::PopupNotificationTypeSettingL( %d )",
-              value )
-    return ( MusSettingsKeys::TPopupNotificationType ) value;
-    }
-
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-inline void MultimediaSharingSettings::SetPopupNotificationTypeSettingL(
-            MusSettingsKeys::TPopupNotificationType aNotificationSetting )
-    {
-    MUS_LOG1( "mus: [MUSSET]     -> MultimediaSharingSettings::SetActivationSettingL( %d )",
-              ( TInt ) aNotificationSetting )
-    SetPropertyValueL( MusSettingsKeys::KPopupNotificationType, ( TInt ) aNotificationSetting );
-    MUS_LOG( "mus: [MUSSET]  <- MultimediaSharingSettings::SetActivationSettingL()" )
-
     }
 
 
@@ -584,88 +524,6 @@ inline TUid MultimediaSharingSettings::EncodingDeviceL()
     }
 
 // -----------------------------------------------------------------------------
-// Returns the cenrep configured value for KAllowOnlyWithActiveCSCall key.
-// -----------------------------------------------------------------------------
-//
-inline MusSettingsKeys::TAllowedCSOnly
-    MultimediaSharingSettings::AllowedCSOnlySettingL()
-    {
-    MUS_LOG( "mus: [MUSSET]  -> MultimediaSharingSettings::AllowedCSOnlySettingL()" )
-    TInt value = GetPropertyValueL( MusSettingsKeys::KAllowOnlyWithActiveCSCall );
-    MUS_LOG1( "mus: [MUSSET]  <- MultimediaSharingSettings::AllowedCSOnlySettingL( %d )",
-              value )
-    return ( MusSettingsKeys::TAllowedCSOnly ) value;
-    }
-    
-// -----------------------------------------------------------------------------
-// Returns the cenrep configured value for KAllowOnlyIn3GNetwork key.
-// -----------------------------------------------------------------------------
-//
-inline MusSettingsKeys::TAllowed3GOnly
-    MultimediaSharingSettings::Allowed3GOnlySettingL()
-    {
-    MUS_LOG( "mus: [MUSSET]  -> MultimediaSharingSettings::Allowed3GOnlySettingL()" )
-    TInt value = GetPropertyValueL( MusSettingsKeys::KAllowOnlyIn3GNetwork );
-    MUS_LOG1( "mus: [MUSSET]  <- MultimediaSharingSettings::Allowed3GOnlySettingL( %d )",
-              value )
-    return ( MusSettingsKeys::TAllowed3GOnly ) value;
-    }    
-
-
-// -----------------------------------------------------------------------------
-// Returns the cenrep configured value for KCameraUsage key.
-// -----------------------------------------------------------------------------
-//
-inline MusSettingsKeys::TUseCamera 
-              MultimediaSharingSettings::CameraUsageL()
-    {
-    MUS_LOG( "mus: [MUSSET]  -> MultimediaSharingSettings::CameraUsageL()" )
-    TInt value = GetPropertyValueL( MusSettingsKeys::KCameraUsage );
-    MUS_LOG1( "mus: [MUSSET]  <- MultimediaSharingSettings::CameraUsageL( %d )",
-              value )
-    return ( MusSettingsKeys::TUseCamera ) value;
-    }    
-
-
-// -----------------------------------------------------------------------------
-// Returns the cenrep configured value for KVideoDirection key.
-// -----------------------------------------------------------------------------
-inline MusSettingsKeys::TVideoDirection 
-              MultimediaSharingSettings::VideoDirectionL()
-    {
-    MUS_LOG( "mus: [MUSSET]  -> MultimediaSharingSettings::VideoDirectionL()" )
-    TInt value = GetPropertyValueL( MusSettingsKeys::KVideoDirection );
-    MUS_LOG1( "mus: [MUSSET]  <- MultimediaSharingSettings::VideoDirectionL( %d )",
-              value )
-    return ( MusSettingsKeys::TVideoDirection ) value;
-    }
-    
-// -----------------------------------------------------------------------------
-// Returns the cenrep configured value for KVideoBandwidth key.
-// -----------------------------------------------------------------------------
-inline TInt MultimediaSharingSettings::VideoBandwidthSettingL()
-    {
-    MUS_LOG( "mus: [MUSSET]  -> MultimediaSharingSettings::VideoBandwidthSettingL()" )
-    TInt value = GetPropertyValueL( MusSettingsKeys::KVideoBandwidth );
-    MUS_LOG1( "mus: [MUSSET]  <- MultimediaSharingSettings::VideoBandwidthSettingL( %d )",
-              value )
-    return value;
-    }
-
-// -----------------------------------------------------------------------------
-// Returns the cenrep configured value for KFastStartupMode key.
-// -----------------------------------------------------------------------------
-inline MusSettingsKeys::TFastMode 
-              MultimediaSharingSettings::FastStartupModeL()
-    {
-    MUS_LOG( "mus: [MUSSET]  -> MultimediaSharingSettings::FastStartupModeL()" )
-    TInt value = GetPropertyValueL( MusSettingsKeys::KFastStartupMode );
-    MUS_LOG1( "mus: [MUSSET]  <- MultimediaSharingSettings::FastStartupModeL( %d )",
-              value )
-    return ( MusSettingsKeys::TFastMode ) value;
-    }
-    
-// -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
@@ -683,4 +541,18 @@ inline TBool MultimediaSharingSettings::IsAvcDisabled()
     return EFalse;
     }
     
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//    
+inline TBool MultimediaSharingSettings::PrivacySetting()
+	{
+	MUS_LOG( "mus: [MUSSET]  -> MultimediaSharingSettings::PrivacySetting()" )
+
+	TInt value(0);
+    TRAPD( err, value = GetPropertyValueL( MusSettingsKeys::KPrivacyExchange ) );
+    MUS_LOG2( "mus: [MUSSET]  <- MultimediaSharingSettings::PrivacySetting() err=%d value=%d",
+              err, value )
+	return ( err == KErrNone && value == MusSettingsKeys::EPrivacy );
+	}
 #endif // MUSSETTINGS_INL

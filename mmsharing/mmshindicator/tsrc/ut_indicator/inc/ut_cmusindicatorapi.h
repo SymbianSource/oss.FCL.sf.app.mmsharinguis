@@ -78,16 +78,12 @@ private:
      * Actual unit test methods.
      */
     void UT_CMusIndicatorApi_NewLL();
-    void UT_CMusIndicatorApi_ConfirmationQueryLL();
     void UT_CMusIndicatorApi_IndicateAvailabilityLL();
     void UT_CMusIndicatorApi_RunLL();
     void UT_CMusIndicatorApi_DoCancelL();
     void UT_CMusIndicatorApi_RunErrorL();
     void UT_CMusIndicatorApi_PlaySoundCompleteL();
     void UT_CMusIndicatorApi_PlayToneLL();
-    void UT_CMusIndicatorApi_NoteTextLCL();
-    void UT_CMusIndicatorApi_ShowLiveSharingQueryLL();
-    void UT_CMusIndicatorApi_LiveSharingQueryTimeoutL();
     
     
 private: // data

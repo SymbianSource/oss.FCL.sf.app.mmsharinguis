@@ -37,8 +37,6 @@ HBufC8* CRepository::iStaticAvcConfigKeys = NULL;
 TBool CRepository::iStaticWriteAvcKeysToStaticData = EFalse;
 TInt CRepository::iForceFailWithCode = KErrNone;
 TInt CRepository::iStaticEncoderUid = 0;
-CRepository::TCenRepStubKeyValueEntry CRepository::iGlobalKeyVals[ KCenRepStubGlobalKeyValueMaxLen ];
-TInt CRepository::iGlobalKeyValsTop = 0;
 
 
 // -----------------------------------------------------------------------------
@@ -103,7 +101,6 @@ EXPORT_C CRepository* CRepository::NewLC( TUid aRepositoryUid )
         User::LeaveIfError( 
                 self->Set ( MusSettingsKeys::KSipProfileId,
                             0 /*default profile*/ ) );                    
-    
         User::LeaveIfError( 
                 self->Set ( MusSettingsKeys::KUiOrientation,
                             MusSettingsKeys::EPortrait ) );                    
@@ -126,9 +123,9 @@ EXPORT_C CRepository* CRepository::NewLC( TUid aRepositoryUid )
 //
 EXPORT_C CRepository::~CRepository()
     {
-    iKeys.Close();
-    iValues.Close();
-    iDesC8Keys.Close();
+    iKeys.Reset();
+    iValues.Reset();
+    iDesC8Keys.Reset();
     delete iDesC8Values;   
     }
 
@@ -206,17 +203,7 @@ EXPORT_C TInt CRepository::Get(TUint32 aKey, TInt& aValue)
                 }
             }
         }
-    if ( iGlobalKeyValsTop >= 0 && iGlobalKeyValsTop < KCenRepStubGlobalKeyValueMaxLen )
-        {
-        for ( TInt i = 0; i < iGlobalKeyValsTop; i++ )
-            {
-            if ( iGlobalKeyVals[ i ].iKey == aKey )
-                {
-                aValue = CRepository::iGlobalKeyVals[ i ].iVal;
-                return KErrNone;
-                }
-            }
-        }
+    
     return err;
     }
 
@@ -491,32 +478,8 @@ void CRepository::DeleteStubAvcConfigKeys()
     delete iStaticAvcConfigKeys;
     iStaticAvcConfigKeys = NULL;
     }
-
-void CRepository::ResetStubGlobal()
-    {
-    iGlobalKeyValsTop = 0;
-    }
-
-TInt CRepository::SetStubGlobal(TUint32 aKey, TInt aValue)
-    {
-    for ( TInt i = 0; i < iGlobalKeyValsTop; i++ )
-        {
-        if ( iGlobalKeyVals[ i ].iKey == aKey )
-            {
-            iGlobalKeyVals[ i ].iVal = aValue;
-            return KErrNone;
-            }
-        }
+  
     
-    if ( iGlobalKeyValsTop >= KCenRepStubGlobalKeyValueMaxLen )
-        {
-        return KErrNoMemory;
-        }
-    iGlobalKeyVals[ iGlobalKeyValsTop ].iKey = aKey;
-    iGlobalKeyVals[ iGlobalKeyValsTop ].iVal = aValue;
-    iGlobalKeyValsTop++;
-    return KErrNone;
-    }
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -524,7 +487,6 @@ TInt CRepository::SetStubGlobal(TUint32 aKey, TInt aValue)
 CRepository::CRepository( TUid aRepositoryUid )
     :iRepositoryUid( aRepositoryUid )
     {
-    
     }    
 
 

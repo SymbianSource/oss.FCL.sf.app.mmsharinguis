@@ -1,0 +1,111 @@
+/*
+* Copyright (c) 2005 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:  The MUS application's resource header file.
+*
+*/
+
+
+#ifndef MUS_HRH
+#define MUS_HRH
+
+//
+// Application menu commands
+//
+enum TMusUiMenuCommands
+    {
+    // General commands start
+    EMusuiCmdAppTest = 1,
+    EMusuiCmdViewPause,
+    EMusuiCmdViewContinue,
+    EMusuiCmdViewReplay,
+    EMusuiCmdViewShareVideo,
+    EMusuiCmdViewShareImage,
+    EMusuiCmdViewShareLive,
+    EMusuiCmdViewClipAudio,
+    EMusuiCmdViewAudioNormal,
+    EMusuiCmdViewAudioMute,
+    EMusuiCmdViewFullScreen,
+    EMusuiCmdViewZoom,
+    EMusuiCmdViewBrightness,
+    EMusuiCmdViewMicrophoneMute,
+    EMusuiCmdViewMicrophoneUnmute,
+    EMusuiCmdViewIncreaseBrightness,
+    EMusuiCmdViewDecreaseBrightness,
+    EMusuiCmdViewZoomIn,
+    EMusuiCmdViewZoomOut,
+    EMusuiCmdViewVolumeUp,          // Not in menu
+    EMusuiCmdViewVolumeDown,        // Not in menu
+    EMusuiCmdViewVolumeChanged,     // Not in menu
+    EMusuiCmdViewFastForward,       // Not in menu
+    EMusuiCmdViewFastReverse,       // Not in menu
+    EMusuiCmdViewFastForwardEnd,    // Not in menu
+    EMusuiCmdViewFastReverseEnd,    // Not in menu
+    EMusuiCmdViewLoadspeaker,
+    EMusuiCmdViewHandset,
+    EMusuiCmdViewEndActiveCall,
+    EMusuiCmdViewMiddleSoftkeyOk,
+    EMusuiCmdRecord,
+    EMusuiCmdStopRecording,    
+    EMusuiGenCmdExit,
+    EMusuiGenCmdBack,
+    // Toolbar commands:
+    EMusuiCmdToolbarVolume,
+    EMusuiCmdToolbarFullScreen,
+    EMusuiCmdToolbarPauseLive,
+    EMusuiCmdToolbarUnPauseLive,
+    EMusuiCmdToolbarPause,
+    EMusuiCmdToolbarUnPause,
+    EMusuiCmdToolbarZoom,
+    EMusuiCmdToolbarFFRev,
+    EMusuiCmdToolbarBrightness,
+    EMusuiCmdToolbarMute,
+    EMusuiCmdToolbarUnmute,
+    EMusuiCmdToolbarBlank,
+    EMusuiCmdToolbarSpeakerOff,
+    EMusuiCmdToolbarSpeakerOn,
+    EMusuiCmdToolbarGallery,
+    EMusUiCmdToolbarLastIndex   // For loops
+    };
+
+enum TMusUiDlgIds
+	{
+	EMusDialogTextQuery = 0x200,
+	EMusConfirmationQuery
+	};
+
+enum TMusUiControlIds
+    {
+    EMusDummyControlId = 1000,
+    EMusInvitingWaitNoteId,
+    EMusTranscodingProgressNoteId,
+    EMusActivateCameraWaitNoteId
+    };
+//
+// MUS clip list view icons
+//
+enum TMusUiIconID
+    {
+    EMusuiMarkingIconId = 0,           // Icon for marking
+    EMusuiFolderIconId,                // Folder icon for user created folder
+    EMusuiFolderSubfolderIconId,       // - " - with subfolders
+    EMusuiVideoIconId,                 // Icon for video file
+    EMusuiOtherIconId,                 // Icon for other file type
+    // Icon # of this enumeration (MUST be the last entry in this enumeration):
+    EMusuiIconCount                    
+    };
+
+
+#endif
+
+// end of file

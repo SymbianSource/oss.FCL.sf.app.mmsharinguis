@@ -16,7 +16,6 @@
 */
 
 
-#include "musmanager.h"
 #include "musresourceproperties.h"
 #include "mussesseioninformationapi.h"
 #include "mussettingskeys.h"
@@ -33,6 +32,9 @@
 #include <AlwaysOnlineManagerCommon.h>
 #include <AlwaysOnlineManagerClient.h>
 #include <mmtsy_names.h>
+#include <featmgr.h>
+
+using namespace NMusSessionInformationApi;
 
 // -----------------------------------------------------------------------------
 // Symbian two-phase constructor.
@@ -65,14 +67,19 @@ CMusAoPlugin::CMusAoPlugin() :
 void CMusAoPlugin::ConstructL()
     {
     MUS_LOG( "mus: [MUSAO]  -> CMusAoPlugin::ConstructL" )
-    DefinePropertiesL();
-    User::LeaveIfError( iServer.Connect() );
-    User::LeaveIfError( iPhone.Open( iServer, KMmTsyPhoneName() ) );        
-    iTsyPropertyMonitor = CMusTsyPropertyMonitor::NewL(iPhone, *this );    
-    iPropertyMonitor = CMusPropertyMonitor::NewL(*this);    
-    // Enable the below line if Kodiak Ptt has to be monitered
-    // iPttCallMonitor = CMusPttCallMonitor::NewL(*iLineMonitor);    
-    
+	FeatureManager::InitializeLibL();
+    TBool support = FeatureManager::FeatureSupported( KFeatureIdMultimediaSharing );
+	FeatureManager::UnInitializeLib();
+	if ( support )
+		{
+        DefinePropertiesL();
+        User::LeaveIfError( iServer.Connect() );
+        User::LeaveIfError( iPhone.Open( iServer, KMmTsyPhoneName() ) );        
+        iTsyPropertyMonitor = CMusTsyPropertyMonitor::NewL(iPhone);    
+        iPropertyMonitor = CMusPropertyMonitor::NewL();    
+        // Enable the below line if Kodiak Ptt has to be monitered
+        // iPttCallMonitor = CMusPttCallMonitor::NewL(*iLineMonitor); 
+		}
     MUS_LOG( "mus: [MUSAO]  <- CMusAoPlugin::ConstructL" )
     }
 
@@ -84,7 +91,6 @@ CMusAoPlugin::~CMusAoPlugin()
     {
     MUS_LOG( "-> CMusAoPlugin::~CMusAoPlugin" )
     // should never come here, because service should always be on
-    delete iManager;
     delete iPropertyMonitor;
     delete iTsyPropertyMonitor;
     // Enable the below line if Kodiak Ptt has to be monitered
@@ -136,10 +142,12 @@ void CMusAoPlugin::DefinePropertiesL()
                  RProperty::EInt,( TInt ) NMusSessionInformationApi::EMUSAllowed); 
     DefinePropertyL(NMusSessionInformationApi::KMusCallDirection,
                 RProperty::EInt,( TInt ) NMusSessionInformationApi::ENoDirection);  
-    _LIT( KEmptyCallProvider,"" );
-    DefinePropertyL(NMusSessionInformationApi::KMUSCallProvider,
-                        RProperty::EText,KEmptyCallProvider);
-
+    DefinePropertyL(NMusSessionInformationApi::KMUSPrivacy,
+                RProperty::EInt,( TInt ) NMusSessionInformationApi::EPrivacyOff);  
+    DefinePropertyL(KMusClirSetting,
+                RProperty::EInt,( TInt ) ESendOwnNumber);  
+                              
+ 
     MUS_LOG( "mus: [MUSAO]  <- CMusAoPlugin::DefineResourceProperties" )
     }
 
@@ -220,9 +228,10 @@ void CMusAoPlugin::DeleteProperties()
     DeleteProperty(NMusSessionInformationApi::KMusCallEvent);
     DeleteProperty(NMusSessionInformationApi::KMusCallCount);
     DeleteProperty(NMusSessionInformationApi::KMusTelNumber);
-    DeleteProperty(NMusSessionInformationApi::KMUSCallProvider);
     DeleteProperty(NMusSessionInformationApi::KMUSForbidden);
     DeleteProperty(NMusSessionInformationApi::KMusCallDirection);
+    DeleteProperty(NMusSessionInformationApi::KMUSPrivacy);
+    DeleteProperty(KMusClirSetting);
     MUS_LOG( "mus: [MUSAO]  <- CMusAoPlugin::DeleteResourcePropertiesL" )
     }
 
@@ -250,72 +259,5 @@ TAny* CMusAoPlugin::HandleServerCommandL( TInt /*aCommand*/,
     return &iError;;
     }
 
-// -----------------------------------------------------------------------------
-// CMusAoPlugin::StartMusClient()
-// This will start the MusManager Client which inturn should start
-// MusManager Server and Availability Plugin.
-// -----------------------------------------------------------------------------
-//
-void CMusAoPlugin::StartMusClientL()
-    {
-    MUS_LOG( "mus: [MUSAO]  -> CMusAoPlugin::StartMusClient" )
-    if( !iManager )
-        {
-        iManager = CMusManager::NewL();
-        }
-    iManager->ExamineAvailabilityL();   
-    MUS_LOG( "mus: [MUSAO]  <- CMusAoPlugin::StartMusClient" ) 
-    }
-
-// -----------------------------------------------------------------------------
-// CMusAoPlugin::StopMusClient()
-// This will stop the MusManager Client which inturn should stop
-// MusManager Server and Availability Plugin.
-// -----------------------------------------------------------------------------
-//
-void CMusAoPlugin::StopMusClient()
-    {
-    MUS_LOG( "mus: [MUSAO]  -> CMusAoPlugin::StopMusClient" )
-    if( iManager )
-        {
-        delete iManager;
-        iManager = NULL;
-        }
-    MUS_LOG( "mus: [MUSAO]  <- CMusAoPlugin::StopMusClient" )
-    }
-
-// -----------------------------------------------------------------------------
-// From MMusCallStateObserver
-// CMusAoPlugin::MusCallStateChanged()
-// -----------------------------------------------------------------------------
-//
-void CMusAoPlugin::MusCallStateChanged( )
-    {
-    MUS_LOG( "mus: [MUSAO]  -> CMusAoPlugin::MusCallStateChanged" )
-
-    TBool dataReady = EFalse;
-    TRAPD( error, dataReady = iTsyPropertyMonitor->IsDataReadyL() )
-    
-    if ( error == KErrNone &&
-            dataReady &&
-            iPropertyMonitor->IsCallConnected() )
-        {
-        MUS_LOG( "mus: [MUSAO]  Starting Mush Client" )
-        TRAP( error, StartMusClientL() )
-        
-        MUS_LOG1("mus: [MUSAO]  Error Ocurred = %d",error )
-        
-        if ( error != KErrNone )
-            {
-            StopMusClient();
-            }
-        }
-    else
-        {
-        MUS_LOG( "mus: [MUSAO]  Stopping Mush Client" )
-        StopMusClient();
-        }
-    MUS_LOG( "mus: [MUSAO]  <- CMusAoPlugin::MusCallStateChanged" )
-    }
 
 // End of file

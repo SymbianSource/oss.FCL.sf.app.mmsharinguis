@@ -21,88 +21,71 @@
 
 
 // USER INCLUDES
-#include "musunittesting.h"
 
-// KERNEL INCLUDES 
+// KERNEL INCLUDES
 #include <e32base.h>
 
 // FORWARD DECLERATIONS
 class MMusEngSessionDurationTimerObserver;
 
-class CMusEngSessionDurationTimer : public CActive
+class CMusEngSessionDurationTimer
     {
-    MUS_UNITTEST( UT_CMusEngSessionDurationTimer )
 
     public:
 
-		/**
-   		*
+        /**
+        *
         * @since S60 v3.2
         */
-        static CMusEngSessionDurationTimer* NewL( 
-        					MMusEngSessionDurationTimerObserver& aObserver );
+        static CMusEngSessionDurationTimer* NewL(
+                            MMusEngSessionDurationTimerObserver& aObserver );
 
-		/**
-   		*
+        /**
+        *
         * @since S60 v3.2
         */
         ~CMusEngSessionDurationTimer();
 
 
-	public: // API
-	
-		/**
-   		*
+    public: // API
+
+        /**
+        *
         * @since S60 v3.2
         */
-        void Start( TInt aDelay );
 
 
-    private: 
+    private:
 
-		/**
-   		*
+        /**
+        *
         * @since S60 v3.2
         */
-        CMusEngSessionDurationTimer( 
-        					MMusEngSessionDurationTimerObserver& aObserver );
+        CMusEngSessionDurationTimer(
+                            MMusEngSessionDurationTimerObserver& aObserver );
 
-		/**
-   		*
+        /**
+        *
         * @since S60 v3.2
         */
         void ConstructL();
 
-    
-    private: // inherited from CActive
 
-		/**
-   		*
+
+    public: // DATA
+
+        /**
+        *
         * @since S60 v3.2
         */
-        void RunL();
-        
-		/**
-   		*
-        * @since S60 v3.2
-        */
-        void DoCancel();
+        //RTimer iTimer;
 
-
-    private: // DATA
-
-		/**
-   		*
-        * @since S60 v3.2
-        */
-        RTimer iTimer;
-
-		/**
-   		*
+        /**
+        *
         * @since S60 v3.2
         */
         MMusEngSessionDurationTimerObserver& iObserver;
-        
+
     };
 
 #endif // _MUSENGSESSIONDURATIONTIMER_H_

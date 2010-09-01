@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2006 Nokia Corporation and/or its subsidiary(-ies). 
+* Copyright (c) 2006-2006 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -10,74 +10,39 @@
 * Nokia Corporation - initial contribution.
 *
 * Contributors:
-* 
-* Description:
+*
+* Description:  Definition of project MceClientStub
 *
 */
 
-// using relative paths for sourcepath and user includes
-// exports are unfrozen
 
+// To get the APP_LAYER_SYSTEMINCLUDE-definition
 #include <platform_paths.hrh>
 #include <data_caging_paths.hrh>
 #include<eunitcaps.h>
-#include "../../../inc/musuid.hrh"
 
-// Capability assignment.
-CAPABILITY 	EUNIT_CAPS
+TARGET              	musenginestub.dll
+TARGETTYPE            	dll
+UID                  	0x1000008d 0x00000112 // Experimental UID
 
-// Vendor ID assignment.
-VENDORID	VID_DEFAULT
+CAPABILITY      EUNIT_CAPS
+VENDORID                VID_DEFAULT
 
-
-TARGET        musengine.dll
-TARGETTYPE    dll
-UID           0x1000008d KMusEngineUid // 0x10282392
-
-//DOCUMENT	  Generic_Symbian_DLL_ReadMe.txt
-
-SOURCEPATH  	../src
+SOURCEPATH              ../src
 SOURCE      	musengsession.cpp
 SOURCE      	musengmcesession.cpp
 SOURCE      	musengmceoutsession.cpp
 SOURCE          musenglivesession.cpp
-SOURCE			musengtwowaysession.cpp
-SOURCE			musengtwowayrecvsession.cpp
 SOURCE          musengreceivesession.cpp
-SOURCE      	musengtelephoneutils.cpp
 SOURCE      	musengsessiondurationtimer.cpp
-SOURCE			musengclipsession.cpp
-SOURCE          musenguriparser.cpp
-SOURCE          musengmceutils.cpp
-SOURCE			musengcamerahandler.cpp
-
-// SIP API
-SOURCE		    mussipprofilehandler.cpp
+SOURCE		musengclipsession.cpp
 
 
-USERINCLUDE 	../inc
-USERINCLUDE 	../../mmshshared/inc
-USERINCLUDE   ../../inc
-USERINCLUDE   ../../../inc
+USERINCLUDE             ../inc
 
 APP_LAYER_SYSTEMINCLUDE
-SYSTEMINCLUDE 	/epoc32/include/ecom
 
-LIBRARY     euser.lib
-LIBRARY     bafl.lib
-LIBRARY     inetprotutil.lib
-LIBRARY		phoneclient.lib
-LIBRARY		centralrepository.lib
+LIBRARY                 euser.lib
 
-LIBRARY		sipprofilecli.lib
-LIBRARY		sipclient.lib
-LIBRARY         sipcodec.lib
-LIBRARY 	mceclient.lib  
-LIBRARY 	drmcommon.lib
-LIBRARY		charconv.lib
-LIBRARY     telephonyaudiorouting.lib
-LIBRARY		pbkeng.lib 
-LIBRARY     cntmodel.lib
 
-DEBUGLIBRARY		flogger.lib
-
+EXPORTUNFROZEN

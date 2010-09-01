@@ -60,8 +60,8 @@ namespace NMusSessionApi
     
     const TInt KSipProfileId( 0x1A );
     const TInt KContactName( 0x1B );
+    const TInt KPrivacyStatus( 0x1C );
     const TInt KMusIndicatorStatus( KMusIndicator );
-    const TInt KFastMode( 0x1D );
     }
 
 #endif // MUSPSKEYS_H

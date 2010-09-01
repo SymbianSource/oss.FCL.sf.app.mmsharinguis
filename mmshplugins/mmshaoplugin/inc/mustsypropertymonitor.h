@@ -16,26 +16,23 @@
 */
 
 
+
 #ifndef MUSTSYPROPERTYMONITOR_H
 #define MUSTSYPROPERTYMONITOR_H
-
-// Enable the below line if Kodiak Ptt has to be monitered
-// #include "mmusptteventobserver.h"
-#include <etel.h>
-#include <etelmm.h>
-#include <e32base.h>
-#include <e32property.h>
-#include <ctsydomainpskeys.h>
 
 #include "musunittesting.h"
 #include "mussesseioninformationapi.h"
 #include "mmustsypropertyobserver.h"
-#include "mmuscallstateobserver.h"
+// Enable the below line if Kodiak Ptt has to be monitered
+// #include "mmusptteventobserver.h"
+#include <etelmm.h>
+#include <e32base.h>
+#include <e32property.h>
 
 class CMusCallMonitor;
-class CMusVoipCallMonitor;
 class CMusPTTCallMonitor;
 class CMusCallConferenceMonitor;
+class CMusClirMonitor;
 
 /**
  * This class monitors the line event,if call is connected
@@ -56,8 +53,7 @@ class CMusTsyPropertyMonitor : public CActive,
         /**
          * Two-phased constructor.
          */
-        static CMusTsyPropertyMonitor* NewL( RMobilePhone& aPhone, 
-                                             MMusCallStateObserver& aCallStateObserver );
+        static CMusTsyPropertyMonitor* NewL( RMobilePhone& aPhone );
 
         /**
          * Destructor.
@@ -74,24 +70,19 @@ class CMusTsyPropertyMonitor : public CActive,
          * Function from MMusTsyPropertyObserver
          */
         void NotifyCallStateChanged(NMusSessionInformationApi::TMusCallEvent aVal, TName& aCallName);
-        
-        /**
-         * Checks from the corresponding monitors if the data is ready.
-         */
-        TBool IsDataReadyL();
 
     private:
 
         /**
          * C++ constructor.
          */
-        CMusTsyPropertyMonitor( RMobilePhone& aPhone, MMusCallStateObserver& aCallStateObserve );
+        CMusTsyPropertyMonitor( RMobilePhone& aPhone );
 
         /**
          * Symbian 2nd-phase constructor.
          */
         void ConstructL();
-        
+
 
     private: // functions from base class CActive
 
@@ -144,44 +135,7 @@ class CMusTsyPropertyMonitor : public CActive,
         /**
           * Add / Remove Call Monitors based on Mus criteria          
           */
-        void MonitorCallL(const TPSCTsyCallState& aCallState,
-                const TPSCTsyCallType& aCallType);
-        
-        /**
-          * Add / Remove Call Monitors based on Mus criteria          
-          */
-        void MonitorCSCallL();
-        
-    private: // Voip related 
-        /*
-         * If the call Monitor doesnt exist then it creats one new
-         * CMusCallMonitor class and add into array. 
-         * Leavs if objects creation fails.
-         */
-        void AddVoipCallMonitorL( TName& aCallName );
-
-        /*
-         * It removs the CMusCallMonitor object from array
-         * based on the call name.         
-         */
-
-        void RemoveVoipCallMonitor( TName& aCallName );
-        
-        /**
-         * Add / Remove Call Monitors based on Mus criteria          
-         */
-       void MonitorVoipCallL(const TPSCTsyCallState& aCallState);
-
-        /**
-         * Removes and reset the voip call monitor array
-         */
-       void RemoveAllVoipCallMonitors( );
-       
-        /**
-         * Checks multimediasharing call criteria's
-         */
-       void CheckCallCriteriaL();
-
+        void MonitorCallL();
 
          /**
           * Delete all call monitor        
@@ -230,11 +184,6 @@ class CMusTsyPropertyMonitor : public CActive,
         RPointerArray<CMusCallMonitor> iCallMonitorArray;
 
         /**
-         * Array of voip Call Monitors.
-         */
-        RPointerArray<CMusVoipCallMonitor> iVoipCallMonitorArray;
-        
-        /**
          * Conference call monitor, owned.
          */
         CMusCallConferenceMonitor* iConferenceMonitor;
@@ -242,16 +191,13 @@ class CMusTsyPropertyMonitor : public CActive,
         /**
          * Instance of RProperty.
          */
-        RProperty iPropertyEvent;  
+        RProperty iPropertyEvent;
         
-        /*
-         * Reference of callstate observer not owned
-         */
-        MMusCallStateObserver& iCallStateObserver;
+        CMusClirMonitor* iClirMonitor;
+        
 
         MUS_UNITTEST( UT_CMusTsyPropertyMonitor )
-        MUS_UNITTEST( UT_CMusAoPlugin )
-        
+
     };
 
 #endif // MUSTSYPROPERTYMONITOR_H

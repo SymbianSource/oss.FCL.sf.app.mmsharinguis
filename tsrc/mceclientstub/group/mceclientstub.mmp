@@ -18,7 +18,6 @@
 
 // To get the APP_LAYER_SYSTEMINCLUDE-definition
 #include <platform_paths.hrh>
-
 #include <data_caging_paths.hrh>
 #include<eunitcaps.h>
 
@@ -56,18 +55,7 @@ SOURCE                  mceavccodec.cpp
 SOURCE                  mcetransactiondatacontainer.cpp
 SOURCE                  staticdllentry.cpp
 
-SOURCEPATH              ../../sipprofilestub/src
-SOURCE                  sipprofileregistrybasestub.cpp
-SOURCE                  sipprofileregistrystub.cpp
-SOURCE                  sipprofilestub.cpp
-
-
 USERINCLUDE             ../inc
-USERINCLUDE		../../sipprofilestub/inc
-
-
-// to replace SIP profiles with a stub
-SYSTEMINCLUDE           ../../sipprofilestub/inc
 
 // Default system include paths for application layer modules.
 APP_LAYER_SYSTEMINCLUDE

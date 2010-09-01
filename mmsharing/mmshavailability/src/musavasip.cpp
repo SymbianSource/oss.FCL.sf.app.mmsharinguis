@@ -5,7 +5,7 @@
 * under the terms of "Eclipse Public License v1.0"
 * which accompanies this distribution, and is available
 * at the URL "http://www.eclipse.org/legal/epl-v10.html".
-*  Version     : %version:  30.1.5 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version:  30.1.4 % << Don't touch! Updated by Synergy at check-out.
 *
 * Initial Contributors:
 * Nokia Corporation - initial contribution.
@@ -405,6 +405,15 @@ TInt CMusAvaSip::SipProfileId( TUint32& aSipProfileId )
 CMusAvaClientResolverUtil* CMusAvaSip::ClientResolverUtil() const
     {
     return iClientResolverUtil;
+    }
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+void CMusAvaSip::DeleteSIPConnection()
+    {
+    MUS_LOG( "mus: [MUSAVA]  -> CMusAvaSip::DeleteSIPConnection()" )
+        delete iSipConnection; iSipConnection = NULL;
+    MUS_LOG( "mus: [MUSAVA]  <- CMusAvaSip::DeleteSIPConnection()" )
     }
 
     

@@ -1,0 +1,22 @@
+-c8,8 qgn_indi_video_forw
+-c8,8 qgn_indi_video_pause
+-c8,8 qgn_indi_video_play
+-c8,8 qgn_indi_video_record
+-c8,8 qgn_indi_video_record_not
+-c8,8 qgn_indi_video_rew
+-c8,8 qgn_indi_video_stop
+-c8,8 qgn_indi_video_wait1
+-c8,8 qgn_indi_video_wait2
+-c8,8 qgn_indi_video_wait3
+-c8,8 qgn_indi_video_wait4
+-c8,8 qgn_indi_video_wait5
+-c8,8 qgn_indi_video_wait6
+-c8,8 qgn_indi_video_wait7
+-c8,8 qgn_indi_video_wait8
+-c8,8 qgn_indi_cams_zoom_bg
+-c8,8 qgn_indi_cams_zoom_bg_max
+-c8,8 qgn_indi_cams_zoom_bg_min
+-c8,8 qgn_indi_cams_zoom_elevator
+-c8,8 qgn_indi_browser_tb_zoom_out
+-c8,8 qgn_indi_browser_tb_zoom_in
+

@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2008 Nokia Corporation and/or its subsidiary(-ies).
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
 * All rights reserved.
 * This component and the accompanying materials are made available
 * under the terms of "Eclipse Public License v1.0"
@@ -11,7 +11,7 @@
 *
 * Contributors:
 *
-* Description:  
+* Description:
 *
 */
 
@@ -35,13 +35,7 @@ class MMusSipProfileUser
         * Checks whether roaming between access points is allowed.
         * @return ETrue is roaming is allowed, otherwise EFalse.
         */
-        virtual TBool IsRoamingBetweenAPsAllowed() = 0;
-        
-        /**
-        * Indicates that SIP profile has been registered.
-        */
-        virtual void ProfileRegistered() = 0;
-        
+        virtual TBool IsRoamingBetweenAPsAllowed() = 0;        
     };
 
 

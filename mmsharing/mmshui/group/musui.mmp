@@ -1,0 +1,150 @@
+/*
+* Copyright (c) 2005 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:  Specifies the project for building musui.exe, the
+*                application executable.
+*
+*/
+
+
+#include <platform_paths.hrh>
+#include <data_caging_paths.hrh>
+
+#include "../../../inc/musuid.hrh"
+
+
+TARGET                  musui.exe
+TARGETTYPE              EXE
+UID                     0x100039CE KMusUiUid //0x10282391
+EPOCSTACKSIZE           0x8000 // 32 kB
+EPOCHEAPSIZE            0x4000 0x500000 // Max heapsize ~= 5MB
+VENDORID                VID_DEFAULT
+CAPABILITY              CAP_APPLICATION NetworkControl SwEvent Location MultimediaDD
+
+START RESOURCE          ../data/musui.rss
+HEADER
+LANGUAGE_IDS
+TARGETPATH              APP_RESOURCE_DIR 
+END // RESOURCE
+
+START RESOURCE          ../data/musui_reg.rss
+DEPENDS musui.rsg
+TARGETPATH              /private/10003a3f/apps // Do not change the UID in this path.
+END
+
+START BITMAP            musui.mbm
+HEADER
+TARGETPATH              APP_BITMAP_DIR
+SOURCEPATH              ../graphics
+SOURCE                  c16 qgn_menu_mus_app_cxt.bmp
+SOURCE                   8  qgn_menu_mus_app_cxt_mask.bmp
+SOURCE                  c8  qgn_graf_rop_black.bmp
+END // BITMAP
+
+SOURCEPATH              ../src
+SOURCE                  musuiapp.cpp
+SOURCE                  musuidocument.cpp
+SOURCE                  musuiappui.cpp
+SOURCE                  musuigeneralview.cpp
+SOURCE                  musuisendview.cpp
+SOURCE                  musuilivesharingview.cpp
+SOURCE                  musuireceiveview.cpp
+SOURCE                  musuiclipsharingview.cpp
+SOURCE                  musuiviewcontainer.cpp
+SOURCE                  musuisendviewcontainer.cpp
+SOURCE                  musuilivesharingviewcontainer.cpp
+SOURCE                  musuiclipsharingviewcontainer.cpp
+SOURCE                  musuireceivecontainer.cpp
+SOURCE                  musuistatuspanehandler.cpp
+SOURCE                  musuinavimediadecorator.cpp
+SOURCE                  musuinavimediaanimator.cpp
+SOURCE                  musuiinvitationquery.cpp
+SOURCE                  musuiactivequerydialog.cpp
+SOURCE                  musuilevelindicator.cpp
+SOURCE                  musuiactivetimer.cpp
+SOURCE                  musuistartcontroller.cpp
+SOURCE                  musuipropertywatch.cpp
+SOURCE                  musuiresourcehandler.cpp
+SOURCE                  musuieventcontroller.cpp
+SOURCE                  musuisendcontroller.cpp
+SOURCE                  musuilivesharingcontroller.cpp
+SOURCE                  musuireceivecontroller.cpp
+SOURCE                  musuiclipsharingcontroller.cpp
+SOURCE                  musuibitmapdecoder.cpp
+SOURCE                  musuiactivitymanger.cpp
+SOURCE                  musuimmcmonitor.cpp
+SOURCE                  musuicallbackservice.cpp
+SOURCE                  musuidialogutil.cpp
+SOURCE                  musuifileutil.cpp
+SOURCE                  musuicontactutil.cpp
+SOURCE                  musuibackgroundviewcontainer.cpp
+
+
+USERINCLUDE             .
+USERINCLUDE             ../inc
+
+USERINCLUDE             ../data
+USERINCLUDE				      ../../mmshshared/inc
+USERINCLUDE				      ../../mmshengine/inc
+USERINCLUDE             ../../inc
+USERINCLUDE             ../../../inc
+
+APP_LAYER_SYSTEMINCLUDE
+SYSTEMINCLUDE           .
+
+// MUS libraries:
+
+// Symbian libraries:
+LIBRARY                 apgrfx.lib              // AppArc server client APIs
+LIBRARY                 apparc.lib              // Application framework API
+LIBRARY                 bafl.lib                // Resource readers
+LIBRARY                 centralrepository.lib   // Central repository
+LIBRARY                 cntmodel.lib            // Contact Model
+LIBRARY                 cone.lib                // Cone framework API
+LIBRARY                 efsrv.lib               // File Server API
+LIBRARY                 eikcoctl.lib            // Control framework API
+LIBRARY                 eikcore.lib             // Eikon core controls API
+LIBRARY                 eikctl.lib              // Eikon controls
+LIBRARY                 eikdlg.lib              // Eikon Dialog API
+LIBRARY                 euser.lib               // Base library
+LIBRARY                 ws32.lib                // Window server client API
+LIBRARY                 fbscli.lib              // CFbsBitmap
+LIBRARY                 remconcoreapi.lib
+LIBRARY                 remconinterfacebase.lib
+LIBRARY             	hlplch.lib              // HlpLauncher
+
+// S60 libraries:
+LIBRARY                 aknnotify.lib           // CAknGlobalNote
+LIBRARY                 aknskins.lib            // Avkon Skins Utils
+LIBRARY                 avkon.lib               // Avkon Utils
+LIBRARY                 commonengine.lib        // StringLoader
+LIBRARY                 featmgr.lib             // S60 Feature manager API
+LIBRARY                 mgfetch.lib             // Media Gallery Fetch Dialog
+LIBRARY                 pbkeng.lib              // PhoneBook Engine API
+LIBRARY                 pbkview.lib             // PhoneBook view API
+LIBRARY                 platformenv.lib         // PathInfo
+LIBRARY                 aknicon.lib             // AknIconUtils
+LIBRARY                 aknlayout.lib           // CdlEngine
+LIBRARY                 gdi.lib                 // CFont
+LIBRARY                 flogger.lib             // RFileLogger
+LIBRARY                 imageconversion.lib     // CIImageDecoder
+LIBRARY                 egul.lib                // CGulIcon
+LIBRARY                 pbk2commonui.lib        // CPbk2ViewState
+LIBRARY                 directorylocalizer.lib  // CDirectoryLocalizer
+
+// MUS libarires:
+LIBRARY                 musengine.lib           // Engine
+
+PAGED
+
+// end of file

@@ -42,7 +42,6 @@
 #include "musavasip.h"
 #include "CSipSseTestTls.h"
 #include "musavacapabilitytesthelper.h"
-#include "musavasettingsobserverimp.h"
 
 
 // CONSTRUCTION
@@ -87,9 +86,7 @@ void UT_CMusAvaOptionHandler::SetupL(  )
     {
     iSharedObject = CMusAvaSharedObject::GetSingletonL();
     iAvailabilityObserver = CMusAvaAvailabilityObserverImp::NewL();
-    iSettingsObserver = CMusAvaSettingsObserverImp::NewL();
     iConcreteSettings = CMusAvaSettingsImp::NewL();
-    iConcreteSettings->SetObserver( *iSettingsObserver );
     iOptionHandler = CMusAvaOptionHandler::NewL( *iAvailabilityObserver,
                                     *iConcreteSettings );
 
@@ -98,9 +95,6 @@ void UT_CMusAvaOptionHandler::SetupL(  )
     CSIP& sip = iSharedObject->MusAvaSip().Sip();
     CSipSseTestTls::OpenL();
     iStorage = CSipSseTestTls::Storage();
-    iStorage->Set( MusSettingsKeys::KFastStartupMode, 
-        MusSettingsKeys::EFastModeOff );
-
     iSharedObject->MusAvaSip().CreateProfileL();
     iProfile = iSharedObject->MusAvaSip().Profile();
     iSharedObject->MusAvaSip().ConnectionL( );
@@ -131,9 +125,6 @@ void UT_CMusAvaOptionHandler::Teardown(  )
         iStorage = NULL;
         }
     delete iOptionHandler;
-    delete iSettingsObserver;
-    
-    PropertyHelper::Close();
     }
 
 void UT_CMusAvaOptionHandler::UT_CMusAvaOptionHandler_NewLL(  )
@@ -331,143 +322,6 @@ void UT_CMusAvaOptionHandler::UT_CMusAvaOptionHandler_VideoCodecsResolvedLL()
     
     }
 
-void UT_CMusAvaOptionHandler::UT_CMusAvaOptionHandler_DoSetStateL()
-    {
-    // Set some state which does not cause special handling
-    iOptionHandler->iFastModeCapable = EFalse;
-    iOptionHandler->DoSetState( MMusAvaObserver::EMusAvaStatusOptionsSent );
-    EUNIT_ASSERT( iOptionHandler->iState == MMusAvaObserver::EMusAvaStatusOptionsSent );
-    
-    // Set special handling state, but fast mode is not enabled
-    iOptionHandler->DoSetState( MMusAvaObserver::EMusAvaStatusAvailable );
-    EUNIT_ASSERT( iOptionHandler->iState == MMusAvaObserver::EMusAvaStatusAvailable );
-    EUNIT_ASSERT( !iSettingsObserver->iApplicationStarted );
-        
-    // Set special handling state, fast capable but mode is not enabled
-    iOptionHandler->iFastModeCapable = ETrue;
-    iConcreteSettings->SetFastMode( MusSettingsKeys::EFastModeOff );
-    iOptionHandler->DoSetState( MMusAvaObserver::EMusAvaStatusAvailable );
-    EUNIT_ASSERT( iOptionHandler->iState == MMusAvaObserver::EMusAvaStatusAvailable );
-    EUNIT_ASSERT( !iSettingsObserver->iApplicationStarted );
-    }
-
-void UT_CMusAvaOptionHandler::UT_CMusAvaOptionHandler_DoSetStateFastModeL()
-    {
-    iOptionHandler->iFastModeCapable = ETrue;
-    iConcreteSettings->SetFastMode( MusSettingsKeys::EFastModeOn );
-    iOptionHandler->iSettings.SetCallDirection( 1 );
-    
-    // State which does not have special handling
-    iOptionHandler->DoSetState( MMusAvaObserver::EMusAvaFailureCode );
-    EUNIT_ASSERT( iOptionHandler->iState == MMusAvaObserver::EMusAvaFailureCode );
-    EUNIT_ASSERT( !iOptionHandler->iFastModeAvailabilityDelayed );
-    
-    // OptionsNotSent handling
-    //
-        
-    // MT, not answered
-    iOptionHandler->iSettings.SetCallDirection( 2 );
-    iOptionHandler->iCapabilityQueryAnswered = EFalse;
-    iOptionHandler->DoSetState( MMusAvaObserver::EMusAvaStatusOptionsNotSent );
-    EUNIT_ASSERT( iOptionHandler->iState == MMusAvaObserver::EMusAvaStatusOptionsNotSent );
-    EUNIT_ASSERT( !iOptionHandler->iFastModeAvailabilityDelayed );
-        
-    // MT, answered (makes state available delayed)
-    iOptionHandler->iCapabilityQueryAnswered = ETrue;
-    iOptionHandler->DoSetState( MMusAvaObserver::EMusAvaStatusOptionsNotSent );
-    EUNIT_ASSERT( iOptionHandler->iState == MMusAvaObserver::EMusAvaStatusOptionsNotSent );
-    EUNIT_ASSERT( iOptionHandler->iFastModeAvailabilityDelayed );
-    
-    // Available handling
-    //
-    
-    // MO, start app
-    iOptionHandler->iSettings.SetCallDirection( 1 );
-    iSettingsObserver->iApplicationStarted = EFalse;
-    iOptionHandler->iFastModeAvailabilityDelayed = EFalse;
-    iOptionHandler->DoSetState( MMusAvaObserver::EMusAvaStatusAvailable );
-    EUNIT_ASSERT( iOptionHandler->iState == MMusAvaObserver::EMusAvaStatusAvailable );
-    EUNIT_ASSERT( !iOptionHandler->iFastModeAvailabilityDelayed );
-    EUNIT_ASSERT( iSettingsObserver->iApplicationStarted );
-    
-    // App already started by going to available state, do not do twice
-    iSettingsObserver->iApplicationStarted = EFalse;
-    iOptionHandler->DoSetState( MMusAvaObserver::EMusAvaStatusAvailable );
-    EUNIT_ASSERT( iOptionHandler->iState == MMusAvaObserver::EMusAvaStatusAvailable );
-    EUNIT_ASSERT( !iOptionHandler->iFastModeAvailabilityDelayed );
-    EUNIT_ASSERT( !iSettingsObserver->iApplicationStarted );
-     
-    // MT, delayed availability publishing (state not changed yet)
-    iOptionHandler->iSettings.SetCallDirection( 2 );
-    iOptionHandler->iFastModeAvailabilityDelayed = EFalse;
-    iSettingsObserver->iApplicationStarted = EFalse;
-    iOptionHandler->iState = MMusAvaObserver::EMusAvaStatusOptionsNotSent;
-    iOptionHandler->DoSetState( MMusAvaObserver::EMusAvaStatusAvailable );
-    EUNIT_ASSERT( iOptionHandler->iState == MMusAvaObserver::EMusAvaStatusOptionsNotSent );
-    EUNIT_ASSERT( iOptionHandler->iFastModeAvailabilityDelayed );
-    EUNIT_ASSERT( !iSettingsObserver->iApplicationStarted );
-    
-    // Invite ends availability delaying
-    iOptionHandler->PrepareForReceivedInviteL();
-    EUNIT_ASSERT( iOptionHandler->iState == MMusAvaObserver::EMusAvaStatusAvailable );
-    EUNIT_ASSERT( !iOptionHandler->iFastModeAvailabilityDelayed );
-    
-    // No effect if no delay pending
-    iOptionHandler->iState = MMusAvaObserver::EMusAvaStatusOptionsNotSent;
-    iOptionHandler->PrepareForReceivedInviteL();
-    EUNIT_ASSERT( iOptionHandler->iState == MMusAvaObserver::EMusAvaStatusOptionsNotSent );
-    
-    // OptionNotAvailable handling
-    //
-    
-    // Normal handling when no pending availabilty publishing nor state is
-    // not already available
-    iOptionHandler->iFastModeAvailabilityDelayed = EFalse;
-    iOptionHandler->DoSetState( MMusAvaObserver::EMusAvaOptionNotAvailable );
-    EUNIT_ASSERT( iOptionHandler->iState == MMusAvaObserver::EMusAvaOptionNotAvailable );
-    
-    // If already set to available by succesfull answer, sending failure
-    // does not clear availability
-    iOptionHandler->iState = MMusAvaObserver::EMusAvaStatusAvailable;
-    iOptionHandler->DoSetState( MMusAvaObserver::EMusAvaOptionNotAvailable );
-    EUNIT_ASSERT( iOptionHandler->iState == MMusAvaObserver::EMusAvaStatusAvailable );
-    }
-
-void UT_CMusAvaOptionHandler::UT_CMusAvaOptionHandler_FastModeResolvedL()
-    {
-    iOptionHandler->iFastModeCapable = ETrue;
-    
-    // Normal case  
-    iOptionHandler->iSettings.SetFastMode( MusSettingsKeys::EFastModeOff );
-    iOptionHandler->FastModeResolved( MusSettingsKeys::EFastModeOn );
-    EUNIT_ASSERT( iOptionHandler->iSettings.FastMode() == MusSettingsKeys::EFastModeOn )
-    
-    // MO side fast mode negotiation has failed, value is not set
-    iOptionHandler->iSettings.SetFastMode( MusSettingsKeys::EFastModeOff );
-    iOptionHandler->iSettings.SetCallDirection( 1 );
-    iOptionHandler->iState = MMusAvaObserver::EMusAvaOptionNotAvailable;
-    iOptionHandler->FastModeResolved( MusSettingsKeys::EFastModeOn );
-    EUNIT_ASSERT( iOptionHandler->iSettings.FastMode() == MusSettingsKeys::EFastModeOff )
-    }
-
-void UT_CMusAvaOptionHandler::UT_CMusAvaOptionHandler_CapabilityQueryAnsweredL()
-    {
-    iOptionHandler->iFastModeCapable = ETrue;
-    
-    // If fast mode MO side, no special handling for answer
-    iOptionHandler->CapabilityQueryAnswered( ETrue );
-    EUNIT_ASSERT( iOptionHandler->iCapabilityQueryAnswered )
-    EUNIT_ASSERT( !iOptionHandler->iFastModeAvailabilityDelayed );
-    
-    // If fast mode MT side, MT can start waiting for invite already after answering
-    iOptionHandler->iCapabilityQueryAnswered = EFalse;
-    iOptionHandler->iSettings.SetFastMode( MusSettingsKeys::EFastModeOn );
-    iOptionHandler->iSettings.SetCallDirection( 2 );
-    iOptionHandler->CapabilityQueryAnswered( ETrue );
-    EUNIT_ASSERT( iOptionHandler->iCapabilityQueryAnswered )
-    EUNIT_ASSERT( iOptionHandler->iFastModeAvailabilityDelayed );
-    }
-
 //  TEST TABLE
 
 EUNIT_BEGIN_TEST_TABLE( 
@@ -540,38 +394,6 @@ EUNIT_TEST(
     "VideoCodecsResolvedL",
     "FUNCTIONALITY",
     SetupL,UT_CMusAvaOptionHandler_VideoCodecsResolvedLL, 
-    Teardown) 
-
-EUNIT_TEST(
-    "DoSetState - test ",
-    "CMusAvaOptionHandler",
-    "DoSetState",
-    "FUNCTIONALITY",
-    SetupL,UT_CMusAvaOptionHandler_DoSetStateL, 
-    Teardown) 
-
-EUNIT_TEST(
-    "DoSetState - fastmode test ",
-    "CMusAvaOptionHandler",
-    "DoSetState",
-    "FUNCTIONALITY",
-    SetupL,UT_CMusAvaOptionHandler_DoSetStateFastModeL, 
-    Teardown) 
-
-EUNIT_TEST(
-    "FastModeResolved - test ",
-    "CMusAvaOptionHandler",
-    "FastModeResolved",
-    "FUNCTIONALITY",
-    SetupL,UT_CMusAvaOptionHandler_FastModeResolvedL, 
-    Teardown) 
-
-EUNIT_TEST(
-    "CapabilityQueryAnswered - test ",
-    "CMusAvaOptionHandler",
-    "CapabilityQueryAnswered",
-    "FUNCTIONALITY",
-    SetupL,UT_CMusAvaOptionHandler_CapabilityQueryAnsweredL, 
     Teardown) 
 
 EUNIT_END_TEST_TABLE

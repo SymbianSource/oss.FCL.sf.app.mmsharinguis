@@ -61,9 +61,7 @@ namespace MultimediaSharing
         EMusClipVideo,           // video clip sharing
         EMusStillImage,          // still image sharing
         EMusReceive,             // receive video
-        EMusContinue,            // continue running the existing application
-        EMusTwoWayVideo,         // two-way sharing
-        EMusReceiveTwoWayVideo   // two-way receive video
+        EMusContinue             // continue running the existing application
         };
    /**  Contains the possible commands of MultimediaSharing. */    
    enum TCommandType

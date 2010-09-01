@@ -26,8 +26,6 @@
 
 //  FORWARD DECLARATIONS
 class CMusEngLiveSession;
-class CLcSessionObserverStub;
-class CLcUiProviderStub;
 class CMusEngObserverStub;
 
 
@@ -66,6 +64,16 @@ NONSHARABLE_CLASS( UT_CMusEngLiveSession ): public CEUnitTestSuiteClass
     private: // Test methdods
     
         void UT_NewLL();
+        void UT_CurrentZoomLL();
+        void UT_CMusEngLiveSession_SetZoomLL();
+        void UT_MaxZoomLL();
+        void UT_ZoomInLL();
+        void UT_ZoomOutLL();
+        void UT_ZoomDefaultLL();
+        void UT_RecordL_and_IsRecordingLL();
+        void UT_PlayLL();
+        void UT_PauseLL();
+        void UT_IsPlayingLL();
         void UT_CompleteSessionStructureLL();
         void UT_HandleSessionStateChangedL();
         void UT_AdjustVideoCodecLL();
@@ -74,18 +82,28 @@ NONSHARABLE_CLASS( UT_CMusEngLiveSession ): public CEUnitTestSuiteClass
         void UT_StreamStateChangedL();
         void UT_StreamStateChangedWithSourceL();
         void UT_StreamStateChangedWithSinkL();
-        void UT_EstablishLcSessionL();
-        void UT_LocalVideoPlayerL();  
-                
+        void UT_SetBrightnessLL();
+        void UT_CurrentBrightnessLL();
+        void UT_MaxBrightnessLL();
+        void UT_MinBrightnessLL();
+        void UT_IncreaseBrightnessLL();
+        void UT_DecreaseBrightnessLL();
+        void UT_BrightnessDefaultLL();
+        void UT_BrightnessAutoLL();
+        void UT_SetEncodingDeviceLL();
+        void UT_SetCodecConfigKeyLL();
+        void UT_ReadCodecConfigKeyLL();
+        void UT_StoreEncoderConfigInfoLL();
+        void UT_InitializeZoomStepSizeL();
+        
     private:    // Data
 
         CMusEngLiveSession* iLiveSession;
         CMusEngLiveSession* iRecordedLiveSession;
-        CLcSessionObserverStub* iLcSessionObserver;
-        CLcUiProviderStub* iLcUiProvider;
-        CMusEngObserverStub* iAudioRoutingObserver;
+        CMusEngObserverStub* iObserver;
 
         EUNIT_DECLARE_TEST_TABLE;
+
     };
 
 #endif      //  __UT_MUSENGLIVESESSION_H__

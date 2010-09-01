@@ -49,8 +49,6 @@ class CMceItcSender;
 class CMceCameraSource : public CMceMediaSource
 	{
     friend class UT_CMusEngLiveSession;
-    friend class UT_CMusEngTwoWaySession;
-    friend class UT_TMusEngCameraHandler;
 
 	public: // Constructors and destructor
 
@@ -65,12 +63,6 @@ class CMceCameraSource : public CMceMediaSource
 	    * @param aManager reference to the manager
 	    */
 		IMPORT_C static CMceCameraSource* NewLC( CMceManager& aManager );
-		
-        /// Not in the real implementation 
-        IMPORT_C static CMceCameraSource* NewL();		
-		
-		/// Not in the real implementation 
-		IMPORT_C static CMceCameraSource* NewLC();
 		
 	    /**
 	    * Destructor.
@@ -218,6 +210,11 @@ class CMceCameraSource : public CMceMediaSource
 	    * C++ constructor.
 	    */
 		CMceCameraSource();
+
+	    /**
+	    * Second-phase constructor.
+	    */
+		void ConstructL( CMceManager* aManager );
     
     private: // Owned data
    
@@ -235,7 +232,6 @@ class CMceCameraSource : public CMceMediaSource
     public: // stub data
 	
 	    TInt iCameraIndex;
-	    TInt iCameraCount;
         TInt iZoomFactor;
         TInt iDigitalZoomFactor;
         TInt iContrast;

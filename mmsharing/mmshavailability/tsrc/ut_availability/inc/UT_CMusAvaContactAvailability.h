@@ -26,7 +26,7 @@
 
 //  INTERNAL INCLUDES
 #include <e32def.h>
-#include <cntdef.h>
+#include <PbkFields.hrh>
 
 //  FORWARD DECLARATIONS
 class CMusAvaAvailabilityObserverImp;
@@ -36,8 +36,6 @@ class CMusAvaSettingsImp;
 class CContactTextField;
 class CPbkContactItem;
 class CPbkContactEngine;
-
-
 //  CLASS DEFINITION
 /**
  *
@@ -83,8 +81,6 @@ class UT_CMusAvaContactAvailability
         void UT_CMusAvaController_DoExecuteL1_L();
          		
         void UT_CMusAvaController_DoExecuteL2_L();
-        
-         void UT_CMusAvaController_DoExecuteL3_L();
          		
         void UT_CMusAvaController_NameL();
           
@@ -120,6 +116,23 @@ class UT_CMusAvaContactAvailability
         
         void UT_CMusAvaController_UpdateContactNameLL();
         
+        void UT_CMusAvaController_CallConnectedLL();
+        CContactTextField* EditableContactFieldL( CPbkContactEngine& aContactEngine, 
+                                                  CPbkContactItem& aContact, 
+                                                  TPbkFieldId aFieldId );
+                                                  
+        void AddFields(CPbkContactEngine& aContactEngine,
+                       CPbkContactItem& contact,
+                       const TDesC& aText, 
+                       TPbkFieldId aFieldId);
+        
+        void AddToMyContact( CPbkContactEngine& aContactEngine,
+                             const TDesC& aText, 
+                             TPbkFieldId aFieldId,
+                             const TDesC& aText2, 
+                             TPbkFieldId aFieldId2 );
+        
+
     private:    // Data
 
 		EUNIT_DECLARE_TEST_TABLE; 

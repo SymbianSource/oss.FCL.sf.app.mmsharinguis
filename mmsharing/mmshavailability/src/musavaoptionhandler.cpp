@@ -33,7 +33,6 @@
 #include "musavaterminal.h"
 #include "mussettingskeys.h"
 #include "mussettings.h"
-#include "mussesseioninformationapi.h"
 
 
 _LIT( KMusSipPrefix, "sip:" );
@@ -142,21 +141,6 @@ void CMusAvaOptionHandler::ConstructL()
                             ( MMusAvaSipAdapter& ) *iSipAgent, 
                             KMusOptionsHandlerIndex ); 
     
-    MUS_LOG( "mus: [MUSAVA]     Check fast mode capability" )
-    
-    TRAPD( err,
-    iFastModeCapable = 
-        MultimediaSharingSettings::FastStartupModeL() == MusSettingsKeys::EFastModeOn  && 
-        MultimediaSharingSettings::VideoDirectionL() == MusSettingsKeys::ETwoWayVideo &&
-        MultimediaSharingSettings::CapabilityQuerySettingL() == MusSettingsKeys::EParallel );
-    if ( err == KErrNoMemory )
-        {
-        User::Leave( err );
-        }
-    
-    MUS_LOG2( "mus: [MUSAVA]     Fast mode check, err:%d, capable:%d", 
-              err, iFastModeCapable )
-    
     MUS_LOG( "mus: [MUSAVA]  <- CMusAvaOptionHandler::ConstructL()" )
     }
 
@@ -167,12 +151,7 @@ void CMusAvaOptionHandler::ConstructL()
 //
 TBool CMusAvaOptionHandler::CapabilityQueryAnswered( TBool aAnswered )
     {
-    MUS_LOG1( "mus: [MUSAVA]  <-> CMusAvaOptionHandler::CapabilityQueryAnswered():%d", 
-              aAnswered )
-    
     iCapabilityQueryAnswered = aAnswered ? aAnswered : iCapabilityQueryAnswered;
-    
-    HandleFastModeQueryAnswered();
     
     return iCapabilityQueryAnswered;
         
@@ -252,13 +231,13 @@ void CMusAvaOptionHandler::DoExecuteL()
     if ( variantSetting == MusSettingsKeys::EOperatorSpecific 
         && iSettings.CallDirection() == 2 && !iCapabilitiesRequestAnswered )
         { // terminated party 
-        DoSetState( MMusAvaObserver::EMusAvaStatusOptionsNotSent );
+        SetState( MMusAvaObserver::EMusAvaStatusOptionsNotSent );
         }
     else if ( MusSettingsKeys::ESequential ==  
      	        MultimediaSharingSettings::CapabilityQuerySettingL()
         && iSettings.CallDirection() == 2 && !iCapabilitiesRequestAnswered )
         { // terminated party 
-        DoSetState( MMusAvaObserver::EMusAvaStatusOptionsNotSent );
+        SetState( MMusAvaObserver::EMusAvaStatusOptionsNotSent );
         }
     else
         {
@@ -289,11 +268,11 @@ void CMusAvaOptionHandler::DoExecuteL()
                     if ( iCapabilityExchange->
                         TerminalL( sipAddress8->Des() ).QueryExecuting() )
                         {
-                        DoSetState( MMusAvaObserver::EMusAvaStatusOptionsSent );
+                        SetState( MMusAvaObserver::EMusAvaStatusOptionsSent );
                         }
     		    	else
     		    	    {
-    		    	    DoSetState( MMusAvaObserver::EMusAvaStatusAvailable );	
+    		    	    SetState( MMusAvaObserver::EMusAvaStatusAvailable );	
     		            }
     		        CleanupStack::PopAndDestroy( sipAddress8 );
     		    	}
@@ -302,24 +281,24 @@ void CMusAvaOptionHandler::DoExecuteL()
                 // since we did not send any options set the state EMusAvaStatusNotExecuted.
                 else if( err == KErrSIPInvalidRegistrationState )
                     {
-                    DoSetState( MMusAvaObserver::EMusAvaStatusNotExecuted );
+                    SetState( MMusAvaObserver::EMusAvaStatusNotExecuted );
                     }
                 // anything other than this should be considered default , means options sent
                 // and was not successful.
     		    else
     		        {
-    		        DoSetState( MMusAvaObserver::EMusAvaOptionNotAvailable );
+    		        SetState( MMusAvaObserver::EMusAvaOptionNotAvailable );
     		        }
     	        }
     	    else
     	    	{
-    	    	DoSetState( MMusAvaObserver::EMusAvaStatusOptionsNotSent );	
+    	    	SetState( MMusAvaObserver::EMusAvaStatusOptionsNotSent );	
     	    	}
         	}
         else
         	{
         	// option sending not needed 
-        	DoSetState( MMusAvaObserver::EMusAvaStatusOptionsNotSent );
+        	SetState( MMusAvaObserver::EMusAvaStatusOptionsNotSent );
         	}  
         }
     
@@ -348,23 +327,6 @@ MMusAvaObserver::TAvailabilityName CMusAvaOptionHandler::Name()
     return MMusAvaObserver::EMusAvaOptionHandler;
     }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void CMusAvaOptionHandler::PrepareForReceivedInviteL()
-    {
-    MUS_LOG( "mus: [MUSAVA]  -> CMusAvaOptionHandler::PrepareForReceivedInviteL()" )
-    
-    if ( iFastModeAvailabilityDelayed )
-        {
-        MUS_LOG( "mus: [MUSAVA]     Set delayed availability" )
-        SetState( MMusAvaObserver::EMusAvaStatusAvailable );
-        iFastModeAvailabilityDelayed = EFalse;
-        }
-    
-    MUS_LOG( "mus: [MUSAVA]  <- CMusAvaOptionHandler::PrepareForReceivedInviteL()" )
-    }
 
 // -----------------------------------------------------------------------------
 // 
@@ -379,17 +341,19 @@ void CMusAvaOptionHandler::CapabilitiesResolved(
         {
         // tell the upper layer that
         // query was succesfull. VS is available
-        DoSetState( MMusAvaObserver::EMusAvaStatusAvailable );
+        //record the number
+        iSettings.SetOptionSentNumber( iSettings.TelNumber() );
+        SetState( MMusAvaObserver::EMusAvaStatusAvailable );
         }
     else if ( aSentQuery.Result() == KCapabilityCapabilitiesForbidden )
         {
         // query returned with response "403 Forbidden". VS is NOT available
-        DoSetState( MMusAvaObserver::EMusAvaFailureCode );
+        SetState( MMusAvaObserver::EMusAvaFailureCode );
         }
     else
         {
         //query failed. VS is NOT available
-        DoSetState( MMusAvaObserver::EMusAvaOptionNotAvailable );
+        SetState( MMusAvaObserver::EMusAvaOptionNotAvailable );
         }
 
     MUS_LOG(
@@ -436,7 +400,6 @@ void CMusAvaOptionHandler::SetCapabilitiesResolvedForCingular()
         "mus: [MUSAVA]  -> CMusAvaOptionHandler::\
         SetCapabilitiesResolvedForCingular()" )
     iCapabilitiesRequestAnswered = ETrue;
-    
     TRAPD( error, DoExecuteL() );
     if ( error )
         {
@@ -571,214 +534,8 @@ void CMusAvaOptionHandler::VideoCodecsResolvedL( const MDesCArray& aVideoCodecs 
     {
     MUS_LOG("mus: [MUSAVA]  -> CMusAvaOptionHandler::VideoCodecsResolvedL()" )
     
-    iSettings.SetVideoCodecsL( aVideoCodecs );
+    iSettings.SetVideoCodecsL(aVideoCodecs);
     
     MUS_LOG("mus: [MUSAVA]  <- CMusAvaOptionHandler::VideoCodecsResolvedL()" )
     }
 
-
-// -----------------------------------------------------------------------------
-// If MO side fast mode negotiation has failed, cannot change the value anymore
-// as it is very likely that automatic invitation fails as well.
-// -----------------------------------------------------------------------------
-//
-void CMusAvaOptionHandler::FastModeResolved( MusSettingsKeys::TFastMode aMode )
-    {
-    MUS_LOG1("mus: [MUSAVA]  -> CMusAvaOptionHandler::FastModeResolved():%d", 
-        aMode )
-    
-    if ( FastModeNegotiationFailedMO() )
-        {
-        MUS_LOG("mus: [MUSAVA]  Ignore setting as failed already" )
-        }
-    else
-        {
-        iSettings.SetFastMode( aMode );
-        }
-    
-    MUS_LOG("mus: [MUSAVA]  <- CMusAvaOptionHandler::FastModeResolved()" )
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-TInt CMusAvaOptionHandler::DoSetState( MMusAvaObserver::TAvailabilityStatus aNewState )
-    {
-    MUS_LOG1( "mus: [MUSAVA]  -> CMusAvaOptionHandler::DoSetState() state:%d", 
-              aNewState )
-    TInt err( KErrNone );
-    
-    if ( iFastModeCapable )
-        {
-        TRAP( err, aNewState = HandleFastModeL( aNewState  ) );
-        }
-    
-    SetState( aNewState );
-    
-    MUS_LOG1("mus: [MUSAVA]  <- CMusAvaOptionHandler::DoSetState(), err:%d", err )
-    
-    return err;
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-MMusAvaObserver::TAvailabilityStatus CMusAvaOptionHandler::HandleFastModeL(
-    MMusAvaObserver::TAvailabilityStatus aNewState )
-    {
-    MUS_LOG("mus: [MUSAVA]  -> CMusAvaOptionHandler::HandleFastModeL()" )
-    
-    switch ( aNewState )
-        {
-        case MMusAvaObserver::EMusAvaOptionNotAvailable:
-            {
-            aNewState = HandleFastModeOptionNotAvailableL( aNewState );
-            break;
-            }
-        case MMusAvaObserver::EMusAvaStatusOptionsNotSent:
-            {
-            aNewState = HandleFastModeOptionsNotSentL( aNewState );
-            break;
-            }
-        case MMusAvaObserver::EMusAvaStatusAvailable:
-            {
-            aNewState = HandleFastModeAvailableL( aNewState );
-            break;
-            }
-        default:
-            {
-            break;
-            }
-        }
-    
-    MUS_LOG("mus: [MUSAVA]  <- CMusAvaOptionHandler::HandleFastModeL()" )
-    
-    return aNewState;
-    }
-
-// -----------------------------------------------------------------------------
-// If fast mode and call originator, application is started
-// automatically at background with two-way MO use case. If fast mode is
-// negotiated, availability publishing is delayed at MT side until invitation
-// is received (as MO will send invite automatically).
-// -----------------------------------------------------------------------------
-//
-MMusAvaObserver::TAvailabilityStatus CMusAvaOptionHandler::HandleFastModeAvailableL(
-    MMusAvaObserver::TAvailabilityStatus aNewState )
-    {
-    MUS_LOG("mus: [MUSAVA]  -> CMusAvaOptionHandler::HandleFastModeAvailableL()" )
-    
-    __ASSERT_ALWAYS( iSettings.Observer(), User::Leave( KErrNotReady ) );
-    
-    if ( State() != MMusAvaObserver::EMusAvaStatusAvailable &&
-         iSettings.FastMode() == MusSettingsKeys::EFastModeOn )
-        {
-        if ( iSettings.CallDirection() == NMusSessionInformationApi::ECallOrginated )
-            {
-            MUS_LOG("mus: [MUSAVA]      Starting application at background" )
-            iSettings.Observer()->StartApplicationL( MultimediaSharing::EMusTwoWayVideo );
-            }
-        else
-            {
-            MUS_LOG("mus: [MUSAVA]      Delay availability publishing" )
-            iFastModeAvailabilityDelayed = ETrue;
-            aNewState = State();
-            }
-        }
-    
-    MUS_LOG("mus: [MUSAVA]  <- CMusAvaOptionHandler::HandleFastModeAvailableL()" )
-    
-    return aNewState;
-    }
-
-// -----------------------------------------------------------------------------
-// If fast mode and call terminated side, answering to 200 ok is already enough
-// to set us available in delayed manner as other end can start sending
-// invitation already after getting fast mode information in answer. 
-// -----------------------------------------------------------------------------
-//
-void CMusAvaOptionHandler::HandleFastModeQueryAnswered()
-    {
-    if ( FastModeNegotiatedByAnswerMT() )
-        {
-        MUS_LOG( "mus: [MUSAVA]     Set fastmode available already as answered" )
-        
-        // Will result delayed availability handling
-        DoSetState( MMusAvaObserver::EMusAvaStatusOptionsNotSent );
-        }
-    }
-
-// -----------------------------------------------------------------------------
-// If options wasn't sent because of missing information, state can be set to
-// available immediately as MT cannot start waiting for invite unless it is
-// sure that other end is about to send it.
-// -----------------------------------------------------------------------------
-//
-MMusAvaObserver::TAvailabilityStatus 
-CMusAvaOptionHandler::HandleFastModeOptionsNotSentL(
-    MMusAvaObserver::TAvailabilityStatus aNewState )
-    {
-    MUS_LOG("mus: [MUSAVA]  -> CMusAvaOptionHandler::HandleFastModeOptionsNotSentL()" )
-    
-    if ( FastModeNegotiatedByAnswerMT() )
-        {
-        MUS_LOG("mus: [MUSAVA]      Answered already, set available" )
-        // Make available but start waiting for invitation
-        aNewState = HandleFastModeAvailableL( MMusAvaObserver::EMusAvaStatusAvailable );
-        }
-    
-    MUS_LOG("mus: [MUSAVA]  <- CMusAvaOptionHandler::HandleFastModeOptionsNotSentL()" )
-    
-    return aNewState;
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-MMusAvaObserver::TAvailabilityStatus 
-CMusAvaOptionHandler::HandleFastModeOptionNotAvailableL(
-    MMusAvaObserver::TAvailabilityStatus aNewState )
-    {
-    MUS_LOG("mus: [MUSAVA]  -> CMusAvaOptionHandler::HandleFastModeOptionNotAvailableL()" )
-    
-    if ( iFastModeAvailabilityDelayed || 
-         State() == MMusAvaObserver::EMusAvaStatusAvailable )
-        {
-        MUS_LOG("mus: [MUSAVA]  In delayed mode or available, ignore" )
-        aNewState = State();
-        }
-    
-    MUS_LOG("mus: [MUSAVA]  <- CMusAvaOptionHandler::HandleFastModeOptionNotAvailableL()" )
-    
-    return aNewState;
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-TBool CMusAvaOptionHandler::FastModeNegotiatedByAnswerMT()
-    {
-    return ( iFastModeCapable && 
-             iCapabilityQueryAnswered && 
-             iSettings.FastMode() == MusSettingsKeys::EFastModeOn &&
-             iSettings.CallDirection() == NMusSessionInformationApi::ECallTerminated );
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-TBool CMusAvaOptionHandler::FastModeNegotiationFailedMO()
-    {
-    return ( iFastModeCapable && 
-             iSettings.FastMode() != MusSettingsKeys::EFastModeOn &&
-             iSettings.CallDirection() == NMusSessionInformationApi::ECallOrginated &&
-             State() != MMusAvaObserver::EMusAvaStatusAvailable && 
-             State() != MMusAvaObserver::EMusAvaStatusOptionsSent );
-    }
-
-// End of file

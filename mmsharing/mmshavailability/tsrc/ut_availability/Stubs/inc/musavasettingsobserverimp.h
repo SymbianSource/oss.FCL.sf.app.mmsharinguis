@@ -96,13 +96,9 @@ public:
 
     TBool OptionAllowed();
     
-    void StartApplicationL( MultimediaSharing::TMusUseCase aUseCase );
-    
 public: //data
 
     TBool iOptionAllowed;
-    
-    TBool iApplicationStarted;
    
 	};
 

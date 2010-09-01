@@ -33,6 +33,12 @@
 #include <stringpool.h>
 #include <sipservertransaction.h>
 #include <siptransactionbase.h>
+#include <sdpfmtattributefield.h>
+#include <SdpMediaField.h>
+#include <SdpRtpmapValue.h>
+
+#include <e32debug.h>
+
 //  INTERNAL INCLUDES
 #include "musavaoptionhandler.h"
 #include "musavacapabilitytesthelper.h"
@@ -48,6 +54,12 @@
 #include "musavasip.h"
 #include "musavacapabilityqueryobserverimp.h"
 
+_LIT8( KRTPCapabilitySDPAttributeClockrate, "90000" );
+_LIT8( KRTPCapabilitySDPAttributePayloadTypeH264, "98" );
+_LIT8( KRTPCapabilitySDPAttributeCodec, "H264" );
+
+_LIT8( KRTPCapabilitySDPAttributePayloadTypeH263, "96" );
+_LIT8( KRTPCapabilitySDPAttributeCodecH263, "H263-2000" );
 
 // CONSTRUCTION
 UT_CMusAvaCapabilityQuery* UT_CMusAvaCapabilityQuery::NewL()
@@ -130,8 +142,6 @@ void UT_CMusAvaCapabilityQuery::SetupL(  )
 
     CSipSseTestTls::OpenL();
     iStorage = CSipSseTestTls::Storage();
-    iStorage->Set( MusSettingsKeys::KFastStartupMode, 
-        MusSettingsKeys::EFastModeOff );
     iOpVariantSetting = MultimediaSharingSettings::OperatorVariantSettingL();
     } 
 
@@ -380,6 +390,62 @@ void UT_CMusAvaCapabilityQuery::UT_CMusAvaCapabilityQuery_ExecuteLL(  )
     CleanupStack::PopAndDestroy( capability );
     CleanupStack::PopAndDestroy( exchange );
     CleanupStack::PopAndDestroy( capabQueryObserver );
+    }
+
+
+void UT_CMusAvaCapabilityQuery::UT_CMusAvaCapabilityQuery_ValidateUriL()
+    {
+	if( iQuery->iOriginator )
+		{
+	    delete iQuery->iOriginator;
+		}
+	
+    //SIP Uri case, identical
+	CSIPAddress* iOriginatorSipAddress = CSIPAddress::DecodeL( _L8("sip:username111@domain.com") );
+    CleanupStack::PushL( iOriginatorSipAddress );
+
+	iQuery->iOriginator = CUri8::NewL( iOriginatorSipAddress->Uri8().Uri() );
+	iQuery->iRemoteUri.Copy( _L8("sip:username111@domain.com") );
+	
+	EUNIT_ASSERT( iQuery->ValidateUri() == EFalse );
+	
+    CleanupStack::PopAndDestroy(iOriginatorSipAddress);    
+	
+    delete iQuery->iOriginator;
+    
+    //SIP Uri case, not identical
+	iOriginatorSipAddress = CSIPAddress::DecodeL( _L8("sip:username111@domain.com") );	
+    CleanupStack::PushL( iOriginatorSipAddress );
+    
+	iQuery->iOriginator = CUri8::NewL( iOriginatorSipAddress->Uri8().Uri() );	
+	iQuery->iRemoteUri.Copy( _L8("sip:username222@domain.com") );
+	
+	EUNIT_ASSERT( iQuery->ValidateUri() == ETrue );
+    CleanupStack::PopAndDestroy(iOriginatorSipAddress);
+	
+    delete iQuery->iOriginator;
+    
+    //TEL Uri, identical
+	iOriginatorSipAddress = CSIPAddress::DecodeL( _L8("sip:18586037801@domain.com") );
+    CleanupStack::PushL( iOriginatorSipAddress );
+
+	iQuery->iOriginator = CUri8::NewL( iOriginatorSipAddress->Uri8().Uri() );
+	iQuery->iRemoteUri.Copy( _L8("tel:8586037801") );
+	
+	EUNIT_ASSERT( iQuery->ValidateUri() == EFalse );
+    CleanupStack::PopAndDestroy(iOriginatorSipAddress);
+
+    delete iQuery->iOriginator;
+	
+    //TEL Uri, not identical
+	iOriginatorSipAddress = CSIPAddress::DecodeL( _L8("sip:18586037801@domain.com") );
+    CleanupStack::PushL( iOriginatorSipAddress );
+
+	iQuery->iOriginator = CUri8::NewL( iOriginatorSipAddress->Uri8().Uri() );
+	iQuery->iRemoteUri.Copy( _L8("tel:9876543210") );
+	
+	EUNIT_ASSERT( iQuery->ValidateUri() == ETrue );
+    CleanupStack::PopAndDestroy(iOriginatorSipAddress);
     }
 
 void UT_CMusAvaCapabilityQuery::UT_CMusAvaCapabilityQuery_CanceledL(  )
@@ -1064,6 +1130,76 @@ void UT_CMusAvaCapabilityQuery::UT_CMusAvaCapabilityQuery_DoCompleted200OKLL()
     
     }
 
+void UT_CMusAvaCapabilityQuery::UT_CMusAvaCapabilityOtherSDPHeadersLL()
+    {
+    CSdpDocument* content = CSdpDocument::NewLC();
+    //AVC Disabled  
+    MultimediaSharingSettings::SetPropertyValueL(MusSettingsKeys::KEncodingDevice,
+                                                 KMusDisableAVC );
+    iQuery->OtherSDPHeadersL(*content);
+    
+    RStringF media = MusAvaCapabilityContext::SDPStringL( 
+                                          SdpCodecStringConstants::EMediaVideo );
+    RStringF rtpmap =  MusAvaCapabilityContext::SDPStringL( 
+                                 SdpCodecStringConstants::EAttributeRtpmap );
+     
+    RPointerArray<CSdpMediaField>& mediaFields = content->MediaFields();
+    
+    for ( TInt i=0; i < mediaFields.Count(); i++ )
+     {
+     if ( mediaFields[ i ]->Media() == media )
+         {
+         EUNIT_ASSERT( mediaFields[ i ]->FormatList().Find( KCapabilitySwisFormatListH263Only ) >= KErrNone ); 
+         RPointerArray<CSdpFmtAttributeField>& fmtLines =  
+                             mediaFields[ i ]->FormatAttributeFields();
+         EUNIT_ASSERT( fmtLines.Count() == 1 ); 
+         for ( TInt j=0; j < fmtLines.Count(); j++ )
+             {
+             if ( fmtLines[ j ]->Attribute() == rtpmap ) 
+                 {
+                 EUNIT_ASSERT(fmtLines[ j ]->Value().Find( KRTPCapabilitySDPAttributeCodecH263 ) == 0 );
+                 EUNIT_ASSERT(fmtLines[ j ]->Format().Find( KRTPCapabilitySDPAttributePayloadTypeH263 ) == 0 );
+                 } 
+             }
+         }
+     }
+    CleanupStack::PopAndDestroy(content );
+    //AVC Enabled
+    content = CSdpDocument::NewLC();
+    MultimediaSharingSettings::SetPropertyValueL(MusSettingsKeys::KEncodingDevice,
+                                                 KMusDisableAVC - 1 );
+    iQuery->OtherSDPHeadersL(*content);
+    
+    mediaFields = content->MediaFields();
+    
+    for ( TInt i=0; i < mediaFields.Count(); i++ )
+         {
+         if ( mediaFields[ i ]->Media() == media )
+             {
+             EUNIT_ASSERT( mediaFields[ i ]->FormatList().Find( KCapabilitySwisFormatList ) >= KErrNone ); 
+             RPointerArray<CSdpFmtAttributeField>& fmtLines =  
+                                 mediaFields[ i ]->FormatAttributeFields();
+             EUNIT_ASSERT( fmtLines.Count() == 2 )
+             for ( TInt j=0; j < fmtLines.Count(); j++ )
+                 {
+                 if ( fmtLines[ j ]->Attribute() == rtpmap ) 
+                     {
+                     if ( j == 0 ) //AVC first i.e. prefered
+                         {
+                         EUNIT_ASSERT(fmtLines[ j ]->Value().Find( KRTPCapabilitySDPAttributeCodec ) == 0 );
+                         EUNIT_ASSERT(fmtLines[ j ]->Format().Find( KRTPCapabilitySDPAttributePayloadTypeH264 ) == 0 );
+                         }
+                     else
+                         {
+                         EUNIT_ASSERT(fmtLines[ j ]->Value().Find( KRTPCapabilitySDPAttributeCodecH263 ) == 0 );
+                         EUNIT_ASSERT(fmtLines[ j ]->Format().Find( KRTPCapabilitySDPAttributePayloadTypeH263 ) == 0 );
+                         }
+                     }                     
+                 }
+             }
+         }
+    CleanupStack::PopAndDestroy(content );
+    }
 //  TEST TABLE
 
 EUNIT_BEGIN_TEST_TABLE( 
@@ -1084,7 +1220,14 @@ EUNIT_TEST(
     "ExecuteL",
     "FUNCTIONALITY",
     SetupL,UT_CMusAvaCapabilityQuery_ExecuteLL, Teardown)
-
+  
+EUNIT_TEST(
+    "ValidateUri - test ",
+    "CMusAvaCapabilityQuery",
+    "ValidateUri",
+    "FUNCTIONALITY",
+    SetupL,UT_CMusAvaCapabilityQuery_ValidateUriL, Teardown)    
+    
 EUNIT_TEST(
     "Canceled - test ",
     "CMusAvaCapabilityQuery",
@@ -1154,6 +1297,14 @@ EUNIT_TEST(
     "DoCompleted200OKL",
     "FUNCTIONALITY",
     SetupL,UT_CMusAvaCapabilityQuery_DoCompleted200OKLL, Teardown)  
+    
+EUNIT_TEST(
+    "OtherSDPHeadersL - test ",
+    "CMusAvaCapabilityQuery",
+    "OtherSDPHeadersL",
+    "FUNCTIONALITY",
+    SetupL,UT_CMusAvaCapabilityOtherSDPHeadersLL, Teardown)  
+
     
 EUNIT_END_TEST_TABLE
 

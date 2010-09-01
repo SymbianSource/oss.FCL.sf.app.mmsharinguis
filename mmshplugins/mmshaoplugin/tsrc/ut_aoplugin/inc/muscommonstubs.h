@@ -16,6 +16,7 @@
 */
 
 
+
 #ifndef UT_MUSCOMMONSTUBS_H
 #define UT_MUSCOMMONSTUBS_H
 
@@ -43,8 +44,8 @@ class CMusCommonObserverStub : public CBase,
         
         // From MMusCallMonitorObserver
         
-        void CallConnectedL( const TDesC& aTelNumber, TBool aIsSipUri );
-        void CallHoldL( const TDesC& aTelNumber, TBool aIsSipUri );
+        void CallConnectedL( const TDesC& aTelNumber );
+        void CallHoldL( const TDesC& aTelNumber );
         void ConferenceCallL();
         void NoActiveCallL();
            
@@ -69,7 +70,6 @@ class CMusCommonObserverStub : public CBase,
         TBool iCallHoldCalled;
         TBool iConferenceCallCalled;
         TBool iNoActiveCallCalled;
-        TBool iIsSipUri;
                 
         HBufC* iTelNumber; 
         RMobileCall::TMobileCallEvent iCallEvent;

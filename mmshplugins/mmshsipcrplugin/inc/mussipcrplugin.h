@@ -26,7 +26,6 @@
 #include <ecom/implementationproxy.h>
 
 class CMusManager;
-class CSdpMediaField;
 
 IMPORT_C const TImplementationProxy* ImplementationGroupProxy( TInt& aTableCount );
 
@@ -87,20 +86,14 @@ public: // from CSIPResolvedClient
      */
     const TDesC8& Capabilities();
 
-private: // New functions
-    
-    /**
-     * Check whether video field has sendrecv attribute
-     * @return ETrue if video has sendrecv attribute, EFalse otherwise 
-     */
-    TBool CheckForSendRecvAttributeL(
-        RPointerArray<CSdpMediaField>& aFields ) const;
-    
+private: // data
+
+    TUid DoChannelL( RStringF aMethod ); 
+	
 private: // data
 
     CMusManager* iManager;
-    TBool iCloseStringPool;
-    
+
     };
 
 

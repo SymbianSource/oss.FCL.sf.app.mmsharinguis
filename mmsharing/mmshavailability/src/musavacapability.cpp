@@ -23,11 +23,14 @@
 #include "musavacapabilitycontext.h"
 #include "mmusavacapabilityqueryobserver.h"
 #include "mussettings.h"
+#include "mussettingskeys.h"
 
 #include <e32math.h>
 #include <uri8.h>
 #include <escapeutils.h>
+//#include <sip.h>
 #include <sipservertransaction.h>
+//#include <sipclienttransaction.h>
 #include <sipacceptcontactheader.h>
 #include <sipcontactheader.h>
 #include <siprequestelements.h>
@@ -206,9 +209,6 @@ void CMusAvaCapability::DoPopulateResponseL( CSdpDocument& aResponseContent )
     aResponseContent.AttributeFields().AppendL( type );
     CleanupStack::Pop( type );
     
-    //Add fast startup mode, if supported
-    AddFastModeL( aResponseContent );
-
     MUS_LOG( "mus: [MUSAVA] Adding media line to SDP" )
     //media line    
     CSdpMediaField* mediaLine = MediaLineLC( 
@@ -340,54 +340,6 @@ CDesCArrayFlat* CMusAvaCapability::ResolveCodecsL( CSdpDocument& aSDP )
     return codecs;
     }
     
-// -----------------------------------------------------------------------------
-// CMusAvaCapability::ResolveFastModeL
-// -----------------------------------------------------------------------------
-// 
-MusSettingsKeys::TFastMode CMusAvaCapability::ResolveFastModeL( 
-        CSdpDocument& aSDP )
-    {
-    MUS_LOG( "mus: [MUSAVA]: -> CMusAvaCapability::ResolveFastModeL" )
-    MusSettingsKeys::TFastMode mode = MusSettingsKeys::EFastModeOff;
-    if ( MultimediaSharingSettings::FastStartupModeL() == 
-            MusSettingsKeys::EFastModeOn )
-        {
-        MUS_LOG( "mus: [MUSAVA] Checking if a=keywds:fastmode present..." )
-        const CSdpAttributeField* keywds = CMusAvaCapability::Attribute( 
-                    MusAvaCapabilityContext::SDPStringL( 
-                        SdpCodecStringConstants::EAttributeKeywds ),
-                    aSDP );
-        if ( keywds && 
-             keywds->Value().Compare( KCapabilitySDPAttributeFastMode ) == 0 )        
-            {
-            mode = MusSettingsKeys::EFastModeOn;
-            }
-        }
-    MUS_LOG( "mus: [MUSAVA]: <- CMusAvaCapability::ResolveFastModeL" )
-    return mode;
-    }
-
-// -----------------------------------------------------------------------------
-// CMusAvaCapability::ResolveFastModeL
-// -----------------------------------------------------------------------------
-// 
-void CMusAvaCapability::AddFastModeL( CSdpDocument& aSdp )
-    {
-    MUS_LOG( "mus: [MUSAVA]: -> CMusAvaCapability::AddFastModeL" )
-    if ( MultimediaSharingSettings::FastStartupModeL() == 
-            MusSettingsKeys::EFastModeOn )
-        {
-        CSdpAttributeField* fastmode = CSdpAttributeField::NewLC(
-             MusAvaCapabilityContext::SDPStringL( 
-                 SdpCodecStringConstants::EAttributeKeywds ), 
-             KCapabilitySDPAttributeFastMode );
-                                           
-        aSdp.AttributeFields().AppendL( fastmode );
-        CleanupStack::Pop( fastmode );
-        }    
-    MUS_LOG( "mus: [MUSAVA]: <- CMusAvaCapability::AddFastModeL" )        
-    }
-
 
 // -----------------------------------------------------------------------------
 // CMusAvaCapability::Attribute

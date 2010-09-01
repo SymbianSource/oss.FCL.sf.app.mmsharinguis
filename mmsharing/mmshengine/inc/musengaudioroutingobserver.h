@@ -19,13 +19,13 @@
 #ifndef MUSENGAUDIOROUTINGOBSERVER_H
 #define MUSENGAUDIOROUTINGOBSERVER_H
 
-// INCLUDES
-#include <e32std.h>
 
 // CLASS DECLARATION
 
 /**
-* An interface to get notifcations when the audio routing changes
+* An interface to be implemented by users of Multimedia Sharing Engine if 
+* they wish to be notified about changes in audio routing.
+*
 */
 class MMusEngAudioRoutingObserver
     {
@@ -33,10 +33,21 @@ class MMusEngAudioRoutingObserver
     public:
 
         /**
-        * The audio routing has changed.
+        * Indicates that some other application has changed audio routing.
+        * @param aShowNote ETrue if notification of current change should be
+        *        shown.
+        *
         */
-        virtual void AudioRoutingChanged() = 0;
+        virtual void AudioRoutingChanged( TBool aShowNote ) = 0;
+
+        /**
+        * Observer is required to give information whether audio route change
+        * is allowed currently.
+        * @param ETrue if change is allowed, otherwise EFalse
+        *
+        */
+        virtual TBool AudioRouteChangeAllowed() const = 0;
         
     };
 
-#endif // MUSENGAUDIOROUTINGOBSERVER_H
+#endif // INCLUDE GUARD

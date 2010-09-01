@@ -24,8 +24,6 @@
 #include "musmanagerservercommon.h"
 #include "mussessionproperties.h"
 #include "mustesthelp.h"
-#include "mussettings.h"
-#include "mussesseioninformationapi.h"
 #include <apgcli.h>
 #include <apgtask.h>
 #include <e32std.h>
@@ -94,8 +92,7 @@ void UT_CMusApplicationManager::Teardown()
     {
     delete iManager;
     iManager = NULL;
-    PropertyHelper::Close();
-    Dll::FreeTls(); // Used by the RProcess and TFindProcess stubs
+    PropertyHelper::Close(); 
     }
 
 
@@ -109,11 +106,7 @@ void UT_CMusApplicationManager::Teardown()
 void UT_CMusApplicationManager::UT_CMusApplicationManager_NewLL()
     {
     EUNIT_ASSERT( iManager );
-    TInt fastMode;
-    User::LeaveIfError( RProperty::Get( NMusSessionApi::KCategoryUid, 
-                                        NMusSessionApi::KFastMode, 
-                                        fastMode ) );
-    EUNIT_ASSERT_EQUALS( TInt( MusSettingsKeys::EFastModeOff ), fastMode );
+    EUNIT_ASSERT( iManager->iApaSession.iConnected );
     }
 
 
@@ -125,6 +118,7 @@ void UT_CMusApplicationManager::UT_CMusApplicationManager_NewLCL()
     {
     CMusApplicationManager* manager = CMusApplicationManager::NewLC();
     EUNIT_ASSERT( manager );
+    EUNIT_ASSERT( manager->iApaSession.iConnected );
     CleanupStack::PopAndDestroy( manager );
     }
 
@@ -135,10 +129,12 @@ void UT_CMusApplicationManager::UT_CMusApplicationManager_NewLCL()
 //
 void UT_CMusApplicationManager::UT_CMusApplicationManager_ApplicationRunningL()
     {
-    EUNIT_ASSERT( !iManager->ApplicationRunning() )
-   
-    iManager->StartApplicationL();
-    EUNIT_ASSERT( iManager->ApplicationRunning() )
+    TApaTask::iApplicationExist = EFalse;
+    EUNIT_ASSERT( !iManager->ApplicationRunning() );
+    EUNIT_ASSERT( TApaTask::iApaTaskCalledFunction == TApaTask::EExists )
+    TApaTask::iApplicationExist = ETrue;
+    EUNIT_ASSERT( iManager->ApplicationRunning() );
+    EUNIT_ASSERT( TApaTask::iApaTaskCalledFunction == TApaTask::EExists )
     }
 
 
@@ -149,13 +145,15 @@ void UT_CMusApplicationManager::UT_CMusApplicationManager_ApplicationRunningL()
 //
 void UT_CMusApplicationManager::UT_CMusApplicationManager_StartApplicationLL()
     {
-    EUNIT_ASSERT( !iManager->ApplicationRunning() )
+    TApaTask::iApplicationExist = EFalse;
     iManager->StartApplicationL();
-    EUNIT_ASSERT_EQUALS( PropertyHelper::GetCalledFunction(), RProperty::EDefine )
-    EUNIT_ASSERT( iManager->ApplicationRunning() )
-    
+    EUNIT_ASSERT( TApaTask::iApaTaskCalledFunction == TApaTask::EExists )
+    EUNIT_ASSERT_EQUALS( PropertyHelper::GetCalledFunction(), RProperty::ENone ) 
+
+    TApaTask::iApplicationExist = ETrue;
     iManager->StartApplicationL();
-    EUNIT_ASSERT( iManager->ApplicationRunning() )
+    EUNIT_ASSERT_EQUALS( PropertyHelper::GetCalledFunction(), RProperty::ENone ) 
+
     }
 
 
@@ -166,17 +164,16 @@ void UT_CMusApplicationManager::UT_CMusApplicationManager_StartApplicationLL()
 //
 void UT_CMusApplicationManager::UT_CMusApplicationManager_StopApplicationLL()
     {
-    // MuS not running
-    iManager->StopApplicationL(); 
+    TApaTask::iApplicationExist = EFalse;
+    iManager->StopApplicationL();
+    EUNIT_ASSERT( TApaTask::iApaTaskCalledFunction == TApaTask::EExists )    
     
-    // MuS running
-    User::LeaveIfError( 
-        Dll::SetTls( reinterpret_cast< TAny* >( 1 ) ) );     
-    // TLS is used by TFindProcess stub
+    
+    TApaTask::iApplicationExist = ETrue;
     iManager->StopApplicationL();
     TInt availability = MultimediaSharing::EMultimediaSharingAvailable;
-    TUint key( NMusSessionApi::KStatus );
-    RProperty::Get( key, availability );
+    TUint key(NMusSessionApi::KStatus);
+    RProperty::Get( key,availability);
     EUNIT_ASSERT_EQUALS( PropertyHelper::GetCalledFunction(), RProperty::EDefine ) 
     EUNIT_ASSERT_EQUALS( availability, 
                          MultimediaSharing::EMultimediaSharingNotAvailable )
@@ -184,11 +181,18 @@ void UT_CMusApplicationManager::UT_CMusApplicationManager_StopApplicationLL()
 
 
 // ---------------------------------------------------------------------------
-//
+// Asserts that tested method calls TApaTask::Exists and if task exists it
+// calls TApaTask::BringToForeground.
 // ---------------------------------------------------------------------------
 //
 void UT_CMusApplicationManager::UT_CMusApplicationManager_ShowApplicationLL()
     {
+    TApaTask::iApplicationExist = EFalse;
+    iManager->ShowApplicationL();
+    EUNIT_ASSERT( TApaTask::iApaTaskCalledFunction == TApaTask::EExists )
+    TApaTask::iApplicationExist = ETrue;
+    iManager->ShowApplicationL();
+    EUNIT_ASSERT( TApaTask::iApaTaskCalledFunction == TApaTask::EBringToForeground )
     }
 
 
@@ -209,7 +213,7 @@ void UT_CMusApplicationManager::UT_CMusApplicationManager_WriteSessionProperties
     array->AppendL( _L( "e" ) );
     array->AppendL( _L( "f" ) );
     array->AppendL( _L( "g" ) );
-    array->AppendL( _L( "0" ) ); //EFastModeOn
+    array->AppendL( _L( "h" ) );
 
     iManager->WriteSessionPropertiesL(
         MultimediaSharing::EMusLiveVideo,
@@ -225,40 +229,7 @@ void UT_CMusApplicationManager::UT_CMusApplicationManager_WriteSessionProperties
             *array ), KErrGeneral );
 
     PropertyHelper::SetErrorCode(KErrNone);
-    
-    
 
-    MultimediaSharingSettings::iVideoDirection = MusSettingsKeys::ETwoWayVideo;
-    iManager->WriteSessionPropertiesL(
-            MultimediaSharing::EMusLiveVideo,
-            (MultimediaSharing::TMusAvailabilityStatus) KErrNone,
-            *array );
-
-    TInt val;
-    User::LeaveIfError( RProperty::Get( NMusSessionApi::KCategoryUid, 
-                                        NMusSessionApi::KUseCase, 
-                                        val ) );
-    
-    MultimediaSharing::TMusUseCase usecase = 
-                static_cast< MultimediaSharing::TMusUseCase >( val );
-    
-    EUNIT_ASSERT( usecase == MultimediaSharing::EMusTwoWayVideo );
-        
-    
-    //Ensure if fast mode key is "disabled", value from session params
-    //won't be published
-    User::LeaveIfError( RProperty::Set( NMusSessionApi::KCategoryUid, 
-                                        NMusSessionApi::KFastMode, 
-                                        MusSettingsKeys::EFastModeDisabled ) );
-    iManager->WriteSessionPropertiesL(
-            MultimediaSharing::EMusLiveVideo,
-            (MultimediaSharing::TMusAvailabilityStatus) KErrNone,
-            *array );
-    User::LeaveIfError( RProperty::Get( NMusSessionApi::KCategoryUid, 
-                                        NMusSessionApi::KFastMode, 
-                                        val ) );
-    EUNIT_ASSERT_EQUALS( TInt( MusSettingsKeys::EFastModeDisabled ), val );
-    
     CleanupStack::PopAndDestroy( array );
     }
 
@@ -305,6 +276,18 @@ void UT_CMusApplicationManager::UT_CMusApplicationManager_SetPropertyL2L()
 
 
 // ---------------------------------------------------------------------------
+// Asserts that TApaTaskList::FindApp is called by tested method.
+// ---------------------------------------------------------------------------
+//
+void UT_CMusApplicationManager::UT_CMusApplicationManager_GetApaTaskL()
+    {
+    TApaTask::iApplicationExist = EFalse;
+    iManager->GetApaTask();
+    EUNIT_ASSERT( TApaTaskList::iCalledFunction == TApaTaskList::EFindApp )
+    }
+
+
+// ---------------------------------------------------------------------------
 // Sets a videosharing status. Asserts that RProperty leaves are passed
 // correctly to user and RProperty::Define is called.
 // ---------------------------------------------------------------------------
@@ -322,114 +305,6 @@ void UT_CMusApplicationManager::UT_CMusApplicationManager_SetStatusLL()
         MultimediaSharing::EMultimediaSharingAvailable ) );
     }
 
-
-// ---------------------------------------------------------------------------
-// CallProviderL Test
-// ---------------------------------------------------------------------------
-//
-void UT_CMusApplicationManager::UT_CMusApplicationManager_CallProviderLL()
-    {
-    TInt error = KErrNone;
-    
-    // Use Publish & Subscribe Keys to set CallProvider Name
-    _LIT( KProviderName1, "MultimediaSharing");
-    _LIT8( KProviderNameTest1, "MultimediaSharing");
-    
-    _LIT( KProviderNameEmpty1, "");
-    _LIT8( KProviderNameEmptyTest1, "");
-    
-    
-    // Valid Test:
-    TRAP( error, RProperty::Set(
-           NMusSessionInformationApi::KCategoryUid,
-           NMusSessionInformationApi::KMUSCallProvider,
-           KProviderName1 ));
-
-    if ( error == KErrNoMemory ) User::Leave( error );
-    EUNIT_ASSERT ( error == KErrNone );
-    
-    TBuf8<RProperty::KMaxPropertySize> providerName ;
-    iManager->CallProviderL( providerName );
-    
-    EUNIT_ASSERT( providerName == KProviderNameTest1 );
-    
-
-    //Empty Test
-    TRAP( error, RProperty::Set(
-           NMusSessionInformationApi::KCategoryUid,
-           NMusSessionInformationApi::KMUSCallProvider,
-           KProviderNameEmpty1 ));
-
-    if ( error == KErrNoMemory ) User::Leave( error );
-    EUNIT_ASSERT ( error == KErrNone );
-
-    iManager->CallProviderL( providerName );
-    
-    EUNIT_ASSERT( providerName == KProviderNameEmptyTest1 );
-    }
-
-
-// ---------------------------------------------------------------------------
-// ResolvePluginName Test
-// ---------------------------------------------------------------------------
-//
-void UT_CMusApplicationManager::UT_CMusApplicationManager_ResolvePluginNameLL()
-    {
-    // Default Engine Name to be returned
-    TInt error = KErrNone;
-    _LIT( KEngineName, "MultimediaSharing");
-    _LIT8( KEngineTestName, "MultimediaSharing");
-
-    // Test String for the Publish/Subscribe Keys.
-    _LIT( KProviderName, "MultimediaSharing");
-    _LIT( KProviderName1, "CS");
-  
-    TBuf8<RProperty::KMaxPropertySize> engineName ;
-
-    // Use Publish & Subscribe Keys to set Engine Name as 
-    // 1. MultimediaSharing  [Exact Name]
-    // 2. CS                 [No Match Found, Default MultiMediaSharing will be picked]
-
-    // 1. MultimediaSharing  [Exact Name]
-
-    TRAP( error, RProperty::Set(
-           NMusSessionInformationApi::KCategoryUid,
-           NMusSessionInformationApi::KMUSCallProvider,
-           KProviderName ));
-
-    if ( error == KErrNoMemory ) User::Leave( error );
-    EUNIT_ASSERT ( error == KErrNone );
-    
-    iManager->ResolvePluginNameL( engineName );
-    EUNIT_ASSERT( engineName == KEngineTestName );
-  
-    // 2. CS [No Match Found, Default MultiMediaSharing will be picked]
-    TRAP( error, RProperty::Set(
-           NMusSessionInformationApi::KCategoryUid,
-           NMusSessionInformationApi::KMUSCallProvider,
-           KProviderName1 ));
-    
-    if ( error == KErrNoMemory ) User::Leave( error );
-    EUNIT_ASSERT ( error == KErrNone );
-
-    iManager->ResolvePluginNameL( engineName );
-    EUNIT_ASSERT( engineName == KEngineTestName );
-    }
-
-// ---------------------------------------------------------------------------
-// Command line arg test
-// ---------------------------------------------------------------------------
-//
-void UT_CMusApplicationManager::UT_CMusApplicationManager_CreateCommandLineArgsLCL()
-    {
-    _LIT( KEnginePluginName, "MultimediaSharing" );
-    HBufC* cmdLineArgs = iManager->CreateCommandLineArgsLC();
-    
-    EUNIT_ASSERT( cmdLineArgs != NULL )
-    EUNIT_ASSERT_EQUALS( KEnginePluginName(), *cmdLineArgs )
-    
-    CleanupStack::PopAndDestroy( cmdLineArgs );
-    }
 
 // ======== EUNIT TEST TABLE ========
 
@@ -503,31 +378,17 @@ EUNIT_TEST(
     SetupL, UT_CMusApplicationManager_SetPropertyL2L, Teardown )
 
 EUNIT_TEST(
+    "GetApaTask - test ",
+    "CMusApplicationManager",
+    "GetApaTask",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusApplicationManager_GetApaTaskL, Teardown )
+
+EUNIT_TEST(
     "SetStatusL - test ",
     "CMusApplicationManager",
     "SetStatusL",
     "FUNCTIONALITY",
     SetupL, UT_CMusApplicationManager_SetStatusLL, Teardown )
 
-EUNIT_TEST(
-    "CallProviderL - test ",
-    "CMusApplicationManager",
-    "CallProviderL",
-    "FUNCTIONALITY",
-    SetupL, UT_CMusApplicationManager_CallProviderLL, Teardown )    
-    
-EUNIT_TEST(
-    "ResolvePluginNameL - test ",
-    "CMusApplicationManager",
-    "ResolvePluginNameL",
-    "FUNCTIONALITY",
-    SetupL, UT_CMusApplicationManager_ResolvePluginNameLL, Teardown ) 
-    
-EUNIT_TEST(
-    "CreateCommandLineLC - test ",
-    "CMusApplicationManager",
-    "CreateCommandLineLC",
-    "FUNCTIONALITY",
-    SetupL, UT_CMusApplicationManager_CreateCommandLineArgsLCL, Teardown )  
-    
 EUNIT_END_TEST_TABLE

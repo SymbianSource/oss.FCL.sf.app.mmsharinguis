@@ -20,7 +20,6 @@
 
 #include <sipstrconsts.h>
 #include <bamdesca.h>
-#include <mussettingskeys.h>
 
 class CMusAvaCapabilityQueryBase;
 
@@ -68,10 +67,6 @@ public:
     
     virtual TBool CapabilityQueryAnswered( TBool aAnswered = EFalse ) = 0;
     
-    /**
-     * Advertise about fast mode capability 
-     */
-    virtual void FastModeResolved( MusSettingsKeys::TFastMode aMode ) = 0;
     };
 
 

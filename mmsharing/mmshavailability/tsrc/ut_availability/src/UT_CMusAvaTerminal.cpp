@@ -40,6 +40,7 @@
 #include "musavasharedobject.h"
 #include "mussettings.h"
 
+_LIT8( KCapabilityTestOriginatorSIPAddressUri8, "sip:user@domain.com");
 
 // CONSTRUCTION
 UT_CMusAvaTerminal* UT_CMusAvaTerminal::NewL()
@@ -117,21 +118,13 @@ void UT_CMusAvaTerminal::SetupL(  )
         }
     
     CSipSseTestTls::OpenL();
-    iStorage = CSipSseTestTls::Storage();
-    iStorage->Set( MusSettingsKeys::KFastStartupMode, 
-        MusSettingsKeys::EFastModeOff );
     }
 
 
 void UT_CMusAvaTerminal::Teardown(  )
     {
-    if ( iStorage )
-        {
-        iStorage->Clear();
-        CSipSseTestTls::Close();
-        iStorage = NULL;
-        }
 
+    CSipSseTestTls::Close();
     delete iTerminal;
     delete iOptionHandler;
     delete iConcreteSettings;
@@ -226,7 +219,7 @@ void UT_CMusAvaTerminal::UT_CMusAvaTerminal_ExecuteQueryLL(  )
     if ( !iProfile->iArray )
         {
         iProfile->iArray = new ( ELeave ) CDesC8ArrayFlat( 1 );
-        iProfile->iArray->AppendL( _L8("sip:user@domain.com") );
+        iProfile->iArray->AppendL( KCapabilityTestOriginatorSIPAddressUri8 );
         }
     
     EUNIT_ASSERT( iExchange->Terminals().Count() == 0 );
@@ -265,6 +258,8 @@ void UT_CMusAvaTerminal::UT_CMusAvaTerminal_ExecuteQueryLL(  )
     EUNIT_ASSERT( terminal.iQueries == 1 );
     EUNIT_ASSERT( terminal.iQuery == query );
     
+
+    CMusAvaCapabilityQuery* tmpQuery = query;
     query = CMusAvaCapabilityQuery::NewL( *iCapability,
                                         *iSIPConnection,
                                         *iProfile,
@@ -272,12 +267,22 @@ void UT_CMusAvaTerminal::UT_CMusAvaTerminal_ExecuteQueryLL(  )
     CleanupStack::PushL( query );
     EUNIT_ASSERT( iExchange->Terminals().Count() == 1 );
     EUNIT_ASSERT( terminal.iQueries == 2 );
-    
+ 
+
     //Second query cannot be executed
     EUNIT_ASSERT_SPECIFIC_LEAVE( terminal.ExecuteQueryL( query ),
                                  KErrAlreadyExists )
     EUNIT_ASSERT( terminal.iQuery != query );
+
+    
+    //Uri identical case
+	terminal.iQuery = NULL;
+	query->iRemoteUri.Copy( KCapabilityTestOriginatorSIPAddressUri8 );
+	EUNIT_ASSERT_SPECIFIC_LEAVE( terminal.ExecuteQueryL( query ),
+								 KErrNotSupported )      
+        
     CleanupStack::PopAndDestroy( query );
+    delete tmpQuery;
     }
 
 
@@ -454,7 +459,7 @@ void UT_CMusAvaTerminal::UT_CMusAvaTerminal_QueryRequestedLL(  )
     
     CleanupStack::PopAndDestroy( options );
 
-    // with Asserted Identity
+    // with Asserted Identity, check also that SDP of received request is used
     options =   
         CapabilityTestHelper::OptionsRequestL( KCapabilityTestAddress_A,
                                          KCapabilityTestAddress_B,
@@ -462,14 +467,40 @@ void UT_CMusAvaTerminal::UT_CMusAvaTerminal_QueryRequestedLL(  )
                                          KCapabilitySwisFeature,
                                          KCapabilityTestAcceptHeader,
                                          KCapabilityTestTerminalID_B,
-                                         KCapabilityPAssertedIdentity );
+                                         KCapabilityPAssertedIdentity,
+                                         KCapabilityTestSDP);
     CleanupStack::PushL( options );        
-    iTerminal->QueryRequestedL( *options );            
+    iTerminal->QueryRequestedL( *options );   
+
+    
     EUNIT_ASSERT( iConcreteSettings->SipAddresses().MdcaCount() == 1 );    
+    EUNIT_ASSERT_EQUALS( iConcreteSettings->iVideoCodecs->MdcaCount(), 1 );
+    EUNIT_ASSERT_EQUALS( iConcreteSettings->iVideoCodecs->MdcaPoint(0), _L("H263-2000/90000") );
     CleanupStack::PopAndDestroy( options );
   
-
     CSipSseTestTls* server = CSipSseTestTls::Storage();
+    CSipSseTestTls::Storage()->Clear();
+    iTerminal->iRequestedQuery = NULL;
+    EUNIT_ASSERT( iTerminal->RequestedQuery() == NULL );
+    
+    // with Asserted Identity, check also that SDP of received request is used
+   options =   
+        CapabilityTestHelper::OptionsRequestL( KCapabilityTestAddress_A,
+                                         KCapabilityTestAddress_B,
+                                         KCapabilitySwisFeature,
+                                         KCapabilitySwisFeature,
+                                         KCapabilityTestAcceptHeader,
+                                         KCapabilityTestTerminalID_B,
+                                         KCapabilityPAssertedIdentity,
+                                         KCapabilityTestSDP264And263);
+    CleanupStack::PushL( options );        
+    iTerminal->QueryRequestedL( *options );   
+    EUNIT_ASSERT( iConcreteSettings->SipAddresses().MdcaCount() == 1 );    
+    EUNIT_ASSERT_EQUALS( iConcreteSettings->iVideoCodecs->MdcaCount(), 2 );
+    EUNIT_ASSERT_EQUALS( iConcreteSettings->iVideoCodecs->MdcaPoint(0), _L("H264/90000") );
+    EUNIT_ASSERT_EQUALS( iConcreteSettings->iVideoCodecs->MdcaPoint(1), _L("H263-2000/90000") );
+    CleanupStack::PopAndDestroy( options );
+    
     CSipSseTestTls::Storage()->Clear();
     
     iTerminal->iRequestedQuery = NULL;
@@ -481,7 +512,7 @@ void UT_CMusAvaTerminal::UT_CMusAvaTerminal_QueryRequestedLL(  )
                                          KCapabilityTestDataFeature,
                                          KCapabilitySwisFeature,
                                          KCapabilityTestAcceptHeader,
-                                         KCapabilityTestTerminalID_B );
+                                         KCapabilityTestTerminalID_B);
     CleanupStack::PushL( options );
     
     iTerminal->QueryRequestedL( *options );

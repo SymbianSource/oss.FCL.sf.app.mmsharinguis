@@ -56,6 +56,9 @@ CMusAvaSettingsImp::~CMusAvaSettingsImp()
 
     delete iContactName;
     iContactName = NULL;
+    
+    delete iOptionSentTelNumber;
+    iOptionSentTelNumber = NULL ;
 
     delete iSipAddressProposal;
     iSipAddressProposal = NULL ;
@@ -81,8 +84,7 @@ CMusAvaSettingsImp::~CMusAvaSettingsImp()
         iAudioCodecs = NULL ;
         }
     
-    delete iContactResolvingUri;
-    
+
     MUS_LOG( "mus: [MUSAVA]	<- CMusAvaSettingsImp::~CMusAvaSettingsImp()" )
     }
 
@@ -90,9 +92,9 @@ CMusAvaSettingsImp::~CMusAvaSettingsImp()
 // C++ Constructor
 // -----------------------------------------------------------------------------
 //
-CMusAvaSettingsImp::CMusAvaSettingsImp() :
-    iFastMode( MusSettingsKeys::EFastModeOff )
+CMusAvaSettingsImp::CMusAvaSettingsImp()
     {
+
     }
 
 // -----------------------------------------------------------------------------
@@ -103,6 +105,8 @@ void CMusAvaSettingsImp::ConstructL()
     {
     MUS_LOG( "mus: [MUSAVA]	-> CMusAvaSettingsImp::ConstructL()" )
     iTelNumber = HBufC::NewL( 0 );
+    
+    iOptionSentTelNumber = HBufC::NewL( 0 );
 
     iContactName = HBufC::NewL( 0 );
 
@@ -119,7 +123,8 @@ void CMusAvaSettingsImp::ConstructL()
     iAudioCodecs = new( ELeave ) CDesCArrayFlat( 1 );
 
     MUS_LOG( "mus: [MUSAVA]	<- CMusAvaSettingsImp::ConstructL()" )
-    }        
+    }  
+
 // -----------------------------------------------------------------------------
 // 
 // -----------------------------------------------------------------------------
@@ -128,6 +133,7 @@ MMusAvaSettings::TManualActivation CMusAvaSettingsImp::ManualActivation()
 	{
 	return iManualActivation;	
 	}
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -138,6 +144,51 @@ const TDesC& CMusAvaSettingsImp::TelNumber() const
     MUS_LOG( "mus: [MUSAVA]	<- CMusAvaSettingsImp::TelNumber()" )
     return *iTelNumber;
     }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusAvaSettingsImp::SetOptionSentNumber( const TDesC& aTelNumber )
+	{
+    MUS_LOG( "mus: [MUSAVA]	-> CMusAvaSettingsImp::SetOptionSentNumber() " )
+    MUS_LOG_TDESC( "mus: [MUSAVA]	   aTelNumber = ", aTelNumber )
+    delete iOptionSentTelNumber;
+    iOptionSentTelNumber = NULL ;
+    TRAPD ( error , iOptionSentTelNumber = aTelNumber.AllocL() );
+    if ( error )
+    	{
+        MUS_LOG1("CMusAvaSettingsImp::SetOptionSentNumber() leave code: %d ", error);
+    	}
+    MUS_LOG( "mus: [MUSAVA]	<- CMusAvaSettingsImp::SetOptionSentNumber() " )
+	}
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+const TDesC& CMusAvaSettingsImp::OptionSentTelNumber() const
+	{
+    MUS_LOG( "mus: [MUSAVA]	-> CMusAvaSettingsImp::OptionSentTelNumber() " )
+	return *iOptionSentTelNumber;
+	}
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusAvaSettingsImp::ReleaseOptionSentNumber ()
+	{
+	MUS_LOG( "mus: [MUSAVA]	-> CMusAvaSettingsImp::ReleaseOptionSentNumber() " )
+	delete iOptionSentTelNumber;
+	iOptionSentTelNumber = NULL;
+	TRAPD ( err , iOptionSentTelNumber = HBufC::NewL( 0 ) );
+    if ( err )
+    	{
+        MUS_LOG1("CMusAvaSettingsImp::ReleaseOptionSentNumber() leave code: %d ", err);
+    	}
+	MUS_LOG( "mus: [MUSAVA]	<- CMusAvaSettingsImp::ReleaseOptionSentNumber() " )
+	}
 
 // -----------------------------------------------------------------------------
 //
@@ -394,15 +445,6 @@ void CMusAvaSettingsImp::SetObserver( MMusAvaSettingsObserver& aObserver )
 //
 // -----------------------------------------------------------------------------
 //
-MMusAvaSettingsObserver* CMusAvaSettingsImp::Observer()
-    {
-    return iObserver;
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
 void CMusAvaSettingsImp::SetManualActivation( TManualActivation aManualActivation )
     {
     MUS_LOG( "mus: [MUSAVA]	-> CMusAvaSettingsImp::SetManualActivation" )
@@ -429,7 +471,6 @@ MMusAvaSettingsObserver::TApplicationState CMusAvaSettingsImp::ApplicationState(
     return state;
     }
 
-
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -447,48 +488,23 @@ void CMusAvaSettingsImp::SetCallDirection( TInt aDirection )
 	{
 	iCallDirection = aDirection;	
 	}
+    
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+TInt CMusAvaSettingsImp::CallPrivacy()
+	{
+	return iCallPrivacy;	
+	}
+	
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusAvaSettingsImp:: SetCallPrivacy( TInt aPrivacy )
+	{
+	iCallPrivacy = aPrivacy;	
+	}
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void CMusAvaSettingsImp::SetFastMode( MusSettingsKeys::TFastMode aMode )
-    {
-    iFastMode = aMode;    
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-MusSettingsKeys::TFastMode CMusAvaSettingsImp::FastMode() const
-    {
-    return iFastMode;
-    }
-
-// -----------------------------------------------------------------------------
-// In case of not having tel number, contact for remote end may be searched
-// based on sip uri
-// -----------------------------------------------------------------------------
-//
-void CMusAvaSettingsImp::SetUriForContactResolvingL( 
-    const TDesC& aRemoteUri )
-    {
-    HBufC* tempResolvingUri = aRemoteUri.AllocL();
-    delete iContactResolvingUri;
-    iContactResolvingUri = tempResolvingUri;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-TPtrC CMusAvaSettingsImp::ContactResolvingUri()
-    {
-    TPtrC resolvingUri( KNullDesC );
-    if ( iContactResolvingUri )
-        {
-        resolvingUri.Set( iContactResolvingUri->Des() );
-        }
-    return resolvingUri;
-    }
+// end of file

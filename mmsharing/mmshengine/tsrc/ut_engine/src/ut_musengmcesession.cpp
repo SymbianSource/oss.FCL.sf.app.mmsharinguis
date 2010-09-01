@@ -28,12 +28,9 @@
 #include "musengsessiondurationtimer.h"
 #include "musengtelephoneutils.h"
 #include "musengmceutils.h"
-#include "mussessionproperties.h"
-#include "contactenginestub.h"
-#include "musenglivevideoplayer.h"
 
 //  SYSTEM INCLUDES
-#include <lcsourcefilecontrol.h>
+
 #include <digia/eunit/eunitmacros.h>
 #include <mceinsession.h>
 #include <mcevideostream.h>
@@ -45,37 +42,9 @@
 #include <mcevideocodec.h>
 #include <mceaudiocodec.h>
 #include <audiopreference.h>
-#include <mceavccodec.h>
 #include <mceh263codec.h>
-#include <mcecamerasource.h>
-#include <mcefilesource.h>
-#include <telmicmutestatuspskeys.h>
+#include <mceavccodec.h>
 
-// CONSTANTS
-
-_LIT8( KMusAvcBitrateLevel1TestText, "TestTextForAvcBrL1Level" );
-_LIT8( KMusAvcBitrateLevel1bTestText, "TestTextForAvcBrL1bLevel" );
-_LIT8( KMusAvcBitrateLevel1_1TestText, "TestTextForAvcBrL1_1Level" );
-_LIT8( KMusAvcBitrateLevel1_2TestText, "TestTextForAvcBrL1_2Level" );
-_LIT8( KMusAvcBitrateLevel1_3TestText, "TestTextForAvcBrL1_3Level" );
-_LIT8( KMusAvcBitrateLevel2TestText, "TestTextForAvcBrL2Level" );
-
-_LIT8( KMusAvcBitrateLevel_1b_ConfigKey, "AvcBrL1b=TestTextForAvcBrL1bLevel;" );
-
-_LIT8( KMusAvcBitrateLevel_1_1_ConfigKey, 
-"AvcBrL1_1=TestTextForAvcBrL1_1Level;");
-
-_LIT8( KMusAvcBitrateLevels_1_1_And_1b_ConfigKeys, 
-"AvcBrL1_1=TestTextForAvcBrL1_1Level;\
-AvcBrL1b=TestTextForAvcBrL1bLevel;" );
-
-_LIT8( KMusAvcAllLevelsConcatenation,
-"AvcBrL1=TestTextForAvcBrL1Level;\
-AvcBrL1b=TestTextForAvcBrL1bLevel;\
-AvcBrL1_1=TestTextForAvcBrL1_1Level;\
-AvcBrL1_2=TestTextForAvcBrL1_2Level;\
-AvcBrL1_3=TestTextForAvcBrL1_3Level;\
-AvcBrL2=TestTextForAvcBrL2Level;" );
 
 
 // -----------------------------------------------------------------------------
@@ -141,37 +110,34 @@ void UT_CMusEngMceSession::ConstructL()
 //
 void UT_CMusEngMceSession::SetupL(  )
     {
-    iLcSessionObserver = new( ELeave )CLcSessionObserverStub;
-    iLcUiProvider = new( ELeave )CLcUiProviderStub;
-
-    User::LeaveIfError( RProperty::Set( NMusSessionApi::KCategoryUid,
-                                        NMusSessionApi::KRemoteSipAddress,
-                                        KTestRecipientSipUri ) );    
+    iObserver = new( ELeave ) CMusEngObserverStub;
+    iLiveSession = CMusEngLiveSession::NewL( KNullDesC,
+                                             TRect(0,0, 100,100),
+                                             *iObserver,
+                                             *iObserver,
+                                             *iObserver );
     
-    iLiveSession = CMusEngLiveSession::NewL();
-    iLiveSession->SetLcSessionObserver( iLcSessionObserver );
-    iLiveSession->SetLcUiProvider( iLcUiProvider );    
-    
-    iSomeOtherSession = CMusEngLiveSession::NewL();
-    iSomeOtherSession->SetLcSessionObserver( iLcSessionObserver );
-    iSomeOtherSession->SetLcUiProvider( iLcUiProvider );
-    
+    iSomeOtherSession = CMusEngLiveSession::NewL( KNullDesC,
+                                                  TRect(0,0, 100,100),
+                                                  *iObserver,
+                                                  *iObserver,
+                                                  *iObserver );
     ESTABLISH_OUT_SESSION( iSomeOtherSession );
-   
-    iClipSession = CMusEngClipSession::NewL();
-    iClipSession->SetLcSessionObserver( iLcSessionObserver );
-    iClipSession->SetLcUiProvider( iLcUiProvider );
-    MLcSourceFileControl* sourceFileControl =
-        iClipSession->LocalVideoPlayer()->LcSourceFileControl();
-    sourceFileControl->SetLcFileNameL( KTestAvcVideoFileName() );
+    
+    iClipSession = CMusEngClipSession::NewL( TRect(0,0, 100,100),
+                                             *iObserver,
+                                             *iObserver,
+                                             *iObserver );                                             
+    iClipSession->SetClipL( KTestVideoFileName() );
 
-    delete iClipSession->iVideoCodecList;
-    iClipSession->iVideoCodecList = NULL;
-    iClipSession->iVideoCodecList = KMceSDPNameH264().AllocL();
+    TBuf<50> videoCodec;
+    videoCodec.Copy( KMceSDPNameH264() );
+    iClipSession->SetSupportedVideoCodecListL(videoCodec);
     
     // Construct and establish an incoming session
-    iReceiveSession = CMusEngReceiveSession::NewL();
-    iReceiveSession->SetLcSessionObserver( iLcSessionObserver ); 
+    iReceiveSession = CMusEngReceiveSession::NewL( TRect(0,0, 100,100), 
+                                                   *iObserver,
+                                                   *iObserver );
     CMceInSession* inSession = CMceInSession::NewL( *iReceiveSession->iManager,
                                                     KTestOriginator() );
                                                     
@@ -187,10 +153,11 @@ void UT_CMusEngMceSession::SetupL(  )
                                                         inSession, 
                                                         &iContainer );
     iReceiveSession->iSession->iState = CMceSession::EProceeding;
-    iReceiveSession->EstablishLcSessionL();
-   
-    iLcSessionObserver->Reset();
+    iReceiveSession->AcceptInvitationL( ETrue );
+    
+    iObserver->Reset();
     }
+
 
 // -----------------------------------------------------------------------------
 //
@@ -201,282 +168,47 @@ void UT_CMusEngMceSession::Teardown(  )
     delete iLiveSession;
     delete iClipSession;
     delete iReceiveSession;
-    delete iLcSessionObserver;
-    delete iLcUiProvider;
+    delete iObserver;
     delete iSomeOtherSession;
-    PropertyHelper::Close();
-    // Delete static data from CenRep stub
-    CRepository::iStaticWriteAvcKeysToStaticData = EFalse;
-    CRepository::DeleteStubAvcConfigKeys();
-    CRepository::ResetStubGlobal();
-    CRepository::iForceFailWithCode = KErrNone;
+    
     }
 
 
 
 // TEST CASES
 
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
-void UT_CMusEngMceSession::UT_LcSessionStateL()
+void UT_CMusEngMceSession::UT_CMusEngMceSession_TerminateLL()
     {
-    // No MCE session -> MLcSession::EUninitialized
-    EUNIT_ASSERT_EQUALS( MLcSession::EUninitialized, 
-                         iLiveSession->LcSessionState() )
-                         
-    // MLcSession::EOpen
-    ESTABLISH_OUT_SESSION( iLiveSession )
-    EUNIT_ASSERT_EQUALS( TInt( CMceSession::EEstablished ),
-                         TInt( iLiveSession->iSession->iState ) )  
-    EUNIT_ASSERT_EQUALS( TInt( MLcSession::EOpen ), 
-                         TInt( iLiveSession->LcSessionState() ) )
-
-    // MLcSession::EInitialized
-    iLiveSession->iSession->iState = CMceSession::EIdle;
-    EUNIT_ASSERT_EQUALS( TInt( MLcSession::EInitialized ), 
-                         TInt( iLiveSession->LcSessionState() ) )
-
-    // MLcSession::EReceived
-    iLiveSession->iSession->iState = CMceSession::EIncoming;
-    EUNIT_ASSERT_EQUALS( TInt( MLcSession::EReceived ),
-                         TInt( iLiveSession->LcSessionState() ) )
-
-    iLiveSession->iSession->iState = CMceSession::EProceeding; 
-    EUNIT_ASSERT_EQUALS( TInt( MLcSession::EReceived ), 
-                         TInt( iLiveSession->LcSessionState() ) )
+    TRAPD( error, iLiveSession->TerminateL() );
+    MUS_TEST_FORWARD_ALLOC_FAILURE( error );
+    EUNIT_ASSERT( error == KErrNotReady );
     
-    iLiveSession->iSession->iState = CMceSession::EReserving; 
-    EUNIT_ASSERT_EQUALS( TInt( MLcSession::EReceived ), 
-                         TInt( iLiveSession->LcSessionState() ) )   
+    ESTABLISH_OUT_SESSION( iLiveSession );
     
-    // MLcSession::EOpening
-    iLiveSession->iSession->iState = CMceSession::EOffering;
-    EUNIT_ASSERT_EQUALS( TInt( MLcSession::EOpening ), 
-                         TInt( iLiveSession->LcSessionState() ) )
+    EUNIT_ASSERT( iLiveSession->iSession->iState == CMceSession::EEstablished );
     
-    iLiveSession->iSession->iState = CMceSession::EAnswering;
-    EUNIT_ASSERT_EQUALS( TInt( MLcSession::EOpening ), 
-                         TInt( iLiveSession->LcSessionState() ) )
-
-    // MLcSession::EClosing
-    iLiveSession->iSession->iState = CMceSession::ECancelling; 
-    EUNIT_ASSERT_EQUALS( TInt( MLcSession::EClosing ), 
-                         TInt( iLiveSession->LcSessionState() ) )
+    iLiveSession->TerminateL();
     
-    iLiveSession->iSession->iState = CMceSession::ETerminating; 
-    EUNIT_ASSERT_EQUALS( TInt( MLcSession::EClosing ), 
-                         TInt( iLiveSession->LcSessionState() ) )
+    EUNIT_ASSERT( iLiveSession->iSession->iState == CMceSession::ETerminating );
     
-    // MLcSession::EClosed
-    iLiveSession->iSession->iState = CMceSession::ETerminated;
-    EUNIT_ASSERT_EQUALS( TInt( MLcSession::EClosed ), 
-                         TInt( iLiveSession->LcSessionState() ) )   
     }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_RemoteVideoPlayerL()
-    {
-    EUNIT_ASSERT( iLiveSession->CMusEngMceSession::RemoteVideoPlayer() == NULL )
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_LocalVideoPlayerL()
-    {
-    EUNIT_ASSERT( iLiveSession->CMusEngMceSession::LocalVideoPlayer() == NULL )
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_LocalDisplayNameL()
-    {
-    EUNIT_ASSERT_EQUALS( KNullDesC(), iLiveSession->LocalDisplayName() )
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_RemoteDisplayNameL()
-    {
-    // Clear the thread common storage to ensrue its not polluted. 
-    User::LeaveIfError( RProperty::Set( NMusSessionApi::KCategoryUid,
-                                   NMusSessionApi::KContactName,
-                                   KNullDesC) );
-    
-    EUNIT_ASSERT_EQUALS( KNullDesC(), iLiveSession->RemoteDisplayName() )
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_RemoteDetailsL()
-    {
-    // Clear the thread common storage to ensrue its not polluted. 
-    User::LeaveIfError( RProperty::Set( NMusSessionApi::KCategoryUid,
-                                   NMusSessionApi::KTelNumber,
-                                   KNullDesC) );
-    
-    EUNIT_ASSERT_EQUALS( KNullDesC(), iLiveSession->RemoteDetails() )
-    
-    _LIT( KMusTestDetails, "1222233499" );
-    User::LeaveIfError( RProperty::Set( NMusSessionApi::KCategoryUid,
-                                   NMusSessionApi::KTelNumber,
-                                   KMusTestDetails) );
-    EUNIT_ASSERT_EQUALS( KMusTestDetails(), iLiveSession->RemoteDetails() )
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_SetParameterL()
-    {
-    const TInt dummy( 0 );
-    EUNIT_ASSERT_EQUALS( KErrNotSupported, 
-                         iLiveSession->SetParameter( dummy, dummy ) )
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_ParameterValueL()
-    {
-    const TInt dummy( 0 );
-    EUNIT_ASSERT_EQUALS( KErrNotSupported, 
-                         iLiveSession->ParameterValue( dummy ) )
-    }
-
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_IsLcAudioMutedL()
-    {
-    // No MCE session
-    EUNIT_ASSERT_SPECIFIC_LEAVE( iLiveSession->IsLcAudioMutedL(), KErrNotReady )
-    
-    ESTABLISH_OUT_SESSION( iLiveSession )
-    
-    // No audio
-    EUNIT_ASSERT( iLiveSession->IsLcAudioMutedL() )
-    
-    // Contains audio, but explicitly muted
-    CMceAudioStream* audioStream = CMceAudioStream::NewLC();
-    iLiveSession->iSession->AddStreamL( audioStream );
-    CleanupStack::Pop( audioStream );
-    iLiveSession->iExplicitlyMuted = ETrue;
-    EUNIT_ASSERT( iLiveSession->IsLcAudioMutedL() )
-    
-    // Contains audio, not muted
-    iLiveSession->iExplicitlyMuted = EFalse;
-    EUNIT_ASSERT( !iLiveSession->IsLcAudioMutedL() )
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_MuteLcAudioL()
-    {
-    // No MCE session
-    EUNIT_ASSERT_SPECIFIC_LEAVE( iLiveSession->IsLcAudioMutedL(), KErrNotReady )
-    
-    ESTABLISH_OUT_SESSION( iLiveSession )
-    
-    // Mute 
-    iLiveSession->MuteLcAudioL( ETrue );
-    EUNIT_ASSERT( iLiveSession->iExplicitlyMuted )
-    EUNIT_ASSERT( iLiveSession->IsLcAudioMutedL() )
-    
-    // Unmute
-    iLiveSession->MuteLcAudioL( EFalse );
-    EUNIT_ASSERT( !iLiveSession->iExplicitlyMuted )
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_MuteLcMicL()
-    {
-    // Mute
-    iLiveSession->MuteLcMicL( ETrue );
-    User::LeaveIfError( RProperty::Set( KPSUidTelMicrophoneMuteStatus,
-                                        KTelMicrophoneMuteState,
-                                        EPSTelMicMuteOn ) );  
-    EUNIT_ASSERT( iLiveSession->IsLcMicMutedL() )
-    
-    // Unmute
-    iLiveSession->MuteLcMicL( EFalse );
-    User::LeaveIfError( RProperty::Set( KPSUidTelMicrophoneMuteStatus,
-                                        KTelMicrophoneMuteState,
-                                        EPSTelMicMuteOff ) );    
-    EUNIT_ASSERT( !iLiveSession->IsLcMicMutedL() )
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_EnableLcLoudspeakerL()
-    {
-    // Check that enabling the loudspeaker is allowed
-    EUNIT_ASSERT( iLiveSession->IsEnablingLcLoudspeakerAllowed() )
-    
-    // Disable 
-    iLiveSession->EnableLcLoudspeakerL( EFalse );
-    EUNIT_ASSERT( !iLiveSession->IsLcLoudspeakerEnabled() )
-    
-    // Enable
-    iLiveSession->EnableLcLoudspeakerL( ETrue );
-    EUNIT_ASSERT( iLiveSession->IsLcLoudspeakerEnabled() )
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_SetLcVolumeL()
-    {
-    ESTABLISH_OUT_SESSION( iLiveSession )
-    
-    // Set volume
-    const TInt volume( 5 );
-    iLiveSession->SetLcVolumeL( volume );
-    EUNIT_ASSERT_EQUALS( volume, iLiveSession->LcVolumeL() );
-    
-    // Increase volume
-    iLiveSession->IncreaseLcVolumeL();
-    EUNIT_ASSERT_EQUALS( volume+1, iLiveSession->LcVolumeL() );
-    
-    // Decrease volume
-    iLiveSession->DecreaseLcVolumeL();
-    EUNIT_ASSERT_EQUALS( volume, iLiveSession->LcVolumeL() );    
-    }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //  
-void UT_CMusEngMceSession::UT_GetSessionTimeL()
+void UT_CMusEngMceSession::UT_CMusEngMceSession_GetSessionTimeL()
     {
     EUNIT_ASSERT( iLiveSession->GetSessionTime() < TTimeIntervalSeconds( 0 ) );
     
     // Invite
-    iLiveSession->EstablishLcSessionL();
+    iLiveSession->InviteL( KTestRecipientSipUri );
     
     EUNIT_ASSERT( iLiveSession->GetSessionTime() < TTimeIntervalSeconds( 0 ) );
     
@@ -487,68 +219,546 @@ void UT_CMusEngMceSession::UT_GetSessionTimeL()
     TTimeIntervalSeconds sessionTime = iLiveSession->GetSessionTime();
     EUNIT_ASSERT( sessionTime >= TTimeIntervalSeconds( 0 ) );
     }
+    
+void UT_CMusEngMceSession::UT_CMusEngMceSession_IsDisplayEnabledLL()
+    {
+    TRAPD( error, iLiveSession->IsDisplayEnabledL() );
+    MUS_TEST_FORWARD_ALLOC_FAILURE( error );
+    EUNIT_ASSERT( error == KErrNotReady );
+
+    ESTABLISH_OUT_SESSION( iLiveSession );
+     
+    //Enable
+    CMceDisplaySink* display = 
+                    MusEngMceUtils::GetDisplayL( *(iLiveSession->iSession) );
+    display->iIsEnabled = ETrue;
+    EUNIT_ASSERT( iLiveSession->IsDisplayEnabledL() );
+    
+    //Disable
+    display->iIsEnabled = EFalse;
+    EUNIT_ASSERT( !iLiveSession->IsDisplayEnabledL() );
+    
+    // Display is reported as disabled when session state is terminated or idle
+    iLiveSession->iSession->iState = CMceSession::ETerminated;
+    display->iIsEnabled = ETrue;
+    EUNIT_ASSERT( !iLiveSession->IsDisplayEnabledL() );
+    iLiveSession->iSession->iState = CMceSession::EIdle;
+    EUNIT_ASSERT( !iLiveSession->IsDisplayEnabledL() );
+    }
+	
+	
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngMceSession::UT_CMusEngMceSession_ConnectionActiveL()
+    {
+    EUNIT_ASSERT( !iLiveSession->ConnectionActive() );
+    
+    ESTABLISH_OUT_SESSION( iLiveSession );
+    
+    EUNIT_ASSERT( iLiveSession->ConnectionActive() );
+    }
+
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
-void UT_CMusEngMceSession::UT_HandleTerminationL()
+void UT_CMusEngMceSession::UT_CMusEngMceSession_ContainsAudioLL()
+    {
+    // Try without session, fails
+    EUNIT_ASSERT_SPECIFIC_LEAVE( iLiveSession->ContainsAudioL(), KErrNotReady )
+    
+    // Establish session without audio
+    ESTABLISH_OUT_SESSION( iLiveSession )
+    
+    EUNIT_ASSERT( !iLiveSession->ContainsAudioL() )
+    
+    // Establish session with audio
+    ESTABLISH_OUT_SESSION( iClipSession )
+    
+    EUNIT_ASSERT( iClipSession->ContainsAudioL() )
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngMceSession::UT_CMusEngMceSession_IsMutedLL()
+    {
+    // Try without session, fails
+    EUNIT_ASSERT_SPECIFIC_LEAVE( iLiveSession->IsMutedL(), KErrNotReady )
+    
+    // Establish session without audio
+    ESTABLISH_OUT_SESSION( iLiveSession )
+    
+    EUNIT_ASSERT( iLiveSession->IsMutedL() )
+    
+    // Establish session with audio
+    ESTABLISH_OUT_SESSION( iClipSession )
+    
+    EUNIT_ASSERT( !iClipSession->IsMutedL() )  // Not muted although disabled
+    
+    iClipSession->EnableDisplayL( ETrue ); // Enabled also speaker
+    
+    EUNIT_ASSERT( !iClipSession->IsMutedL() )  // Enabled and not muted
+
+    iClipSession->MuteL();
+    
+    EUNIT_ASSERT( iClipSession->IsMutedL() ) // Explicitly muted
+    
+    iClipSession->UnmuteL();
+    
+    EUNIT_ASSERT( !iClipSession->IsMutedL() ) // Explicitly unmuted
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngMceSession::UT_CMusEngMceSession_OrientationLL()
+    {
+    // Try without session, fails
+    EUNIT_ASSERT_SPECIFIC_LEAVE( iLiveSession->OrientationL(), KErrNotReady )
+    
+    // Establish a session and try all the MCE rotation values
+    ESTABLISH_OUT_SESSION( iLiveSession )
+    
+    CMceDisplaySink* display = 
+                    MusEngMceUtils::GetDisplayL( *iLiveSession->iSession );
+
+    display->iRotation = CMceDisplaySink::ENone;
+    EUNIT_ASSERT_EQUALS( iLiveSession->OrientationL(), 
+                         CMusEngMceSession::EPortrait )
+    
+    display->iRotation = CMceDisplaySink::EClockwise90Degree;
+    EUNIT_ASSERT_EQUALS( iLiveSession->OrientationL(), 
+                         CMusEngMceSession::ELandscape )
+    
+    display->iRotation = CMceDisplaySink::EClockwise180Degree;
+    EUNIT_ASSERT_EQUALS( iLiveSession->OrientationL(), 
+                         CMusEngMceSession::ELandscape )
+    
+    display->iRotation = CMceDisplaySink::EClockwise270Degree;
+    EUNIT_ASSERT_EQUALS( iLiveSession->OrientationL(), 
+                         CMusEngMceSession::ELandscape )
+            
+    }
+    
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngMceSession::UT_CMusEngMceSession_SetOrientationLL()
+    {
+    // Try without session, fails
+    EUNIT_ASSERT_SPECIFIC_LEAVE( iLiveSession->SetOrientationL( 
+                                                CMusEngMceSession::EPortrait ), 
+                                 KErrNotReady )
+
+    // Establish a session
+    ESTABLISH_OUT_SESSION( iLiveSession )
+    
+    CMceDisplaySink* display = 
+                    MusEngMceUtils::GetDisplayL( *iLiveSession->iSession );
+    
+    // Check the initial state
+    display->iRotation = CMceDisplaySink::ENone;
+    EUNIT_ASSERT_EQUALS( iLiveSession->OrientationL(), 
+                         CMusEngMceSession::EPortrait )      
+                         
+    // Successfully change orientation
+    
+    iLiveSession->SetOrientationL( CMusEngMceSession::ELandscape );
+    EUNIT_ASSERT_EQUALS( iLiveSession->OrientationL(), 
+                         CMusEngMceSession::ELandscape )
+    
+    iLiveSession->SetOrientationL( CMusEngMceSession::EPortrait );
+    EUNIT_ASSERT_EQUALS( iLiveSession->OrientationL(), 
+                         CMusEngMceSession::EPortrait )                     
+                         
+    }
+        
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngMceSession::UT_CMusEngMceSession_VolumeUpLL()
+    {    
+    // Try without session, fails
+    TRAPD( error, iLiveSession->VolumeUpL() );
+    MUS_TEST_FORWARD_ALLOC_FAILURE( error );
+    EUNIT_ASSERT( error == KErrNotReady );
+    
+    // Test only usage of CMceSpeaker, phone part is tested in base class
+    
+    // Check that nothing crashes without any speakers    
+    iReceiveSession->VolumeUpL();
+    
+    // Establish session
+    ESTABLISH_OUT_SESSION( iClipSession )
+    
+    TInt initialVolume = iClipSession->VolumeL();
+    
+    iClipSession->VolumeUpL();
+
+    // Check that all speaker volumes are adjusted and store one speaker pointer
+    
+    CMceSpeakerSink* speaker = NULL;
+    
+    CMceSession* session = iClipSession->iSession;
+    
+    for ( TInt i = 0; i < session->Streams().Count(); ++i )
+        {
+        for ( TInt j = 0; j < session->Streams()[i]->Sinks().Count(); ++j )
+            {
+            if ( session->Streams()[i]->Sinks()[j]->Type() == KMceSpeakerSink )
+                {
+                speaker = static_cast<CMceSpeakerSink*>(
+                                            session->Streams()[i]->Sinks()[j] );
+                EUNIT_ASSERT( speaker->VolumeL() == initialVolume + 1 );
+                }
+            }
+        } 
+
+    while ( iClipSession->VolumeL() < speaker->MaxVolumeL() )
+        {
+        iClipSession->VolumeUpL();
+        }
+
+    iClipSession->VolumeUpL(); // Does not do anything to volume
+    
+    EUNIT_ASSERT( iClipSession->VolumeL() == speaker->MaxVolumeL() );
+    
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngMceSession::UT_CMusEngMceSession_VolumeDownLL()
+    {
+        // Try without session, fails
+    TRAPD( error, iLiveSession->VolumeDownL() );
+    MUS_TEST_FORWARD_ALLOC_FAILURE( error );
+    EUNIT_ASSERT( error == KErrNotReady );
+    
+    // Test only usage of CMceSpeaker, phone part is tested in base class
+    
+    // Check that nothing crashes without any speakers    
+    iReceiveSession->VolumeUpL();
+    
+    // Establish session
+    ESTABLISH_OUT_SESSION( iClipSession )
+    
+    TInt initialVolume = iClipSession->VolumeL();
+    
+    iClipSession->VolumeDownL();
+
+    // Check that all speaker volumes are adjusted and store one speaker pointer
+    
+    CMceSpeakerSink* speaker = NULL;
+    
+    CMceSession* session = iClipSession->iSession;
+    
+    for ( TInt i = 0; i < session->Streams().Count(); ++i )
+        {
+        for ( TInt j = 0; j < session->Streams()[i]->Sinks().Count(); ++j )
+            {
+            if ( session->Streams()[i]->Sinks()[j]->Type() == KMceSpeakerSink )
+                {
+                speaker = static_cast<CMceSpeakerSink*>(
+                                            session->Streams()[i]->Sinks()[j] );
+                EUNIT_ASSERT( speaker->VolumeL() == initialVolume - 1 );
+                }
+            }
+        } 
+
+    while ( iClipSession->VolumeL() > 0 )
+        {
+        iClipSession->VolumeDownL();
+        }
+
+    iClipSession->VolumeDownL(); // Does not do anything to volume
+    
+    EUNIT_ASSERT_EQUALS( iClipSession->VolumeL(), 0 );
+        
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngMceSession::UT_CMusEngMceSession_SetVolumeLL()
+    {    
+    // Try without session, fails
+    TInt newVolume = KTelephonyVolumeDefaultValue + 1;
+    
+    TRAPD( error, iLiveSession->SetVolumeL( newVolume ) );
+    MUS_TEST_FORWARD_ALLOC_FAILURE( error );
+    EUNIT_ASSERT( error == KErrNotReady );
+    
+    // Test only usage of CMceSpeaker, phone part is tested in base class
+    
+    // Check that nothing crashes without any speakers    
+    iReceiveSession->SetVolumeL( newVolume );
+    
+    // Establish session
+    ESTABLISH_OUT_SESSION( iClipSession )
+    
+    TInt initialVolume = iClipSession->VolumeL();
+    
+    iClipSession->SetVolumeL( newVolume );
+
+    // Check that all speaker volumes are adjusted and store one speaker pointer
+    
+    CMceSpeakerSink* speaker = NULL;
+    
+    CMceSession* session = iClipSession->iSession;
+    
+    for ( TInt i = 0; i < session->Streams().Count(); ++i )
+        {
+        for ( TInt j = 0; j < session->Streams()[i]->Sinks().Count(); ++j )
+            {
+            if ( session->Streams()[i]->Sinks()[j]->Type() == KMceSpeakerSink )
+                {
+                speaker = static_cast<CMceSpeakerSink*>(
+                                            session->Streams()[i]->Sinks()[j] );
+                EUNIT_ASSERT( speaker->VolumeL() == newVolume );
+                }
+            }
+        } 
+
+    newVolume = speaker->MaxVolumeL() + 1;
+    iClipSession->SetVolumeL( newVolume );
+    EUNIT_ASSERT( iClipSession->VolumeL() == speaker->MaxVolumeL() );
+    
+    newVolume = -1;
+    iClipSession->SetVolumeL( newVolume );
+    EUNIT_ASSERT( iClipSession->VolumeL() == 0 );
+    
+    // Test situation where MCE max volume is bigger than MUS max vol
+    SetMaxVolForSpeakersL(*session, KMusEngMaxVolume * 10);
+    newVolume = 5;
+    iClipSession->SetVolumeL( newVolume );
+    EUNIT_ASSERT( iClipSession->VolumeL() == newVolume );
+    EUNIT_ASSERT( speaker->VolumeL() == newVolume * 10 );
+    newVolume = 1;
+    iClipSession->SetVolumeL( newVolume );
+    EUNIT_ASSERT( iClipSession->VolumeL() == newVolume );
+    EUNIT_ASSERT( speaker->VolumeL() == newVolume * 10 );
+    newVolume = KMusEngMaxVolume;
+    iClipSession->SetVolumeL( newVolume );
+    EUNIT_ASSERT( iClipSession->VolumeL() == newVolume );
+    EUNIT_ASSERT( speaker->VolumeL() == newVolume * 10 );
+    
+    SetMaxVolForSpeakersL(*session, KMusEngMaxVolume * 1000);
+    newVolume = 7;
+    iClipSession->SetVolumeL( newVolume );
+    EUNIT_ASSERT( iClipSession->VolumeL() == newVolume );
+    EUNIT_ASSERT( speaker->VolumeL() == newVolume * 1000 );
+    newVolume = 1;
+    iClipSession->SetVolumeL( newVolume );
+    EUNIT_ASSERT( iClipSession->VolumeL() == newVolume );
+    EUNIT_ASSERT( speaker->VolumeL() == newVolume * 1000 );
+    newVolume = KMusEngMaxVolume;
+    iClipSession->SetVolumeL( newVolume );
+    EUNIT_ASSERT( iClipSession->VolumeL() == newVolume );
+    EUNIT_ASSERT( speaker->VolumeL() == newVolume * 1000 );
+    
+    
+    // Test situation where MCE max volume is smaller than MUS max vol
+    SetMaxVolForSpeakersL(*session, KMusEngMaxVolume / 2);
+    newVolume = 3;
+    iClipSession->SetVolumeL( newVolume );
+    EUNIT_ASSERT( iClipSession->VolumeL() == newVolume );
+    EUNIT_ASSERT( speaker->VolumeL() == newVolume / 2 );
+    newVolume = 1;
+    iClipSession->SetVolumeL( newVolume );
+    EUNIT_ASSERT( iClipSession->VolumeL() == newVolume );
+    EUNIT_ASSERT( speaker->VolumeL() == 1 );
+    newVolume = KMusEngMaxVolume;
+    iClipSession->SetVolumeL( newVolume );
+    EUNIT_ASSERT( iClipSession->VolumeL() == newVolume );
+    EUNIT_ASSERT( speaker->VolumeL() == newVolume / 2 );
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngMceSession::UT_CMusEngMceSession_EnableDisplayL()
+    {
+    TRAPD( error, iLiveSession->EnableDisplayL( ETrue ) );
+    MUS_TEST_FORWARD_ALLOC_FAILURE( error );
+    EUNIT_ASSERT( error == KErrNotReady );
+    
+    ESTABLISH_OUT_SESSION( iLiveSession );
+    
+    CMceDisplaySink* display = 
+                    MusEngMceUtils::GetDisplayL( *(iLiveSession->iSession) );
+    
+    // Disable
+    iLiveSession->EnableDisplayL( EFalse );
+    
+    EUNIT_ASSERT( !display->iIsEnabled );
+    
+    // Try to disable again, request should be ignored
+    
+    iLiveSession->EnableDisplayL( EFalse );
+    
+    EUNIT_ASSERT( !display->iIsEnabled );
+
+    // Enable
+    
+    iLiveSession->EnableDisplayL( ETrue );
+    
+    EUNIT_ASSERT( display->iIsEnabled );
+    
+    // Try to enable again, request should be ignored
+    
+    iLiveSession->EnableDisplayL( ETrue );
+    
+    EUNIT_ASSERT( display->iIsEnabled );
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngMceSession::UT_CMusEngMceSession_MuteLL()
+    {
+    TRAPD( error, iClipSession->MuteL() );
+    MUS_TEST_FORWARD_ALLOC_FAILURE( error );
+    EUNIT_ASSERT( error == KErrNotReady );
+    
+    ESTABLISH_OUT_SESSION_AND_START_STREAMING( iClipSession );
+    
+    const RPointerArray<CMceMediaStream> streams = 
+                                            iClipSession->iSession->Streams();
+    
+    iClipSession->MuteL();
+    
+    // Check that all audio speaker sinks are disabled and only those                                        
+    for ( TInt i = 0; i < streams.Count(); ++i )
+        {
+        for ( TInt j = 0; j < streams[i]->Sinks().Count(); ++j )
+            {
+            CMceMediaSink* sink = streams[i]->Sinks()[j];
+            if ( sink->Type() == KMceSpeakerSink  &&
+                 streams[i]->Type() == KMceAudio )
+                {
+                EUNIT_ASSERT( sink->IsEnabled() == EFalse )
+                }    
+            else
+                {
+                EUNIT_ASSERT( sink->IsEnabled() == ETrue )
+                } 
+            }        
+        }
+    
+    EUNIT_ASSERT( iClipSession->iExplicitlyMuted ) 
+    
+    // Try to mute again, request should be ignored without actions or leaving
+
+    iClipSession->MuteL();
+
+    }
+    
+
+// -----------------------------------------------------------------------------
+// Relies on previous test
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngMceSession::UT_CMusEngMceSession_UnmuteLL()
+    {
+    TRAPD( error, iClipSession->UnmuteL() );
+    MUS_TEST_FORWARD_ALLOC_FAILURE( error );
+    EUNIT_ASSERT( error == KErrNotReady );
+    
+    ESTABLISH_OUT_SESSION( iClipSession );
+    
+    const RPointerArray<CMceMediaStream> streams = 
+                                            iClipSession->iSession->Streams();
+    
+    iClipSession->MuteL();
+    
+    iClipSession->UnmuteL();
+    
+    // Check that all audio speaker sinks are enabled
+                                            
+    for ( TInt i = 0; i < streams.Count(); ++i )
+        {
+        for ( TInt j = 0; j < streams[i]->Sinks().Count(); ++j )
+            {
+            if ( streams[i]->Sinks()[j]->Type() == KMceSpeakerSink )
+                {
+                EUNIT_ASSERT( streams[i]->Sinks()[j]->IsEnabled() == ETrue )
+                }
+            }        
+        }
+    
+    EUNIT_ASSERT( !iClipSession->iExplicitlyMuted ) 
+    
+    // Try to unmute again, request should be ignored without actions or leaving
+
+    iClipSession->UnmuteL();
+    }
+    
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngMceSession::UT_CMusEngMceSession_HandleTerminationL()
     { 
     // Try different values
     iLiveSession->CMusEngMceSession::HandleTermination( KSipStatusCodeNoCodeSet,
                                                         KNullDesC8() );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::ESessionStateChanged ) )
-    iLcSessionObserver->Reset();
+    EUNIT_ASSERT( iObserver->iSessionTerminatedCalled );
+    iObserver->Reset();
 
     iLiveSession->CMusEngMceSession::HandleTermination( KSipStatusCode200OK,
                                                         KNullDesC8() );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::ESessionStateChanged ) )
-    iLcSessionObserver->Reset();
+    EUNIT_ASSERT( iObserver->iSessionTerminatedCalled );
+    iObserver->Reset();
 
     iLiveSession->CMusEngMceSession::HandleTermination( KSipStatusCodeUnknown,
                                                         KNullDesC8() );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::ESessionFailed ) )
-    EUNIT_ASSERT_EQUALS( iLcSessionObserver->iError, KErrGeneral )
-    iLcSessionObserver->Reset();
+    EUNIT_ASSERT( iObserver->iSessionFailedCalled );
+    iObserver->Reset();
+    
     }
+
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
-void UT_CMusEngMceSession::UT_AdjustVideoCodecL()
+void UT_CMusEngMceSession::UT_CMusEngMceSession_AdjustVideoCodecLL()
     {
-    CRepository::SetStubAvcConfigKeysL( KNullDesC8() );
-        
-    CMceVideoCodec* codecH263 = CMceH263Codec::NewLC( KMceSDPNameH263() );
-    CMceVideoCodec* codecAvc = CMceAvcCodec::NewLC( KMceSDPNameH264() );
-    CMceVideoCodec* codecAvcFromFile = CMceAvcCodec::NewLC( KMceSDPNameH264() );
-    
-    iLiveSession->CMusEngMceSession::AdjustVideoCodecL( *codecH263,
-                                                        KMceCameraSource );
-    EUNIT_ASSERT( !iLiveSession->iStoreEncoderConfigInfo )
-
-    iLiveSession->CMusEngMceSession::AdjustVideoCodecL( *codecAvcFromFile,
-                                                        KMceFileSource);  
-    EUNIT_ASSERT( !iLiveSession->iStoreEncoderConfigInfo )
-    
-    iLiveSession->CMusEngMceSession::AdjustVideoCodecL( *codecAvc,
-                                                        KMceCameraSource );  
-    EUNIT_ASSERT( iLiveSession->iStoreEncoderConfigInfo )
-    
-    CleanupStack::PopAndDestroy( codecAvcFromFile );
-    CleanupStack::PopAndDestroy( codecAvc );
-    CleanupStack::PopAndDestroy( codecH263 );
+    // CMusEngMceSession::AdjustVideoCodecL does nothing, so NULL test is enough
+    CMceVideoCodec* codec = 
+                iLiveSession->iManager->SupportedVideoCodecs()[0]->CloneL();
+    CleanupStack::PushL( codec );
+    iLiveSession->CMusEngMceSession::AdjustVideoCodecL( *codec );
+    CleanupStack::PopAndDestroy( codec );
     }
 
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
-void UT_CMusEngMceSession::UT_AdjustAudioCodecL()
+void UT_CMusEngMceSession::UT_CMusEngMceSession_AdjustAudioCodecLL()
     {
     CMceAudioCodec* codec = 
                 iLiveSession->iManager->SupportedAudioCodecs()[0]->CloneL();
@@ -559,14 +769,16 @@ void UT_CMusEngMceSession::UT_AdjustAudioCodecL()
     EUNIT_ASSERT( codec->iMMFPriorityPreference == KAudioPrefSwisPlayback )
     
     CleanupStack::PopAndDestroy( codec );
-    }   
+    }
+        
         
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
-void UT_CMusEngMceSession::UT_RectChangedL()
+void UT_CMusEngMceSession::UT_CMusEngMceSession_RectChangedLL()
     {
+    
     // Does nothing before session establishment
     
     iLiveSession->RectChangedL();
@@ -579,9 +791,9 @@ void UT_CMusEngMceSession::UT_RectChangedL()
     // Display size has been updated
     
     CMceDisplaySink* display = 
-        MusEngMceUtils::GetDisplayL( *( iLiveSession->iSession ) );
+                MusEngMceUtils::GetDisplayL( *( iLiveSession->iSession ) );
     
-    EUNIT_ASSERT( display->DisplayRectL() == iLiveSession->Rect() )
+    EUNIT_ASSERT( display->DisplayRectL() == iLiveSession->Rect() );
     
     // Terminate session and try again, rect must not be changed
     
@@ -592,307 +804,121 @@ void UT_CMusEngMceSession::UT_RectChangedL()
     iLiveSession->SetRectL( newRect ); 
     
     EUNIT_ASSERT( display->DisplayRectL() != newRect )
+    
+    
     }
+
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
-void UT_CMusEngMceSession::UT_SetSessionSdpLinesL()
+void UT_CMusEngMceSession::UT_CMusEngMceSession_SetSessionSdpLinesLL()
     {
     // set operator variant off
-    iReceiveSession->iOperatorVariant = EFalse;
-    CRepository::SetStubGlobal( MusSettingsKeys::KVideoBandwidth,
-                                128 );
+    MultimediaSharingSettings::SetOperatorVariantSettingL(
+                     MusSettingsKeys::EStandard );
                      
-    // 1. There is b=AS line at session level
-    // => Xapplication, b=AS and b=TIAS set to session level  
+    // There is no sdp lines in session, right one is added
+
     CMceInSession* inSession = CMceInSession::NewL( *iReceiveSession->iManager,
                                                     KTestOriginator );
-    CleanupStack::PushL( inSession );    
-    EUNIT_ASSERT( !inSession->iSessionSDPLines );
-    inSession->iSessionSDPLines = new ( ELeave ) CDesC8ArrayFlat( 1 );
-    inSession->iSessionSDPLines->AppendL( KMusEngSessionSdpLineBandwidthField() );
-        
-    iReceiveSession->SetSessionSdpLinesL( *inSession, ETrue );
+    CleanupStack::PushL( inSession );
     
-    MDesC8Array* sdpLines = inSession->iSessionSDPLines;    
-    EUNIT_ASSERT( sdpLines );
-    EUNIT_ASSERT( sdpLines->MdcaCount() == 3 );
-    EUNIT_ASSERT( sdpLines->MdcaPoint( 0 ) == KMusEngSessionSdpLineXApplication() );
-    EUNIT_ASSERT( sdpLines->MdcaPoint( 1 ).Find( 
-            KMusEngSessionSdpLineBandwidthLine() ) == 0 );
-    EUNIT_ASSERT( sdpLines->MdcaPoint( 2 ).Find( 
-            KMusEngSessionSdpLineTiasLine() ) == 0 );
+    iReceiveSession->SetSessionSdpLinesL( *inSession );
     
+    MDesC8Array* sdpLines = inSession->SessionSDPLinesL();
+    CleanupDeletePushL( sdpLines );
     
-    // 2. There are b=TIAS sdp line at session  
-    // => Xapplication, b=AS and b=TIAS set to session level
-    delete inSession->iSessionSDPLines;
-    inSession->iSessionSDPLines = NULL;
-    inSession->iSessionSDPLines = new ( ELeave ) CDesC8ArrayFlat( 1 );
-    inSession->iSessionSDPLines->AppendL( KMusEngSessionSdpLineTiasLine() );
-        
-    iReceiveSession->SetSessionSdpLinesL( *inSession, ETrue );
-    
-    sdpLines = inSession->iSessionSDPLines;    
-    EUNIT_ASSERT( sdpLines );
-    EUNIT_ASSERT( sdpLines->MdcaCount() == 3 );
-    EUNIT_ASSERT( sdpLines->MdcaPoint( 0 ) == KMusEngSessionSdpLineXApplication() );
-    EUNIT_ASSERT( sdpLines->MdcaPoint( 1 ).Find( 
-            KMusEngSessionSdpLineBandwidthLine() ) == 0 );
-    EUNIT_ASSERT( sdpLines->MdcaPoint( 2 ).Find( 
-            KMusEngSessionSdpLineTiasLine() ) == 0 );
-            
-    // 3. Simulating outcoming session, i.e. 2d param aForceBandwidthLine is EFalse  
-    // => only Xapplication SDP line is set
-    delete inSession->iSessionSDPLines;
-    inSession->iSessionSDPLines = NULL;
-         
-    iReceiveSession->SetSessionSdpLinesL( *inSession, EFalse );
-     
-    sdpLines = inSession->iSessionSDPLines;    
     EUNIT_ASSERT( sdpLines );
     EUNIT_ASSERT( sdpLines->MdcaCount() == 1 );
     EUNIT_ASSERT( sdpLines->MdcaPoint( 0 ) == KMusEngSessionSdpLineXApplication() );
     
-    // 4. No KVideoBandwidth entry in CenRep => TIAS usage should be disabled
-    // There is AS and TIAS at session level => AS is taken at session level
-    CRepository::iForceFailWithCode = KErrNotFound;
-    delete inSession->iSessionSDPLines;
-    inSession->iSessionSDPLines = NULL;
-    inSession->iSessionSDPLines = new ( ELeave ) CDesC8ArrayFlat( 1 );
-    inSession->iSessionSDPLines->AppendL( KMusEngSessionSdpLineTiasLine() );
-    inSession->iSessionSDPLines->AppendL( KMusEngSessionSdpLineBandwidthField() );
-        
-    iReceiveSession->SetSessionSdpLinesL( *inSession, ETrue );
-    
-    sdpLines = inSession->iSessionSDPLines;    
-    EUNIT_ASSERT( sdpLines );
-    EUNIT_ASSERT( sdpLines->MdcaCount() == 2 );
-    EUNIT_ASSERT( sdpLines->MdcaPoint( 0 ) == KMusEngSessionSdpLineXApplication() );
-    EUNIT_ASSERT( sdpLines->MdcaPoint( 1 ) == KMusEngSessionSdpLineBandwidthField() );
-    
-    CleanupStack::PopAndDestroy( inSession );
-    }
+    CleanupStack::PopAndDestroy(); // sdplines
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_SetSessionSdpLines_OperatorL()
-    {
+    // There is one line ready, replace it with right one
+    CDesC8Array* newSdpLines = new ( ELeave ) CDesC8ArrayFlat( 3 );
+    CleanupStack::PushL( newSdpLines );
+    newSdpLines->AppendL( KTestRecipientRandomText8() );
+    inSession->SetSessionSDPLinesL( newSdpLines );
+    CleanupStack::Pop( newSdpLines );
+    
+    iReceiveSession->SetSessionSdpLinesL( *inSession );
+    
+    sdpLines = inSession->SessionSDPLinesL();
+    CleanupDeletePushL( sdpLines );
+      
+    EUNIT_ASSERT( sdpLines );
+    EUNIT_ASSERT( sdpLines->MdcaCount() == 1 );
+    EUNIT_ASSERT( sdpLines->MdcaPoint( 0 ) == KMusEngSessionSdpLineXApplication() );
+    
+    CleanupStack::PopAndDestroy(); // sdplines
+    
+
+    CleanupStack::PopAndDestroy( inSession );
+
+    // for operator variant testing
     // set operator variant
     iReceiveSession->iOperatorVariant = ETrue;
 
-    // 1. There is b=TIAS sdp line in session => only application and  
-    // type lines are set, no bandwidth related attributes
-    CMceInSession* inSession = CMceInSession::NewL( *iReceiveSession->iManager,
-                                     KTestOriginator );
-    CleanupStack::PushL( inSession );        
+    // There is no sdp lines in session, right ones are added to session and media level
+    inSession = CMceInSession::NewL( *iReceiveSession->iManager,
+                                                    KTestOriginator );
+    CleanupStack::PushL( inSession );
     
-    EUNIT_ASSERT( !inSession->iSessionSDPLines );
-    inSession->iSessionSDPLines = new ( ELeave ) CDesC8ArrayFlat( 1 );
-    inSession->iSessionSDPLines->AppendL( KMusEngSessionSdpLineTiasLine() );
-        
-    iReceiveSession->SetSessionSdpLinesL( *inSession, ETrue );
+    iReceiveSession->SetSessionSdpLinesL( *inSession );
     
-    MDesC8Array* sdpLines = inSession->iSessionSDPLines;    
-    EUNIT_ASSERT( sdpLines );
-    EUNIT_ASSERT( sdpLines->MdcaCount() == 2 );
-    EUNIT_ASSERT( sdpLines->MdcaPoint( 0 ) == KMusEngSessionSdpLineApplication() );
-    EUNIT_ASSERT( sdpLines->MdcaPoint( 1 ) == KMusEngSessionSdpLineType() );    
-
-    // 2. There are b=AS and b=TIAS sdp lines in session => application and  
-    // type SDP lines as well as b=AS bandwidth attributes are set
-    delete inSession->iSessionSDPLines;
-    inSession->iSessionSDPLines = NULL;
-    inSession->iSessionSDPLines = new ( ELeave ) CDesC8ArrayFlat( 2 );
-    inSession->iSessionSDPLines->AppendL( KMusEngSessionSdpLineBandwidthField() );
-    inSession->iSessionSDPLines->AppendL( KMusEngSessionSdpLineTiasLine() );
-        
-    iReceiveSession->SetSessionSdpLinesL( *inSession, ETrue );
+    sdpLines = inSession->SessionSDPLinesL();
+    CleanupDeletePushL( sdpLines );
     
-    sdpLines = inSession->iSessionSDPLines;    
-    EUNIT_ASSERT( sdpLines );
-    EUNIT_ASSERT( sdpLines->MdcaCount() == 3 );
-    EUNIT_ASSERT( sdpLines->MdcaPoint( 0 ) == KMusEngSessionSdpLineApplication() );
-    EUNIT_ASSERT( sdpLines->MdcaPoint( 1 ) == KMusEngSessionSdpLineType() );
-    EUNIT_ASSERT( sdpLines->MdcaPoint( 2 ) == KMusEngSessionSdpLineBandwidthField() );
-        
-    
-    // 3. Simulating outcoming session, i.e. 2d param aForceBandwidthLine is EFalse  
-    // => only application and type SDP lines are set
-    delete inSession->iSessionSDPLines;
-    inSession->iSessionSDPLines = NULL;
-        
-    iReceiveSession->SetSessionSdpLinesL( *inSession, EFalse );
-    
-    sdpLines = inSession->iSessionSDPLines;    
     EUNIT_ASSERT( sdpLines );
     EUNIT_ASSERT( sdpLines->MdcaCount() == 2 );
     EUNIT_ASSERT( sdpLines->MdcaPoint( 0 ) == KMusEngSessionSdpLineApplication() );
     EUNIT_ASSERT( sdpLines->MdcaPoint( 1 ) == KMusEngSessionSdpLineType() );
-        
-    CleanupStack::PopAndDestroy( inSession );   
-    }
+    
+    CleanupStack::PopAndDestroy(); // sdplines
+    
+    MDesC8Array* mediaSdpLines = 
+        iReceiveSession->iSession->Streams()[ 0 ]->MediaAttributeLinesL();
+    CleanupDeletePushL( mediaSdpLines );
+    TBool bandwidthFoundFromMediaLevel = EFalse;
+    for ( TInt i = 0; mediaSdpLines && i < mediaSdpLines->MdcaCount(); i++ )
+        {
+        if ( mediaSdpLines->MdcaPoint( i ).Compare( 
+                KMusEngSessionSdpLineBandwidthField() ) == 0 )
+            {
+            bandwidthFoundFromMediaLevel = ETrue;
+            }
+        }
+    EUNIT_ASSERT( bandwidthFoundFromMediaLevel );
+    CleanupStack::PopAndDestroy( mediaSdpLines );
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_SetMediaSdpLinesL()
-    {
+    // There is one line ready, replace it with right ones
+    newSdpLines = new ( ELeave ) CDesC8ArrayFlat( 3 );
+    CleanupStack::PushL( newSdpLines );
+    newSdpLines->AppendL( KTestRecipientRandomText8() );
+    inSession->SetSessionSDPLinesL( newSdpLines );
+    CleanupStack::Pop( newSdpLines );
+    
+    iReceiveSession->SetSessionSdpLinesL( *inSession );
+    
+    sdpLines = inSession->SessionSDPLinesL();
+    CleanupDeletePushL( sdpLines );
+      
+    EUNIT_ASSERT( sdpLines );
+    EUNIT_ASSERT( sdpLines->MdcaCount() == 2 );
+    EUNIT_ASSERT( sdpLines->MdcaPoint( 0 ) == KMusEngSessionSdpLineApplication() );
+    EUNIT_ASSERT( sdpLines->MdcaPoint( 1 ) == KMusEngSessionSdpLineType() );
+    
+    CleanupStack::PopAndDestroy(); // sdplines
+    
+
+    CleanupStack::PopAndDestroy( inSession );
+
+
     // set operator variant off
-    iReceiveSession->iOperatorVariant = EFalse;
-    CRepository::SetStubGlobal( MusSettingsKeys::KVideoBandwidth,
-                                128 );
-
-    // 1. There is no b=AS, b=TIAS sdp lines at session level
-    // => b=AS and b=TIAS are taken at media level
-    CMceInSession* inSession = CMceInSession::NewL( *iReceiveSession->iManager,
-                                                    KTestOriginator );
-    CleanupStack::PushL( inSession );
-    
-    CMceVideoStream* videoStream = CMceVideoStream::NewLC();        
-    videoStream->SetSourceL( CMceRtpSource::NewLC() );
-    CleanupStack::Pop(); //rtpSource        
-    videoStream->AddSinkL( CMceDisplaySink::NewLC( *iReceiveSession->iManager ) );
-    CleanupStack::Pop(); //displaySink
-        
-    inSession->AddStreamL( videoStream );
-    CleanupStack::Pop( videoStream );
-
-    iReceiveSession->SetMediaSdpLinesL( *videoStream, ETrue );
-    
-    MDesC8Array* sdpLines = inSession->Streams()[ 0 ]->iMediaSDPLines;
-    EUNIT_ASSERT( sdpLines );
-    EUNIT_ASSERT( sdpLines->MdcaCount() == 2 );
-    EUNIT_ASSERT( sdpLines->MdcaPoint( 0 ).Find( 
-            KMusEngSessionSdpLineBandwidthLine() ) == 0 );
-    EUNIT_ASSERT( sdpLines->MdcaPoint( 1 ).Find( 
-            KMusEngSessionSdpLineTiasLine() ) == 0 );
-    
-    
-    // 2. There is b=AS sdp line at session and media level
-    // => b=AS and b=TIAS are taken at media level
-    delete inSession->iSessionSDPLines;
-    inSession->iSessionSDPLines = NULL;
-    inSession->iSessionSDPLines = new ( ELeave ) CDesC8ArrayFlat( 1 );
-    inSession->iSessionSDPLines->AppendL( KMusEngSessionSdpLineBandwidthField() );
-    
-    iReceiveSession->SetMediaSdpLinesL( *videoStream, ETrue );
-    
-    sdpLines = inSession->Streams()[ 0 ]->iMediaSDPLines;
-    EUNIT_ASSERT( sdpLines );
-    EUNIT_ASSERT( sdpLines->MdcaCount() == 2 );
-    EUNIT_ASSERT( sdpLines->MdcaPoint( 0 ).Find( 
-            KMusEngSessionSdpLineBandwidthLine() ) == 0 );
-    EUNIT_ASSERT( sdpLines->MdcaPoint( 1 ).Find( 
-            KMusEngSessionSdpLineTiasLine() ) == 0 );
-
-    // 3. Simulating outcoming session, i.e. 2d param aForceBandwidthLine is EFalse
-    // => no bandwidth attributes at media level
-    delete inSession->iSessionSDPLines;
-    inSession->iSessionSDPLines = NULL;
-     
-    delete inSession->Streams()[ 0 ]->iMediaSDPLines;
-    inSession->Streams()[ 0 ]->iMediaSDPLines = NULL;
-     
-    iReceiveSession->SetMediaSdpLinesL( *videoStream, EFalse );
-     
-    sdpLines = inSession->Streams()[ 0 ]->iMediaSDPLines;
-    EUNIT_ASSERT( sdpLines );
-    EUNIT_ASSERT( sdpLines->MdcaCount() == 0 );
-
-    // 4. No KVideoBandwidth entry in CenRep => TIAS usage should be disabled
-    // There is no bandwidth attributes in session => AS is taken at meida level
-    CRepository::iForceFailWithCode = KErrNotFound;
-    delete inSession->iSessionSDPLines;
-    inSession->iSessionSDPLines = NULL;
-        
-    iReceiveSession->SetMediaSdpLinesL( *videoStream, ETrue );
-    
-    sdpLines = inSession->Streams()[ 0 ]->iMediaSDPLines;
-    EUNIT_ASSERT( sdpLines );
-    EUNIT_ASSERT( sdpLines->MdcaCount() == 1 );
-    EUNIT_ASSERT( sdpLines->MdcaPoint( 0 ) == KMusEngSessionSdpLineBandwidthField() );
-
-    CleanupStack::PopAndDestroy( inSession );
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_SetMediaSdpLines_OperatorL()
-    {
-    // set operator variant
-    iReceiveSession->iOperatorVariant = ETrue;
-
-    // 1. There is no b=AS sdp line at session level
-    // => b=AS is taken at media level
-    CMceInSession* inSession = CMceInSession::NewL( *iReceiveSession->iManager,
-                                                    KTestOriginator );
-    CleanupStack::PushL( inSession );
-  
-    CMceVideoStream* videoStream = CMceVideoStream::NewLC();        
-    videoStream->SetSourceL( CMceRtpSource::NewLC() );
-    CleanupStack::Pop(); //rtpSource        
-    videoStream->AddSinkL( CMceDisplaySink::NewLC( *iReceiveSession->iManager ) );
-    CleanupStack::Pop(); //displaySink
-        
-    inSession->AddStreamL( videoStream );
-    CleanupStack::Pop( videoStream );
-
-    EUNIT_ASSERT( !inSession->iSessionSDPLines );   
-    inSession->iSessionSDPLines = new ( ELeave ) CDesC8ArrayFlat( 1 );
-    inSession->iSessionSDPLines->AppendL( KMusEngSessionSdpLineTiasLine() );
-        
-    iReceiveSession->SetMediaSdpLinesL( *videoStream, ETrue );
-    
-    MDesC8Array* sdpLines = inSession->Streams()[ 0 ]->iMediaSDPLines;
-    EUNIT_ASSERT( sdpLines );
-    EUNIT_ASSERT( sdpLines->MdcaCount() == 1 );
-    EUNIT_ASSERT( sdpLines->MdcaPoint( 0 ) == KMusEngSessionSdpLineBandwidthField() );
-    
-    
-    // 2. There is b=AS sdp line at session and media level
-    // => b=AS is not taken at media level
-    delete inSession->iSessionSDPLines;
-    inSession->iSessionSDPLines = NULL;
-    inSession->iSessionSDPLines = new ( ELeave ) CDesC8ArrayFlat( 1 );
-    inSession->iSessionSDPLines->AppendL( KMusEngSessionSdpLineBandwidthField() );
-    
-    delete inSession->Streams()[ 0 ]->iMediaSDPLines;
-    inSession->Streams()[ 0 ]->iMediaSDPLines = NULL;
-    inSession->Streams()[ 0 ]->iMediaSDPLines =  
-                new ( ELeave ) CDesC8ArrayFlat( 1 ); 
-    inSession->Streams()[ 0 ]->iMediaSDPLines->AppendL( 
-                KMusEngSessionSdpLineBandwidthField() );
-    
-    iReceiveSession->SetMediaSdpLinesL( *videoStream, ETrue );
-    
-    EUNIT_ASSERT( inSession->Streams()[ 0 ]->iMediaSDPLines );
-    EUNIT_ASSERT( inSession->Streams()[ 0 ]->iMediaSDPLines->MdcaCount() == 0 );
-
-
-    // 3. Simulating outcoming session, i.e. 2d param aForceBandwidthLine is EFalse
-    // => b=AS is taken at media level
-    delete inSession->iSessionSDPLines;
-    inSession->iSessionSDPLines = NULL;
-     
-    delete inSession->Streams()[ 0 ]->iMediaSDPLines;
-    inSession->Streams()[ 0 ]->iMediaSDPLines = NULL;
-     
-    iReceiveSession->SetMediaSdpLinesL( *videoStream, EFalse );
-     
-    sdpLines = inSession->Streams()[ 0 ]->iMediaSDPLines;
-    EUNIT_ASSERT( sdpLines );
-    EUNIT_ASSERT( sdpLines->MdcaCount() == 1 );
-    EUNIT_ASSERT( sdpLines->MdcaPoint( 0 ) == KMusEngSessionSdpLineBandwidthField() );
-    
-    CleanupStack::PopAndDestroy( inSession );
+    MultimediaSharingSettings::SetOperatorVariantSettingL(
+                     MusSettingsKeys::EStandard );
     }
 
 
@@ -900,7 +926,7 @@ void UT_CMusEngMceSession::UT_SetMediaSdpLines_OperatorL()
 //
 // -----------------------------------------------------------------------------
 //
-void UT_CMusEngMceSession::UT_AdjustStreamsAndCodecsL()
+void UT_CMusEngMceSession::UT_CMusEngMceSession_AdjustStreamsAndCodecsLL()
     {
     // Check that function cannot be called before creating the session
     TRAPD( error, iClipSession->AdjustStreamsAndCodecsL() );
@@ -1005,6 +1031,46 @@ void UT_CMusEngMceSession::UT_AdjustStreamsAndCodecsL()
         EUNIT_ASSERT( 
             videoStream->Codecs()[ i ]->MaxBitRate() == 128000 );
         }
+    
+    // Test for Configuration based codec removal. Magic uid not set.    
+    CMceVideoCodec* codecAvc = CMceAvcCodec::NewLC( KMceSDPNameH264() );    
+    videoStream->AddCodecL( codecAvc );
+    CleanupStack::Pop( codecAvc );         
+    iClipSession->AdjustStreamsAndCodecsL();   
+    TBool avcCodecFound(EFalse);
+    for ( TInt i = 0; i < videoStream->Codecs().Count(); i++ )
+      {      
+      if( !videoStream->Codecs()[ i ]->SdpName().CompareF( KMceSDPNameH264 ) )
+        {
+        avcCodecFound = ETrue;
+        }      
+      }
+    // AVC should present
+    EUNIT_ASSERT(avcCodecFound);
+    
+    // Test for Configuration based codec removal. Magic uid set.
+    // Store the real value and revert back later , so that other tests will not be affected.
+    TUid uid = MultimediaSharingSettings::EncodingDeviceL();    
+    TInt32 KMusDisableAVC = 0x0fffffff;
+    MultimediaSharingSettings::SetPropertyValueL( MusSettingsKeys::KEncodingDevice,KMusDisableAVC);
+    codecAvc = CMceAvcCodec::NewLC( KMceSDPNameH264() );    
+    videoStream->AddCodecL( codecAvc );
+    CleanupStack::Pop( codecAvc );  
+    codecH2632000 = CMceH263Codec::NewLC( KMceSDPNameH2632000() );
+    videoStream->AddCodecL( codecH2632000 );
+    CleanupStack::Pop( codecH2632000 );
+    iClipSession->AdjustStreamsAndCodecsL();    
+    for ( TInt i = 0; i < videoStream->Codecs().Count(); i++ )
+       {
+       // H264 ( AVC ) codec should be removed
+       EUNIT_ASSERT( 
+                   videoStream->Codecs()[ i ]->SdpName().CompareF( KMceSDPNameH264 ) );
+       }
+    
+    
+    MultimediaSharingSettings::SetPropertyValueL( MusSettingsKeys::KEncodingDevice,uid.iUid);
+    
+    
     }
 
 
@@ -1012,7 +1078,7 @@ void UT_CMusEngMceSession::UT_AdjustStreamsAndCodecsL()
 //
 // -----------------------------------------------------------------------------
 //  
-void UT_CMusEngMceSession::UT_IncomingSessionL()
+void UT_CMusEngMceSession::UT_CMusEngMceSession_IncomingSessionL()
     {
     // New session should get rejected and deleted in any case, first failure
     CMceInSession* inSession = CMceInSession::NewL( 
@@ -1034,7 +1100,7 @@ void UT_CMusEngMceSession::UT_IncomingSessionL()
 //
 // -----------------------------------------------------------------------------
 //  
-void UT_CMusEngMceSession::UT_IncomingUpdateL()
+void UT_CMusEngMceSession::UT_CMusEngMceSession_IncomingUpdateL()
     {
     CMceInSession* inSession = CMceInSession::NewL( 
                                       *iLiveSession->iManager, KNullDesC8 );
@@ -1072,7 +1138,7 @@ void UT_CMusEngMceSession::UT_IncomingUpdateL()
 //
 // -----------------------------------------------------------------------------
 //  
-void UT_CMusEngMceSession::UT_StreamStateChangedL()
+void UT_CMusEngMceSession::UT_CMusEngMceSession_StreamStateChangedL()
     {
     // Try without a session, nothing happens
     CMceAudioStream* audioStream = CMceAudioStream::NewLC();
@@ -1080,7 +1146,7 @@ void UT_CMusEngMceSession::UT_StreamStateChangedL()
     CleanupStack::PopAndDestroy( audioStream );
     
     // Simulate sending invite
-    iLiveSession->EstablishLcSessionL();
+    iLiveSession->InviteL( KTestRecipientSipUri() );
     
     // No observer set, so expect nothing to be done, cannot be asserted
     CMceMediaStream* changedStream = iLiveSession->iSession->Streams()[0];
@@ -1090,56 +1156,55 @@ void UT_CMusEngMceSession::UT_StreamStateChangedL()
     // EUninitialized, stream is created, unexpected change, nothing happens
     changedStream->iState = CMceMediaStream::EUninitialized;
     iLiveSession->CMusEngMceSession::StreamStateChanged( *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->IsReseted() );
     
     // EInitialized, stream is initialized
     changedStream->iState = CMceMediaStream::EInitialized;
     iLiveSession->CMusEngMceSession::StreamStateChanged( *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->IsReseted() );
     
     // EBuffering, stream is buffering
     changedStream->iState = CMceMediaStream::EBuffering;
     iLiveSession->CMusEngMceSession::StreamStateChanged( *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->IsReseted() );
     
     // EIdle, stream is not receiving RTP
     changedStream->iState = CMceMediaStream::EIdle;
     iLiveSession->CMusEngMceSession::StreamStateChanged( *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->iStreamIdleCalled );
     
     // EStreaming, stream is streaming
     changedStream->iState = CMceMediaStream::EStreaming;
     iLiveSession->CMusEngMceSession::StreamStateChanged( *changedStream );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::EPlayerStateChanged ) )
-    iLcSessionObserver->Reset();
+    EUNIT_ASSERT( iObserver->iStreamStreamingCalled );
+    iObserver->Reset();
     
     // EStreaming, stream is streaming, other than video out- or instream
     changedStream->iState = CMceMediaStream::EStreaming;
     iLiveSession->CMusEngMceSession::StreamStateChanged( 
                                 *iLiveSession->iSession->Streams()[1] );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
-    iLcSessionObserver->Reset();
+    EUNIT_ASSERT( iObserver->IsReseted() );
+    iObserver->Reset();
     
     // EDisabled, stream is explicitly disabled
     changedStream->iState = CMceMediaStream::EDisabled;
     iLiveSession->CMusEngMceSession::StreamStateChanged( *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->IsReseted() );
     
     // ENoResources, stream has no needed resources to stream
     changedStream->iState = CMceMediaStream::ENoResources;
     iLiveSession->CMusEngMceSession::StreamStateChanged( *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->IsReseted() );
     
     // ETranscodingRequired, stream requires non-realtime transcoding
     changedStream->iState = CMceMediaStream::ETranscodingRequired;
     iLiveSession->CMusEngMceSession::StreamStateChanged( *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->IsReseted() );
     
     // ETranscoding, stream is transcoding in non-realtime
     changedStream->iState = CMceMediaStream::ETranscoding;
     iLiveSession->CMusEngMceSession::StreamStateChanged( *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->IsReseted() );
     
     }
     
@@ -1149,7 +1214,7 @@ void UT_CMusEngMceSession::UT_StreamStateChangedL()
 // when function is changed
 // -----------------------------------------------------------------------------
 //  
-void UT_CMusEngMceSession::UT_StreamStateChangedWithSourceL()
+void UT_CMusEngMceSession::UT_CMusEngMceSession_StreamStateChangedWithSourceL()
     {
     // Try without a session, nothing happens
     iLiveSession->CMusEngMceSession::StreamStateChanged( 
@@ -1160,7 +1225,7 @@ void UT_CMusEngMceSession::UT_StreamStateChangedWithSourceL()
     CleanupStack::PopAndDestroy(); // audiostream
     
     // Simulate sending invite
-    iLiveSession->EstablishLcSessionL();
+    iLiveSession->InviteL( KTestRecipientSipUri() );
     
     // Try all the stream states
     CMceMediaStream* changedStream = iLiveSession->iSession->Streams()[0];
@@ -1168,49 +1233,48 @@ void UT_CMusEngMceSession::UT_StreamStateChangedWithSourceL()
     // EUninitialized, stream is created, unexpected change, nothing happens
     changedStream->iState = CMceMediaStream::EUninitialized;
     iLiveSession->CMusEngMceSession::StreamStateChanged( *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->IsReseted() );
     
     // EInitialized, stream is initialized
     changedStream->iState = CMceMediaStream::EInitialized;
     iLiveSession->CMusEngMceSession::StreamStateChanged( *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->IsReseted() );
     
     // EBuffering, stream is buffering
     changedStream->iState = CMceMediaStream::EBuffering;
     iLiveSession->CMusEngMceSession::StreamStateChanged( *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->IsReseted() );
     
     // EIdle, stream is not receiving RTP
     changedStream->iState = CMceMediaStream::EIdle;
     iLiveSession->CMusEngMceSession::StreamStateChanged( *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->iStreamIdleCalled );
     
     // EStreaming, stream is streaming
     changedStream->iState = CMceMediaStream::EStreaming;
     iLiveSession->CMusEngMceSession::StreamStateChanged( *changedStream );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::EPlayerStateChanged ) )
-    iLcSessionObserver->Reset();
+    EUNIT_ASSERT( iObserver->iStreamStreamingCalled );
+    iObserver->Reset();
     
     // EDisabled, stream is explicitly disabled
     changedStream->iState = CMceMediaStream::EDisabled;
     iLiveSession->CMusEngMceSession::StreamStateChanged( *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->IsReseted() );
     
     // ENoResources, stream has no needed resources to stream
     changedStream->iState = CMceMediaStream::ENoResources;
     iLiveSession->CMusEngMceSession::StreamStateChanged( *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->IsReseted() );
     
     // ETranscodingRequired, stream requires non-realtime transcoding
     changedStream->iState = CMceMediaStream::ETranscodingRequired;
     iLiveSession->CMusEngMceSession::StreamStateChanged( *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->IsReseted() );
     
     // ETranscoding, stream is transcoding in non-realtime
     changedStream->iState = CMceMediaStream::ETranscoding;
     iLiveSession->CMusEngMceSession::StreamStateChanged( *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->IsReseted() );
     
     }
 
@@ -1220,7 +1284,7 @@ void UT_CMusEngMceSession::UT_StreamStateChangedWithSourceL()
 // when function is changed
 // -----------------------------------------------------------------------------
 //  
-void UT_CMusEngMceSession::UT_StreamStateChangedWithSinkL()
+void UT_CMusEngMceSession::UT_CMusEngMceSession_StreamStateChangedWithSinkL()
     {
     // Try without a session, nothing happens
     CMceAudioStream* audioStream = CMceAudioStream::NewLC();
@@ -1228,7 +1292,7 @@ void UT_CMusEngMceSession::UT_StreamStateChangedWithSinkL()
     CleanupStack::PopAndDestroy( audioStream );
     
     // Simulate sending invite
-    iLiveSession->EstablishLcSessionL();
+    iLiveSession->InviteL( KTestRecipientSipUri() );
     
     // Try all the stream states
     CMceMediaStream* changedStream = iLiveSession->iSession->Streams()[0];
@@ -1236,49 +1300,48 @@ void UT_CMusEngMceSession::UT_StreamStateChangedWithSinkL()
     // EUninitialized, stream is created, unexpected change, nothing happens
     changedStream->iState = CMceMediaStream::EUninitialized;
     iLiveSession->CMusEngMceSession::StreamStateChanged( *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->IsReseted() );
     
     // EInitialized, stream is initialized
     changedStream->iState = CMceMediaStream::EInitialized;
     iLiveSession->CMusEngMceSession::StreamStateChanged( *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->IsReseted() );
     
     // EBuffering, stream is buffering
     changedStream->iState = CMceMediaStream::EBuffering;
     iLiveSession->CMusEngMceSession::StreamStateChanged( *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->IsReseted() );
     
     // EIdle, stream is not receiving RTP
     changedStream->iState = CMceMediaStream::EIdle;
     iLiveSession->CMusEngMceSession::StreamStateChanged( *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->iStreamIdleCalled );
     
     // EStreaming, stream is streaming
     changedStream->iState = CMceMediaStream::EStreaming;
     iLiveSession->CMusEngMceSession::StreamStateChanged( *changedStream );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::EPlayerStateChanged ) )
-    iLcSessionObserver->Reset();
+    EUNIT_ASSERT( iObserver->iStreamStreamingCalled );
+    iObserver->Reset();
     
     // EDisabled, stream is explicitly disabled
     changedStream->iState = CMceMediaStream::EDisabled;
     iLiveSession->CMusEngMceSession::StreamStateChanged( *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->IsReseted() );
     
     // ENoResources, stream has no needed resources to stream
     changedStream->iState = CMceMediaStream::ENoResources;
     iLiveSession->CMusEngMceSession::StreamStateChanged( *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->IsReseted() );
     
     // ETranscodingRequired, stream requires non-realtime transcoding
     changedStream->iState = CMceMediaStream::ETranscodingRequired;
     iLiveSession->CMusEngMceSession::StreamStateChanged( *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->IsReseted() );
     
     // ETranscoding, stream is transcoding in non-realtime
     changedStream->iState = CMceMediaStream::ETranscoding;
     iLiveSession->CMusEngMceSession::StreamStateChanged( *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->IsReseted() );
     
     }        
 
@@ -1287,24 +1350,22 @@ void UT_CMusEngMceSession::UT_StreamStateChangedWithSinkL()
 //
 // -----------------------------------------------------------------------------
 //    
-void UT_CMusEngMceSession::UT_SessionStateChangedL()
+void UT_CMusEngMceSession::UT_CMusEngMceSession_SessionStateChangedL()
     {
     // Simulate sending invite
-    iLiveSession->EstablishLcSessionL();   
+    iLiveSession->InviteL( KTestRecipientSipUri() );   
 
     // No container, so expect to be handled as internal error
     iLiveSession->SessionStateChanged( *iLiveSession->iSession, NULL );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::ESessionFailed ) )
-    EUNIT_ASSERT_EQUALS( iLcSessionObserver->iError, KErrGeneral )
-    iLcSessionObserver->Reset();    
+    EUNIT_ASSERT( iObserver->iSessionFailedCalled );
+    iObserver->Reset();    
     
     // Try to tell session about some other session's state transition
     
     TMceTransactionDataContainer container;
  
     iLiveSession->SessionStateChanged( *iSomeOtherSession->iSession, &container );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );    
+    EUNIT_ASSERT( iObserver->IsReseted() );    
       
     // Try all the normal cases:
     
@@ -1316,10 +1377,8 @@ void UT_CMusEngMceSession::UT_SessionStateChangedL()
     container.SetReasonPhrase( anyReasonPhrase );
     iLiveSession->SessionStateChanged( *iLiveSession->iSession, 
                                        &container );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::ESessionFailed ) )
-    EUNIT_ASSERT_EQUALS( iLcSessionObserver->iError, KErrGeneral )
-    iLcSessionObserver->Reset();
+    EUNIT_ASSERT( iObserver->iSessionFailedCalled );
+    iObserver->Reset();
     container.Clear();
     
     // EOffering
@@ -1327,47 +1386,44 @@ void UT_CMusEngMceSession::UT_SessionStateChangedL()
     container.SetStatusCode( KSipStatusCodeNoCodeSet );
     iLiveSession->SessionStateChanged( *iLiveSession->iSession, 
                                        &container );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->IsReseted() );
     
     // EIncoming
     iLiveSession->iSession->iState = CMceSession::EIncoming;
     container.SetStatusCode( KSipStatusCodeNoCodeSet );
     iLiveSession->SessionStateChanged( *iLiveSession->iSession, 
                                        &container );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::ESessionFailed ) )
-    EUNIT_ASSERT_EQUALS( iLcSessionObserver->iError, KErrGeneral )
-    iLcSessionObserver->Reset();
+    EUNIT_ASSERT( iObserver->iSessionFailedCalled );
+    iObserver->Reset();
     
     // EReserving
     iLiveSession->iSession->iState = CMceSession::EReserving;
     container.SetStatusCode( KSipStatusCodeNoCodeSet );
     iLiveSession->SessionStateChanged( *iLiveSession->iSession, 
                                        &container );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->IsReseted() );
     
     // EAnswering
     iLiveSession->iSession->iState = CMceSession::EAnswering;
     container.SetStatusCode( KSipStatusCodeNoCodeSet );
     iLiveSession->SessionStateChanged( *iLiveSession->iSession, 
                                        &container );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->IsReseted() );
     
     // EProceeding
     iLiveSession->iSession->iState = CMceSession::EProceeding;
     container.SetStatusCode( KSipStatusCodeNoCodeSet );
     iLiveSession->SessionStateChanged( *iLiveSession->iSession, 
                                        &container );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->IsReseted() );
     
     // EEstablished
     iLiveSession->iSession->iState = CMceSession::EEstablished;
     container.SetStatusCode( KSipStatusCode200OK );
     iLiveSession->SessionStateChanged( *iLiveSession->iSession, 
                                        &container );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::ESessionStateChanged ) )
-    iLcSessionObserver->Reset();
+    EUNIT_ASSERT( iObserver->iSessionEstablishedCalled );
+    iObserver->Reset();
     
     // EEstablished again (meaning expiration of session timer 
     // and refresment of session )
@@ -1375,109 +1431,74 @@ void UT_CMusEngMceSession::UT_SessionStateChangedL()
     container.SetStatusCode( KSipStatusCode200OK );
     iLiveSession->SessionStateChanged( *iLiveSession->iSession, 
                                        &container );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->IsReseted() );
     
     // ECancelling
     iLiveSession->iSession->iState = CMceSession::ECancelling;
     container.SetStatusCode( KSipStatusCodeNoCodeSet );
     iLiveSession->SessionStateChanged( *iLiveSession->iSession, 
                                        &container );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
-    iLcSessionObserver->Reset();
+    EUNIT_ASSERT( iObserver->IsReseted() );
+    iObserver->Reset();
     
     // ETerminating
     iLiveSession->iSession->iState = CMceSession::ETerminating;
     container.SetStatusCode( KSipStatusCodeNoCodeSet );
     iLiveSession->SessionStateChanged( *iLiveSession->iSession, 
                                        &container );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
-    iLcSessionObserver->Reset();
+    EUNIT_ASSERT( iObserver->IsReseted() );
+    iObserver->Reset();
     
     // ETerminated
     iLiveSession->iSession->iState = CMceSession::ETerminated;
     container.SetStatusCode( KSipStatusCode200OK );
     iLiveSession->SessionStateChanged( *iLiveSession->iSession, 
                                        &container );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::ESessionStateChanged ) )
-    iLcSessionObserver->Reset();
+    EUNIT_ASSERT( iObserver->iSessionTerminatedCalled );
+    iObserver->Reset();
     
     // Default case
     iLiveSession->iSession->iState = static_cast<CMceSession::TState>( 10 );
     container.SetStatusCode( KSipStatusCodeNoCodeSet );
     iLiveSession->SessionStateChanged( *iLiveSession->iSession, &container );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() );
+    EUNIT_ASSERT( iObserver->IsReseted() );
 
     }
+    
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //     
-void UT_CMusEngMceSession::UT_HandleSessionStateChanged_EncoderKeyStoringL()
-    {
-    // Make repository empty, config keys must be written
-    CRepository::SetStubAvcConfigKeysL( KNullDesC8() );
-    
-    // Invite    
-    iLiveSession->EstablishLcSessionL();
-    iLiveSession->iSession->iState = CMceSession::EEstablished;
-    
-    // Force failure on CenRep
-    CRepository::iForceFailWithCode = KErrNoMemory;
-    
-    // Simulate session state transition notification
-    iLiveSession->HandleSessionStateChanged( 
-        *iLiveSession->iSession, 200, KNullDesC8() );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::ESessionFailed ) )
-    EUNIT_ASSERT_EQUALS( iLcSessionObserver->iError, KErrNoMemory )    
-    
-    // Normal case, something will be written to CenRep    
-    iClipSession->EstablishLcSessionL();
-    iClipSession->iSession->iState = CMceSession::EEstablished;
-    iClipSession->HandleSessionStateChanged( 
-                            *iClipSession->iSession, 200, KNullDesC8() );  
-    HBufC8* info = MultimediaSharingSettings::EncoderConfigInfoLC();
-    EUNIT_ASSERT_NOT_EQUALS( *info, KMusAvcBitrateLevel_1b_ConfigKey() )
-    CleanupStack::PopAndDestroy( info );
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//     
-void UT_CMusEngMceSession::UT_SessionConnectionStateChangedL()
+void UT_CMusEngMceSession::UT_CMusEngMceSession_SessionConnectionStateChangedL()
     {
     
     // Try to tell session about another session's connection state change
     
     iLiveSession->SessionConnectionStateChanged( *iSomeOtherSession->iSession, 
                                                  ETrue );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() ); // No session yet, nothing happened
+    EUNIT_ASSERT( iObserver->IsReseted() ); // No session yet, nothing happened
     
     // Simulate sending invite
-    iLiveSession->EstablishLcSessionL();
+    iLiveSession->InviteL( KTestRecipientSipUri() );
     
     // Now try again to notify session about session connection state change
     // of an another session
     iLiveSession->SessionConnectionStateChanged( *iSomeOtherSession->iSession, 
                                                  ETrue );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() ); // Wrong session, nothing happened
+    EUNIT_ASSERT( iObserver->IsReseted() ); // Wrong session, nothing happened
     
     // Try tell session connection state is active
     iLiveSession->SessionConnectionStateChanged( *iLiveSession->iSession, 
                                                  ETrue );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() ); // Session active, nothing happened
+    EUNIT_ASSERT( iObserver->IsReseted() ); // Session active, nothing happened
     
     // Try tell session connection state is inactive
     iLiveSession->SessionConnectionStateChanged( *iLiveSession->iSession, 
                                                  EFalse );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::ESessionFailed ) )
-    EUNIT_ASSERT_EQUALS( iLcSessionObserver->iError,
-                         TInt( MLcSession::EConnectionLost ) )
-    iLcSessionObserver->Reset();  
+    EUNIT_ASSERT( iObserver->iSessionConnectionLostCalled );
+    iObserver->Reset();
+    
     }
     
 
@@ -1485,26 +1506,25 @@ void UT_CMusEngMceSession::UT_SessionConnectionStateChangedL()
 //
 // -----------------------------------------------------------------------------
 // 
-void UT_CMusEngMceSession::UT_FailedL()
+void UT_CMusEngMceSession::UT_CMusEngMceSession_FailedL()
     {
     // Try to tell session about failure of another session
 
     iLiveSession->Failed( *iSomeOtherSession->iSession, 0 );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() ); // No session yet, nothing happened
+    EUNIT_ASSERT( iObserver->IsReseted() ); // No session yet, nothing happened
     
     // Simulate sending invite
-    iLiveSession->EstablishLcSessionL();
+    iLiveSession->InviteL( KTestRecipientSipUri() );
     
     // Now try again to notify session about failure of an another session
     iLiveSession->Failed( *iSomeOtherSession->iSession, 0 );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() ); // Wrong session, nothing happened
+    EUNIT_ASSERT( iObserver->IsReseted() ); // Wrong session, nothing happened
     
     // Tell session that it has failed
-    iLiveSession->Failed( *iLiveSession->iSession, KErrNotFound );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::ESessionFailed ) )
-    EUNIT_ASSERT_EQUALS( iLcSessionObserver->iError, KErrNotFound )
-    iLcSessionObserver->Reset();
+    iLiveSession->Failed( *iLiveSession->iSession, 0 );
+    EUNIT_ASSERT( iObserver->iSessionFailedCalled );
+    iObserver->Reset();
+    
     }
     
 
@@ -1512,31 +1532,27 @@ void UT_CMusEngMceSession::UT_FailedL()
 //
 // -----------------------------------------------------------------------------
 //     
-void UT_CMusEngMceSession::UT_UpdateFailedL()
+void UT_CMusEngMceSession::UT_CMusEngMceSession_UpdateFailedL()
     {
     // Try to tell session about update failure of another session
     iLiveSession->UpdateFailed( *iSomeOtherSession->iSession, NULL );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::ESessionFailed ) )
-    EUNIT_ASSERT_EQUALS( iLcSessionObserver->iError, KErrGeneral )
-    iLcSessionObserver->Reset();
+    EUNIT_ASSERT( iObserver->iSessionFailedCalled ); // No container, internal error
+    iObserver->Reset();
     
     // Try again with container
     TMceTransactionDataContainer container;
     iLiveSession->UpdateFailed( *iSomeOtherSession->iSession, &container );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() ); // No session yet, nothing happened
+    EUNIT_ASSERT( iObserver->IsReseted() ); // No session yet, nothing happened
     
     // Invite and try again.
-    iLiveSession->EstablishLcSessionL();
+    iLiveSession->InviteL( KTestRecipientSipUri() );
     iLiveSession->UpdateFailed( *iSomeOtherSession->iSession, &container );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() ); // Wrong session, nothing happened¨
+    EUNIT_ASSERT( iObserver->IsReseted() ); // Wrong session, nothing happened¨
     
     // Try with right session
     iLiveSession->UpdateFailed( *iLiveSession->iSession, &container );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::ESessionFailed ) )
-    EUNIT_ASSERT_EQUALS( iLcSessionObserver->iError, KErrGeneral )
-    iLcSessionObserver->Reset();
+    EUNIT_ASSERT( iObserver->iSessionFailedCalled );
+    iObserver->Reset();
     }
     
 
@@ -1544,7 +1560,7 @@ void UT_CMusEngMceSession::UT_UpdateFailedL()
 //
 // -----------------------------------------------------------------------------
 // 
-void UT_CMusEngMceSession::UT_SRReceivedL()
+void UT_CMusEngMceSession::UT_CMusEngMceSession_SRReceivedL()
     {
     EUNIT_ASSERT( iLiveSession->iSecondsFromLastRtcpReport == 0 );
     
@@ -1587,7 +1603,7 @@ void UT_CMusEngMceSession::UT_SRReceivedL()
 //
 // -----------------------------------------------------------------------------
 //     
-void UT_CMusEngMceSession::UT_RRReceivedL()
+void UT_CMusEngMceSession::UT_CMusEngMceSession_RRReceivedL()
     {
     EUNIT_ASSERT( iLiveSession->iSecondsFromLastRtcpReport == 0 );
     
@@ -1624,12 +1640,45 @@ void UT_CMusEngMceSession::UT_RRReceivedL()
     EUNIT_ASSERT( iLiveSession->iSecondsFromLastRtcpReport == 0 );    
     }
     
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//      
+void UT_CMusEngMceSession::UT_CMusEngMceSession_InactivityTimeoutL()
+    {    
+    //   Construct an audio stream for this test
+    
+    CMceAudioStream* audioStream = CMceAudioStream::NewLC();
+    
+    CMceRtpSource* rtpSource = CMceRtpSource::NewLC();
+    audioStream->SetSourceL( rtpSource );
+    CleanupStack::Pop( rtpSource );
+    
+    iReceiveSession->InactivityTimeout( *audioStream, *rtpSource );
+    
+    EUNIT_ASSERT( iObserver->IsReseted() )
+    
+    CleanupStack::PopAndDestroy( audioStream );
+    
+    // And now real inactivity timeout
+    
+    iReceiveSession->InactivityTimeout( 
+                *iReceiveSession->iSession->Streams()[0],
+                *static_cast<CMceRtpSource*>
+                        (iReceiveSession->iSession->Streams()[0]->Source()) );
+    
+    EUNIT_ASSERT( iObserver->iStreamIdleCalled )
+    
+    iObserver->Reset();
+    }
+    
     
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //       
-void UT_CMusEngMceSession::UT_SsrcAddedL()
+void UT_CMusEngMceSession::UT_CMusEngMceSession_SsrcAddedL()
     {
     // As CMusEngMceSession::SsrcAdded is expected to do nothing, just call
     // it to make sure it does not weaken the test coverage
@@ -1648,7 +1697,7 @@ void UT_CMusEngMceSession::UT_SsrcAddedL()
 //
 // -----------------------------------------------------------------------------
 //  
-void UT_CMusEngMceSession::UT_SsrcRemovedL()
+void UT_CMusEngMceSession::UT_CMusEngMceSession_SsrcRemovedL()
     {
     // As CMusEngMceSession::SsrcRemoved is expected to do nothing, just call
     // it to make sure it does not weaken the test coverage
@@ -1667,25 +1716,21 @@ void UT_CMusEngMceSession::UT_SsrcRemovedL()
 //
 // -----------------------------------------------------------------------------
 //  
-void UT_CMusEngMceSession::UT_UpdateTimerEventL()
+void UT_CMusEngMceSession::UT_CMusEngMceSession_UpdateTimerEventL()
     {
-    iLcSessionObserver->Reset();
     iLiveSession->UpdateTimerEvent();
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::EUnknown ) )
+    EUNIT_ASSERT( iObserver->iSessionTimeChangedCalled )
     EUNIT_ASSERT( iLiveSession->iUpdateTimer->IsActive() )
     iLiveSession->iUpdateTimer->Cancel();
-    iLcSessionObserver->Reset();
+    iObserver->Reset();
     
     iLiveSession->iSecondsFromLastRtcpReport = 25; // >KMusEngRtcpInactivityThreshold
     iLiveSession->UpdateTimerEvent();
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::ESessionFailed ) )
-    EUNIT_ASSERT_EQUALS( iLcSessionObserver->iError,
-                         TInt( MLcSession::EMediaInactivityTimeout ) )
+    EUNIT_ASSERT( iObserver->iSessionTimeChangedCalled )
+    EUNIT_ASSERT( iObserver->iInactivityTimeoutCalled );
     EUNIT_ASSERT( iLiveSession->iUpdateTimer->IsActive() )
     iLiveSession->iUpdateTimer->Cancel();
-    iLcSessionObserver->Reset(); 
+    iObserver->Reset();
     }   
 
 
@@ -1693,13 +1738,14 @@ void UT_CMusEngMceSession::UT_UpdateTimerEventL()
 //
 // -----------------------------------------------------------------------------
 //
-void UT_CMusEngMceSession::UT_IsRoamingBetweenAPsAllowedL()
+void UT_CMusEngMceSession::UT_CMusEngMceSession_IsRoamingBetweenAPsAllowedL()
     {
     // No session
     EUNIT_ASSERT( iLiveSession->IsRoamingBetweenAPsAllowed() )
 
     // Session idle
-    iLiveSession->EstablishLcSessionL();
+    _LIT( KRecipientSipUri, "sip:user@some.where" );
+    iLiveSession->InviteL( KRecipientSipUri );
     iLiveSession->iSession->iState = CMceSession::EIdle;
     EUNIT_ASSERT( iLiveSession->IsRoamingBetweenAPsAllowed() )
     
@@ -1716,760 +1762,78 @@ void UT_CMusEngMceSession::UT_IsRoamingBetweenAPsAllowedL()
 //
 // -----------------------------------------------------------------------------
 //
-void UT_CMusEngMceSession::UT_SaveContactL()
-    {     
-    _LIT8( KTestSaveContactAddr, "sip:abc@10.10.10.10");
-    
-    User::LeaveIfError( RProperty::Set( NMusSessionApi::KCategoryUid,
-                                        NMusSessionApi::KTelNumber,
-                                        _L("12341234") ) );
-    
-    // Operator variant
-    iLiveSession->iOperatorVariant = ETrue;
-    MUSENG_EUNIT_ASSERT_SPECIFIC_LEAVE( 
-            iLiveSession->SaveContactL( KTestSaveContactAddr ), KErrNotSupported )
-    
-    // No address to save
-    iLiveSession->iOperatorVariant = EFalse;
-    MUSENG_EUNIT_ASSERT_SPECIFIC_LEAVE( 
-               iLiveSession->SaveContactL( KNullDesC8 ), KErrArgument )
+void UT_CMusEngMceSession::UT_CMusEngMceSession_VolumeChangedL()
+    {
+    // Try without session, nothing happens
+    EUNIT_ASSERT( iObserver->iVolume == 0 );
+    iLiveSession->VolumeChanged( 1, EFalse );
+    EUNIT_ASSERT( !VerifySpeakersVolume(*iLiveSession, 1) )
+    EUNIT_ASSERT( iObserver->iVolume == 0 );
 
-    // Contact id KErrNotSupported (multiple matching contacts)
-    User::LeaveIfError( RProperty::Set( NMusSessionApi::KCategoryUid,
-                                     NMusSessionApi::KContactId,
-                                     KErrNotSupported ) );
+    // Establish session
+    ESTABLISH_OUT_SESSION( iClipSession )
     
-    MUSENG_EUNIT_ASSERT_SPECIFIC_LEAVE( 
-                iLiveSession->SaveContactL( KTestSaveContactAddr ), KErrNotFound )
+    // Try without observer
+    iClipSession->VolumeChanged( 2, EFalse );
+    EUNIT_ASSERT( VerifySpeakersVolume(*iClipSession, 2) )
+    EUNIT_ASSERT( iObserver->iVolume == 0 );
     
-    // SIP field exists already
-    User::LeaveIfError( RProperty::Set( NMusSessionApi::KCategoryUid,
-                                        NMusSessionApi::KContactId,
-                                        2 ) );
-
-    ContactEngineStubHelper::SetSIPFieldFound( ETrue );
-    MUSENG_EUNIT_ASSERT_SPECIFIC_LEAVE( 
-                   iLiveSession->SaveContactL( KTestSaveContactAddr ), KErrAlreadyExists )
     
-    // No correct field in fields info
-    ContactEngineStubHelper::Reset();
-    ContactEngineStubHelper::SetSIPFieldInfoFound( EFalse );
-    MUSENG_EUNIT_ASSERT_SPECIFIC_LEAVE( 
-                       iLiveSession->SaveContactL( KTestSaveContactAddr ), KErrNotFound )
-    
-    // Success
-    ContactEngineStubHelper::Reset();
-    iLiveSession->SaveContactL( KTestSaveContactAddr );
-    EUNIT_ASSERT( ContactEngineStubHelper::GetCalledFunction() == EContactEngineStubSetText );
+    // Try with observer set
+    iClipSession->SetVolumeChangeObserver( iObserver );
+    iClipSession->VolumeChanged( 3, EFalse );
+    EUNIT_ASSERT( VerifySpeakersVolume(*iClipSession, 3) )
+    EUNIT_ASSERT( iObserver->iVolume == 3 );
     
     }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_RectL()
+// HELPERS
+TBool UT_CMusEngMceSession::VerifySpeakersVolume(CMusEngMceSession& aSession, TInt aVolume)
     {
-    iLiveSession->SetRectL( TRect( 0, 0, 100, 100 ) );    
-    TRect rect = iLiveSession->Rect();
+    TBool result = EFalse;
     
-    // Initial values
-    EUNIT_ASSERT( rect.iTl.iX == 0 );
-    EUNIT_ASSERT( rect.iTl.iY == 0 );
-    EUNIT_ASSERT( rect.iBr.iX == 100 );
-    EUNIT_ASSERT( rect.iBr.iY == 100 );
+    CMceSpeakerSink* speaker = NULL;    
+    CMceSession* session = aSession.iSession;
     
-    iLiveSession->iRect.iTl.iX = 100;
-    iLiveSession->iRect.iTl.iY = 200;
-    iLiveSession->iRect.iBr.iX = 300;
-    iLiveSession->iRect.iBr.iY = 400;
-    
-    rect = iLiveSession->Rect();
-    
-    EUNIT_ASSERT( rect.iTl.iX == 100 );
-    EUNIT_ASSERT( rect.iTl.iY == 200 );
-    EUNIT_ASSERT( rect.iBr.iX == 300 );
-    EUNIT_ASSERT( rect.iBr.iY == 400 );  
-    }
-
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_SetRectLL()
-    {
-    TRect rect;
-
-    rect.iTl.iX = 100;
-    rect.iTl.iY = 200;
-    rect.iBr.iX = 300;
-    rect.iBr.iY = 400;
-
-    iLiveSession->SetRectL( rect );
-    
-    EUNIT_ASSERT( iLiveSession->iRect.iTl.iX == 100 );
-    EUNIT_ASSERT( iLiveSession->iRect.iTl.iY == 200 );
-    EUNIT_ASSERT( iLiveSession->iRect.iBr.iX == 300 );
-    EUNIT_ASSERT( iLiveSession->iRect.iBr.iY == 400 );
-
-    ESTABLISH_OUT_SESSION( iLiveSession );
-    
-    CMceDisplaySink* display = 
-                MusEngMceUtils::GetDisplayL( *( iLiveSession->iSession ) );
-    TRect displayRect = display->DisplayRectL();
-    
-    EUNIT_ASSERT( displayRect.iTl.iX == 100 );
-    EUNIT_ASSERT( displayRect.iTl.iY == 200 );
-    EUNIT_ASSERT( displayRect.iBr.iX == 300 );
-    EUNIT_ASSERT( displayRect.iBr.iY == 400 );
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_SecondaryRectL()
-    {
-    iLiveSession->SetSecondaryRectL( TRect( 0, 0, 100, 100 ) );    
-    TRect rect = iLiveSession->SecondaryRect();
-    
-    // Initial values
-    EUNIT_ASSERT( rect.iTl.iX == 0 );
-    EUNIT_ASSERT( rect.iTl.iY == 0 );
-    EUNIT_ASSERT( rect.iBr.iX == 100 );
-    EUNIT_ASSERT( rect.iBr.iY == 100 );
-    
-    iLiveSession->iRect.iTl.iX = 100;
-    iLiveSession->iRect.iTl.iY = 200;
-    iLiveSession->iRect.iBr.iX = 300;
-    iLiveSession->iRect.iBr.iY = 400;
-    
-    rect = iLiveSession->SecondaryRect();
-    
-    EUNIT_ASSERT( rect.iTl.iX == 100 );
-    EUNIT_ASSERT( rect.iTl.iY == 200 );
-    EUNIT_ASSERT( rect.iBr.iX == 300 );
-    EUNIT_ASSERT( rect.iBr.iY == 400 );  
-    }
-
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_SetSecondaryRectLL()
-    {
-    TRect rect;
-
-    rect.iTl.iX = 100;
-    rect.iTl.iY = 200;
-    rect.iBr.iX = 300;
-    rect.iBr.iY = 400;
-
-    iLiveSession->SetSecondaryRectL( rect );
-    
-    EUNIT_ASSERT( iLiveSession->iRect.iTl.iX == 100 );
-    EUNIT_ASSERT( iLiveSession->iRect.iTl.iY == 200 );
-    EUNIT_ASSERT( iLiveSession->iRect.iBr.iX == 300 );
-    EUNIT_ASSERT( iLiveSession->iRect.iBr.iY == 400 );
-
-    ESTABLISH_OUT_SESSION( iLiveSession );
-    
-    CMceDisplaySink* display = 
-                MusEngMceUtils::GetDisplayL( *( iLiveSession->iSession ) );
-    TRect displayRect = display->DisplayRectL();
-    
-    EUNIT_ASSERT( displayRect.iTl.iX == 100 );
-    EUNIT_ASSERT( displayRect.iTl.iY == 200 );
-    EUNIT_ASSERT( displayRect.iBr.iX == 300 );
-    EUNIT_ASSERT( displayRect.iBr.iY == 400 );
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_EnableDisplayLL()
-    {
-    TRAPD( error, iLiveSession->EnableDisplayL( ETrue ) );
-    MUS_TEST_FORWARD_ALLOC_FAILURE( error );
-    EUNIT_ASSERT( error == KErrNotReady );
-    
-    ESTABLISH_OUT_SESSION( iLiveSession );
-    
-    CMceDisplaySink* display = 
-                    MusEngMceUtils::GetDisplayL( *(iLiveSession->iSession) );
-    
-    // Disable
-    iLiveSession->EnableDisplayL( EFalse );
-    
-    EUNIT_ASSERT( !display->iIsEnabled );
-    
-    // Try to disable again, request should be ignored
-    
-    iLiveSession->EnableDisplayL( EFalse );
-    
-    EUNIT_ASSERT( !display->iIsEnabled );
-
-    // Enable
-    
-    iLiveSession->EnableDisplayL( ETrue );
-    
-    EUNIT_ASSERT( display->iIsEnabled );
-    
-    // Try to enable again, request should be ignored
-    
-    iLiveSession->EnableDisplayL( ETrue );
-    
-    EUNIT_ASSERT( display->iIsEnabled );
-    
-    EUNIT_ASSERT( iLiveSession->IsDisplayEnabled() )
-    EUNIT_ASSERT( iLiveSession->IsDisplayActive() )
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_CMusEngMceSession_SetOrientationLL()
-    {
-    // Try without session, fails
-    EUNIT_ASSERT_SPECIFIC_LEAVE( iLiveSession->SetOrientationL( 
-                                                CMusEngMceSession::EPortrait ), 
-                                 KErrNotReady )
-
-    // Establish a session
-    ESTABLISH_OUT_SESSION( iLiveSession )
-    
-    CMceDisplaySink* display = 
-                    MusEngMceUtils::GetDisplayL( *iLiveSession->iSession );
-    
-    // Check the initial state
-    display->iRotation = CMceDisplaySink::ENone;
-    EUNIT_ASSERT_EQUALS( iLiveSession->OrientationL(), 
-                         CMusEngMceSession::EPortrait )      
-                         
-    // Successfully change orientation
-    
-    iLiveSession->SetOrientationL( CMusEngMceSession::ELandscape );
-    EUNIT_ASSERT_EQUALS( iLiveSession->OrientationL(), 
-                         CMusEngMceSession::ELandscape )
-    
-    iLiveSession->SetOrientationL( CMusEngMceSession::EPortrait );
-    EUNIT_ASSERT_EQUALS( iLiveSession->OrientationL(), 
-                         CMusEngMceSession::EPortrait )
-    }
-
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_SetEncodingDeviceLL()
-    {
-    CMceAvcCodec* codec = CMceAvcCodec::NewLC( KMceSDPNameH264() );
-    
-    // Generic error in CenRep, leave expected
-    CRepository::iForceFailWithCode = KErrNotReady;
-    EUNIT_ASSERT_LEAVE( iLiveSession->SetEncodingDeviceL( *codec ) )
-    EUNIT_ASSERT_EQUALS( codec->iEncodingDecodingDevice, TUid::Uid( 0 ) )
-    
-    // No entry in CenRep, default value expected
-    CRepository::iForceFailWithCode = KErrNotFound;
-    const TUid KDefaultEncodingDevice( TUid::Uid( 0x20001C13 ) );
-    iLiveSession->SetEncodingDeviceL( *codec );
-    EUNIT_ASSERT_EQUALS( codec->iEncodingDecodingDevice, 
-                         KDefaultEncodingDevice )
-    
-    // Entry in CenRep
-    const TInt KSomeEncodingDevice( 0x20001C15 );
-    CRepository::iStaticEncoderUid = KSomeEncodingDevice;
-    iLiveSession->SetEncodingDeviceL( *codec );
-    EUNIT_ASSERT_EQUALS( codec->iEncodingDecodingDevice, 
-                         TUid::Uid( KSomeEncodingDevice ) )
-                                             
-    CleanupStack::PopAndDestroy( codec );
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_SetCodecConfigKeyLL()
-    {
-    CMceAvcCodec* codec = CMceAvcCodec::NewLC( KMceSDPNameH264() );
-    codec->SetAllowedBitrates( KMceAvcBitrateLevel1b );
-
-    // Generic error in CenRep, leave expected
-    CRepository::iForceFailWithCode = KErrNotReady;
-    EUNIT_ASSERT_LEAVE( iLiveSession->SetCodecConfigKeyL( *codec ) );
-    EUNIT_ASSERT( !codec->iConfigKey )
-    EUNIT_ASSERT( !iLiveSession->iStoreEncoderConfigInfo )
-    CRepository::iForceFailWithCode = KErrNone;
-    
-    // No entry in CenRep, nothing happens
-    iLiveSession->SetCodecConfigKeyL( *codec );
-    EUNIT_ASSERT( !codec->iConfigKey )
-    EUNIT_ASSERT( !iLiveSession->iStoreEncoderConfigInfo )
-    
-    // Empty entry in CenRep
-    CRepository::SetStubAvcConfigKeysL( KNullDesC8() );
-    iLiveSession->SetCodecConfigKeyL( *codec );
-    EUNIT_ASSERT( !codec->iConfigKey )
-    EUNIT_ASSERT( iLiveSession->iStoreEncoderConfigInfo )
-    iLiveSession->iStoreEncoderConfigInfo = EFalse; // emulate original situation
-    
-    // Entry in CenRep
-    CRepository::SetStubAvcConfigKeysL( KMusAvcBitrateLevel_1b_ConfigKey );
-    iLiveSession->SetCodecConfigKeyL( *codec );
-    EUNIT_ASSERT( codec->iConfigKey )
-    HBufC8* key = codec->ConfigKeyL();
-    CleanupStack::PushL( key );
-    EUNIT_ASSERT_EQUALS( *key, KMusAvcBitrateLevel1bTestText() )
-    CleanupStack::PopAndDestroy( key );
-    EUNIT_ASSERT( !iLiveSession->iStoreEncoderConfigInfo )
-    
-    CleanupStack::PopAndDestroy( codec );
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_ReadCodecConfigKeyLL()
-    {
-    HBufC8* key( NULL );
-    
-    // Try with H263, leave expected
-    CMceVideoCodec* codecH263 = CMceH263Codec::NewLC( KMceSDPNameH263() );  
-    EUNIT_ASSERT_LEAVE( key = iLiveSession->ReadCodecConfigKeyL( *codecH263 ) )
-    CleanupStack::PopAndDestroy( codecH263 );
-    
-    // Try without an entry in CenRep, leave expected
-    CMceVideoCodec* codec = CMceAvcCodec::NewLC( KMceSDPNameH264() );
-    codec->SetAllowedBitrates( 0 | KMceAvcBitrateLevel1 );
-    EUNIT_ASSERT_LEAVE( key = iLiveSession->ReadCodecConfigKeyL( *codec ) )
-
-    // Create CenRep entry which does not include wanted bitrate, NULL value
-    // expected
-    CRepository::SetStubAvcConfigKeysL( KMusAvcBitrateLevel1bTestText() );
-    key = iLiveSession->ReadCodecConfigKeyL( *codec );
-    EUNIT_ASSERT( !key )
-    
-    // Create entry with all AVC keys and try with all the values
-    CRepository::SetStubAvcConfigKeysL( KMusAvcAllLevelsConcatenation() );                           
-    
-    // KMceAvcBitrateLevel1
-    key = iLiveSession->ReadCodecConfigKeyL( *codec );
-    EUNIT_ASSERT( key );
-    CleanupStack::PushL( key );
-    EUNIT_ASSERT_EQUALS( *key, KMusAvcBitrateLevel1TestText );
-    CleanupStack::PopAndDestroy( key );
-    
-    // KMceAvcBitrateLevel1b
-    codec->SetAllowedBitrates( KMceAvcBitrateLevel1b );
-    key = iLiveSession->ReadCodecConfigKeyL( *codec );
-    EUNIT_ASSERT( key );
-    CleanupStack::PushL( key );
-    EUNIT_ASSERT_EQUALS( *key, KMusAvcBitrateLevel1bTestText );
-    CleanupStack::PopAndDestroy( key );
-    
-    // KMceAvcBitrateLevel1_1
-    codec->SetAllowedBitrates( KMceAvcBitrateLevel1_1 );
-    key = iLiveSession->ReadCodecConfigKeyL( *codec );
-    EUNIT_ASSERT( key );
-    CleanupStack::PushL( key );
-    EUNIT_ASSERT_EQUALS( *key, KMusAvcBitrateLevel1_1TestText );
-    CleanupStack::PopAndDestroy( key );
-    
-    // KMceAvcBitrateLevel1_2
-    codec->SetAllowedBitrates( KMceAvcBitrateLevel1_2 );
-    key = iLiveSession->ReadCodecConfigKeyL( *codec );
-    EUNIT_ASSERT( key );
-    CleanupStack::PushL( key );
-    EUNIT_ASSERT_EQUALS( *key, KMusAvcBitrateLevel1_2TestText );
-    CleanupStack::PopAndDestroy( key );
-    
-    // KMceAvcBitrateLevel1_3
-    codec->SetAllowedBitrates( KMceAvcBitrateLevel1_3 );
-    key = iLiveSession->ReadCodecConfigKeyL( *codec );
-    EUNIT_ASSERT( key );
-    CleanupStack::PushL( key );
-    EUNIT_ASSERT_EQUALS( *key, KMusAvcBitrateLevel1_3TestText );
-    CleanupStack::PopAndDestroy( key );
-    
-    // KMceAvcBitrateLevel2
-    codec->SetAllowedBitrates( KMceAvcBitrateLevel2 );
-    key = iLiveSession->ReadCodecConfigKeyL( *codec );
-    EUNIT_ASSERT( key );
-    CleanupStack::PushL( key );
-    EUNIT_ASSERT_EQUALS( *key, KMusAvcBitrateLevel2TestText );
-    CleanupStack::PopAndDestroy( key );
-   
-    CleanupStack::PopAndDestroy( codec );
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_StoreEncoderConfigInfoLL()
-    {
-    CRepository::iStaticWriteAvcKeysToStaticData = ETrue;
-    
-    // Try with clean CenRep
-    MultimediaSharingSettings::SetEncoderConfigInfoL( KNullDesC8() );   
-    
-    ESTABLISH_OUT_SESSION( iLiveSession ) // calls StoreEncoderConfigInfoL
-    // If StoreEncoderConfigInfoL leaves with KErrNoMemory,
-    // MMusEngSessionObserver::SessionFailed will be called.
-    if ( iLcSessionObserver->iCalledFunction == CLcSessionObserverStub::ESessionFailed )
+    if ( session ) 
         {
-        User::Leave( KErrNoMemory );
+        for ( TInt i = 0; i < session->Streams().Count(); ++i )
+            {
+            for ( TInt j = 0; j < session->Streams()[i]->Sinks().Count(); ++j )
+                {
+                if ( session->Streams()[i]->Sinks()[j]->Type() == KMceSpeakerSink )
+                    {
+                    speaker = static_cast<CMceSpeakerSink*>(
+                                              session->Streams()[i]->Sinks()[j] );
+                    result = ( speaker->VolumeL() == aVolume );
+                    }
+                }
+            } 
         }
-
-    HBufC8* keys = MultimediaSharingSettings::EncoderConfigInfoLC();    
-    EUNIT_ASSERT_EQUALS( *keys, KMusAvcBitrateLevel_1b_ConfigKey() )
-    CleanupStack::PopAndDestroy( keys );
-    
-    // Try without a clean CenRep 
-    MultimediaSharingSettings::SetEncoderConfigInfoL(
-                                        KMusAvcBitrateLevel_1_1_ConfigKey() );   
-    
-    delete iLiveSession;
-    iLiveSession = NULL;
-    iLiveSession = CMusEngLiveSession::NewL();
-    iLiveSession->SetLcSessionObserver( iLcSessionObserver );
-    iLiveSession->SetLcUiProvider( iLcUiProvider );
-    
-    ESTABLISH_OUT_SESSION( iLiveSession ) // calls StoreEncoderConfigInfoL
-    // If StoreEncoderConfigInfoL leaves with KErrNoMemory,
-    // MMusEngSessionObserver::SessionFailed will be called.
-    if ( iLcSessionObserver->iCalledFunction == CLcSessionObserverStub::ESessionFailed )
-        {
-        User::Leave( KErrNoMemory );
-        }
-                     
-    keys = MultimediaSharingSettings::EncoderConfigInfoLC();
-    EUNIT_ASSERT_EQUALS( *keys, 
-                         KMusAvcBitrateLevels_1_1_And_1b_ConfigKeys() )
-    CleanupStack::PopAndDestroy( keys );
+    return result;
     }
 
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
-void UT_CMusEngMceSession::UT_StreamStreamingL()
+void UT_CMusEngMceSession::SetMaxVolForSpeakersL(CMceSession& aSession, TInt aMaxVol)
     {
-    // Wrong stream type, no callbacks to MLcSessionObserver
-    CMceAudioStream* audioStream = CMceAudioStream::NewLC();
-    iLiveSession->StreamStreaming( *audioStream );
-    CleanupStack::PopAndDestroy( audioStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() )
-    
-    // Wrong state, no callbacks to MLcSessionObserver
-    CMceVideoStream* videoStream = CMceVideoStream::NewLC();
-    videoStream->iState = CMceMediaStream::EIdle;
-    iLiveSession->StreamStreaming( *videoStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() )
-    
-    // Receive session, RTP source and remote player present
-    iLcSessionObserver->Reset();
-    videoStream->iState = CMceMediaStream::EStreaming;
-    CMceRtpSource* rtpSource = CMceRtpSource::NewLC();
-    videoStream->SetSourceL( rtpSource );
-    CleanupStack::Pop( rtpSource );
-    iReceiveSession->StreamStreaming( *videoStream );
-    EUNIT_ASSERT_EQUALS( 
-        TInt( CLcSessionObserverStub::EPlayerStateChanged ),
-        iLcSessionObserver->iCalledFunction )
-    EUNIT_ASSERT_EQUALS( 
-        iReceiveSession->RemoteVideoPlayer(),
-        iLcSessionObserver->iCurrentPlayer )
-    
-    // Live session, RTP sink and local player present
-    iLcSessionObserver->Reset();
-    videoStream->SetSourceL( NULL );
-    CMceRtpSink* rtpSink = CMceRtpSink::NewLC();
-    videoStream->AddSinkL( rtpSink );
-    CleanupStack::Pop( rtpSink );
-    iLiveSession->StreamStreaming( *videoStream );
-    EUNIT_ASSERT_EQUALS( 
-        TInt( CLcSessionObserverStub::EPlayerStateChanged ),
-        iLcSessionObserver->iCalledFunction )
-    EUNIT_ASSERT_EQUALS( 
-        iLiveSession->LocalVideoPlayer(),
-        iLcSessionObserver->iCurrentPlayer )
-
-    // Live session, RTP sink present, but no local player
-    iLcSessionObserver->Reset();
-    delete iLiveSession->iLiveVideoPlayer;
-    iLiveSession->iLiveVideoPlayer = NULL;
-    iLiveSession->StreamStreaming( *videoStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() )
-        
-    CleanupStack::PopAndDestroy( videoStream );
+    for ( TInt i = 0; i < aSession.Streams().Count(); ++i )
+            {
+            for ( TInt j = 0; j < aSession.Streams()[i]->Sinks().Count(); ++j )
+                {
+                if ( aSession.Streams()[i]->Sinks()[j]->Type() == KMceSpeakerSink )
+                    {
+                    CMceSpeakerSink* speaker = static_cast<CMceSpeakerSink*>(
+                                                aSession.Streams()[i]->Sinks()[j] );
+                    speaker->iMaxVolume = aMaxVol;
+                    }
+                }
+            } 
     }
-
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_InformObserverAboutSessionStateChangeL()
-    {
-    // Observer does not exist
-    iLiveSession->SetLcSessionObserver( NULL );
-    iLiveSession->InformObserverAboutSessionStateChange();
-    EUNIT_ASSERT_EQUALS( 
-        CLcSessionObserverStub::EUnknown, 
-        iLcSessionObserver->iCalledFunction )
-    
-    // Observer exists
-    iLiveSession->SetLcSessionObserver( iLcSessionObserver );
-    iLiveSession->InformObserverAboutSessionStateChange();
-    EUNIT_ASSERT_EQUALS( 
-        CLcSessionObserverStub::ESessionStateChanged, 
-        iLcSessionObserver->iCalledFunction )  
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_InformObserverAboutSessionUpdateL()
-    {
-    // Observer does not exist
-    iLiveSession->SetLcSessionObserver( NULL );
-    iLiveSession->InformObserverAboutSessionUpdate();
-    EUNIT_ASSERT_EQUALS( 
-        CLcSessionObserverStub::EUnknown, 
-        iLcSessionObserver->iCalledFunction )    
-       
-    // Observer exists
-    iLiveSession->SetLcSessionObserver( iLcSessionObserver );
-    iLiveSession->InformObserverAboutSessionUpdate();
-    EUNIT_ASSERT_EQUALS( 
-        CLcSessionObserverStub::ESessionUpdated, 
-        iLcSessionObserver->iCalledFunction )
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_InformObserverAboutSessionFailureL()
-    {
-    // Observer does not exist
-    iLiveSession->SetLcSessionObserver( NULL );
-    iLiveSession->InformObserverAboutSessionFailure( KErrGeneral );
-    EUNIT_ASSERT_EQUALS( 
-        CLcSessionObserverStub::EUnknown, 
-        iLcSessionObserver->iCalledFunction )
-    EUNIT_ASSERT_EQUALS( KErrNone, iLcSessionObserver->iError )    
-    
-    // Observer exists
-    iLiveSession->SetLcSessionObserver( iLcSessionObserver );
-    iLiveSession->InformObserverAboutSessionFailure( KErrGeneral );
-    EUNIT_ASSERT_EQUALS( 
-        CLcSessionObserverStub::ESessionFailed, 
-        iLcSessionObserver->iCalledFunction )
-    EUNIT_ASSERT_EQUALS( KErrGeneral, iLcSessionObserver->iError )
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_InformObserverAboutPlayerStateChangeL()
-    {
-    // Observer does not exist
-    iLiveSession->SetLcSessionObserver( NULL );
-    iLiveSession->InformObserverAboutPlayerStateChange( NULL );
-    EUNIT_ASSERT_EQUALS( 
-        CLcSessionObserverStub::EUnknown, 
-        iLcSessionObserver->iCalledFunction )    
-    
-    // Observer exists, but the player is NULL
-    iLiveSession->SetLcSessionObserver( iLcSessionObserver );
-    iLiveSession->InformObserverAboutPlayerStateChange( NULL );
-    EUNIT_ASSERT_EQUALS( 
-        CLcSessionObserverStub::EUnknown, 
-        iLcSessionObserver->iCalledFunction )    
-    
-    // Both observer and player exist
-    iLiveSession->InformObserverAboutPlayerStateChange( 
-        iLiveSession->LocalVideoPlayer() );
-    EUNIT_ASSERT_EQUALS( 
-        CLcSessionObserverStub::EPlayerStateChanged, 
-        iLcSessionObserver->iCalledFunction )
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_InformObserverAboutPlayerUpdateL()
-    {
-    // Observer does not exist
-    iLiveSession->SetLcSessionObserver( NULL );
-    iLiveSession->InformObserverAboutPlayerUpdate( NULL );
-    EUNIT_ASSERT_EQUALS( 
-        CLcSessionObserverStub::EUnknown, 
-        iLcSessionObserver->iCalledFunction )    
-    
-    // Observer exists, but the player is NULL
-    iLiveSession->SetLcSessionObserver( iLcSessionObserver );
-    iLiveSession->InformObserverAboutPlayerUpdate( NULL );
-    EUNIT_ASSERT_EQUALS( 
-        CLcSessionObserverStub::EUnknown, 
-        iLcSessionObserver->iCalledFunction )    
-    
-    // Both observer and player exist
-    iLiveSession->InformObserverAboutPlayerUpdate( 
-        iLiveSession->LocalVideoPlayer() );
-    EUNIT_ASSERT_EQUALS( 
-        CLcSessionObserverStub::EPlayerUpdated, 
-        iLcSessionObserver->iCalledFunction )
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_InformObserverAboutPlayerFailureL()
-    {
-    // Observer does not exist
-    iLiveSession->SetLcSessionObserver( NULL );
-    iLiveSession->InformObserverAboutPlayerFailure( NULL, KErrGeneral );
-    EUNIT_ASSERT_EQUALS( 
-        CLcSessionObserverStub::EUnknown, 
-        iLcSessionObserver->iCalledFunction )
-    EUNIT_ASSERT_EQUALS( KErrNone, iLcSessionObserver->iError )
-    
-    // Observer exists, but the player is NULL
-    iLiveSession->SetLcSessionObserver( iLcSessionObserver );
-    iLiveSession->InformObserverAboutPlayerFailure( NULL, KErrGeneral );
-    EUNIT_ASSERT_EQUALS( 
-        CLcSessionObserverStub::EUnknown, 
-        iLcSessionObserver->iCalledFunction )
-    EUNIT_ASSERT_EQUALS( KErrNone, iLcSessionObserver->iError )
-    
-    // Both observer and player exist
-    iLiveSession->InformObserverAboutPlayerFailure( 
-        iLiveSession->LocalVideoPlayer(), KErrGeneral );
-    EUNIT_ASSERT_EQUALS( 
-        CLcSessionObserverStub::EPlayerFailed, 
-        iLcSessionObserver->iCalledFunction )
-    EUNIT_ASSERT_EQUALS( KErrGeneral, iLcSessionObserver->iError )
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_LcUiProviderL()
-    {
-    // Provider does not exist 
-    iLiveSession->SetLcUiProvider( NULL );
-    EUNIT_ASSERT_SPECIFIC_LEAVE( iLiveSession->LcUiProviderL(), KErrNotReady )
-    
-    // Provider exists
-    iLiveSession->SetLcUiProvider( iLcUiProvider  );
-    EUNIT_ASSERT( &iLiveSession->LcUiProviderL() == iLcUiProvider )
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UI_IsBackgroundStartupL()
-    {
-    // fast mode is not defined
-    EUNIT_ASSERT( !iLiveSession->IsBackgroundStartup() )
-    
-    // fast mode is Off
-    User::LeaveIfError( RProperty::Set( NMusSessionApi::KCategoryUid,
-                                        NMusSessionApi::KFastMode,
-                                        1 ) );
-
-    EUNIT_ASSERT( !iLiveSession->IsBackgroundStartup() )
-
-    // fast mode is On
-    // Bg value would be set to true at session contruct phase if property
-    // is set to EFastModeOn at that time.
-    iLiveSession->iBackground = ETrue;
-    User::LeaveIfError( RProperty::Set( NMusSessionApi::KCategoryUid,
-                                        NMusSessionApi::KFastMode,
-                                        0 ) );
-
-    EUNIT_ASSERT( iLiveSession->IsBackgroundStartup() )    
-    
-    // Ensure after session recreation fast mode is off 
-    delete iLiveSession;
-    iLiveSession = NULL;
-    iLiveSession = CMusEngLiveSession::NewL();
-    EUNIT_ASSERT( !iLiveSession->IsBackgroundStartup() ) 
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_InformUiProviderAboutReceivingStartL()
-    {
-    // Observer does not exist
-    iLiveSession->SetLcUiProvider( NULL );
-    iLiveSession->InformUiProviderAboutReceivingStart();
-    EUNIT_ASSERT_EQUALS( TInt( CLcUiProviderStub::EUnknown ), 
-                         iLcUiProvider->iCalledFunction )
-    
-    // Observer exists, but we are on foreground (fast mode is off)
-    iLiveSession->SetLcUiProvider( iLcUiProvider );
-    iLiveSession->InformUiProviderAboutReceivingStart();
-    EUNIT_ASSERT_EQUALS( TInt( CLcUiProviderStub::EUnknown ), 
-                         iLcUiProvider->iCalledFunction )
-    
-    // Observer exists, we are on background
-    iLiveSession->iBackground = ETrue;
-    EUNIT_ASSERT( !iLcUiProvider->iForeground )
-    iLiveSession->InformUiProviderAboutReceivingStart();
-    EUNIT_ASSERT_EQUALS( TInt( CLcUiProviderStub::EHandleForegroundStatus ),
-                         iLcUiProvider->iCalledFunction )
-    EUNIT_ASSERT( iLcUiProvider->iForeground ) 
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_SetForegroundStatusL()
-    {
-    iLiveSession->iBackground = ETrue;
-    EUNIT_ASSERT( iLiveSession->SetForegroundStatus( ETrue ) == KErrNone );
-    EUNIT_ASSERT( !iLiveSession->iBackground );
-    EUNIT_ASSERT( iLiveSession->SetForegroundStatus( EFalse ) == KErrNone );
-    EUNIT_ASSERT( !iLiveSession->iBackground ); // Still bg
-    }
-
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngMceSession::UT_UpdateLcSessionLL()
-    {
-    // No MCE session
-    EUNIT_ASSERT_SPECIFIC_LEAVE( iLiveSession->UpdateLcSessionL(), KErrNotReady )
-        
-    ESTABLISH_OUT_SESSION( iLiveSession );
-    
-    iLiveSession->UpdateLcSessionL();
-    
-    }
-
+ 
 //  TEST TABLE
 
 EUNIT_BEGIN_TEST_TABLE(
@@ -2478,442 +1842,264 @@ EUNIT_BEGIN_TEST_TABLE(
     "UNIT" )
 
 EUNIT_TEST(
-    "LcSessionState - test ",
+    "TerminateL - test ",
     "CMusEngMceSession",
-    "LcSessionState",
+    "TerminateL",
     "FUNCTIONALITY",
-    SetupL, UT_LcSessionStateL, Teardown)
-        
-EUNIT_TEST(
-    "RemoteVideoPlayer - test ",
-    "CMusEngMceSession",
-    "RemoteVideoPlayer",
-    "FUNCTIONALITY",
-    SetupL, UT_RemoteVideoPlayerL, Teardown)
-        
-EUNIT_TEST(
-    "LocalVideoPlayer - test ",
-    "CMusEngMceSession",
-    "LocalVideoPlayer",
-    "FUNCTIONALITY",
-    SetupL, UT_LocalVideoPlayerL, Teardown) 
-        
-EUNIT_TEST(
-    "LocalDisplayNameL - test ",
-    "CMusEngMceSession",
-    "LocalDisplayNameL",
-    "FUNCTIONALITY",
-    SetupL, UT_LocalDisplayNameL, Teardown)
-
-EUNIT_TEST(
-    "RemoteDisplayName - test ",
-    "CMusEngMceSession",
-    "RemoteDisplayName",
-    "FUNCTIONALITY",
-    SetupL, UT_RemoteDisplayNameL, Teardown)
-    
-EUNIT_TEST(
-    "RemoteDetails - test ",
-    "CMusEngMceSession",
-    "RemoteDetails",
-    "FUNCTIONALITY",
-    SetupL, UT_RemoteDetailsL, Teardown)
-
-EUNIT_TEST(
-    "SetParameter - test ",
-    "CMusEngMceSession",
-    "SetParameter",
-    "FUNCTIONALITY",
-    SetupL, UT_SetParameterL, Teardown)
-        
-EUNIT_TEST(
-    "ParameterValue - test ",
-    "CMusEngMceSession",
-    "ParameterValue",
-    "FUNCTIONALITY",
-    SetupL, UT_ParameterValueL, Teardown)    
-        
-EUNIT_TEST(
-    "IsLcAudioMutedL - test ",
-    "CMusEngMceSession",
-    "IsLcAudioMutedL",
-    "FUNCTIONALITY",
-    SetupL, UT_IsLcAudioMutedL, Teardown)
-        
-EUNIT_TEST(
-    "MuteLcAudioL - test ",
-    "CMusEngMceSession",
-    "MuteLcAudioL",
-    "FUNCTIONALITY",
-    SetupL, UT_MuteLcAudioL, Teardown)    
-
-EUNIT_TEST(
-    "MuteLcMicL - test ",
-    "CMusEngMceSession",
-    "MuteLcMicL",
-    "FUNCTIONALITY",
-    SetupL, UT_MuteLcMicL, Teardown)
-        
-EUNIT_TEST(
-    "EnableLcLoudspeakerL - test ",
-    "CMusEngMceSession",
-    "EnableLcLoudspeakerL",
-    "FUNCTIONALITY",
-    SetupL, UT_EnableLcLoudspeakerL, Teardown)
-        
-EUNIT_TEST(
-    "SetLcVolumeL - test ",
-    "CMusEngMceSession",
-    "SetLcVolumeL",
-    "FUNCTIONALITY",
-    SetupL, UT_SetLcVolumeL, Teardown)
+    SetupL, UT_CMusEngMceSession_TerminateLL, Teardown)
 
 EUNIT_TEST(
     "GetSessionTime - test ",
     "CMusEngMceSession",
     "GetSessionTime",
     "FUNCTIONALITY",
-    SetupL, UT_GetSessionTimeL, Teardown)   
+    SetupL, UT_CMusEngMceSession_GetSessionTimeL, Teardown)
 
 EUNIT_TEST(
-    "HandleTermination - test ",
+    "ConnectionActive - test ",
     "CMusEngMceSession",
-    "HandleTermination",
+    "ConnectionActive",
     "FUNCTIONALITY",
-    SetupL, UT_HandleTerminationL, Teardown)   
+    SetupL, UT_CMusEngMceSession_ConnectionActiveL, Teardown) 
 
 EUNIT_TEST(
-    "AdjustVideoCodecL - test ",
+    "ContainsAudioL - test ",
     "CMusEngMceSession",
-    "AdjustVideoCodecL",
+    "ContainsAudioL",
     "FUNCTIONALITY",
-    SetupL, UT_AdjustVideoCodecL, Teardown) 
+    SetupL, UT_CMusEngMceSession_ContainsAudioLL, Teardown) 
 
 EUNIT_TEST(
-    "AdjustAudioCodecL - test ",
+    "IsMutedL - test ",
     "CMusEngMceSession",
-    "AdjustAudioCodecL",
+    "IsMutedL",
     "FUNCTIONALITY",
-    SetupL, UT_AdjustAudioCodecL, Teardown) 
-    
-EUNIT_TEST(
-    "RectChangedL - test ",
-    "CMusEngMceSession",
-    "RectChangedL",
-    "FUNCTIONALITY",
-    SetupL, UT_RectChangedL, Teardown) 
+    SetupL, UT_CMusEngMceSession_IsMutedLL, Teardown) 
 
 EUNIT_TEST(
-    "SetSessionSdpLinesL - test ",
+    "OrientationL - test ",
     "CMusEngMceSession",
-    "SetSessionSdpLinesL",
+    "OrientationL",
     "FUNCTIONALITY",
-    SetupL, UT_SetSessionSdpLinesL, Teardown) 
+    SetupL, UT_CMusEngMceSession_OrientationLL, Teardown) 
 
-EUNIT_TEST(
-    "SetSessionSdpLinesL - operator variant test ",
-    "CMusEngMceSession",
-    "SetSessionSdpLinesL",
-    "FUNCTIONALITY",
-    SetupL, UT_SetSessionSdpLines_OperatorL, Teardown)
-    
-EUNIT_TEST(
-    "SetMediaSdpLinesL - test ",
-    "CMusEngMceSession",
-    "SetMediaSdpLinesL",
-    "FUNCTIONALITY",
-    SetupL, UT_SetMediaSdpLinesL, Teardown) 
-
-EUNIT_TEST(
-    "SetMediaSdpLinesL - operator variant test ",
-    "CMusEngMceSession",
-    "SetMediaSdpLinesL",
-    "FUNCTIONALITY",
-    SetupL, UT_SetMediaSdpLines_OperatorL, Teardown) 
-    
-EUNIT_TEST(
-    "AdjustStreamsAndCodecsL - test ",
-    "CMusEngMceSession",
-    "AdjustStreamsAndCodecsL",
-    "FUNCTIONALITY",
-    SetupL, UT_AdjustStreamsAndCodecsL, Teardown)
-
-EUNIT_TEST(
-    "IncomingSession - test ",
-    "CMusEngMceSession",
-    "IncomingSession",
-    "FUNCTIONALITY",
-    SetupL, UT_IncomingSessionL, Teardown)          
-
-EUNIT_TEST(
-    "IncomingUpdate - test ",
-    "CMusEngMceSession",
-    "IncomingUpdate",
-    "FUNCTIONALITY",
-    SetupL, UT_IncomingUpdateL, Teardown)      
-
-EUNIT_TEST(
-    "StreamStateChangedL( source ) - test ",
-    "CMusEngMceSession",
-    "StreamStateChangedL( source )",
-    "FUNCTIONALITY",
-    SetupL, UT_StreamStateChangedWithSourceL, Teardown)          
-
-EUNIT_TEST(
-    "SessionStateChanged - test ",
-    "CMusEngMceSession",
-    "SessionStateChanged",
-    "FUNCTIONALITY",
-    SetupL, UT_SessionStateChangedL, Teardown)
-    
-EUNIT_TEST(
-    "HandleSessionStateChanged - encoder key storing ",
-    "CMusEngMceSession",
-    "HandleSessionStateChanged",
-    "FUNCTIONALITY",
-    SetupL, UT_HandleSessionStateChanged_EncoderKeyStoringL, Teardown)
-    
-EUNIT_TEST(
-    "SessionConnectionStateChanged - test ",
-    "CMusEngMceSession",
-    "SessionConnectionStateChanged",
-    "FUNCTIONALITY",
-    SetupL, UT_SessionConnectionStateChangedL, Teardown) 
-
-EUNIT_TEST(
-    "Failed - test ",
-    "CMusEngMceSession",
-    "Failed",
-    "FUNCTIONALITY",
-    SetupL, UT_FailedL, Teardown)     
-
-EUNIT_TEST(
-    "UpdateFailed - test ",
-    "CMusEngMceSession",
-    "UpdateFailed",
-    "FUNCTIONALITY",
-    SetupL, UT_UpdateFailedL, Teardown) 
-
-EUNIT_TEST(
-    "StreamStateChanged - test ",
-    "CMusEngMceSession",
-    "StreamStateChanged",
-    "FUNCTIONALITY",
-    SetupL, UT_StreamStateChangedL, Teardown)             
-
-EUNIT_TEST(
-    "StreamStateChangedL (sink ) - test ",
-    "CMusEngMceSession",
-    "StreamStateChangedL( sink )",
-    "FUNCTIONALITY",
-    SetupL, UT_StreamStateChangedWithSinkL, Teardown) 
-
-EUNIT_TEST(
-    "SRReceived - test ",
-    "CMusEngMceSession",
-    "SRReceived",
-    "FUNCTIONALITY",
-    SetupL, UT_SRReceivedL, Teardown)     
-
-EUNIT_TEST(
-    "RRReceived - test ",
-    "CMusEngMceSession",
-    "RRReceived",
-    "FUNCTIONALITY",
-    SetupL, UT_RRReceivedL, Teardown) 
-
-EUNIT_TEST(
-    "SsrcAdded - test ",
-    "CMusEngMceSession",
-    "SsrcAdded",
-    "FUNCTIONALITY",
-    SetupL, UT_SsrcAddedL, Teardown) 
-
-EUNIT_TEST(
-    "SsrcRemoved - test ",
-    "CMusEngMceSession",
-    "SsrcRemoved",
-    "FUNCTIONALITY",
-    SetupL, UT_SsrcRemovedL, Teardown)         
-
-EUNIT_TEST(
-    "UpdateTimerEvent - test ",
-    "CMusEngMceSession",
-    "UpdateTimerEvent",
-    "FUNCTIONALITY",
-    SetupL, UT_UpdateTimerEventL, Teardown)              
-
-EUNIT_TEST(
-    "IsRoamingBetweenAPsAllowed - test ",
-    "CMusEngMceSession",
-    "IsRoamingBetweenAPsAllowed",
-    "FUNCTIONALITY",
-    SetupL, UT_IsRoamingBetweenAPsAllowedL, Teardown)
-
-EUNIT_TEST(
-    "SaveContactL - test ",
-    "CMusEngMceSession",
-    "SaveContactL",
-    "FUNCTIONALITY",
-    SetupL, UT_SaveContactL, Teardown)    
-
-EUNIT_TEST(
-    "Rect - test ",
-    "CMusEngMceSession",
-    "Rect",
-    "FUNCTIONALITY",
-    SetupL, UT_RectL, Teardown)
-
-EUNIT_TEST(
-    "SetRectL - test ",
-    "CMusEngMceSession",
-    "SetRectL",
-    "FUNCTIONALITY",
-    SetupL, UT_SetRectLL, Teardown)
-
-EUNIT_TEST(
-    "SecondaryRect - test ",
-    "CMusEngMceSession",
-    "SecondaryRect",
-    "FUNCTIONALITY",
-    SetupL, UT_SecondaryRectL, Teardown)
-
-EUNIT_TEST(
-    "SetSecondaryRectL - test ",
-    "CMusEngMceSession",
-    "SetSecondaryRectL",
-    "FUNCTIONALITY",
-    SetupL, UT_SetSecondaryRectLL, Teardown)
-
-EUNIT_TEST(
-    "EnableDisplayL - test ",
-    "CMusEngMceSession",
-    "EnableDisplayL",
-    "FUNCTIONALITY",
-    SetupL, UT_EnableDisplayLL, Teardown)
-    
 EUNIT_TEST(
     "SetOrientationL - test ",
     "CMusEngMceSession",
     "SetOrientationL",
     "FUNCTIONALITY",
     SetupL, UT_CMusEngMceSession_SetOrientationLL, Teardown) 
-
-EUNIT_TEST(
-    "SetEncodingDeviceL - test ",
-    "CMusEngMceSession",
-    "SetEncodingDeviceL",
-    "FUNCTIONALITY",
-    SetupL, UT_SetEncodingDeviceLL, Teardown)   
-
-EUNIT_TEST(
-    "SetCodecConfigKeyL - test ",
-    "CMusEngMceSession",
-    "SetCodecConfigKeyL",
-    "FUNCTIONALITY",
-    SetupL, UT_SetCodecConfigKeyLL, Teardown)    
-
-EUNIT_TEST(
-    "ReadCodecConfigKeyL - test ",
-    "CMusEngMceSession",
-    "ReadCodecConfigKeyL",
-    "FUNCTIONALITY",
-    SetupL, UT_ReadCodecConfigKeyLL, Teardown)        
-
-EUNIT_TEST(
-    "StoreEncoderConfigInfoL - test ",
-    "CMusEngMceSession",
-    "StoreEncoderConfigInfoL",
-    "FUNCTIONALITY",
-    SetupL, UT_StoreEncoderConfigInfoLL, Teardown)   
-
-EUNIT_TEST(
-    "StreamStreaming - test ",
-    "CMusEngMceSession",
-    "StreamStreaming",
-    "FUNCTIONALITY",
-    SetupL, UT_StreamStreamingL, Teardown)   
-   
-EUNIT_TEST(
-    "InformObserverAboutSessionStateChange - test ",
-    "CMusEngMceSession",
-    "InformObserverAboutSessionStateChange",
-    "FUNCTIONALITY",
-    SetupL, UT_InformObserverAboutSessionStateChangeL, Teardown)
-
-EUNIT_TEST(
-    "InformObserverAboutSessionUpdate - test ",
-    "CMusEngMceSession",
-    "InformObserverAboutSessionUpdate",
-    "FUNCTIONALITY",
-    SetupL, UT_InformObserverAboutSessionUpdateL, Teardown)
-
-EUNIT_TEST(
-    "InformObserverAboutSessionFailure - test ",
-    "CMusEngMceSession",
-    "InformObserverAboutSessionFailure",
-    "FUNCTIONALITY",
-    SetupL, UT_InformObserverAboutSessionFailureL, Teardown)
-
-EUNIT_TEST(
-    "InformObserverAboutPlayerStateChange - test ",
-    "CMusEngMceSession",
-    "InformObserverAboutPlayerStateChange",
-    "FUNCTIONALITY",
-    SetupL, UT_InformObserverAboutPlayerStateChangeL, Teardown)
-
-EUNIT_TEST(
-    "InformObserverAboutPlayerUpdate - test ",
-    "CMusEngMceSession",
-    "InformObserverAboutPlayerUpdate",
-    "FUNCTIONALITY",
-    SetupL, UT_InformObserverAboutPlayerUpdateL, Teardown)
-
-EUNIT_TEST(
-    "InformObserverAboutPlayerFailure - test ",
-    "CMusEngMceSession",
-    "InformObserverAboutPlayerFailure",
-    "FUNCTIONALITY",
-    SetupL, UT_InformObserverAboutPlayerFailureL, Teardown)
     
 EUNIT_TEST(
-    "LcUiProviderL - test ",
+    "VolumeUpL - test ",
     "CMusEngMceSession",
-    "LcUiProviderL",
+    "VolumeUpL",
     "FUNCTIONALITY",
-    SetupL, UT_LcUiProviderL, Teardown)
+    SetupL, UT_CMusEngMceSession_VolumeUpLL, Teardown) 
 
 EUNIT_TEST(
-    "IsBackgroundStartup - test ",
+    "VolumeDownL - test ",
     "CMusEngMceSession",
-    "IsBackgroundStartup",
+    "VolumeDownL",
     "FUNCTIONALITY",
-    SetupL, UI_IsBackgroundStartupL, Teardown)
+    SetupL, UT_CMusEngMceSession_VolumeDownLL, Teardown) 
 
 EUNIT_TEST(
-    "InformUiProviderAboutReceivingStart - test ",
+    "SetVolumeL - test ",
     "CMusEngMceSession",
-    "InformUiProviderAboutReceivingStart",
+    "SetVolumeL",
     "FUNCTIONALITY",
-    SetupL, UT_InformUiProviderAboutReceivingStartL, Teardown)
-
-EUNIT_TEST(
-    "SetForegroundStatus - test ",
-    "CMusEngMceSession",
-    "SetForegroundStatus",
-    "FUNCTIONALITY",
-    SetupL, UT_SetForegroundStatusL, Teardown)
+    SetupL, UT_CMusEngMceSession_SetVolumeLL, Teardown)
     
 EUNIT_TEST(
-    "UpdateLcSessionL - test ",
+    "EnableDisplay - test ",
     "CMusEngMceSession",
-    "UpdateL",
+    "EnableDisplay",
     "FUNCTIONALITY",
-    SetupL, UT_UpdateLcSessionLL, Teardown)
+    SetupL, UT_CMusEngMceSession_EnableDisplayL, Teardown)   
 
+EUNIT_TEST(
+    "MuteL - test ",
+    "CMusEngMceSession",
+    "MuteL",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusEngMceSession_MuteLL, Teardown)   
+
+EUNIT_TEST(
+    "UnmuteL - test ",
+    "CMusEngMceSession",
+    "UnmuteL",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusEngMceSession_UnmuteLL, Teardown)   
+
+EUNIT_TEST(
+    "HandleTermination - test ",
+    "CMusEngMceSession",
+    "HandleTermination",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusEngMceSession_HandleTerminationL, Teardown)   
+
+EUNIT_TEST(
+    "AdjustVideoCodecL - test ",
+    "CMusEngMceSession",
+    "AdjustVideoCodecL",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusEngMceSession_AdjustVideoCodecLL, Teardown) 
+
+EUNIT_TEST(
+    "AdjustAudioCodecL - test ",
+    "CMusEngMceSession",
+    "AdjustAudioCodecL",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusEngMceSession_AdjustAudioCodecLL, Teardown) 
     
+EUNIT_TEST(
+    "RectChangedL - test ",
+    "CMusEngMceSession",
+    "RectChangedL",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusEngMceSession_RectChangedLL, Teardown) 
+
+EUNIT_TEST(
+    "SetSessionSdpLinesL - test ",
+    "CMusEngMceSession",
+    "SetSessionSdpLinesL",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusEngMceSession_SetSessionSdpLinesLL, Teardown) 
+
+EUNIT_TEST(
+    "AdjustStreamsAndCodecsL - test ",
+    "CMusEngMceSession",
+    "AdjustStreamsAndCodecsL",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusEngMceSession_AdjustStreamsAndCodecsLL, Teardown)
+
+EUNIT_TEST(
+    "IncomingSession - test ",
+    "CMusEngMceSession",
+    "IncomingSession",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusEngMceSession_IncomingSessionL, Teardown)          
+
+EUNIT_TEST(
+    "IncomingUpdate - test ",
+    "CMusEngMceSession",
+    "IncomingUpdate",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusEngMceSession_IncomingUpdateL, Teardown)      
+
+EUNIT_TEST(
+    "StreamStateChangedL( source ) - test ",
+    "CMusEngMceSession",
+    "StreamStateChangedL( source )",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusEngMceSession_StreamStateChangedWithSourceL, Teardown)          
+
+EUNIT_TEST(
+    "SessionStateChanged - test ",
+    "CMusEngMceSession",
+    "SessionStateChanged",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusEngMceSession_SessionStateChangedL, Teardown) 
+    
+EUNIT_TEST(
+    "SessionConnectionStateChanged - test ",
+    "CMusEngMceSession",
+    "SessionConnectionStateChanged",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusEngMceSession_SessionConnectionStateChangedL, Teardown) 
+
+EUNIT_TEST(
+    "Failed - test ",
+    "CMusEngMceSession",
+    "Failed",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusEngMceSession_FailedL, Teardown)     
+
+EUNIT_TEST(
+    "UpdateFailed - test ",
+    "CMusEngMceSession",
+    "UpdateFailed",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusEngMceSession_UpdateFailedL, Teardown) 
+
+EUNIT_TEST(
+    "StreamStateChanged - test ",
+    "CMusEngMceSession",
+    "StreamStateChanged",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusEngMceSession_StreamStateChangedL, Teardown)             
+
+EUNIT_TEST(
+    "StreamStateChangedL (sink ) - test ",
+    "CMusEngMceSession",
+    "StreamStateChangedL( sink )",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusEngMceSession_StreamStateChangedWithSinkL, Teardown) 
+
+EUNIT_TEST(
+    "SRReceived - test ",
+    "CMusEngMceSession",
+    "SRReceived",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusEngMceSession_SRReceivedL, Teardown)     
+
+EUNIT_TEST(
+    "RRReceived - test ",
+    "CMusEngMceSession",
+    "RRReceived",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusEngMceSession_RRReceivedL, Teardown) 
+
+EUNIT_TEST(
+    "InactivityTimeout - test ",
+    "CMusEngMceSession",
+    "InactivityTimeout",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusEngMceSession_InactivityTimeoutL, Teardown)     
+
+EUNIT_TEST(
+    "SsrcAdded - test ",
+    "CMusEngMceSession",
+    "SsrcAdded",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusEngMceSession_SsrcAddedL, Teardown) 
+
+EUNIT_TEST(
+    "SsrcRemoved - test ",
+    "CMusEngMceSession",
+    "SsrcRemoved",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusEngMceSession_SsrcRemovedL, Teardown)         
+EUNIT_TEST(
+    "IsDisplayEnabledL - test ",
+    "CMusEngMceSession",
+    "IsDisplayEnabledL",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusEngMceSession_IsDisplayEnabledLL, Teardown)  	
+
+EUNIT_TEST(
+    "UpdateTimerEvent - test ",
+    "CMusEngMceSession",
+    "UpdateTimerEvent",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusEngMceSession_UpdateTimerEventL, Teardown)              
+
+EUNIT_TEST(
+    "IsRoamingBetweenAPsAllowed - test ",
+    "CMusEngMceSession",
+    "IsRoamingBetweenAPsAllowed",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusEngMceSession_IsRoamingBetweenAPsAllowedL, Teardown)
+        
+EUNIT_TEST(
+    "VolumeChanged - test ",
+    "CMusEngMceSession",
+    "VolumeChanged",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusEngMceSession_VolumeChangedL, Teardown)
+    
+
 EUNIT_END_TEST_TABLE
 
 //  END OF FILE
-
-

@@ -18,6 +18,4 @@
 #include <platform_paths.hrh>
 
 PRJ_MMPFILES
-musengineplugin.mmp
-
-
+musengine.mmp

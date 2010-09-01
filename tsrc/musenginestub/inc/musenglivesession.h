@@ -21,189 +21,182 @@
 
 // USER
 #include "musengmceoutsession.h"
-#include "musunittesting.h"
-#include "mussettings.h"
-#include "musengcamerahandler.h"
-#include "lcvideoplayer.h"
-#include "lccameracontrol.h"
-#include "lcbrightnesscontrol.h"
-#include "lczoomcontrol.h"
-#include "lcfilecontrol.h"
 
 // SYSTEM
 #include <ecam.h>
 
 // FORWARD DECLARATIONS
 class MMusEngLiveSessionObserver;
-class MLcValueControl;
 
 
-class CMusEngLiveSession : 
-    public CMusEngMceOutSession, 
-    public MLcVideoPlayer,
-    public MLcCameraControl,
-    public MLcBrightnessControl,
-    public MLcZoomControl,
-    public MLcFileControl
+class CMusEngLiveSession : public CMusEngMceOutSession
     {
-    
+
     public:
+
         /**
         * Creates new MultimediaSharing Live session.
         *
+        * @since S60 v3.2
         * @param aFileName Media filename
         * @param aRect UI drawing area. It is allowed handle from engine
-        * @param aSessionObserver Interface for session specific callbacks
-        * @param aOutSessionObserver Interface for outsession specific callbacks
-        * @param aLiveSessionObserver interface for live session specific
-        *        callbacks
+        * @param aSessionObserver Session specific callbacks
+        * @param aSipProfileId SIP profile to be used, 0 is default profile
         * @return CMusEngLiveSession* New instanse of specified class
         */
-        static CMusEngLiveSession* NewL( 
-							const TDesC& aFileName,
-                            const TRect& aRect );
-                            
+        IMPORT_C static CMusEngLiveSession* NewL(
+                                const TDesC& aFileName,
+                                const TRect& aRect,
+                                MMusEngLiveSessionObserver* aSessionObserver,
+                                TUint aSipProfileId = 0);
+
         /**
         * Creates new MultimediaSharing Live session.
         *
+        * @since S60 v3.2
         * @param aRect UI drawing area. It is allowed handle from engine
-        * @param aSessionObserver Interface for session specific callbacks
-        * @param aOutSessionObserver Interface for outsession specific callbacks
-        * @param aLiveSessionObserver interface for live session specific
-        *        callbacks
+        * @param aSessionObserver Session specific callbacks
+        * @param aSipProfileId SIP profile to be used, 0 is default profile
         * @return CMusEngLiveSession* New instanse of specified class
         */
-        static CMusEngLiveSession* NewL( 
-                            const TRect& aRect );
-
+        IMPORT_C static CMusEngLiveSession* NewL(
+                                const TRect& aRect,
+                                MMusEngLiveSessionObserver* aSessionObserver,
+                                TUint aSipProfileId = 0 );
 
     public:
 
         /**
         * Destructor
+        *
+        * @since S60 v3.2
         */
         ~CMusEngLiveSession();
 
 
-    public: // from MLcSession
-        
-        void EstablishLcSessionL();
-    
-        MLcVideoPlayer* LocalVideoPlayer();
-        
-        const TDesC& RemoteDisplayName();
-        
-        
-    public: // from MLcVideoPlayer
-        
-        TLcVideoPlayerState LcVideoPlayerState() const;
-        
-        TBool LcIsPlayingL();
-        
-        void LcPlayL();
-        
-        void LcPauseL();
-    
-        MLcWindow* LcWindow();
 
-        MLcCameraControl* LcCameraControl();
-        
-        MLcFileControl* LcSourceFile();
-        
-        MLcFileControl* LcDestinationFile();
-        
-        MLcAudioControl* LcAudioControl();
-    
-        MLcZoomControl* LcZoomControl();
-    
-        MLcBrightnessControl* LcBrightnessControl();
+    public: // NEW API FUNCTIONS live session specific
 
-        RPointerArray< MLcValueControl >& LcExtensionControls();    
+        /**
+        * Sets callback interface pointer
+        *
+        * @since S60 v3.2
+        * @param aSessionObserver Pointer to class which implements interface
+        */
+        IMPORT_C void SetSessionObserver(
+                                MMusEngLiveSessionObserver* aSessionObserver );
 
-    public: // from MLcCameraControl
-        
-        TInt LcCameraCountL();
+        /**
+        * Gets current zoom factor
+        *
+        * @pre Session is established
+        * @leave KErrNotReady if precondition not fullfilled
+        * @since S60 v3.2
+        */
+        IMPORT_C TInt CurrentZoomL() const;
 
-        void ToggleLcCameraL();       
+        /**
+        * Gets maximum zoom factor
+        *
+        * @pre Session is established
+        * @leave KErrNotReady if precondition not fullfilled
+        * @since S60 v3.2
+        */
+        IMPORT_C TInt MaxZoomL() const;
 
-    public: // MLcBrightnessControl
-        
-        TInt MinLcBrightnessL();
+        IMPORT_C TInt MinZoomL() const;
 
-        TInt MaxLcBrightnessL();
+        /**
+        * Increases zoom factor by one.
+        *
+        * @pre Session is established
+        * @leave KErrNotReady if precondition not fullfilled
+        * @since S60 v3.2
+        */
+        IMPORT_C void ZoomInL();
 
-        TInt LcBrightnessL();
+        /**
+        * Decreases zoom factor by one.
+        *
+        * @pre Session is established
+        * @leave KErrNotReady if precondition not fullfilled
+        * @since S60 v3.2
+        */
+        IMPORT_C void ZoomOutL();
 
-        void SetLcBrightnessL( TInt aValue );
-        
-        void IncreaseLcBrightnessL();
-        
-        void DecreaseLcBrightnessL();
-        
-    public: // from MLcZoomControl
-        
-        TInt MinLcZoomL();
+        /**
+        * Sets zoom factor to default.
+        *
+        * @pre Session is established
+        * @leave KErrNotReady if precondition not fullfilled
+        * @since S60 v3.2
+        */
+        IMPORT_C void ZoomDefaultL();
 
-        TInt MaxLcZoomL();
+    public: // implementation of virtual API from CMusEngMceOutSession
 
-        TInt LcZoomValueL();
+        /**
+        * Resumes previously paused session.
+        * Continues using viewfinder and enables streaming video.
+        *
+        * @since S60 v3.2
+        */
+        IMPORT_C void PlayL();
 
-        void SetLcZoomValueL( TInt aValue );
-        
-        void LcZoomInL();
-        
-        void LcZoomOutL();        
-        
-    public: // from MLcFileControl
-        
-        void EnableLcFileL( TBool aEnable );
-        
-        TBool IsLcFileEnabled();
+        /**
+        * Pauses session.
+        * Holds display and disables streaming video to network.
+        *
+        * @since S60 v3.2
+        */
+        IMPORT_C void PauseL();
 
-        void SetLcFileNameL( const TFileName& aFileName );
-        
-        TFileName& LcFileName();  
-        
-    protected:
+
+    protected: // inherited from CMusEngMceOutSession
+
+        /**
+        *
+        * @since S60 v3.2
+        */
+        void CompleteSessionStructureL();
+
+
+    private:
 
         /**
         * Constructor
+
+        * @since S60 v3.2
         */
-        CMusEngLiveSession( const TRect& aRect, 
-        					const TDesC& aRecordedFile = KNullDesC );
+        CMusEngLiveSession( MMusEngLiveSessionObserver* aSessionObserver,
+                            const TRect& aRect,
+                            TUint aSipProfileId = 0 );
 
         /**
         * Second-phase constructor
+        *
+        * @since S60 v3.2
         */
         void ConstructL();
 
-    
 
-    protected:
+    public:
 
         /**
-        * File name for recording. If KNullDesC no recording performed.
+        *
+        * @since S60 v3.2
         */
-        TFileName iRecordedFile;
-        
-        /** 
-        * Dummy member variable to implement MLcVideoPlayer::LcExtensionControls
+        //TCameraInfo iCameraInfo;
+
+        /**
+        *
+        * @since S60 v3.2
         */
-        RPointerArray< MLcValueControl > iValueControls;    
-        
-        TMusEngCameraHandler iCameraHandler;
-        
-        /*
-         * Remote Display Name
-         */
-        HBufC* iRemoteDisplayName;
-        
-        TInt iCurrentZoom;
         TInt iDefaultZoomFactor;
-        TInt iCurrentBrighness;
         TInt iPlaying;
-        TBool iFileEnabled;
-        
+        TInt iCurrentZoom;
+
+
     };
 
 #endif

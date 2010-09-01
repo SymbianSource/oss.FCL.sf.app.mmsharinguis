@@ -27,6 +27,7 @@
 #include "cmusavainterfacestub.h"
 #include "musmanagerservercommon.h"
 #include "musapplicationmanager.h"
+#include "mussesseioninformationapi.h"
 #include <digia/eunit/eunitmacros.h>
 #include <E32Math.h>
 #include <E32Property.h>
@@ -47,6 +48,10 @@ _LIT( KUsedTelNumber, "123" );
  */
 _LIT( KUsedSipAddress, "sip:stadi@hesa.fi" );
 
+/*
+ * Privacy status from MusAvaSettingsStub.
+ */
+_LIT( KUsedPrivacyStatus, "1" );
 
 // ======== MEMBER FUNCTIONS ========
 
@@ -113,8 +118,7 @@ void UT_CMusAvailabilityPluginManager::AvailabilityChangedL(
 // From class MMusAvailabilityPluginManagerObserver.
 // ---------------------------------------------------------------------------
 //
-void UT_CMusAvailabilityPluginManager::StartSharingWithUseCaseL( 
-    MultimediaSharing::TMusUseCase /*aUseCase*/ )
+void UT_CMusAvailabilityPluginManager::StartLiveSharingL()
     {
     iCalledAStartLiveSharing = ETrue;
     }
@@ -141,8 +145,7 @@ void UT_CMusAvailabilityPluginManager::Teardown()
     delete iManager;
     iManager = NULL;
     delete iAppManager;
-    PropertyHelper::Close();
-    Dll::FreeTls(); // Used by the RProcess and TFindProcess stubs
+    PropertyHelper::Close(); 
     
     }
 
@@ -253,10 +256,15 @@ void UT_CMusAvailabilityPluginManager::UT_CMusAvailabilityPluginManager_StopPlug
 //
 void UT_CMusAvailabilityPluginManager::UT_CMusAvailabilityPluginManager_SessionParametersL()
     {
+    CMusAvaInterface* interface = iManager->iPlugin;
+    CMusAvaInterface2* interface2 =  static_cast<CMusAvaInterface2*>( interface );
+    interface2->iSettings->iCallPrivacy = 1;
+    
     MDesCArray* params = &iManager->SessionParametersL();
     EUNIT_ASSERT_EQUALS( KUsedTelNumber(), params->MdcaPoint( KTelNumber ) );
     EUNIT_ASSERT_EQUALS( KUsedSipAddress(), params->MdcaPoint( KSipAddress ) );
     EUNIT_ASSERT_EQUALS( KUsedVideoCodec(), params->MdcaPoint( KVideoCodec ) );
+    EUNIT_ASSERT( !params->MdcaPoint( KPrivacyStatus ).Compare( KUsedPrivacyStatus() ) );
     }
     
 // ---------------------------------------------------------------------------
@@ -394,11 +402,15 @@ void  UT_CMusAvailabilityPluginManager::
 //
 void  UT_CMusAvailabilityPluginManager::
     UT_CMusAvailabilityPluginManager_UpdateSessionParametersLL()
-    {
+    {       
     MDesCArray* params = &iManager->SessionParametersL();
+    CMusAvaInterface* interface = iManager->iPlugin;
+    CMusAvaInterface2* interface2 =  static_cast<CMusAvaInterface2*>( interface );
+    interface2->iSettings->iCallPrivacy = 1;
     EUNIT_ASSERT_EQUALS( KUsedTelNumber(), iManager->SessionParametersL().MdcaPoint( KTelNumber ) );
     EUNIT_ASSERT_EQUALS( KUsedSipAddress(), iManager->SessionParametersL().MdcaPoint( KSipAddress ) );
     EUNIT_ASSERT_EQUALS( KUsedVideoCodec(), iManager->SessionParametersL().MdcaPoint( KVideoCodec ) );
+    EUNIT_ASSERT( !iManager->SessionParametersL().MdcaPoint( KPrivacyStatus ).Compare( KUsedPrivacyStatus() ) );
     }
 
 
@@ -468,19 +480,6 @@ void UT_CMusAvailabilityPluginManager::
     UT_CMusAvailabilityPluginManager_IndicateAvailabilityLL()
     {
     iManager->IndicateAvailabilityL();
-    }
-
-void UT_CMusAvailabilityPluginManager::UT_CMusAvailabilityPluginManager_PrepareForReceivedInviteLL()
-    {
-    CMusAvaInterface* interface = iManager->iPlugin;
-    CMusAvaInterface2* interface2 =  static_cast<CMusAvaInterface2*>( interface );
-   
-    CMusAvaAvailabilityStub* abilityStub =  
-        static_cast<CMusAvaAvailabilityStub*>( interface2->iAvailabilities[0] );    
-    abilityStub->iPrepareForInviteCalled = EFalse;
-    
-    iManager->PrepareForReceivedInviteL();
-    EUNIT_ASSERT( abilityStub->iPrepareForInviteCalled );
     }
 
 // ======== EUNIT TEST TABLE ========
@@ -604,12 +603,6 @@ EUNIT_TEST(
     "IndicateAvailabilityL",
     "FUNCTIONALITY",
     SetupL, UT_CMusAvailabilityPluginManager_IndicateAvailabilityLL, Teardown )
-
-EUNIT_TEST(
-    "PrepareForReceivedInviteL - test ",
-    "CMusAvailabilityPluginManager",
-    "PrepareForReceivedInviteL",
-    "FUNCTIONALITY",
-    SetupL, UT_CMusAvailabilityPluginManager_PrepareForReceivedInviteLL, Teardown )
+    
 
 EUNIT_END_TEST_TABLE

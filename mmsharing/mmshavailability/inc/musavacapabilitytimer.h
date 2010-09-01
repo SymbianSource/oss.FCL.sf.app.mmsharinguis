@@ -45,6 +45,10 @@ public: // constructors and destructor
 protected: // From CTimer
 
     void RunL();
+    
+protected: // from CActive
+
+    TInt RunError( TInt aError );
 
 private:
 

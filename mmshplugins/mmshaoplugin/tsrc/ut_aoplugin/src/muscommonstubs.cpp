@@ -16,6 +16,7 @@
 */
 
 
+
 #include "muscommonstubs.h"
 
 
@@ -51,14 +52,11 @@ CMusCommonObserverStub::~CMusCommonObserverStub()
 // 
 // -----------------------------------------------------------------------------
 //	
-void CMusCommonObserverStub::CallConnectedL( const TDesC& aTelNumber,
-											 TBool aIsSipUri )
+void CMusCommonObserverStub::CallConnectedL( const TDesC& aTelNumber )
     {
     delete iTelNumber;
-    iTelNumber = NULL;
     iTelNumber = aTelNumber.AllocL();
     iCallConnectedCalled = ETrue;
-    iIsSipUri = aIsSipUri;
     }
 
 
@@ -66,14 +64,11 @@ void CMusCommonObserverStub::CallConnectedL( const TDesC& aTelNumber,
 // 
 // -----------------------------------------------------------------------------
 //	    
-void CMusCommonObserverStub::CallHoldL( const TDesC& aTelNumber,
-										TBool aIsSipUri )
+void CMusCommonObserverStub::CallHoldL( const TDesC& aTelNumber )
     {
     delete iTelNumber;
-    iTelNumber = NULL;
     iTelNumber = aTelNumber.AllocL();
     iCallHoldCalled = ETrue;
-    iIsSipUri = aIsSipUri;
     }
     
 

@@ -27,8 +27,6 @@ enum TIndicatorTestAppIds
     EIndicatorTestAppSharingNotAvailable,
     EIndicatorTestAppAudiotoryNotification,
     EIndicatorTestAppNoAudiotoryNotification,
-    EIndicatorTestAppPopUpNotification,
-    EIndicatorTestAppNoPopUpNotification,
     EIndicatorTestAppIconNotification,
     EIndicatorTestAppNoIconNotification
     

@@ -20,16 +20,15 @@
 #include "ut_musengoutsession.h"
 #include "musengstubs.h"
 #include "musengtestdefs.h"
-#include "sipprofile.h"
+
 #include "musenglivesession.h"
 #include "musengclipsession.h"
 #include "mussipprofilehandler.h"
-#include "mussessionproperties.h"
-#include "contactenginestub.h"
+
 
 //  SYSTEM INCLUDES
-#include <lcsourcefilecontrol.h>
 #include <digia/eunit/eunitmacros.h>
+
 #include <mceoutsession.h>
 #include <mcestreambundle.h>
 #include <mceaudiostream.h>
@@ -39,15 +38,13 @@
 #include <mceh263codec.h>
 #include <mceavccodec.h>
 #include <mceaudiocodec.h>
-#include <mcecamerasource.h>
 
-
+#include <sipprofile.h>
 #include <sipstrings.h>
 
 #include <audiopreference.h>
 #include <uri8.h>
 
-_LIT( KTestContactName, "nokia" );
 
 // -----------------------------------------------------------------------------
 //
@@ -112,25 +109,17 @@ void UT_CMusEngOutSession::ConstructL()
 //
 void UT_CMusEngOutSession::SetupL()
     {
-    
-    PropertyHelper::SetErrorCode( KErrNone );
-    
-    iLcSessionObserver = new( ELeave )CLcSessionObserverStub;
-    iLcUiProvider = new( ELeave )CLcUiProviderStub;
-    iAudioRoutingObserver = new( ELeave )CMusEngObserverStub;
-    // Name is published using publish/subscribe key by Availblity
-    User::LeaveIfError( RProperty::Set( NMusSessionApi::KCategoryUid,
-                                        NMusSessionApi::KContactName,
-                                        KTestContactName ) );
-    iLiveSession = CMusEngLiveSession::NewL();
-    iLiveSession->SetLcSessionObserver( iLcSessionObserver );
-    iLiveSession->SetLcUiProvider( iLcUiProvider );    
-
+    iObserver = new( ELeave ) CMusEngObserverStub;
+    iLiveSession = CMusEngLiveSession::NewL( KNullDesC(),
+                                             TRect(0,0, 100,100),
+                                             *iObserver,
+                                             *iObserver,
+                                             *iObserver );
     SIPStrings::OpenL();
     
-    User::LeaveIfError( RProperty::Set( NMusSessionApi::KCategoryUid,
-                                        NMusSessionApi::KRemoteSipAddress,
-                                        KTestRecipientSipUri ) );
+    iLiveSession->iPrivate = EFalse;
+    iLiveSession->iPrivateNumber = EFalse;
+    
     }
 
 
@@ -142,28 +131,26 @@ void UT_CMusEngOutSession::Teardown()
     {
     SIPStrings::Close();
     delete iLiveSession;
-    delete iLcSessionObserver;
-    delete iLcUiProvider;
-    delete iAudioRoutingObserver;
-    PropertyHelper::SetErrorCode( KErrNone );
-    PropertyHelper::Close();
+    delete iObserver;
     }
+
 
 
 // TEST CASES
 
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
-void UT_CMusEngOutSession::UT_EstablishLcSessionL()
+void UT_CMusEngOutSession::UT_CMusEngOutSession_InviteLL()
     {
+
     // Initial state
     EUNIT_ASSERT( !iLiveSession->iSession );
     
-    ///////////////////////////////////////////////////////////////////////////
-    // 1. Simulate failing session structure construction.
-    iLiveSession->EstablishLcSessionL();
+    // Simulate failing session structure construction.
+    iLiveSession->InviteL( KTestRecipientSipUri );
     
     iLiveSession->iSession->iState = CMceSession::EIdle;
     delete iLiveSession->iSession->Streams()[0];
@@ -171,13 +158,11 @@ void UT_CMusEngOutSession::UT_EstablishLcSessionL()
                                             iLiveSession->iSession->Streams();
     const_cast<RPointerArray<CMceMediaStream>&>(constStreams)[0] = NULL;
 
-    ///////////////////////////////////////////////////////////////////////////
-    // 2. Normal invite
-    iLiveSession->EstablishLcSessionL();
+    // Normal invite
+    iLiveSession->InviteL( KTestRecipientSipUri );
     
     EUNIT_ASSERT( iLiveSession->iSession );
     // Next assertion ensures that session structure is new
-    EUNIT_ASSERT( iLiveSession->iSession->Streams().Count() > 0 );   
     EUNIT_ASSERT( iLiveSession->iSession->Streams()[0] ); 
     EUNIT_ASSERT( *(iLiveSession->iRecipient) == KTestRecipientSipUri8() );
     EUNIT_ASSERT( iLiveSession->iSession->State() == CMceSession::EOffering );
@@ -192,20 +177,15 @@ void UT_CMusEngOutSession::UT_EstablishLcSessionL()
     EUNIT_ASSERT( iLiveSession->iSession->iSessionSDPLines->Count() == 1 );
     EUNIT_ASSERT( iLiveSession->iSession->iSessionSDPLines->MdcaPoint( 0 ) ==
                   KMusEngSessionSdpLineXApplication() );
-        
-    // Ensure there is no SDP lines at media level
-    MDesC8Array* mediaSdpLines = 
-        iLiveSession->iSession->Streams()[0]->iMediaSDPLines;
-    EUNIT_ASSERT( mediaSdpLines );
-    EUNIT_ASSERT( mediaSdpLines->MdcaCount() == 0 );
-
-    ///////////////////////////////////////////////////////////////////////////
-    // 3. Normal operator invite
+    
+    // Normal operator invite
     delete iLiveSession;
     iLiveSession = NULL;
-    iLiveSession = CMusEngLiveSession::NewL();
-    iLiveSession->SetLcSessionObserver( iLcSessionObserver );
-    iLiveSession->SetLcUiProvider( iLcUiProvider );    
+    iLiveSession = CMusEngLiveSession::NewL( KNullDesC,
+                                             TRect(0,0, 100,100),
+                                             *iObserver,
+                                             *iObserver,
+                                             *iObserver );
    	iLiveSession->iOperatorVariant = ETrue;
    	CSIPProfile* profile = iLiveSession->iSipProfileHandler->Profile();
     delete profile->iArray;
@@ -213,10 +193,11 @@ void UT_CMusEngOutSession::UT_EstablishLcSessionL()
     profile->iArray = new ( ELeave ) CDesC8ArrayFlat( 1 );
     profile->iArray->AppendL( KMusTestUri );
 
-    iLiveSession->EstablishLcSessionL();
+    iLiveSession->InviteL( KTestRecipientSipUri );
     
     EUNIT_ASSERT( iLiveSession->iSession );
     // Next assertion ensures that session structure is new
+    EUNIT_ASSERT( iLiveSession->iSession->Streams()[0] ); 
     EUNIT_ASSERT( *(iLiveSession->iRecipient) == KTestRecipientSipUri8() );
     EUNIT_ASSERT( iLiveSession->iSession->State() == CMceSession::EOffering );
     
@@ -230,8 +211,6 @@ void UT_CMusEngOutSession::UT_EstablishLcSessionL()
     EUNIT_ASSERT( iLiveSession->iSession->iHeaders->MdcaPoint( 2 ) ==
                   KMusPPreferredIdentityTestHeader() );
     
-    // Ensure there is only a=type and a=application attributes (and no b=TIAS)
-    // at session level for operator variant
     EUNIT_ASSERT( iLiveSession->iSession->iSessionSDPLines );
     EUNIT_ASSERT( iLiveSession->iSession->iSessionSDPLines->Count() == 2 );
     EUNIT_ASSERT( iLiveSession->iSession->iSessionSDPLines->MdcaPoint( 0 ) ==
@@ -240,223 +219,77 @@ void UT_CMusEngOutSession::UT_EstablishLcSessionL()
                   KMusEngSessionSdpLineType() )
                   
     EUNIT_ASSERT( iLiveSession->iSession->Streams().Count() > 0 );   
-    EUNIT_ASSERT( iLiveSession->iSession->Streams()[0] ); 
-    EUNIT_ASSERT( iLiveSession->iSession->Streams()[0]->Type() == KMceVideo );
-
-    // Ensure there is only b=AS and no b=TIAS present at media level
-    // for operator variant
-    mediaSdpLines = iLiveSession->iSession->Streams()[0]->iMediaSDPLines;
-    EUNIT_ASSERT( mediaSdpLines );
-    EUNIT_ASSERT( mediaSdpLines->MdcaCount() == 1 );
-    EUNIT_ASSERT( mediaSdpLines->MdcaPoint( 0 ) == 
-                  KMusEngSessionSdpLineBandwidthField() );
-    
-    ///////////////////////////////////////////////////////////////////////////
-    // 4. Try invite again, must fail
-    TRAPD( error, iLiveSession->EstablishLcSessionL() );
+    TBool foundBandwidthLineFromMediaLevel( EFalse );
+    for ( TInt i = 0; i <  iLiveSession->iSession->Streams().Count(); i++ )
+        {
+        if ( iLiveSession->iSession->Streams()[0]->Type() == KMceVideo )
+            {
+            if ( iLiveSession->iSession->Streams()[0]->iMediaSDPLines->MdcaCount() > 0 &&
+                 iLiveSession->iSession->Streams()[0]->iMediaSDPLines->MdcaPoint( 0 ) ==
+                    KMusEngSessionSdpLineBandwidthField() )
+                {
+                foundBandwidthLineFromMediaLevel = ETrue;
+                }
+            }
+        }
+    EUNIT_ASSERT( foundBandwidthLineFromMediaLevel );
+                      
+    // Try invite again, must fail
+    TRAPD( error, iLiveSession->InviteL( KTestRecipientSipUri ) );
     MUS_TEST_FORWARD_ALLOC_FAILURE( error );
     EUNIT_ASSERT( error == KErrAlreadyExists );
     
-    // 5. Simulate normal session ending, no need for observer call in this case
+    // Simulate normal session ending, no need for observer call in this case
     iLiveSession->iSession->iState = CMceSession::ETerminated;
     
     // Try again. Establishment must be OK with new MceSession object
-    iLiveSession->EstablishLcSessionL();
+    iLiveSession->InviteL( KTestRecipientSipUri );
     EUNIT_ASSERT( iLiveSession->iSession->State() == CMceSession::EOffering );
-    }
-    
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngOutSession::UT_EstablishLcSession_RecipientResolvingL()
-    {   
-    // Manual query from user, 
-    // the user cancels the query (MLcUiProvider::Query returns EFalse)
-    PropertyHelper::SetErrorCode( KErrNotFound );
-    TRAPD( err, iLiveSession->EstablishLcSessionL() )
-    if ( err == KErrNoMemory )
-        {
-        User::Leave( err );
-        }
-    EUNIT_ASSERT_EQUALS( KErrCancel, err )        
- 
-    // Manual query from user succeeds
-    iLcSessionObserver->Reset();
-    iLcUiProvider->Reset();        
-    delete iLiveSession;
-    iLiveSession = NULL;
-    iLiveSession = CMusEngLiveSession::NewL();
-    iLiveSession->SetLcSessionObserver( iLcSessionObserver );
-    iLiveSession->SetLcUiProvider( iLcUiProvider );    
-    iLcUiProvider->iSimulatedReturnValue = ETrue;
-    iLcUiProvider->iRecipient.Set( KTestRecipient2SipUri );
-    PropertyHelper::SetErrorCode( KErrNotFound );
-    iLiveSession->EstablishLcSessionL();
-    EUNIT_ASSERT_EQUALS( 1, iLiveSession->iTriedInvitations )
-    EUNIT_ASSERT_EQUALS( 
-        TInt( CLcUiProviderStub::EInputRecipient ),
-        iLcUiProvider->iCalledFunction )
-    EUNIT_ASSERT_EQUALS( 
-        KTestRecipient2SipUri8(), 
-        *( iLiveSession->iRecipient ) )        
-    EUNIT_ASSERT_EQUALS( KTestRecipient2SipUri(),iLiveSession->RemoteDisplayName() )  
 
-    // Multiple resolved recipients
-    iLcSessionObserver->Reset();
-    iLcUiProvider->Reset();
-    iLcUiProvider->iSimulatedReturnValue = ETrue;
-    PropertyHelper::SetErrorCode( KErrNone );
-    TBuf<200> multipleAddr;
-    multipleAddr.Append( KTestRecipient2SipUri );
-    multipleAddr.Append( _L(",") );
-    multipleAddr.Append( KTestRecipientSipUri );
-    
-    User::LeaveIfError( RProperty::Set( NMusSessionApi::KCategoryUid,
-                                        NMusSessionApi::KRemoteSipAddress,
-                                        multipleAddr ) );
-    delete iLiveSession;
-    iLiveSession = NULL;
-    iLiveSession = CMusEngLiveSession::NewL();
-    iLiveSession->SetLcSessionObserver( iLcSessionObserver );
-    iLiveSession->SetLcUiProvider( iLcUiProvider );    
-    iLiveSession->EstablishLcSessionL();
-        
-    EUNIT_ASSERT_EQUALS( 0, iLiveSession->iTriedInvitations )
-    EUNIT_ASSERT_EQUALS( 
-        TInt( CLcUiProviderStub::ESelectRecipient ),
-        iLcUiProvider->iCalledFunction )
-    // Stub selected first one from multiple addresses list
-    EUNIT_ASSERT_EQUALS( 
-        KTestRecipient2SipUri8(), 
-        *( iLiveSession->iRecipient ) )    
-       
-    // Multiple resolved recipient, user doesn't select any
-    iLcSessionObserver->Reset();
-    iLcUiProvider->Reset();
-    delete iLiveSession;
-    iLiveSession = NULL;
-    iLiveSession = CMusEngLiveSession::NewL();
-    iLiveSession->SetLcSessionObserver( iLcSessionObserver );
-    iLiveSession->SetLcUiProvider( iLcUiProvider );    
-    TRAP( err, iLiveSession->EstablishLcSessionL() );
-    if ( err == KErrNoMemory )
-        {
-        User::Leave( err );
-        }
-    EUNIT_ASSERT_EQUALS( KErrNotFound, err )   
-    EUNIT_ASSERT_EQUALS( 0, iLiveSession->iTriedInvitations )
-    EUNIT_ASSERT_EQUALS( 
-        TInt( CLcUiProviderStub::ESelectRecipient ),
-        iLcUiProvider->iCalledFunction )
-    
-    // Malformed multiple addresses, selection fails, manual entry is launched
-    iLcSessionObserver->Reset();
-    iLcUiProvider->Reset();
-    iLcUiProvider->iSimulatedReturnValue = ETrue;
-    iLcUiProvider->iRecipient.Set( KTestRecipient2SipUri );
-    PropertyHelper::SetErrorCode( KErrNone );
-    multipleAddr.Copy( _L(",") );
-    User::LeaveIfError( RProperty::Set( NMusSessionApi::KCategoryUid,
-                                        NMusSessionApi::KRemoteSipAddress,
-                                        multipleAddr ) );
-    delete iLiveSession;
-    iLiveSession = NULL;
-    iLiveSession = CMusEngLiveSession::NewL();
-    iLiveSession->SetLcSessionObserver( iLcSessionObserver );
-    iLiveSession->SetLcUiProvider( iLcUiProvider );    
-    TRAP( err, iLiveSession->EstablishLcSessionL() );
-    if ( err == KErrNoMemory )
-       {
-       User::Leave( err );
-       }
-    EUNIT_ASSERT_EQUALS( 
-        TInt( CLcUiProviderStub::EInputRecipient ),
-        iLcUiProvider->iCalledFunction )    
-    EUNIT_ASSERT_EQUALS( KErrNone, err );
-    EUNIT_ASSERT_EQUALS( 1, iLiveSession->iTriedInvitations )
-    EUNIT_ASSERT_EQUALS( 
-        KTestRecipient2SipUri8(), 
-        *( iLiveSession->iRecipient ) )
+      
     }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngOutSession::UT_EstablishLcSession_RegistrationPendingL()
-    {
-    // Set registration as pending
-    iLiveSession->iSipProfileHandler->Profile()->iTBoolValue = EFalse;
     
-    iLiveSession->EstablishLcSessionL();
-    EUNIT_ASSERT( !iLiveSession->iSession )
-    EUNIT_ASSERT( iLiveSession->iRegistrationPending )
-    
-    // Fake registration, session starts
-    iLiveSession->iSipProfileHandler->Profile()->iTBoolValue = ETrue;
-    iLiveSession->ProfileRegistered();
-    
-    if ( iLcSessionObserver->iCalledFunction == CLcSessionObserverStub::ESessionFailed )
-        {
-        // Session didn't start because of running out of memory
-        User::Leave( KErrNoMemory );
-        }
-    
-    iLiveSession->iDeltaTimer->Remove( iLiveSession->iInvitationResponseEntry );
-    CMusEngMceOutSession::InvitationResponseTimerExpired( iLiveSession );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::ESessionFailed ) )
-    EUNIT_ASSERT_EQUALS( iLcSessionObserver->iError,
-                         TInt( MLcSession::ENoAnswer ) )    
-    iLcSessionObserver->Reset();
-    
-    EUNIT_ASSERT( iLiveSession->iSession )
-    EUNIT_ASSERT_EQUALS( iLiveSession->iSession->State(), 
-                         CMceSession::EOffering )
-    EUNIT_ASSERT( !iLiveSession->iRegistrationPending )    
-    }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //    
-void UT_CMusEngOutSession::UT_TerminateLcSessionL()
+void UT_CMusEngOutSession::UT_CMusEngOutSession_CancelInviteLL()
     {
-    // No MCE session
-    EUNIT_ASSERT_SPECIFIC_LEAVE( 
-        iLiveSession->TerminateLcSessionL(), KErrNotReady )
-
-    // Cancel a session that is in offering state
-    iLiveSession->EstablishLcSessionL();
-    EUNIT_ASSERT_EQUALS( TInt( CMceSession::EOffering ),
-                         TInt( iLiveSession->iSession->iState ) )
-    iLiveSession->TerminateLcSessionL();
-    EUNIT_ASSERT_EQUALS( TInt( CMceSession::ECancelling ),
-                         TInt( iLiveSession->iSession->iState ) )
+    // Try to cancel, must fail
+    TRAPD( error, iLiveSession->CancelInviteL() );
+    MUS_TEST_FORWARD_ALLOC_FAILURE( error );
+    EUNIT_ASSERT( error == KErrNotReady );
     
-    // Terminate an established session
-    iLiveSession->iSession->iState = CMceSession::ETerminated;
-    iLiveSession->EstablishLcSessionL();
-    iLiveSession->iSession->iState = CMceSession::EEstablished;
-    iLiveSession->TerminateLcSessionL();
-    EUNIT_ASSERT_EQUALS( TInt( CMceSession::ETerminating ),
-                         TInt( iLiveSession->iSession->iState ) )
+    // Invite
+    iLiveSession->InviteL( KTestRecipientSipUri );
+    EUNIT_ASSERT( iLiveSession->iSession->State() == CMceSession::EOffering );
+    
+    // Cancel
+    iLiveSession->CancelInviteL();
+    EUNIT_ASSERT( iLiveSession->iSession->State() == CMceSession::ECancelling );
+    
+    // Try to cancel again, does nothing
+    iLiveSession->CancelInviteL();
+    EUNIT_ASSERT( iLiveSession->iSession->State() == CMceSession::ECancelling );
     }
+
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //  
-void UT_CMusEngOutSession::UT_EstablishSessionLL()
+void UT_CMusEngOutSession::UT_CMusEngOutSession_EstablishSessionLL()
     {
     // Try to establish, must fail, because of missing session
     TRAPD( error, iLiveSession->EstablishSessionL() );
     MUS_TEST_FORWARD_ALLOC_FAILURE( error );
     EUNIT_ASSERT( error == KErrNotReady );
+    iLiveSession->iPrivate = ETrue;
+    iLiveSession->iPrivateNumber = EFalse;
     
     // Call to CMusEngOutMceSession::InviteL leads to call to EstablishL
-    iLiveSession->EstablishLcSessionL();
+    iLiveSession->InviteL( KTestRecipientSipUri );
     
     // Check that ports are correct
     
@@ -482,205 +315,160 @@ void UT_CMusEngOutSession::UT_EstablishSessionLL()
     EUNIT_ASSERT( iLiveSession->iSession->iHeaders->MdcaPoint( 1 ) ==
                   KMusAcceptHeader() );   
     EUNIT_ASSERT( iLiveSession->iSession->State() == CMceSession::EOffering );
+    
+    // Privacy test : Check Private -header & originator
+    delete iLiveSession;
+    iLiveSession = NULL;
+    iLiveSession = CMusEngLiveSession::NewL( KNullDesC(),
+                                                TRect(0,0, 100,100),
+                                                *iObserver,
+                                                *iObserver,
+                                                *iObserver );
+    iLiveSession->iPrivate = ETrue;
+    iLiveSession->iPrivateNumber = ETrue;
+    
+    // Call to CMusEngOutMceSession::InviteL leads to call to EstablishL
+    iLiveSession->InviteL( KTestRecipientSipUri );
+    EUNIT_ASSERT( *iLiveSession->iSession->iOriginator == KMusAnonymousHeader );
+    
+    EUNIT_ASSERT( iLiveSession->iSession->iHeaders )
+    EUNIT_ASSERT( iLiveSession->iSession->iHeaders->Count() == 3 )
+    EUNIT_ASSERT( iLiveSession->iSession->iHeaders->MdcaPoint( 0 ) ==
+                  KMusEngAcceptContactHeader() )
+    EUNIT_ASSERT( iLiveSession->iSession->iHeaders->MdcaPoint( 1 ) ==
+                  KMusAcceptHeader() );   
+    EUNIT_ASSERT( iLiveSession->iSession->iHeaders->MdcaPoint( 2 ).Find( KMusPrivacyHeader() ) == 0 );
+    
+    
     }
+
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //    
-void UT_CMusEngOutSession::UT_HandleTerminationL()
+void UT_CMusEngOutSession::UT_CMusEngOutSession_HandleTerminationL()
     {
-    // Try different values    
+
+    // Try different values
+    iLiveSession->HandleTermination( KSipStatusCode400BadRequest, 
+                                     KNullDesC8() );
+    EUNIT_ASSERT( iObserver->iSessionBadRequestCalled );
+    iObserver->Reset();
+    
+    iLiveSession->HandleTermination( KSipStatusCode401Unauthorized, 
+                                     KNullDesC8() );
+    EUNIT_ASSERT( iObserver->iSessionUnauthorizedCalled );
+    iObserver->Reset();
+    
+    iLiveSession->HandleTermination( KSipStatusCode402PaymentRequired, 
+                                     KNullDesC8() );
+    EUNIT_ASSERT( iObserver->iSessionPaymentRequiredCalled );
+    iObserver->Reset();
+    
+    iLiveSession->HandleTermination( KSipStatusCode404RecipientNotFound, 
+                                     KNullDesC8() );
+    EUNIT_ASSERT( iObserver->iSessionRecipientNotFoundCalled );
+    iObserver->Reset();
+    
+    iLiveSession->HandleTermination( KSipStatusCode416UnsupportedUriScheme, 
+                                     KNullDesC8() );
+    EUNIT_ASSERT( iObserver->iSessionRecipientNotFoundCalled );
+    iObserver->Reset();
+
+    iLiveSession->HandleTermination( KSipStatusCode479NotAbleToProcessURI, 
+                                     KNullDesC8() );
+    EUNIT_ASSERT( iObserver->iSessionRecipientNotFoundCalled );
+    iObserver->Reset();
+    
+    iLiveSession->HandleTermination( 
+                            KSipStatusCode407ProxyAuthenticationRequired, 
+                            KNullDesC8() );
+    EUNIT_ASSERT( iObserver->iSessionProxyAuthenticationRequiredCalled );
+    iObserver->Reset();
+    
     iLiveSession->HandleTermination( KSipStatusCode408ConnectionTimeOut, 
                                      KNullDesC8() );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::ESessionFailed ) )
-    EUNIT_ASSERT_EQUALS( iLcSessionObserver->iError,
-                         TInt( MLcSession::ENoAnswer ) )
-    iLcSessionObserver->Reset();
+    EUNIT_ASSERT( iObserver->iSessionRequestTimeOutCalled );
+    iObserver->Reset();
     
     iLiveSession->HandleTermination( KSipStatusCode415UnsupportedMediaType, 
                                      KNullDesC8() );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::ESessionFailed ) )
-    EUNIT_ASSERT_EQUALS( iLcSessionObserver->iError,
-                         TInt( MLcSession::ESessionRejected ) ) 
-    iLcSessionObserver->Reset();
+    EUNIT_ASSERT( iObserver->iSessionUnsupportedMediaTypeCalled );
+    iObserver->Reset();
     
     iLiveSession->HandleTermination( KSipStatusCode488NotAcceptableHere, 
                                      KNullDesC8() );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::ESessionFailed ) )
-    EUNIT_ASSERT_EQUALS( iLcSessionObserver->iError,
-                         TInt( MLcSession::ESessionRejected ) )
-    iLcSessionObserver->Reset();
+    EUNIT_ASSERT( iObserver->iSessionUnsupportedMediaTypeCalled );
+    iObserver->Reset();
     
     iLiveSession->HandleTermination( KSipStatusCode606NotAcceptable, 
                                      KNullDesC8() );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::ESessionFailed ) )
-    EUNIT_ASSERT_EQUALS( iLcSessionObserver->iError,
-                         TInt( MLcSession::ESessionRejected ) )
-    iLcSessionObserver->Reset(); 
+    EUNIT_ASSERT( iObserver->iSessionUnsupportedMediaTypeCalled );
+    iObserver->Reset(); 
     
     iLiveSession->HandleTermination( KSipStatusCode486BusyHere, 
                                      KNullDesC8() );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::ESessionFailed ) )
-    EUNIT_ASSERT_EQUALS( iLcSessionObserver->iError,
-                         TInt( MLcSession::ERecipientBusy ) )
-    iLcSessionObserver->Reset();
+    EUNIT_ASSERT( iObserver->iSessionBusyHereCalled );
+    iObserver->Reset();
     
     iLiveSession->HandleTermination( KSipStatusCode487RequestCancelled, 
                                      KNullDesC8() );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::ESessionFailed ) )
-    EUNIT_ASSERT_EQUALS( iLcSessionObserver->iError,
-                         TInt( MLcSession::ESessionCancelled ) )
-    iLcSessionObserver->Reset();
+    EUNIT_ASSERT( iObserver->iSessionRequestCancelledCalled );
+    iObserver->Reset();
     
     iLiveSession->HandleTermination( KSipStatusCode603Decline, KNullDesC8()  );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::ESessionFailed ) )
-    EUNIT_ASSERT_EQUALS( iLcSessionObserver->iError,
-                         TInt( MLcSession::ESessionRejected ) )
-    iLcSessionObserver->Reset();
+    EUNIT_ASSERT( iObserver->iSessionRejectedCalled );
+    iObserver->Reset();
 
     iLiveSession->HandleTermination( KSipStatusCode480TemporarilyNotAvailable, 
                                      KNullDesC8() );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::ESessionFailed ) )
-    EUNIT_ASSERT_EQUALS( iLcSessionObserver->iError,
-                         TInt( MLcSession::ERecipientTemporarilyNotAvailable ) )
-    iLcSessionObserver->Reset();
+    EUNIT_ASSERT( iObserver->iSessionTemporarilyNotAvailable );
+    iObserver->Reset();
     
     // Receive 486 with operator variant
     iLiveSession->iOperatorVariant = ETrue;
     iLiveSession->HandleTermination( KSipStatusCode486BusyHere, KNullDesC8()  );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::ESessionFailed ) )
-    EUNIT_ASSERT_EQUALS( iLcSessionObserver->iError,
-                         TInt( MLcSession::ESessionRejected ) )    
-    iLcSessionObserver->Reset();
+    EUNIT_ASSERT( iObserver->iSessionRejectedCalled )
+    EUNIT_ASSERT( !iObserver->iSessionBusyHereCalled )
+    iObserver->Reset();
     iLiveSession->iOperatorVariant = EFalse;
     
     // Normal termination, let the base class handle
     iLiveSession->HandleTermination(  KSipStatusCode200OK, KNullDesC8()  );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::ESessionStateChanged ) )
-    iLcSessionObserver->Reset();
+    EUNIT_ASSERT( iObserver->iSessionTerminatedCalled ); // called by base class
+    iObserver->Reset();
+
     }    
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//    
-void UT_CMusEngOutSession::UT_HandleRecipientNotFoundTerminationL()
-    {
-    EUNIT_ASSERT_EQUALS( iLiveSession->iTriedInvitations, 0 );
-    
-    // Retry possible when 404 is received but fails because of recipient 
-    // proposal is missing for some reason, recipient not found callback
-    // is called instead of retry
-    delete iLiveSession->iRemoteSipAddressProposal;
-    iLiveSession->iRemoteSipAddressProposal = NULL;
-    iLcSessionObserver->Reset();
-    iLiveSession->HandleTermination( KSipStatusCode404RecipientNotFound, 
-                                     KNullDesC8() );
-    
-    EUNIT_ASSERT( iLiveSession->iDeltaTimer->IsActive() == ETrue )
-    iLiveSession->AsyncBrakeCompleted( iLiveSession );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::ESessionFailed ) )
-    EUNIT_ASSERT_EQUALS( iLcSessionObserver->iError,
-                         TInt( MLcSession::ERecipientNotFound ) )
-    
-    // Retry possible when 404 is received
-    delete iLiveSession->iRemoteSipAddressProposal;
-    iLiveSession->iRemoteSipAddressProposal = NULL;
-    iLiveSession->iRemoteSipAddressProposal = KTestRecipient2SipUri().AllocL();
-    iLcSessionObserver->Reset();
-    iLcUiProvider->iRecipient.Set( KTestRecipient2SipUri );
-    iLcUiProvider->iSimulatedReturnValue = ETrue;
-    iLiveSession->HandleTermination( KSipStatusCode404RecipientNotFound, 
-                                     KNullDesC8() );
-       
-    EUNIT_ASSERT( iLiveSession->iDeltaTimer->IsActive() == ETrue );
-    iLiveSession->AsyncBrakeCompleted( iLiveSession );
-
-    // Memory running out might cause that retry is not done
-    if ( iLcSessionObserver->iCalledFunction == CLcSessionObserverStub::ESessionFailed )
-        {
-        User::Leave( KErrNoMemory );
-        }
-    EUNIT_ASSERT_EQUALS( 1, iLiveSession->iTriedInvitations )    
-    EUNIT_ASSERT_EQUALS( 
-        KTestRecipient2SipUri8(), 
-        *( iLiveSession->iRecipient ) )
-    
-    // Retry not anymore possible when 404 received (e.g. manual address query
-    // was done for invite).
-    iLcSessionObserver->Reset();
-    iLiveSession->HandleTermination( KSipStatusCode404RecipientNotFound, 
-                                     KNullDesC8() );
-    EUNIT_ASSERT( iLiveSession->iDeltaTimer->IsActive() == ETrue )
-    iLiveSession->AsyncBrakeCompleted( iLiveSession );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::ESessionFailed ) )
-    EUNIT_ASSERT_EQUALS( iLcSessionObserver->iError,
-                         TInt( MLcSession::ERecipientNotFound ) )
-    
-    // 416 has identical handling
-    iLcSessionObserver->Reset();
-    iLiveSession->HandleTermination( KSipStatusCode416UnsupportedUriScheme, 
-                                     KNullDesC8() );
-    EUNIT_ASSERT( iLiveSession->iDeltaTimer->IsActive() == ETrue );
-    iLiveSession->AsyncBrakeCompleted( iLiveSession );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::ESessionFailed ) )
-    EUNIT_ASSERT_EQUALS( iLcSessionObserver->iError,
-                         TInt( MLcSession::ERecipientNotFound ) )
-   
-    // 479 has identical handling
-    iLcSessionObserver->Reset();
-    iLiveSession->HandleTermination( KSipStatusCode479NotAbleToProcessURI, 
-                                    KNullDesC8() );
-    EUNIT_ASSERT( iLiveSession->iDeltaTimer->IsActive() == ETrue );
-    iLiveSession->AsyncBrakeCompleted( iLiveSession );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::ESessionFailed ) )
-    EUNIT_ASSERT_EQUALS( iLcSessionObserver->iError,
-                         TInt( MLcSession::ERecipientNotFound ) )
-    }
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //   
-void UT_CMusEngOutSession::UT_AdjustVideoCodecLL()
+void UT_CMusEngOutSession::UT_CMusEngOutSession_AdjustVideoCodecLL()
     {
     //H263
     CMceH263Codec* codecH263 = CMceH263Codec::NewLC( KMceSDPNameH2632000() );
-    iLiveSession->CMusEngMceOutSession::AdjustVideoCodecL( *codecH263,
-                                                           KMceCameraSource );
+    iLiveSession->CMusEngMceOutSession::AdjustVideoCodecL( *codecH263 );
     // Test payloadtype
     EUNIT_ASSERT( codecH263->iPayloadType == 96 )
     CleanupStack::PopAndDestroy( codecH263 );
     
     //H264
     CMceAvcCodec* codecAvc = CMceAvcCodec::NewLC( KMceSDPNameH264() );
-    iLiveSession->CMusEngMceOutSession::AdjustVideoCodecL( *codecAvc,
-                                                           KMceCameraSource  );
+    iLiveSession->CMusEngMceOutSession::AdjustVideoCodecL( *codecAvc );
     // Test payloadtype
     EUNIT_ASSERT( codecAvc->iPayloadType == 98 )
     CleanupStack::PopAndDestroy( codecAvc );
     }
 
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //   
-void UT_CMusEngOutSession::UT_AdjustAudioCodecLL()
+void UT_CMusEngOutSession::UT_CMusEngOutSession_AdjustAudioCodecLL()
     {
     CMceAudioCodec* codec = 
                 iLiveSession->iManager->SupportedAudioCodecs()[0]->CloneL();
@@ -699,11 +487,12 @@ void UT_CMusEngOutSession::UT_AdjustAudioCodecLL()
     CleanupStack::PopAndDestroy( codec );
     }
         
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //   
-void UT_CMusEngOutSession::UT_CreateMceSessionStructureLL()
+void UT_CMusEngOutSession::UT_CMusEngOutSession_CreateMceSessionStructureLL()
     {
     // Test removal of QoS-lines
     
@@ -735,12 +524,14 @@ void UT_CMusEngOutSession::UT_CreateMceSessionStructureLL()
     
     EUNIT_ASSERT( iLiveSession->iSession->Bundles().Count() == 0 )
 
-    CMusEngClipSession* clipSession = CMusEngClipSession::NewL();
+    CMusEngClipSession* clipSession = CMusEngClipSession::NewL(
+                                                    TRect(0, 100, 200, 300 ),
+                                                    *iObserver,
+                                                    *iObserver,
+                                                    *iObserver );
     CleanupStack::PushL( clipSession );
-    clipSession->SetLcSessionObserver( iLcSessionObserver );
-    clipSession->SetLcUiProvider( iLcUiProvider );    
-    clipSession->LocalVideoPlayer()->LcSourceFileControl()->SetLcFileNameL(
-        KTestVideoFileName() );
+    
+    clipSession->SetClipL( KTestVideoFileName );
     
     clipSession->iRecipient = KTestRecipientSipUri8().AllocL();
     
@@ -760,230 +551,6 @@ void UT_CMusEngOutSession::UT_CreateMceSessionStructureLL()
     CleanupStack::PopAndDestroy( clipSession );
     }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//   
-void UT_CMusEngOutSession::UT_ConstructLL()
-    {
-    TUint32 profileid = 0;
-    CSIPProfile* profile = iLiveSession->iSipProfileHandler->Profile();
-    profile->GetParameter( KSIPProfileId, profileid );
-    //stub creates defaultprofile if profileid is zero
-    //stub does not care if the profileid is given or not
-    //profileid of new profile is always 1
-    EUNIT_ASSERT(profile->iIsDefaultProfile)
-
-    TInt error = NULL;
-    const TUint KSipProfileId2( 2 );
-    TRAP( error, RProperty::Set( NMusSessionApi::KCategoryUid,
-                                 NMusSessionApi::KSipProfileId,
-                                 KSipProfileId2 ) );
-    if ( error == KErrNoMemory ) User::Leave( error );
-    EUNIT_ASSERT ( error == KErrNone );
-    profile = NULL;
-    profileid = 0;
-    
-    SIPStrings::Close();
-    delete iLcSessionObserver;
-    iLcSessionObserver = NULL;
-    delete iLiveSession;
-    iLiveSession = NULL;
-        
-    iLcSessionObserver = new( ELeave )CLcSessionObserverStub;
-    iLiveSession = CMusEngLiveSession::NewL();
-    iLiveSession->SetLcSessionObserver( iLcSessionObserver );
-    iLiveSession->SetLcUiProvider( iLcUiProvider );    
-    
-    SIPStrings::OpenL();
-    
-    profile = iLiveSession->iSipProfileHandler->Profile();
-    profile->GetParameter( KSIPProfileId, profileid );
-    EUNIT_ASSERT( !profile->iIsDefaultProfile )
-    
-    
-    TRAP( error, RProperty::Delete( NMusSessionApi::KCategoryUid,
-                                     NMusSessionApi::KSipProfileId ) );
-    if ( error == KErrNoMemory ) User::Leave( error );
-    EUNIT_ASSERT ( error == KErrNone );
-    profile = NULL;
-    profileid = 0;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngOutSession::UT_ContactSavingLL()
-    {
-    ContactEngineStubHelper::Reset();
-    
-    // Saving of contact is done at destruction phase only if recipient
-    // has been queried from client
-    //
-    CMusEngLiveSession* liveSession = CMusEngLiveSession::NewL();
-    liveSession->SetLcSessionObserver( iLcSessionObserver );
-    liveSession->SetLcUiProvider( iLcUiProvider );    
-    delete liveSession;
-    liveSession = NULL;
-    EUNIT_ASSERT( ContactEngineStubHelper::GetCalledFunction() == EContactEngineStubNone );
-    
-    
-    User::LeaveIfError( RProperty::Set( NMusSessionApi::KCategoryUid,
-                                        NMusSessionApi::KContactId,
-                                        2 ) );
-    User::LeaveIfError( RProperty::Set( NMusSessionApi::KCategoryUid,
-                                        NMusSessionApi::KTelNumber,
-                                        _L("12341234") ) );
-    
-    liveSession = CMusEngLiveSession::NewL();
-    CleanupStack::PushL( liveSession );
-    liveSession->SetLcSessionObserver( iLcSessionObserver );
-    liveSession->SetLcUiProvider( iLcUiProvider );    
-    
-    delete liveSession->iRecipient;
-    liveSession->iRecipient = NULL;
-    liveSession->iRecipient = _L8("sip:yep@10.10.10.10").AllocL();
-    liveSession->iAddressQueried = ETrue;
-    CleanupStack::PopAndDestroy( liveSession );
-    if ( ContactEngineStubHelper::GetCalledFunction() != EContactEngineStubSetText )
-        {
-        // out-of-memory was trap ignored and saving failed because of that
-        User::Leave( KErrNoMemory );
-        }
-    EUNIT_ASSERT( ContactEngineStubHelper::GetCalledFunction() == EContactEngineStubSetText );
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//  
-void UT_CMusEngOutSession::UT_RemoteAddressLL()
-    {
-    delete iLiveSession->iRecipient;
-    iLiveSession->iRecipient = NULL;
-    EUNIT_ASSERT_SPECIFIC_LEAVE( iLiveSession->RemoteAddressL(), KErrNotReady )
-    
-    iLiveSession->iRecipient = KTestRecipient2SipUri8().AllocL();
-    
-    HBufC* remoteAddr = iLiveSession->RemoteAddressL();
-    CleanupStack::PushL( remoteAddr );
-    EUNIT_ASSERT_EQUALS( KTestRecipient2SipUri(), *remoteAddr )
-    CleanupStack::PopAndDestroy( remoteAddr );
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-void UT_CMusEngOutSession::UT_RemoteDisplayNameL()
-    {
-    // Test 1 : Default setting, contact name set
-    EUNIT_ASSERT_EQUALS ( KTestContactName(), iLiveSession->RemoteDisplayName() )    
-    
-    // Test 2 : Contact name set to null descriptor
-    User::LeaveIfError( RProperty::Set( NMusSessionApi::KCategoryUid,
-                                       NMusSessionApi::KContactName,
-                                       KNullDesC) );
-    delete iLiveSession;
-    iLiveSession = NULL;
-    iLiveSession = CMusEngLiveSession::NewL();
-    iLiveSession->SetLcSessionObserver( iLcSessionObserver );
-    iLiveSession->SetLcUiProvider( iLcUiProvider );    
-    EUNIT_ASSERT( iLiveSession->RemoteDisplayName().Length() == 0 );
-    
-    // Test 3 : Manual address entered
-    PropertyHelper::SetErrorCode( KErrNone );
-    delete iLiveSession;
-    iLiveSession = NULL;
-    iLcSessionObserver->Reset();
-    iLcUiProvider->Reset();
-    User::LeaveIfError( RProperty::Set( NMusSessionApi::KCategoryUid,
-                                        NMusSessionApi::KContactName,
-                                        KTestContactName ) );    
-    iLcUiProvider->iSimulatedReturnValue = ETrue;
-    iLcUiProvider->iRecipient.Set( KTestRecipientSipUri );
-    iLiveSession = CMusEngLiveSession::NewL();
-    iLiveSession->SetLcSessionObserver( iLcSessionObserver );
-    iLiveSession->SetLcUiProvider( iLcUiProvider );    
-    PropertyHelper::SetErrorCode( KErrNotFound );
-    iLiveSession->EstablishLcSessionL();    
-    EUNIT_ASSERT_EQUALS( 1, iLiveSession->iTriedInvitations )
-    EUNIT_ASSERT_EQUALS( KTestRecipientSipUri(),iLiveSession->RemoteDisplayName() )
-    
-    // Test 4 : Contact name has zero lenth and multiple address entry query. 
-    //          Displayname should have user selected address.
-    //          Rare scenario.
-    PropertyHelper::SetErrorCode( KErrNone );
-    iLcSessionObserver->Reset();
-    iLcUiProvider->Reset();
-    User::LeaveIfError( RProperty::Set( NMusSessionApi::KCategoryUid,
-                                        NMusSessionApi::KContactName,
-                                        KNullDesC) );
-    delete iLiveSession;
-    iLiveSession = NULL;    
-    iLiveSession = CMusEngLiveSession::NewL();
-    iLiveSession->SetLcSessionObserver( iLcSessionObserver );
-    iLiveSession->SetLcUiProvider( iLcUiProvider );    
-    iLcUiProvider->iSimulatedReturnValue = ETrue;    
-    PropertyHelper::SetErrorCode( KErrNone );
-    TBuf<200> multipleAddr;
-    multipleAddr.Append( KTestRecipientTelUri );
-    multipleAddr.Append( _L(",") );
-    multipleAddr.Append( KTestRecipientSipUri );
-    User::LeaveIfError( RProperty::Set( NMusSessionApi::KCategoryUid,
-                                        NMusSessionApi::KRemoteSipAddress,
-                                        multipleAddr ) );
-    iLiveSession->EstablishLcSessionL();    
-    /* Stub selects the first one automatically */
-    EUNIT_ASSERT_EQUALS( KTestRecipientTelUri(),iLiveSession->RemoteDisplayName() );
-    
-    // Test 5 : Contact name has zero lenth and no manual entry queried. 
-    //          Recipient has only teluri. So displayname should have tel uri address.
-    PropertyHelper::SetErrorCode( KErrNone );
-    User::LeaveIfError( RProperty::Set( NMusSessionApi::KCategoryUid,
-                                        NMusSessionApi::KContactName,
-                                        KNullDesC) );
-    delete iLiveSession;
-    iLiveSession = NULL;    
-    iLiveSession = CMusEngLiveSession::NewL();
-    iLiveSession->SetLcSessionObserver( iLcSessionObserver );
-    iLiveSession->SetLcUiProvider( iLcUiProvider );    
-    iLcUiProvider->iSimulatedReturnValue = ETrue;
-    TBuf<200> singleAddr;
-    singleAddr.Append( KTestRecipientTelUri );    
-    User::LeaveIfError( RProperty::Set( NMusSessionApi::KCategoryUid,
-                                        NMusSessionApi::KRemoteSipAddress,
-                                        singleAddr ) );
-    PropertyHelper::SetErrorCode( KErrNone );
-    iLiveSession->EstablishLcSessionL();
-    EUNIT_ASSERT_EQUALS( KTestRecipientTelUri(),iLiveSession->RemoteDisplayName() );
-    
-    // Test 6 : Contact name has zero lenth and recipient has teluri 
-    //          and invitation fails to teluri.
-    //          Manual address query entered and now display should have entered 
-    //          manual address.
-    PropertyHelper::SetErrorCode( KErrNone );
-    User::LeaveIfError( RProperty::Set( NMusSessionApi::KCategoryUid,
-                                           NMusSessionApi::KContactName,
-                                           KNullDesC) );
-    delete iLiveSession;
-    iLiveSession = NULL;    
-    iLiveSession = CMusEngLiveSession::NewL();
-    iLiveSession->SetLcSessionObserver( iLcSessionObserver );
-    iLiveSession->SetLcUiProvider( iLcUiProvider );    
-    iLcUiProvider->iRecipient.Set( KTestRecipientSipUri );
-    iLcUiProvider->iSimulatedReturnValue = ETrue;
-    singleAddr.Copy( KTestRecipientTelUri );
-    User::LeaveIfError( RProperty::Set( NMusSessionApi::KCategoryUid,
-                                        NMusSessionApi::KRemoteSipAddress,
-                                        singleAddr ) );
-    PropertyHelper::SetErrorCode( KErrNotFound );
-    iLiveSession->EstablishLcSessionL(); 
-    EUNIT_ASSERT_EQUALS( 1, iLiveSession->iTriedInvitations )
-    EUNIT_ASSERT_EQUALS( KTestRecipientSipUri(),iLiveSession->RemoteDisplayName() );
-    }
-
 //  TEST TABLE
 
 EUNIT_BEGIN_TEST_TABLE(
@@ -992,102 +559,53 @@ EUNIT_BEGIN_TEST_TABLE(
     "UNIT" )
 
 EUNIT_TEST(
-    "EstablishLcSessionL - test ",
+    "InviteL - test ",
     "CMusEngOutSession",
-    "EstablishLcSessionL",
+    "InviteL",
     "FUNCTIONALITY",
-    SetupL, UT_EstablishLcSessionL, Teardown)
+    SetupL, UT_CMusEngOutSession_InviteLL, Teardown)
 
 EUNIT_TEST(
-    "TerminateLcSessionL - test ",
+    "CancelInviteL - test ",
     "CMusEngOutSession",
-    "TerminateLcSessionL",
+    "CancelInviteL",
     "FUNCTIONALITY",
-    SetupL, UT_TerminateLcSessionL, Teardown)    
-    
-EUNIT_TEST(
-    "EstablishLcSessionL recipient resolving - test ",
-    "CMusEngOutSession",
-    "EstablishLcSessionL",
-    "FUNCTIONALITY",
-    SetupL, UT_EstablishLcSession_RecipientResolvingL, Teardown)
-
-EUNIT_TEST(
-    "EstablishLcSessionL registration pending - test ",
-    "CMusEngOutSession",
-    "EstablishLcSessionL",
-    "FUNCTIONALITY",
-    SetupL, UT_EstablishLcSession_RegistrationPendingL, Teardown)
+    SetupL, UT_CMusEngOutSession_CancelInviteLL, Teardown)
 
 EUNIT_TEST(
     "EstablishSessionL - test ",
     "CMusEngOutSession",
     "EstablishSessionL",
     "FUNCTIONALITY",
-    SetupL, UT_EstablishSessionLL, Teardown)   
+    SetupL, UT_CMusEngOutSession_EstablishSessionLL, Teardown)   
 
 EUNIT_TEST(
     "HandleTermination - test ",
     "CMusEngOutSession",
     "HandleTermination",
     "FUNCTIONALITY",
-    SetupL, UT_HandleTerminationL, Teardown)   
+    SetupL, UT_CMusEngOutSession_HandleTerminationL, Teardown)   
 
-EUNIT_TEST(
-    "HandleTermination recipient not found - test ",
-    "CMusEngOutSession",
-    "HandleTermination recipient not found",
-    "FUNCTIONALITY",
-    SetupL, UT_HandleRecipientNotFoundTerminationL, Teardown)  
-    
 EUNIT_TEST(
     "AdjustVideoCodecL - test ",
     "CMusEngOutSession",
     "AdjustVideoCodecL",
     "FUNCTIONALITY",
-    SetupL, UT_AdjustVideoCodecLL, Teardown)   
+    SetupL, UT_CMusEngOutSession_AdjustVideoCodecLL, Teardown)   
 
 EUNIT_TEST(
     "AdjustAudioCodecL - test ",
     "CMusEngOutSession",
     "AdjustAudioCodecL",
     "FUNCTIONALITY",
-    SetupL, UT_AdjustAudioCodecLL, Teardown)   
+    SetupL, UT_CMusEngOutSession_AdjustAudioCodecLL, Teardown)   
     
 EUNIT_TEST(
     "CreateMceSessionStructureL - test ",
     "CMusEngOutSession",
     "CreateMceSessionStructureL",
     "FUNCTIONALITY",
-    SetupL, UT_CreateMceSessionStructureLL, Teardown)    
-  
-EUNIT_TEST(
-    "ConstructLL - test ",
-    "CMusEngOutSession",
-    "ConstructLL",
-    "FUNCTIONALITY",
-    SetupL, UT_ConstructLL, Teardown) 
-
-EUNIT_TEST(
-    "ContactSavingL - test ",
-    "CMusEngOutSession",
-    "ContactSavingL",
-    "FUNCTIONALITY",
-    SetupL, UT_ContactSavingLL, Teardown) 
-
-EUNIT_TEST(
-    "RemoteAddressLL - test ",
-    "CMusEngOutSession",
-    "RemoteAddressLL",
-    "FUNCTIONALITY",
-    SetupL, UT_RemoteAddressLL, Teardown)
-
-EUNIT_TEST(
-    "RemoteDisplayName - test ",
-    "CMusEngOutSession",
-    "RemoteDisplayName",
-    "FUNCTIONALITY",
-    SetupL, UT_RemoteDisplayNameL, Teardown)
+    SetupL, UT_CMusEngOutSession_CreateMceSessionStructureLL, Teardown)    
 
 EUNIT_END_TEST_TABLE
 

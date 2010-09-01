@@ -15,9 +15,5 @@
 *
 */
 
-#include <platform_paths.hrh>
-
 PRJ_MMPFILES
-musenginepluginstub.mmp
-
-
+musenginestub.mmp

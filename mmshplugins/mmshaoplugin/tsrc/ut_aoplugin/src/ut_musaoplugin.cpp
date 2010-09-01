@@ -28,14 +28,13 @@
 #include <alwaysonlinemanagercommon.h>
 #include <alwaysonlinemanagerclient.h>
 #include <digia/eunit/eunitmacros.h>
-#include <digia/eunit/eunitdecorators.h>
+#include "FeatMgr.h"
+
+
 
 #pragma warn_illtokenpasting off
 
 _LIT( KEmptyTelNumber, "");
-_LIT( KEmptyProviderName, "");
-
-_LIT(KTestTelNumber,"+3585050");
 
 
 // -----------------------------------------------------------------------------
@@ -102,8 +101,63 @@ void UT_CMusAoPlugin::Teardown(  )
     delete iPlugin;
     iPlugin = NULL ;
     PropertyHelper::Close();
+    
     }
+	
+	
+//// -----------------------------------------------------------------------------
+////
+//// -----------------------------------------------------------------------------
+//// 
+void UT_CMusAoPlugin::NewLL()
+	{
+	
+    TInt res = KErrNone;
+    TInt ret = KErrNone;
+	FeatureManager::MultimediaSharingNotSupported();
+	iPlugin->DeleteProperties();
+    delete iPlugin;
+    iPlugin = NULL ;
+	iPlugin = CMusAoPlugin::NewL(); 
+	EUNIT_ASSERT( iPlugin );
+    EUNIT_ASSERT( iPlugin->iTsyPropertyMonitor == NULL);
+    EUNIT_ASSERT( iPlugin->iPropertyMonitor == NULL);
+    // camera information property
+    ret = RProperty::Get( NMusResourceApi::KCategoryUid,
+            NMusResourceApi::KCameraInformation,
+                          res );
+    EUNIT_ASSERT_EQUALS( ret, KErrNotFound )
+    ret = KErrNone;
 
+    // call event
+    ret = RProperty::Get( NMusSessionInformationApi::KCategoryUid,
+                          NMusSessionInformationApi::KMusCallEvent,
+                          res );
+    EUNIT_ASSERT_EQUALS( ret, KErrNotFound )
+    ret = KErrNone;
+    
+    // phone number
+    TBuf<15> telnumber; // TODO change to des
+    User::LeaveIfError( RProperty::Get(
+                            NMusSessionInformationApi::KCategoryUid,
+                            NMusSessionInformationApi::KMusTelNumber,
+                            telnumber ) );
+    EUNIT_ASSERT_EQUALS( telnumber.Compare( KEmptyTelNumber ), KErrNone )
+    
+    // Mus allowed
+    ret = RProperty::Get( NMusSessionInformationApi::KCategoryUid,
+                          NMusSessionInformationApi::KMUSForbidden,
+                          res );
+    EUNIT_ASSERT_EQUALS( ret, KErrNotFound )
+    ret = KErrNone;
+
+    // Call direction
+    ret = RProperty::Get( NMusSessionInformationApi::KCategoryUid,
+                          NMusSessionInformationApi::KMusCallDirection,
+                          res );
+    EUNIT_ASSERT_EQUALS( ret, KErrNotFound )
+    FeatureManager::MultimediaSharingSupported();
+	}
 
 // -----------------------------------------------------------------------------
 //
@@ -111,9 +165,7 @@ void UT_CMusAoPlugin::Teardown(  )
 // 
 void UT_CMusAoPlugin::DefinePropertiesLL()
     {
-/* Test 1 */
-    TInt res = KErrNone;
-    TInt err = KErrNone;   
+/* Test 1 */  
     /* Set Product Mode variation key value to
        00 - VideoPlayer always available
        0-Keypad available dynamic
@@ -128,7 +180,7 @@ void UT_CMusAoPlugin::DefinePropertiesLL()
     iPlugin->DefinePropertiesL();
     // It should not configure any PS keys for camera
     // Check the stub whether define is called.   
-    err = RProperty::Get( NMusResourceApi::KCategoryUid,
+    TInt err = RProperty::Get( NMusResourceApi::KCategoryUid,
                     NMusResourceApi::KCameraAvailability,
                     keyValue );
     EUNIT_ASSERT(keyValue == KErrNotFound );
@@ -178,9 +230,8 @@ void UT_CMusAoPlugin::DefinePropertiesLL()
 
     iPlugin->DefinePropertiesL();                       
 
-    res = KErrNone;
     // camera information property
-    res = RProperty::Get( NMusResourceApi::KCategoryUid,
+    TInt res = RProperty::Get( NMusResourceApi::KCategoryUid,
                                         NMusResourceApi::KCameraInformation,
                                         keyValue );
     EUNIT_ASSERT_EQUALS( keyValue, NMusResourceApi::EUsePrimaryCamera )    
@@ -199,17 +250,6 @@ void UT_CMusAoPlugin::DefinePropertiesLL()
                             telnumber ) );
     EUNIT_ASSERT_EQUALS( telnumber.Compare( KEmptyTelNumber ), KErrNone )
 
-    // callprovider
-    TBuf<15> callprovider;
-    User::LeaveIfError( RProperty::Get(
-                            NMusSessionInformationApi::KCategoryUid,
-                            NMusSessionInformationApi::KMUSCallProvider,
-                            callprovider ) );
-    EUNIT_ASSERT_EQUALS( callprovider.Compare( KEmptyProviderName ), KErrNone )
-
-    
-    
-    
     // Mus allowed
     RProperty::Get(NMusSessionInformationApi::KCategoryUid,
                    NMusSessionInformationApi::KMUSForbidden,
@@ -362,6 +402,13 @@ void UT_CMusAoPlugin::DeletePropertiesL()
                           NMusSessionInformationApi::KMusCallDirection,
                           res );
     EUNIT_ASSERT_EQUALS( ret, KErrNotFound )
+    
+    // Call privacy
+    ret = RProperty::Get( NMusSessionInformationApi::KCategoryUid,
+                          NMusSessionInformationApi::KMUSPrivacy,
+                          res );
+    EUNIT_ASSERT_EQUALS( ret, KErrNotFound )
+
 
     }
 
@@ -377,103 +424,6 @@ void UT_CMusAoPlugin::UT_HandleServerCommandLL()
     }
 
 
-
-// -----------------------------------------------------------------------------
-// Test Starting MushClient
-// -----------------------------------------------------------------------------
-// 
-
-void UT_CMusAoPlugin::UT_StartMusClientL()
-    {
-    // Ensure MushAO Plugin Exisit
-    EUNIT_ASSERT( iPlugin);
-    // Mush Manager Client process is not Created
-    EUNIT_ASSERT( !iPlugin->iManager );
-    
-    // Test1: Ensure Start really creates the MushClient process
-    iPlugin->StartMusClientL();
-    EUNIT_ASSERT( iPlugin->iManager );
-    
-    // Test2: Trying to Create Client process again if it already exisit.
-    iPlugin->StartMusClientL();
-    EUNIT_ASSERT( iPlugin->iManager );
-    
-    //Reset Plugin Data.
-    iPlugin->StopMusClient();
-    }
-
-
-// -----------------------------------------------------------------------------
-// Test Starting MushClient
-// -----------------------------------------------------------------------------
-// 
-
-void UT_CMusAoPlugin::UT_StopMusClientL()
-    {
-    EUNIT_ASSERT( iPlugin);
-    EUNIT_ASSERT( !iPlugin->iManager );
-    
-    // Test1: Deleteing Mush Cient when it does not exisit
-    iPlugin->StopMusClient();
-    EUNIT_ASSERT( !iPlugin->iManager );
-
-    // Create Mush Client process
-    iPlugin->StartMusClientL();
-    EUNIT_ASSERT( iPlugin->iManager );
-    
-    // Test2: Deleting Mush Client when it Exisit.
-    iPlugin->StopMusClient();
-    EUNIT_ASSERT( !iPlugin->iManager );
-    }
-
-
-// -----------------------------------------------------------------------------
-// From MMusCallStateObserver
-// Test MushCall State Changed
-// -----------------------------------------------------------------------------
-// 
-
-void UT_CMusAoPlugin::UT_MusCallStateChangedL()
-    {
-    TName cs_call_1(_L("cs_call_1"));
-
-    // Test 1: Data Ready: Call Connected: -> Start Mush 
-    
-    // Add Some dummy CS Call
-    // Set Call Connected:
-    // Set the Required Data.
-    iPlugin->iTsyPropertyMonitor->AddCallMonitorL( cs_call_1);
-
-    User::LeaveIfError(RProperty::Set( 
-                               NMusSessionInformationApi::KCategoryUid,
-                               NMusSessionInformationApi::KMusCallEvent,
-                               NMusSessionInformationApi::ECallConnected ));
-    
-    User::LeaveIfError( RProperty::Set( NMusSessionInformationApi::KCategoryUid,
-                                            NMusSessionInformationApi::KMusTelNumber,
-                                            KTestTelNumber ));
-
-    User::LeaveIfError( RProperty::Set( NMusSessionInformationApi::KCategoryUid,
-                                            NMusSessionInformationApi::KMusCallDirection,
-                                            NMusSessionInformationApi::ECallOrginated ));
-
-    // This can not be tested easily wit M-ALLOC 
-    EUNIT_DISABLE_ALLOC_DECORATOR;
-    iPlugin->MusCallStateChanged();
-    
-    EUNIT_ASSERT( iPlugin->iManager )
-    EUNIT_ENABLE_ALLOC_DECORATOR;
-    
-    // Test 2: Data Not Ready: Call Connected: -> Stop Mush
-    User::LeaveIfError(RProperty::Set( 
-                               NMusSessionInformationApi::KCategoryUid,
-                               NMusSessionInformationApi::KMusCallEvent,
-                               NMusSessionInformationApi::ENoCall ));
-    
-    iPlugin->MusCallStateChanged();
-    EUNIT_ASSERT( !iPlugin->iManager )
-    }
-
 //  TEST TABLE
 
 EUNIT_BEGIN_TEST_TABLE(
@@ -481,6 +431,13 @@ EUNIT_BEGIN_TEST_TABLE(
     "UT_CMusAoPlugin",
     "UNIT")
 
+EUNIT_TEST(
+    "UT_NewLL",
+    "CMusAoPlugin",
+    "NewL",
+    "FUNCTIONALITY",
+    SetupL, NewLL, Teardown)
+        
 EUNIT_TEST(
     "DefinePropertiesLL",
     "CMusAoPlugin",
@@ -509,6 +466,8 @@ EUNIT_TEST(
     "FUNCTIONALITY",
     SetupL, DeletePropertiesL, Teardown)
     
+    
+
 EUNIT_TEST(
     "HandleServerCommandL",
     "CMusAoPlugin",
@@ -516,26 +475,12 @@ EUNIT_TEST(
     "FUNCTIONALITY",
     SetupL, UT_HandleServerCommandLL, Teardown)
 
-EUNIT_TEST(
-    "StartMusClient",
-    "CMusAoPlugin",
-    "StartMusClient",
-    "FUNCTIONALITY",
-    SetupL, UT_StartMusClientL, Teardown)
 
-EUNIT_TEST(
-    "StopMusClient",
-    "CMusAoPlugin",
-    "StopMusClient",
-    "FUNCTIONALITY",
-    SetupL, UT_StopMusClientL, Teardown)
-    
-EUNIT_TEST(
-    "MusCallStateChanged",
-    "CMusAoPlugin",
-    "MusCallStateChanged",
-    "FUNCTIONALITY",
-    SetupL, UT_MusCallStateChangedL, Teardown)
-    
-    
 EUNIT_END_TEST_TABLE
+
+
+
+
+
+
+

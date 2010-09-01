@@ -42,8 +42,7 @@ SOURCE                  muscalleventmonitor.cpp
 SOURCE                  muscallstatusmonitor.cpp
 SOURCE                  muscallconferencemonitor.cpp
 SOURCE                  muscallconferenceeventmonitor.cpp
-SOURCE					musvoipcallmonitor.cpp
-
+SOURCE                  musclirmonitor.cpp
 
 USERINCLUDE             ../inc
 USERINCLUDE             ../../../inc
@@ -56,8 +55,8 @@ LIBRARY                 ecom.lib
 LIBRARY                 etel.lib
 LIBRARY                 etelmm.lib
 LIBRARY                 centralrepository.lib
-LIBRARY                 telephonyservice.lib
-LIBRARY                 serviceprovidersettings.lib
+LIBRARY                 etel3rdparty.lib
+
 // MultimediaSharing libraries:
 LIBRARY                 musmanagerclient.lib
 LIBRARY                 featmgr.lib

@@ -18,14 +18,14 @@
 
 // USER
 #include "musengclipsession.h"
+#include "musengclipsessionobserver.h"
+#include "musengsessionobserver.h"
 #include "musengmceoutsession.h"
 #include "musenglivesession.h"
 #include "musengmceutils.h"
 #include "musenglogger.h"
-#include "musengclipvideoplayer.h"
 
 // SYSTEM
-#include <lcsessionobserver.h>
 #include <mcemanager.h>
 #include <mcesession.h>
 #include <mcestreambundle.h>
@@ -39,49 +39,39 @@
 #include <mceamrcodec.h>
 #include <mcevideocodec.h>
 #include <DRMCommon.h>
+#include <f32file.h>
 
 
 // CONSTANTS
+
+const TInt64 KMicroSecondsInOneSecond = 1000000;
 const TInt KMusEngAmrBitRate = KMceAmrNbBitrate475;
 const TUint KMusEngAllowedAmrBitrates = KMceAllowedAmrNbBitrate475;
 
+const TInt KFastWindingFactor = 4;
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
-CMusEngClipSession* CMusEngClipSession::NewL()
+EXPORT_C CMusEngClipSession* CMusEngClipSession::NewL(
+                        const TRect& aRect,
+                        MMusEngSessionObserver& aSessionObserver,
+                        MMusEngOutSessionObserver& aOutSessionObserver,
+                        MMusEngClipSessionObserver& aClipSessionObserver,
+                        TUint aSipProfileId )
     {
-    CMusEngClipSession* self = new( ELeave )CMusEngClipSession();
+    CMusEngClipSession* self = new( ELeave ) CMusEngClipSession(
+                                                    aSessionObserver,
+                                                    aOutSessionObserver,
+                                                    aClipSessionObserver,
+                                                    aRect );
     CleanupStack::PushL( self );
-    self->ConstructL();
+    self->ConstructL( aSipProfileId );
     CleanupStack::Pop( self );
     return self;
     }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-CMusEngClipSession::CMusEngClipSession()
-    : CMusEngMceOutSession()
-    {
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void CMusEngClipSession::ConstructL()
-    {
-    MUS_LOG( "mus: [ENGINE] -> CMusEngClipSession::ConstructL(...)" )
-
-    CMusEngMceOutSession::ConstructL();
-    
-    iClipVideoPlayer = CMusEngClipVideoPlayer::NewL( *this, *this  );
-
-    MUS_LOG( "mus: [ENGINE] <- CMusEngClipSession::ConstructL(...)" )
-    }
 
 // -----------------------------------------------------------------------------
 //
@@ -90,31 +80,362 @@ void CMusEngClipSession::ConstructL()
 CMusEngClipSession::~CMusEngClipSession()
     {
     MUS_LOG( "mus: [ENGINE] -> CMusEngClipSession::~CMusEngClipSession()" )
-    
-    delete iClipVideoPlayer;
-    
     MUS_LOG( "mus: [ENGINE] <- CMusEngClipSession::~CMusEngClipSession()" )
     }
 
-// -----------------------------------------------------------------------------
-// From MLcSession
+
 // -----------------------------------------------------------------------------
 //
-MLcVideoPlayer* CMusEngClipSession::LocalVideoPlayer()
+// -----------------------------------------------------------------------------
+//
+EXPORT_C void CMusEngClipSession::SetClipL( const TDesC& aFileName )
     {
-    return iClipVideoPlayer;
+    MUS_LOG( "mus: [ENGINE] -> CMusEngClipSession::SetClipL(...)" )
+
+    __ASSERT_ALWAYS( !IsProtectedFileL( aFileName ),
+                     User::Leave( KErrPermissionDenied ) );
+    
+    if ( iSession )
+        {
+        CMceFileSource* file = MusEngMceUtils::GetFileSourceL( *iSession );
+        file->UpdateL( aFileName );
+        }
+
+    iFileName = aFileName;
+
+    MUS_LOG( "mus: [ENGINE] <- CMusEngClipSession::SetClipL(...)" )
+
     }
+
+
+// -----------------------------------------------------------------------------
+// Since MCE does not at the moment support SetFastForwardL function, this
+// functionality is implemented by taking a timestamp when forwarding is
+// started and calculating a new position when it is ended.
+// -----------------------------------------------------------------------------
+//
+EXPORT_C void CMusEngClipSession::FastForwardL( TBool aUseFFWD )
+    {
+    MUS_LOG1( "mus: [ENGINE] -> CMusEngClipSession::FastForward(%d)", aUseFFWD )
+
+    __ASSERT_ALWAYS( iSession, User::Leave( KErrNotReady ) );
+
+    CMceFileSource* file = MusEngMceUtils::GetFileSourceL( *iSession );
+
+    if ( aUseFFWD )
+        {
+        // Ignore if we are already fastforwarding
+        if ( iFFWDStartTime.Int64() > 0 )
+            {
+            return;
+            }
+
+        // Stop rewinding if ongoing, else just pause file source
+        if ( iFRWDStartTime.Int64() > 0 )
+            {
+            FastRewindL( EFalse );
+            }
+        else
+            {
+            file->DisableL();
+            }
+            
+        // Get timestamp for starttime
+        iFFWDStartTime.HomeTime();
+        }
+    else
+        {
+        // Leave if we are not fastforwarding
+        if ( iFFWDStartTime.Int64() == 0 )
+            {
+            User::Leave( KErrAlreadyExists );
+            }
+
+        // Set new position
+        file->SetPositionL( PositionMicroSecondsL() );
+        MUS_LOG( "                 SetPositionL returned without error " )
+        
+        // Reset timer
+        iFFWDStartTime = TTime( 0 );
+        }
+
+    MUS_LOG1( "mus: [ENGINE] <- CMusEngClipSession::FastForward(%d)", aUseFFWD )
+    }
+
+
+// -----------------------------------------------------------------------------
+// Since MCE does not at the moment support SetFastRewindL function, this
+// functionality is implemented by taking a timestamp when rewinding is
+// started and calculating a new position when it is ended.
+// -----------------------------------------------------------------------------
+//
+EXPORT_C void CMusEngClipSession::FastRewindL( TBool aUseFRWD )
+    {
+    MUS_LOG1( "mus: [ENGINE] -> CMusEngClipSession::FastRewind(%d)", aUseFRWD )
+
+    __ASSERT_ALWAYS( iSession, User::Leave( KErrNotReady ) );
+
+    CMceFileSource* file = MusEngMceUtils::GetFileSourceL( *iSession );
+
+    if ( aUseFRWD )
+        {
+        // Ignore if we are already fastrewinding
+        if ( iFRWDStartTime.Int64() > 0 )
+            {
+            return;
+            }
+
+        // Stop fastforwarding if ongoing, else just pause file source
+        if ( iFFWDStartTime.Int64() > 0 )
+            {
+            FastForwardL( EFalse );
+            }
+        else
+            {
+            file->DisableL();
+            }
+            
+        // Get timestamp for starttime
+        iFRWDStartTime.HomeTime();
+        }
+    else
+        {
+        // Leave if we are not fastrewinding
+        if ( iFRWDStartTime.Int64() == 0 )
+            {
+            User::Leave( KErrAlreadyExists );
+            }
+
+        // Set new position
+        file->SetPositionL( PositionMicroSecondsL() );
+        MUS_LOG( "                 SetPositionL returned without error " )
+        
+        // Reset timer
+        iFRWDStartTime = TTime( 0 );
+        }
+
+    MUS_LOG1( "mus: [ENGINE] <- CMusEngClipSession::FastRewind(%d)", aUseFRWD  )
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+EXPORT_C TTimeIntervalSeconds CMusEngClipSession::PositionL()
+    {
+    MUS_LOG( "mus: [ENGINE] -> CMusEngClipSession::PositionL()" )
+    
+    TTimeIntervalMicroSeconds currentPosition = PositionMicroSecondsL();
+    
+    MUS_LOG1( "mus: [ENGINE] <- CMusEngClipSession::PositionL(), pos:%d", 
+              currentPosition.Int64() )
+    return TTimeIntervalSeconds( static_cast<TInt>( 
+                    currentPosition.Int64() / KMicroSecondsInOneSecond ) );
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+EXPORT_C TTimeIntervalSeconds CMusEngClipSession::DurationL()
+    {
+    MUS_LOG( "mus: [ENGINE] -> CMusEngClipSession::DurationL()" )
+
+    __ASSERT_ALWAYS( iSession, User::Leave( KErrNotReady ) );
+
+    CMceFileSource* file = MusEngMceUtils::GetFileSourceL( *iSession );
+
+    TTimeIntervalMicroSeconds duration = file->DurationL();
+
+    MUS_LOG( "mus: [ENGINE] <- CMusEngClipSession::DurationL()" )
+    return TTimeIntervalSeconds(
+            static_cast<TInt>( duration.Int64() / KMicroSecondsInOneSecond ) );
+
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+EXPORT_C void CMusEngClipSession::SetPositionL (
+                        const TTimeIntervalSeconds& aPosition )
+    {
+    MUS_LOG1( "mus: [ENGINE] -> CMusEngClipSession::SetPositionL (%d)",
+              aPosition.Int() )
+
+    __ASSERT_ALWAYS( iSession, User::Leave( KErrNotReady ) );
+
+    CMceFileSource* file = MusEngMceUtils::GetFileSourceL( *iSession );
+
+    TTimeIntervalMicroSeconds position( 
+            KMicroSecondsInOneSecond * static_cast<TInt64>(aPosition.Int()) );
+
+    if ( position == 0 )
+        {
+        iRewindedToBeginning = ETrue;
+        }
+        
+    file->SetPositionL( position );
+
+    MUS_LOG( "mus: [ENGINE] <- CMusEngClipSession::SetPositionL ()" )
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+EXPORT_C void CMusEngClipSession::TranscodeL( const TFileName& aFileName )
+    {
+    MUS_LOG( "mus: [ENGINE] -> CMusEngClipSession::TranscodeL(...)" )
+
+    __ASSERT_ALWAYS( iSession, User::Leave( KErrNotReady ) );
+
+    CMceFileSource* file = MusEngMceUtils::GetFileSourceL( *iSession );
+
+    const RPointerArray<CMceMediaStream>& streams = iSession->Streams();
+
+    for ( TInt i = 0; i < streams.Count(); ++i )
+        {
+        if ( streams[i]->State() == CMceMediaStream::ETranscodingRequired )
+            {
+            if ( streams[i]->Type() == KMceAudio )
+                {
+                AddAmrCodecL( static_cast<CMceAudioStream&>( *streams[i] ) );
+                }
+            else
+                {
+                AddVideoCodecL( static_cast<CMceVideoStream&>( *streams[i] ) );
+                }
+            }
+        }
+
+    // Set dest file already before transcoding as output file is deleted in failure case
+    iTranscodingDestFileName = aFileName; 
+    TRAPD( err, file->TranscodeL( aFileName ) );    
+    HandleTranscodingFailureL( err );
+    iTranscodingOngoing = ETrue;
+      
+
+    MUS_LOG( "mus: [ENGINE] <- CMusEngClipSession::TranscodeL(...)" )
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+EXPORT_C void CMusEngClipSession::CancelTranscodeL()
+    {
+    MUS_LOG( "mus: [ENGINE] -> CMusEngClipSession::CancelTranscodeL()" )
+
+    __ASSERT_ALWAYS( iSession, User::Leave( KErrNotReady ) );
+
+    CMceFileSource* file = MusEngMceUtils::GetFileSourceL( *iSession );
+
+    TRAPD( err, file->CancelTranscodeL() );
+    err = err; // Silence warning in UREL build
+    MUS_LOG1( "mus: [ENGINE] - cancel result %d", err )
+    // Even if cancel fails, try to delete the partial clip
+
+    MUS_LOG( "mus: [ENGINE] - delete the partially converted clip" )
+    
+    DeleteTranscodingDestinationFileL();
+
+    MUS_LOG( "mus: [ENGINE] <- CMusEngClipSession::CancelTranscodeL()" )
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+EXPORT_C void CMusEngClipSession::PlayL()
+    {
+    MUS_LOG( "mus: [ENGINE] -> CMusEngClipSession::PlayL()" )
+
+    __ASSERT_ALWAYS( iSession &&
+                     iFFWDStartTime.Int64() == 0 &&
+                     iFRWDStartTime.Int64() == 0, 
+                     User::Leave( KErrNotReady ) );                     
+
+    iPause = EFalse;
+    CMceFileSource* file = MusEngMceUtils::GetFileSourceL( *iSession );
+
+    if ( !file->IsEnabled() )
+        {
+        file->EnableL();
+        
+        iClipEnded = EFalse;
+        // No need to enable audio separarely
+        }
+    else
+        {
+        MUS_LOG( "mus: [ENGINE]    File is already enabled, ignore request" )
+        }
+        
+    MUS_LOG( "mus: [ENGINE] <- CMusEngClipSession::PlayL()" )
+    }
+
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
+EXPORT_C void CMusEngClipSession::PauseL()
+    {
+    MUS_LOG( "mus: [ENGINE] -> CMusEngClipSession::PauseL()" )
+
+    __ASSERT_ALWAYS( iSession &&
+                     iFFWDStartTime.Int64() == 0 &&
+                     iFRWDStartTime.Int64() == 0, 
+                     User::Leave( KErrNotReady ) );  
+
+    
+    iPause = ETrue;
+    CMceFileSource* file = MusEngMceUtils::GetFileSourceL( *iSession );
+    
+    if ( file->IsEnabled() )
+        {
+        file->DisableL();
+
+        // No need to disable audio separarely
+        }
+    else
+        {
+        MUS_LOG( "mus: [ENGINE]    File is already disabled, ignore request" )
+        }
+        
+    MUS_LOG( "mus: [ENGINE] <- CMusEngClipSession::PauseL()" )
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+EXPORT_C TBool CMusEngClipSession::IsPlayingL()
+    {
+    __ASSERT_ALWAYS( iSession, User::Leave( KErrNotReady ) );
+    
+    return ( MusEngMceUtils::GetFileSourceL( *iSession )->IsEnabled() );
+    }
+
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
 void CMusEngClipSession::CompleteSessionStructureL(
-    CMceStreamBundle& aLocalBundle )
+                                            CMceStreamBundle& aLocalBundle )
     {
     MUS_LOG( "mus: [ENGINE] -> CMusEngClipSession::CompleteSessionStructureL()" )
 
     __ASSERT_ALWAYS( iSession, User::Leave( KErrNotReady ) );
+    __ASSERT_ALWAYS( iFileName != KNullDesC(), User::Leave( KErrNotReady ) );
 
     // Create outgoing video stream
     CMceVideoStream* videoStream = CMceVideoStream::NewLC();
@@ -123,8 +444,8 @@ void CMusEngClipSession::CompleteSessionStructureL(
     videoStream->AddSinkL( rtpsink );
     CleanupStack::Pop( rtpsink );
 
-    CMceFileSource* fileSource = 
-        CMceFileSource::NewLC( *iManager, iClipVideoPlayer->LcFileName() );
+    CMceFileSource* fileSource = CMceFileSource::NewLC( *iManager,
+                                                        iFileName );
     fileSource->DisableL(); // Start session in pause mode.
     videoStream->SetSourceL( fileSource );
     CleanupStack::Pop( fileSource );
@@ -133,11 +454,10 @@ void CMusEngClipSession::CompleteSessionStructureL(
     CleanupStack::Pop( videoStream );
 
     ConstructAudioStructureL( aLocalBundle );
-    
-    iClipVideoPlayer->SetMceSession( iSession );
 
     MUS_LOG( "mus: [ENGINE] <- CMusEngClipSession::CompleteSessionStructureL()" )
     }
+
 
 // -----------------------------------------------------------------------------
 // Checks that that there is no need for transcoding before calling
@@ -152,6 +472,9 @@ void CMusEngClipSession::EstablishSessionL()
 
     const RPointerArray<CMceMediaStream>& streams = iSession->Streams();
 
+    TBool transcodingRequired = EFalse;
+    TBool transcodingRequiredDueUnknownCaps = EFalse;
+    
     if ( iVideoCodecList )
         {
         MUS_LOG_TDESC8( "iVideoCodecList: ", iVideoCodecList->Des() )
@@ -160,33 +483,58 @@ void CMusEngClipSession::EstablishSessionL()
     CMceVideoStream* videoStream = NULL;
     for ( TInt i = 0; i < streams.Count(); ++i )
         {
-        if ( streams[i]->State() == CMceMediaStream::ETranscodingRequired )
+        videoStream = static_cast<CMceVideoStream*>( streams[i] );
+        
+        if ( iTranscodingRequiredDueMissingOptions )
             {
-            User::Leave( KErrNotSupported );
+            MUS_LOG( "      -> establish with current codec, remote capa unknown!!!" )
+            TBool ignoreOptionsQueryCodecs( ETrue );
+            AddVideoCodecL( *videoStream, ignoreOptionsQueryCodecs );  
             }
-        else if ( streams[i]->Type() == KMceVideo &&
-                  !IsH264Supported() )
+        else if ( streams[i]->State() == CMceMediaStream::ETranscodingRequired )
+            {
+            transcodingRequired = ETrue;
+            }
+        else if ( streams[i]->Type() == KMceVideo && !IsH264Supported() )
             {
             MUS_LOG( "                -> video stream found!!!" )
-            videoStream = static_cast<CMceVideoStream*>( streams[i] );
             
             //transcoding of H264 is not needed only if we know explicitly
-            //that the peer supports it (from OPTIONS response)
-                            
+            //that the peer supports it (from OPTIONS response)             
             const RPointerArray<CMceVideoCodec>& codecs = videoStream->Codecs();
             for ( TInt codecIndex = 0; codecIndex < codecs.Count(); ++codecIndex )
                 {
                 if ( codecs[codecIndex]->SdpName() == KMceSDPNameH264() )                     
                     {
-                    User::Leave( KErrNotSupported );
+                    transcodingRequired = ETrue;
+                    transcodingRequiredDueUnknownCaps = !iVideoCodecList;
+                    MUS_LOG( " -> Removing H264 codec from video stream" )
+                    videoStream->RemoveCodecL( *codecs[codecIndex] );
+                    codecIndex = 0;
                     }
-                }            
+                }
+            
+            if ( codecs.Count() == 0)
+                {
+                // At least one codec should be in the stream list. 
+                MUS_LOG( " -> Adding codec, since codecs list is empty " )
+                AddVideoCodecL( *videoStream );  
+                }                
             } 
         }
 
-    CMusEngMceOutSession::EstablishSessionL();
-    // Now session state is right to adjust volume
-    SetSpeakerVolumeL( LcVolumeL() );
+    iTranscodingRequiredDueMissingOptions = transcodingRequiredDueUnknownCaps;
+    
+    if ( transcodingRequired )
+        {
+        iClipSessionObserver.TranscodingNeeded(iTranscodingRequiredDueMissingOptions);
+        }
+    else
+        {                
+        CMusEngMceOutSession::EstablishSessionL();
+        // Now session state is right to adjust volume
+        SetSpeakerVolumeL( VolumeL() );
+        }
 
     MUS_LOG( "mus: [ENGINE] <- CMusEngClipSession::EstablishSessionL()" )
     }
@@ -229,11 +577,49 @@ void CMusEngClipSession::StreamStateChanged( CMceMediaStream& aStream,
     
     DetermineBufferingPeriod( aStream );
 
-    if ( iClipVideoPlayer->HasClipEnded() )
+    if ( aStream.State() == CMceMediaStream::ETranscoding )
+        {
+        CMceFileSource* file = static_cast<CMceFileSource*>(aStream.Source());
+        TInt progressPercentage = 0;
+        TRAP_IGNORE( progressPercentage = file->TranscodingProgressL() )
+        iClipSessionObserver.TranscodingProgressed( progressPercentage );
+        }
+    else if ( aStream.State() == CMceMediaStream::EInitialized )
+        {
+        if ( iTranscodingOngoing )
+            {
+            MUS_LOG( "mus: [ENGINE]     Transcoding completed." )
+            
+            // Filename has been updated in MCE side but unfortunately
+            // there's no getter for the filename in API.
+            iFileName = iTranscodingDestFileName;
+        
+            DoCompleteTranscoding();
+            }
+        }
+    else if ( aStream.State() == CMceMediaStream::ETranscodingRequired &&
+              iTranscodingOngoing )
+        {
+        MUS_LOG( "mus: [ENGINE]     Transcoding failed." )
+        
+        iClipSessionObserver.TranscodingFailed();
+        iTranscodingOngoing = EFalse;
+        iTranscodingRequiredDueMissingOptions = EFalse;
+        }
+    else if ( HasClipEnded() )
         {
         MUS_LOG( "mus: [ENGINE]     Clip ended." )
-        InformObserverAboutPlayerStateChange( iClipVideoPlayer );
+        
+        iDelayFileEndingPos = 0;
+        iClipEnded = ETrue;
+        
+        iClipSessionObserver.EndOfClip();
         }
+    else if ( IsRewindFromEnd() )
+    	{
+        TRAP_IGNORE( iClipSessionObserver.RewindFromEndL() );
+    	}
+    
     else
         {
         // Cannot handle, forward to the ancestor class
@@ -247,19 +633,77 @@ void CMusEngClipSession::StreamStateChanged( CMceMediaStream& aStream,
 //
 // -----------------------------------------------------------------------------
 //
+CMusEngClipSession::CMusEngClipSession(
+                        MMusEngSessionObserver& aSessionObserver,
+                        MMusEngOutSessionObserver& aOutSessionObserver,
+                        MMusEngClipSessionObserver& aClipSessionObserver,
+                        const TRect& aRect )
+    : CMusEngMceOutSession( aRect,
+                            aSessionObserver,
+                            aOutSessionObserver ),
+      iClipSessionObserver( aClipSessionObserver )
+    {
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngClipSession::ConstructL( TUint aSipProfileId )
+    {
+    MUS_LOG( "mus: [ENGINE] -> CMusEngClipSession::ConstructL(...)" )
+
+    CMusEngMceOutSession::ConstructL( aSipProfileId );
+
+    MUS_LOG( "mus: [ENGINE] <- CMusEngClipSession::ConstructL(...)" )
+    }
+
+
+// -----------------------------------------------------------------------------
+// Check is file DRM protected.
+//
+// -----------------------------------------------------------------------------
+//
+TBool CMusEngClipSession::IsProtectedFileL( const TDesC& aClipFile )
+    {
+    MUS_LOG( "mus: [ENGINE] -> CMusEngClipSession::IsProtectedFileL(...)" )
+
+    TBool isDRMProtected = EFalse;
+    DRMCommon* drmapi = DRMCommon::NewL();
+    CleanupStack::PushL( drmapi );
+
+    User::LeaveIfError( drmapi->Connect() );
+    //Check DRM file protection
+    User::LeaveIfError( drmapi->IsProtectedFile( aClipFile, isDRMProtected ) );
+    drmapi->Disconnect();
+
+    CleanupStack::PopAndDestroy( drmapi );
+
+    MUS_LOG( "mus: [ENGINE] <- CMusEngClipSession::IsProtectedFileL(...)" )
+    return isDRMProtected;
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
 void CMusEngClipSession::AddAmrCodecL( CMceAudioStream& aAudioStream )
     {
     MUS_LOG( "mus: [ENGINE] -> CMusEngClipSession::AddAmrCodecL" )
 
     // Remove old codecs
+
     while ( aAudioStream.Codecs().Count() > 0 )
         {
         aAudioStream.RemoveCodecL( *aAudioStream.Codecs()[0] );
         }
 
     // Create AMR codec instance
+
     const RPointerArray<const CMceAudioCodec>& supportedCodecs =
-        iManager->SupportedAudioCodecs();
+                                            iManager->SupportedAudioCodecs();
 
     CMceAudioCodec* amr = NULL;
 
@@ -269,10 +713,12 @@ void CMusEngClipSession::AddAmrCodecL( CMceAudioStream& aAudioStream )
             {
             amr = supportedCodecs[i]->CloneL();
             CleanupStack::PushL( amr );
-            User::LeaveIfError( 
-                amr->SetAllowedBitrates( KMusEngAllowedAmrBitrates ) );
+
+            User::LeaveIfError(
+                    amr->SetAllowedBitrates( KMusEngAllowedAmrBitrates ) );
             User::LeaveIfError( amr->SetBitrate( KMusEngAmrBitRate ) );
             aAudioStream.AddCodecL( amr );
+
             CleanupStack::Pop( amr );
             break; // We must have only one codec
             }
@@ -283,12 +729,14 @@ void CMusEngClipSession::AddAmrCodecL( CMceAudioStream& aAudioStream )
     MUS_LOG( "mus: [ENGINE] <- CMusEngClipSession::AddAmrCodecL" )
     }
 
+
 // -----------------------------------------------------------------------------
 // Create codec instance, H264 is used only if other end supports it for sure,
 // otherwise H263 is used.
 // -----------------------------------------------------------------------------
 //
-void CMusEngClipSession::AddVideoCodecL( CMceVideoStream& aVideoStream )
+void CMusEngClipSession::AddVideoCodecL( 
+    CMceVideoStream& aVideoStream, TBool aIgnoreNegotiated )
     {
     MUS_LOG( "mus: [ENGINE] -> CMusEngClipSession::AddVideoCodecL" )
 
@@ -299,13 +747,13 @@ void CMusEngClipSession::AddVideoCodecL( CMceVideoStream& aVideoStream )
         aVideoStream.RemoveCodecL( *aVideoStream.Codecs()[0] );
         }
 
-    const RPointerArray< const CMceVideoCodec >& supportedCodecs =
-        iManager->SupportedVideoCodecs();
+    const RPointerArray<const CMceVideoCodec>& supportedCodecs =
+                                            iManager->SupportedVideoCodecs();
 
     CMceVideoCodec* addedCodec = NULL;
     
-    TPtrC8 addedCodecName = 
-            IsH264Supported() ? KMceSDPNameH264() : KMceSDPNameH2632000();
+    TPtrC8 addedCodecName = ( aIgnoreNegotiated || IsH264Supported() ) ? 
+        KMceSDPNameH264() : KMceSDPNameH2632000();
     
     MUS_LOG_TDESC8( "mus: [ENGINE] adding codec : ", addedCodecName ); 
             
@@ -327,12 +775,123 @@ void CMusEngClipSession::AddVideoCodecL( CMceVideoStream& aVideoStream )
     }
 
 // -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+TBool CMusEngClipSession::HasClipEnded()
+    {
+    MUS_LOG( "mus: [ENGINE] -> CMusEngClipSession::HasClipEnded()" )
+
+    TBool hasClipEnded = EFalse;
+
+    if ( iSession )
+        {
+        
+        CMceVideoStream* videoOut = NULL;
+        
+        TRAPD( error, 
+               videoOut = MusEngMceUtils::GetVideoOutStreamL( *iSession ) );
+        if( error != KErrNone ) 
+            {
+            MUS_LOG1( "mus: [ENGINE]     Error in GetVideoOutStreamL #%d", error )
+            return hasClipEnded;
+            }
+
+        CMceFileSource* filesource = NULL;
+        TRAP( error, filesource = MusEngMceUtils::GetFileSourceL( *iSession ) )
+
+        if ( error == KErrNone )
+            {
+            TTimeIntervalMicroSeconds position;
+            TTimeIntervalMicroSeconds duration;
+            TRAP( error, position = filesource->PositionL() );
+            TRAPD( error1, duration = filesource->DurationL() );
+            if ( error != KErrNone || error1 != KErrNone )
+                {
+                return hasClipEnded;
+                }
+                
+            MUS_LOG2( "mus: [ENGINE]    position = %Ld, duration = %Ld", 
+                        position.Int64(), 
+                        duration.Int64() )
+                        
+            TRAP( error, hasClipEnded = 
+                        ( position.Int64() == 0 && 
+                          !filesource->IsEnabled() && 
+                          videoOut->State() == CMceMediaStream::EDisabled ) )
+            if(  hasClipEnded )
+                {
+                MUS_LOG( "mus: [ENGINE]     End of clip" )
+                }
+            }
+        }
+
+    MUS_LOG( "mus: [ENGINE] <- CMusEngClipSession::HasClipEnded()" )
+    return hasClipEnded;
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+TTimeIntervalMicroSeconds CMusEngClipSession::PositionMicroSecondsL()
+    {
+    __ASSERT_ALWAYS( iSession, User::Leave( KErrNotReady ) );
+
+    CMceFileSource* file = MusEngMceUtils::GetFileSourceL( *iSession );
+
+    TTimeIntervalMicroSeconds position = file->PositionL();
+    TTimeIntervalMicroSeconds duration = file->DurationL();
+       
+    TTimeIntervalMicroSeconds calculatedPosition;
+    
+    // Adjust position if we are fastforwarding or -rewinding
+    if ( iFFWDStartTime.Int64() != 0 )
+        {
+        TTime now;
+        now.HomeTime();
+        calculatedPosition = KFastWindingFactor *
+                             now.MicroSecondsFrom( iFFWDStartTime ).Int64() +
+                             position.Int64();
+        if ( calculatedPosition > duration )
+            {
+            calculatedPosition = duration;
+            }
+        }
+    else if ( iFRWDStartTime.Int64() != 0 )
+        {
+        TTime now;
+        now.HomeTime();
+        calculatedPosition = position.Int64() -
+                             KFastWindingFactor *
+                             now.MicroSecondsFrom( iFRWDStartTime ).Int64();
+        if ( calculatedPosition < 0 )
+            {
+            calculatedPosition = 0;
+            }
+            
+        if ( calculatedPosition == 0 )
+            {
+            iRewindedToBeginning = ETrue;
+            }
+        }
+    else
+        {
+        calculatedPosition = position;
+        }
+        
+    return calculatedPosition;
+    }
+    
+
+// -----------------------------------------------------------------------------
 // If member file contains audio, add appropriate amount of audio streams to
 // session structure
 // -----------------------------------------------------------------------------
 //
 void CMusEngClipSession::ConstructAudioStructureL(
-    CMceStreamBundle& aLocalBundle )
+                                            CMceStreamBundle& aLocalBundle )
     {
     MUS_LOG( "mus: [ENGINE] -> CMusEngClipSession::ConstructAudioStructureL()" )
 
@@ -422,11 +981,11 @@ void CMusEngClipSession::DetermineBufferingPeriod( CMceMediaStream& aStream )
             const TInt KMusMinimumBufferingPeriod( 500000 );
             if ( bufferingPeriod > KMusMinimumBufferingPeriod )
                 {
-                iClipVideoPlayer->SetBufferingPeriod( bufferingPeriod );
+                iBufferingPeriod = bufferingPeriod;
                 }
                 
             MUS_LOG1( "mus: [ENGINE] current buffering period:%d", 
-                      bufferingPeriod.Int64() )
+                      iBufferingPeriod.Int64() )
             
             iBufferingStartedTime = 0;
             }
@@ -435,4 +994,131 @@ void CMusEngClipSession::DetermineBufferingPeriod( CMceMediaStream& aStream )
     MUS_LOG( "mus: [ENGINE] <- CMusEngClipSession::DetermineBufferingPeriod()" )
     }
 
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+TBool CMusEngClipSession::IsH264Supported() const
+    {
+    return ( iVideoCodecList && iVideoCodecList->FindF( KMceSDPNameH264() ) >= 0 );
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngClipSession::HandleTranscodingFailureL( TInt aError )
+    {
+    if ( aError == KErrNone )
+        {
+        return;
+        }
+
+    TRAP_IGNORE( DeleteTranscodingDestinationFileL() )
+
+    User::LeaveIfError( aError );
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+TInt CMusEngClipSession::DoCompleteTranscoding()
+    {
+    iTranscodingOngoing = EFalse;
+              
+    iClipSessionObserver.TranscodingCompletedInit();  
+      
+    TRAPD( error, EstablishSessionL() )
+    iTranscodingRequiredDueMissingOptions = EFalse;
+    if ( error != KErrNone )
+        {
+        iSessionObserver.SessionFailed();
+        }
+    
+    // Next call does not return before session establishment
+    iClipSessionObserver.TranscodingCompletedFinalize();            
+
+    return error;
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngClipSession::DeleteTranscodingDestinationFileL()
+    {
+    RFs fs;
+    User::LeaveIfError( fs.Connect() );
+    CleanupClosePushL( fs );
+
+    CFileMan* fileMan = CFileMan::NewL( fs );    
+    CleanupStack::PushL( fileMan );
+
+    MUS_LOG_TDESC8( "mus: [ENGINE] - deleting trascoding destination, filename",
+                    iTranscodingDestFileName )
+    TInt err = fileMan->Delete( iTranscodingDestFileName );
+    MUS_LOG1( "mus: [ENGINE] - file delete result %d", err )
+
+    CleanupStack::PopAndDestroy( fileMan );
+    CleanupStack::PopAndDestroy(); // fs
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+TBool CMusEngClipSession::IsRewindFromEnd()
+    {
+    MUS_LOG( "mus: [ENGINE] -> CMusEngClipSession::IsRewindFromEnd()" )
+
+    TBool isRewindFromEnd = EFalse;
+
+    if ( iSession )
+        {
+        
+        CMceVideoStream* videoOut = NULL;
+        
+        TRAPD( error, 
+               videoOut = MusEngMceUtils::GetVideoOutStreamL( *iSession ) );
+        if( error != KErrNone ) 
+            {
+            MUS_LOG1( "mus: [ENGINE]     Error in GetVideoOutStreamL #%d", error )
+            return isRewindFromEnd;
+            }
+
+        CMceFileSource* filesource = NULL;
+        TRAP( error, filesource = MusEngMceUtils::GetFileSourceL( *iSession ) )
+
+        if ( error == KErrNone )
+            {
+            TTimeIntervalMicroSeconds position;
+            TTimeIntervalMicroSeconds duration;
+            TRAP( error, position = filesource->PositionL() );
+            TRAPD( error1, duration = filesource->DurationL() );
+            if ( error != KErrNone || error1 != KErrNone )
+                {
+                return isRewindFromEnd;
+                }
+                
+            MUS_LOG2( "mus: [ENGINE]    position = %Ld, duration = %Ld", 
+                        position.Int64(), 
+                        duration.Int64() )
+                        
+            TRAP( error, isRewindFromEnd = 
+                        ( position.Int64() != 0 && 
+                          !filesource->IsEnabled() && 
+                          videoOut->State() == CMceMediaStream::EDisabled &&
+                          !iPause ) )
+            if(  isRewindFromEnd )
+                {
+                MUS_LOG( "mus: [ENGINE]     Rewind from end of clip" )
+                }
+            }
+        }
+
+    MUS_LOG( "mus: [ENGINE] <- CMusEngClipSession::IsRewindFromEnd()" )
+    return isRewindFromEnd;
+    }
 // End of file
+

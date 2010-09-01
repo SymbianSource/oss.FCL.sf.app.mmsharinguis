@@ -16,6 +16,7 @@
 */
 
 
+
 #ifndef UT_MUSAOCALLEVENTMONITOR_H
 #define UT_MUSAOCALLEVENTMONITOR_H
 
@@ -66,9 +67,9 @@ private:
 
 private: // test MMusCallMonitorObserver      
     
-    virtual void CallConnectedL( const TDesC& aTelNumber, TBool aIsSipUri );
+    virtual void CallConnectedL( const TDesC& aTelNumber );
     
-    virtual void CallHoldL( const TDesC& aTelNumber, TBool aIsSipUri );
+    virtual void CallHoldL( const TDesC& aTelNumber );
     
     virtual void ConferenceCallL();
     

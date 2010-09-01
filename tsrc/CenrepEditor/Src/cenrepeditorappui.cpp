@@ -63,7 +63,8 @@ void CCenrepEditorAppUi::ConstructL()
         {
         iTabGroup = (CAknTabGroup*) iDecoratedTabGroup->DecoratedControl();
         }    
-    iPhoneResources =  CPhoneResources::NewL();
+    iPhoneResources =  CPhoneResources::NewL();  
+    iPhoneResources->ReadL();      
       
    	CCenrepEditorView1*   view1 = new (ELeave) CCenrepEditorView1;
     CleanupStack::PushL( view1 );
@@ -71,7 +72,8 @@ void CCenrepEditorAppUi::ConstructL()
     AddViewL( view1 );      // transfer ownership to CAknViewAppUi
     CleanupStack::Pop();    // view1
          
-    iOtherResources =  COtherResources::NewL();
+    iOtherResources =  COtherResources::NewL();    
+    iOtherResources->ReadL(); 
 
     CCenrepEditorView2*	view2 = new (ELeave) CCenrepEditorView2;
     CleanupStack::PushL( view2 );

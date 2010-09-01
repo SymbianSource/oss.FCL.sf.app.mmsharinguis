@@ -17,7 +17,7 @@
 
 // To get the APP_LAYER_SYSTEMINCLUDE-definition
 #include <platform_paths.hrh>
-#include <eunitcaps.h>
+#include<eunitcaps.h>
 
 TARGET                  ut_musaiwprovider.dll
 TARGETTYPE              dll
@@ -25,7 +25,7 @@ EPOCALLOWDLLDATA
 TARGETPATH              /z/sys/bin
 UID                     0x1000af5a 0x01700a22
 
-CAPABILITY              EUNIT_CAPS
+CAPABILITY      EUNIT_CAPS
 VENDORID                VID_DEFAULT
 
 MACRO                   UNIT_TESTING
@@ -47,11 +47,8 @@ SOURCE                  barsc.cpp
 SOURCEPATH              ../../../../../tsrc/featmgrstub/src
 SOURCE                  FeatMgr.cpp
 
-SOURCEPATH              ../../../../../tsrc/propertystub/src
-SOURCE		            e32property.cpp
-
 SOURCEPATH              ../../../../../tsrc/musmanagerstub/src
-SOURCE    				musmanagerstub.cpp
+SOURCE    		musmanagerstub.cpp
 // Test classes
 SOURCEPATH              ../src
 SOURCE                  ut_musaiwproviderdllmain.cpp
@@ -63,27 +60,13 @@ SOURCE                  musaiwprovidermain.cpp
 SOURCE                  musaiwprovider.cpp
 
 
-// Centrep Stub
-SOURCEPATH              ../../../../../tsrc/centralrepositorystub/src
-SOURCE                  centralrepositorystub.cpp
-
-
-// Stup User Includes
-USERINCLUDE             ../../../../../tsrc/resourcefilestub/inc
-USERINCLUDE             ../../../../../tsrc/propertystub/inc
-USERINCLUDE             ../../../../../tsrc/centralrepositorystub/inc
-
-// Actual User Includes
 USERINCLUDE             ../inc
-USERINCLUDE				../../../inc
-
-// Test Includes.
+USERINCLUDE				      ../../../inc
 USERINCLUDE             ../../../../../tsrc/musmanagerstub/inc
 USERINCLUDE             ../../../../../tsrc/ututils/inc
 USERINCLUDE             ../../../../../inc
 USERINCLUDE             ../../../../../tsrc/Apastub/inc
-USERINCLUDE             ../../../../../tsrc/featmgrstub/inc
-
+USERINCLUDE             ../../../../../tsrc/resourcefilestub/inc
 
 
 // to replace FeatMgr.h with a stub
@@ -94,12 +77,6 @@ SYSTEMINCLUDE           ../../../../../tsrc/Apastub/inc
 
 // to replace barsc.h with a stub
 SYSTEMINCLUDE           ../../../../../tsrc/resourcefilestub/inc
-
-// to replace RProperty with a stub
-SYSTEMINCLUDE           ../../../../../tsrc/propertystub/inc
-
-// Centrep stub
-SYSTEMINCLUDE             ../../../../../tsrc/centralrepositorystub/inc
 
 // Default system include paths for application layer modules.
 APP_LAYER_SYSTEMINCLUDE
@@ -116,7 +93,8 @@ LIBRARY                 eikcoctl.lib
 LIBRARY                 eikcore.lib
 LIBRARY                 eunit.lib
 LIBRARY                 charconv.lib
-//LIBRARY                 centralrepository.lib
+LIBRARY                 centralrepository.lib
+
 LIBRARY                 flogger.lib
 LIBRARY                 servicehandler.lib // AIW Consumer API
 

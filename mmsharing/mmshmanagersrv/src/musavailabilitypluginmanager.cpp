@@ -33,10 +33,6 @@
 
 // CONSTANTS
 
-// Max number of digits in unsigned 32 bit integer (TInt32)
-const TUint KMaxInt32Length = 16;
-
-
 using namespace MultimediaSharing;
 
 // -----------------------------------------------------------------------------
@@ -179,21 +175,6 @@ void CMusAvailabilityPluginManager::InvestigateAvailabilityL()
 //
 // -----------------------------------------------------------------------------
 //
-void CMusAvailabilityPluginManager::PrepareForReceivedInviteL()
-    {
-    MUS_LOG( "mus: [MUSSRV]  -> CMusAvailabilityPluginManager::\
-                 PrepareForReceivedInviteL()" )
-                 
-    iPlugin->PrepareForReceivedInviteL();
-    
-    MUS_LOG( "mus: [MUSSRV]  <- CMusAvailabilityPluginManager::\
-                     PrepareForReceivedInviteL()" )
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
 void CMusAvailabilityPluginManager::InvitationReceivedL()
     {
     MUS_LOG( "mus: [MUSSRV]  -> CMusAvailabilityPluginManager::\
@@ -287,34 +268,10 @@ void CMusAvailabilityPluginManager::ManualQueryL()
   	MMusAvaSettings& settings = iPlugin->Settings();
   	
     MUS_LOG( "mus: [MUSSRV]    Status available" )
-    if( !iIndicator )
-        {
-        MUS_LOG( "mus: [MUSSRV]    Create indicator" )
-        iIndicator = CMusIndicatorApi::NewL( *this );
-        if( iIndicator->ConfirmationQueryL( CMusIndicatorApi::EVsRoamingActivationQuery ) )
-        	{
-        	settings.SetManualActivation( MMusAvaSettings::EActivationAllowed );
-        	iPlugin->StartL();
-        	}
-        else
-        	{
-        	settings.SetManualActivation( MMusAvaSettings::EActivationNotAllowed );
-        	}
-        delete iIndicator;
-        iIndicator = NULL;
-        }
-     else
-     	{
-     	if( iIndicator->ConfirmationQueryL( CMusIndicatorApi::EVsRoamingActivationQuery ) )
-        	{
-        	settings.SetManualActivation( MMusAvaSettings::EActivationAllowed );
-        	iPlugin->StartL();
-        	}
-        else
-        	{
-        	settings.SetManualActivation( MMusAvaSettings::EActivationNotAllowed );	
-        	}	
-     	}
+    
+    settings.SetManualActivation( MMusAvaSettings::EActivationAllowed );
+    iPlugin->StartL();
+
     MUS_LOG( "mus: [MUSSRV]  <- CMusAvailabilityPluginManager::\
         ManualQueryL()" )  
     }
@@ -349,6 +306,21 @@ void CMusAvailabilityPluginManager::AvailabilityChanged(
         AvailabilityChanged()" )	
     }
 
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+ void CMusAvailabilityPluginManager::AvailabilitiesAbleToShowIndicator()
+	{
+	    TInt err = 0;
+		TRAP( err, IndicateAvailabilityL() );
+		if ( err )
+			{
+			// Not sure about what to do. Very rare situation.
+			MUS_LOG1( "mus: [MUSSRV] AvailabilitiesAbleToShowIndicator() leave code: %d",err )
+			}
+	}
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -378,7 +350,7 @@ void CMusAvailabilityPluginManager::AvailabilityError(
     }
 
 // -----------------------------------------------------------------------------
-// From MMusAvaSettingsObserver
+//
 // -----------------------------------------------------------------------------
 //
 MMusAvaSettingsObserver::TApplicationState CMusAvailabilityPluginManager::
@@ -402,7 +374,7 @@ MMusAvaSettingsObserver::TApplicationState CMusAvailabilityPluginManager::
     }
 
 // -----------------------------------------------------------------------------
-// From MMusAvaSettingsObserver
+//
 // -----------------------------------------------------------------------------
 //
 TBool CMusAvailabilityPluginManager::OptionAllowed()
@@ -417,23 +389,13 @@ TBool CMusAvailabilityPluginManager::OptionAllowed()
     }
 
 // -----------------------------------------------------------------------------
-// From MMusAvaSettingsObserver
-// -----------------------------------------------------------------------------
-//
-void CMusAvailabilityPluginManager::StartApplicationL( 
-        MultimediaSharing::TMusUseCase aUseCase )
-    {
-    iObserver.StartSharingWithUseCaseL( aUseCase );        
-    }
-
-// -----------------------------------------------------------------------------
 // From MMusIndicatorObserver.
 // Starts live video sharing.
 // -----------------------------------------------------------------------------
 //
 void CMusAvailabilityPluginManager::StartLiveSharingL()
     {
-    iObserver.StartSharingWithUseCaseL( MultimediaSharing::EMusLiveVideo );
+    iObserver.StartLiveSharingL();
     }
 
 // -----------------------------------------------------------------------------
@@ -613,17 +575,22 @@ void CMusAvailabilityPluginManager::UpdateSessionParametersL()
     // append sip address proposal
     iSessionParameters->AppendL( settings.SipAddressProposal() );
 
-    TBuf<KMaxInt32Length> contactIdBuf;
+    // Unsafe Magic number 16 is used but unsigned 32 bit integer (TInt32)
+    // can't go beyond 16 digits .
+    TBuf<16> contactIdBuf;
     contactIdBuf.Num( settings.ContactId() );
 
     // append contact id
     iSessionParameters->AppendL( contactIdBuf );
+    
     // append video codec
     HBufC* videoCodecs = VideoCodecsLC();
     iSessionParameters->AppendL( *videoCodecs );
     CleanupStack::PopAndDestroy( videoCodecs );
 
-    TBuf<KMaxInt32Length> sipProfileIdBuf;
+    // Unsafe Magic number 16 is used but unsigned 32 bit integer (TInt32)
+    // can't go beyond 16 digits .
+    TBuf<16> sipProfileIdBuf;
     sipProfileIdBuf.Num( settings.SipProfileId() );
 
     MUS_LOG1("iSessionParameters -> SIP Profile ID = %d ",
@@ -635,15 +602,15 @@ void CMusAvailabilityPluginManager::UpdateSessionParametersL()
     HBufC* contactName = ContactNameLC();
     iSessionParameters->AppendL( *contactName );
     CleanupStack::PopAndDestroy( contactName );
-
-    TBuf<KMaxInt32Length> fastModeBuf;
-    fastModeBuf.Num( settings.FastMode() );
-    MUS_LOG1("iSessionParameters -> fast mode = %d ",
-        settings.FastMode() )
-
-    // append fast mode
-    iSessionParameters->AppendL( fastModeBuf );
     
+    // append call privacy indication
+    MUS_LOG1("iSessionParameters -> Call Privacy = %d ",
+            settings.CallPrivacy() )
+    TBuf<16> callPrivacy;
+    callPrivacy.Num( settings.CallPrivacy() );
+    iSessionParameters->AppendL( callPrivacy );
+
+
     MUS_LOG( "mus: [MUSSRV]  <- CMusAvailabilityPluginManager::\
              UpdateSessionParametersL()" )
     }
@@ -795,8 +762,8 @@ void CMusAvailabilityPluginManager::IndicateAvailabilityL()
             {
             MUS_LOG( "mus: [MUSSRV]    Create indicator" )
             iIndicator = CMusIndicatorApi::NewL( *this );
-            iIndicator->IndicateAvailabilityL();
             }
+        iIndicator->IndicateAvailabilityL();
         iApplicationManager.SetIndicatorStatusL( ETrue );
         }
     else

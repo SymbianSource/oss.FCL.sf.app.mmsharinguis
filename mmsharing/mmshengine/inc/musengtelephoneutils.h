@@ -27,19 +27,22 @@
 #include <MTelephonyAudioRoutingObserver.h>
 #include <TelephonyAudioRouting.h>
 #include <RPhCltServer.h>
+#include <cenrepnotifyhandler.h>
 
 // FORWARD DECLARATIONS
 class CRepository;
 class CTelephonyAudioRouting;
 class CPhCltCommandHandler;
 class MMusEngAudioRoutingObserver;
+class MMusEngVolumeChangeObserver;
 
 /**
 * Utility class to handle all phone related requests:
 * Audio routing, volume control and microphone muting.
 */
 class CMusEngTelephoneUtils : public CActive,
-                              public MTelephonyAudioRoutingObserver
+                              public MTelephonyAudioRoutingObserver,
+                              public MCenRepNotifyHandlerCallback
     {
     MUS_UNITTEST( UT_CMusEngTelephoneUtils )
     MUS_UNITTEST( UT_CMusEngSession )
@@ -49,13 +52,13 @@ class CMusEngTelephoneUtils : public CActive,
 		/**
    		*
         */
-		static CMusEngTelephoneUtils* NewL( 
-		    MMusEngAudioRoutingObserver& aAudioRoutingObserver );
+		static CMusEngTelephoneUtils* NewL();
 
 		/**
    		*
         */
 		~CMusEngTelephoneUtils();
+
 
 	public: // API
 	
@@ -64,12 +67,29 @@ class CMusEngTelephoneUtils : public CActive,
         * 
         * @return ETrue if audio routing can be changed using LoudspeakerL
         */
-        TBool AudioRoutingCanBeChanged();
-
+        TBool AudioRoutingCanBeChanged() const;
+        
+        /**
+		* Checks if audio routing is headset
+		* 
+		* @return ETrue if audio routing is headset
+		*/
+        TBool IsAudioRoutingHeadset() const;
+        
+        /**
+		* Checks if audio routing is LoudSpeaker
+		* 
+		* @return ETrue if audio routing is LoudSpeaker and 
+		* currentMode != iAudioOutputAtStartup
+		*/
+        TBool IsAudioRoutingLoudSpeaker() const;
+        
 		/**
    		* Changes the audio routing between loudspeaker and handset.
+   		*  
+   		* @param aShowDialog if ETrue, user is notified about new audio routing
         */
-        void LoudspeakerL( TBool aEnable );
+        void LoudspeakerL( TBool aEnable, TBool aShowDialog );
 
 		/**
    		*
@@ -77,10 +97,15 @@ class CMusEngTelephoneUtils : public CActive,
 		TBool IsLoudSpeakerEnabled() const;
 		
 		/**
-   		*
+   		* Returns current CS call volume level from central repository
         */
 		TInt GetVolumeL() const;
 
+        /**
+        * Returns locally cached CS call volume level
+        */
+		TInt GetVolume() const;
+		
 		/**
    		*
         */
@@ -94,7 +119,19 @@ class CMusEngTelephoneUtils : public CActive,
         /**
         * Returns current CS call mic mute state.
         */
-        TBool IsMicMutedL();                                        
+        TBool IsMicMutedL();
+    
+        /**
+        * Sets audio routing observer. Can be set to NULL in order to indicate
+        * ending of observing changes in audio routing.
+        */
+        void SetAudioRoutingObserver( MMusEngAudioRoutingObserver* aObserver );
+                                        
+        /**
+        * Sets volume level observer. Can be set to NULL in order to indicate
+        * ending of observing changes in volume level.
+        */
+        void SetVolumeChangeObserver( MMusEngVolumeChangeObserver* aObserver );
     
     private: // inherited from CActive
 
@@ -102,6 +139,7 @@ class CMusEngTelephoneUtils : public CActive,
    		*
         */
         void RunL();
+        TInt RunError( TInt aError );
         
 		/**
    		* Cancels outstanding request to phone client
@@ -115,28 +153,37 @@ class CMusEngTelephoneUtils : public CActive,
          * Available outputs have changed
          */
         void AvailableOutputsChanged( 
-            CTelephonyAudioRouting& aTelephonyAudioRouting );
+                        CTelephonyAudioRouting& aTelephonyAudioRouting );
     
         /**
          * Some other application has changed audio output routing
          */
         void OutputChanged( 
-            CTelephonyAudioRouting& aTelephonyAudioRouting );
+                        CTelephonyAudioRouting& aTelephonyAudioRouting );
     
         /**
          * Our request to change audio output routing has completed
          */
         void SetOutputComplete( 
-            CTelephonyAudioRouting& aTelephonyAudioRouting,
-            TInt aError );
+                        CTelephonyAudioRouting& aTelephonyAudioRouting,
+                        TInt aError );
+    
+        /**
+        * Set output if setting is currently allowed. Leaves with KErrAccessDenied
+        * if setting is not allowed.
+        */
+        void DoSetOutputL( CTelephonyAudioRouting::TAudioOutput aAudioOutput );
+        
+    private:// From MCenRepNotifyHandlerCallback
+        
+        void HandleNotifyGeneric( TUint32 aId );
         
     private:
 
 		/**
    		* Default C++ constructor
         */
-		CMusEngTelephoneUtils( 
-		    MMusEngAudioRoutingObserver& aAudioRoutingObserver );
+		CMusEngTelephoneUtils();
 
 		/**
    		* 2nd phase constructor
@@ -153,10 +200,14 @@ class CMusEngTelephoneUtils : public CActive,
         */
 		TInt ValidateVolume( const TInt aVolume ) const;
 		
-
+		/**
+		 * Checks current volume level and notifies observer, if volume changed
+		 * @param aAudioRouteChanged, ETrue if volume check should be done
+		 *        because of audio route change
+		 */
+		void UpdateCurrentVolume( TBool aAudioRouteChanged );
+		
     private: // DATA
-        
-        MMusEngAudioRoutingObserver& iAudioRoutingObserver;
 
         /**
         *  Stores the audio routing state at startup.
@@ -177,6 +228,27 @@ class CMusEngTelephoneUtils : public CActive,
         * Command handler for muting the microphone
         */        
         CPhCltCommandHandler* iPhoneCommandHandler;
+        
+        /**
+        * Not owned.
+        */
+        MMusEngAudioRoutingObserver* iAudioRoutingObserver;
+
+        TBool iShowDialog;
+        
+        /**
+         * Central repository notifier instance. Owned.
+         */
+        CCenRepNotifyHandler* iNotifier;
+       
+        /**
+         * Volume change observer
+         * Used to inform session about volume updates
+         */
+        MMusEngVolumeChangeObserver* iVolumeObserver;
+        
+        TInt iCurrentVolume;
     };
+
 
 #endif // MUSENGTELEPHONEUTILS_H

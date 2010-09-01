@@ -75,11 +75,9 @@ private:
     void UT_CMusApplicationManager_WriteSessionPropertiesL();
     void UT_CMusApplicationManager_SetPropertyLL();
     void UT_CMusApplicationManager_SetPropertyL2L();
+    void UT_CMusApplicationManager_GetApaTaskL();
     void UT_CMusApplicationManager_MapAvailabilitiesL();
     void UT_CMusApplicationManager_SetStatusLL();
-    void UT_CMusApplicationManager_CallProviderLL();
-    void UT_CMusApplicationManager_ResolvePluginNameLL();
-    void UT_CMusApplicationManager_CreateCommandLineArgsLCL();
 
 private: // data
 

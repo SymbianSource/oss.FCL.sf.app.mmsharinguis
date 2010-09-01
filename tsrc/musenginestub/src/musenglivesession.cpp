@@ -18,49 +18,36 @@
 
 // USER
 #include "musenglivesession.h"
-#include "musengsessionobserver.h"
 #include "musenglivesessionobserver.h"
-#include "musunittesting.h"
-#include "musengmceutils.h"
-#include "musenglogger.h"
-#include "mussessionproperties.h"
+//#include "musunittesting.h"
+//#include "musengmceutils.h"
 
 // SYSTEM
-#include <mcemanager.h>
+/*
 #include <mcecamerasource.h>
 #include <mcevideostream.h>
 #include <mcertpsink.h>
 #include <mcedisplaysink.h>
-#include <mcefilesink.h>
 #include <mcesession.h>
 #include <mcevideocodec.h>
-#include <mceh263codec.h>
-#include <mceavccodec.h>
+*/
 
 
-// Names of AVC levels in string for config keys stored in CenRep 
-_LIT8( KMusAvcBitrateLevel1, "AvcBrL1=" );
-_LIT8( KMusAvcBitrateLevel1b, "AvcBrL1b=" );
-_LIT8( KMusAvcBitrateLevel1_1, "AvcBrL1_1=" );
-_LIT8( KMusAvcBitrateLevel1_2, "AvcBrL1_2=" );
-_LIT8( KMusAvcBitrateLevel1_3, "AvcBrL1_3=" );
-_LIT8( KMusAvcBitrateLevel2, "AvcBrL2=" );
-
-_LIT8( KMusEncoderInfoTokenizer, ";" );
-
-
-const TInt KMaxDispName = 512;
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
-CMusEngLiveSession* CMusEngLiveSession::NewL(
-                        const TDesC& aFileName,
-                        const TRect& aRect )
+EXPORT_C CMusEngLiveSession* CMusEngLiveSession::NewL(
+                    const TDesC& /*aFileName*/,
+                    const TRect& aRect,
+                    MMusEngLiveSessionObserver* aSessionObserver,
+                    TUint aSipProfileId )
     {
-    CMusEngLiveSession* self = new( ELeave ) CMusEngLiveSession( aRect,
-                                                                 aFileName );
+    CMusEngLiveSession* self = new( ELeave ) CMusEngLiveSession(
+                                                    aSessionObserver,
+                                                    aRect,
+                                                    aSipProfileId );
     CleanupStack::PushL( self );
     self->ConstructL();
     CleanupStack::Pop( self );
@@ -72,10 +59,15 @@ CMusEngLiveSession* CMusEngLiveSession::NewL(
 //
 // -----------------------------------------------------------------------------
 //
-CMusEngLiveSession* CMusEngLiveSession::NewL(
-                        const TRect& aRect )
+EXPORT_C CMusEngLiveSession* CMusEngLiveSession::NewL(
+                        const TRect& aRect,
+                        MMusEngLiveSessionObserver* aSessionObserver,
+                        TUint aSipProfileId )
     {
-    CMusEngLiveSession* self = new( ELeave ) CMusEngLiveSession( aRect );
+    CMusEngLiveSession* self = new( ELeave ) CMusEngLiveSession(
+                                                    aSessionObserver,
+                                                    aRect,
+                                                    aSipProfileId);
     CleanupStack::PushL( self );
     self->ConstructL();
     CleanupStack::Pop( self );
@@ -89,322 +81,117 @@ CMusEngLiveSession* CMusEngLiveSession::NewL(
 //
 CMusEngLiveSession::~CMusEngLiveSession()
     {
-    delete iRemoteDisplayName;
     }
 
 
-
-// -----------------------------------------------------------------------------
-// From MLcSession
 // -----------------------------------------------------------------------------
 //
-void CMusEngLiveSession::EstablishLcSessionL()
+// -----------------------------------------------------------------------------
+//
+EXPORT_C void CMusEngLiveSession::SetSessionObserver(
+                        MMusEngLiveSessionObserver* aSessionObserver )
     {
     }
 
-// -----------------------------------------------------------------------------
-// From MLcSession
+
 // -----------------------------------------------------------------------------
 //
-MLcVideoPlayer* CMusEngLiveSession::LocalVideoPlayer()
-    {
-    return this;
-    }
-    
- 
-    
-// -----------------------------------------------------------------------------
-// From MLcSession
 // -----------------------------------------------------------------------------
 //
- 
-const TDesC& CMusEngLiveSession::RemoteDisplayName()
- 	{
-    return *iRemoteDisplayName;
- 	}
-
-
-
-
-// -----------------------------------------------------------------------------
-// From MLcVideoPlayer
-// -----------------------------------------------------------------------------
-//
-MLcVideoPlayer::TLcVideoPlayerState CMusEngLiveSession::LcVideoPlayerState() const
-    {
-    TLcVideoPlayerState vidPlayerState = MLcVideoPlayer::EUnavailable;
-    return vidPlayerState;
-    }
-
-// -----------------------------------------------------------------------------
-// From MLcVideoPlayer
-// -----------------------------------------------------------------------------
-//
-TBool CMusEngLiveSession::LcIsPlayingL()
-    {
-    return iPlaying;
-    }
-
-// -----------------------------------------------------------------------------
-// From MLcVideoPlayer
-// -----------------------------------------------------------------------------
-//
-void CMusEngLiveSession::LcPlayL()
-    {
-    iPlaying = ETrue;
-    }
-
-// -----------------------------------------------------------------------------
-// From MLcVideoPlayer
-// -----------------------------------------------------------------------------
-//
-void CMusEngLiveSession::LcPauseL()
-    {
-    iPlaying = EFalse;
-    }
-
-// -----------------------------------------------------------------------------
-// From MLcVideoPlayer
-// -----------------------------------------------------------------------------
-//
-MLcWindow* CMusEngLiveSession::LcWindow()
-    {
-    return this;
-    }
-
-// -----------------------------------------------------------------------------
-// From MLcVideoPlayer
-// -----------------------------------------------------------------------------
-//
-MLcCameraControl* CMusEngLiveSession::LcCameraControl()
-    {
-    return this;
-    }
-
-// -----------------------------------------------------------------------------
-// From MLcVideoPlayer
-// -----------------------------------------------------------------------------
-//
-MLcFileControl* CMusEngLiveSession::LcSourceFile()
-    {
-    return NULL;
-    }
-
-// -----------------------------------------------------------------------------
-// From MLcVideoPlayer
-// -----------------------------------------------------------------------------
-//
-MLcFileControl* CMusEngLiveSession::LcDestinationFile()
-    {
-    return this;
-    }
-
-// -----------------------------------------------------------------------------
-// From MLcVideoPlayer
-// -----------------------------------------------------------------------------
-//
-MLcAudioControl* CMusEngLiveSession::LcAudioControl()
-    {
-    return this;
-    }
-
-// -----------------------------------------------------------------------------
-// From MLcVideoPlayer
-// -----------------------------------------------------------------------------
-//
-MLcZoomControl* CMusEngLiveSession::LcZoomControl()
-    {
-    return this;
-    }
-
-// -----------------------------------------------------------------------------
-// From MLcVideoPlayer
-// -----------------------------------------------------------------------------
-//
-MLcBrightnessControl* CMusEngLiveSession::LcBrightnessControl()
-    {
-    return this;
-    }
-
-// -----------------------------------------------------------------------------
-// From MLcVideoPlayer
-// -----------------------------------------------------------------------------
-//
-RPointerArray< MLcValueControl >& CMusEngLiveSession::LcExtensionControls()
-    {
-    return iValueControls;
-    }
-
-// -----------------------------------------------------------------------------
-// From MLcCameraControl
-// -----------------------------------------------------------------------------
-//
-TInt CMusEngLiveSession::LcCameraCountL()
-    {
-    return 1;
-    }
-
-// -----------------------------------------------------------------------------
-// From MLcCameraControl
-// -----------------------------------------------------------------------------
-//
-void CMusEngLiveSession::ToggleLcCameraL()
-    {
-    }
-
-// -----------------------------------------------------------------------------
-// From MLcBrightnessControl
-// -----------------------------------------------------------------------------
-//
-TInt CMusEngLiveSession::MinLcBrightnessL()
-    {
-    return iCurrentBrighness;
-    }
-
-// -----------------------------------------------------------------------------
-// From MLcBrightnessControl
-// -----------------------------------------------------------------------------
-//
-TInt CMusEngLiveSession::MaxLcBrightnessL()
-    {
-    return iCurrentBrighness;
-    }
-
-// -----------------------------------------------------------------------------
-// From MLcBrightnessControl
-// -----------------------------------------------------------------------------
-//
-TInt CMusEngLiveSession::LcBrightnessL()
-    {
-    return iCurrentBrighness;
-    }
-
-// -----------------------------------------------------------------------------
-// From MLcBrightnessControl
-// -----------------------------------------------------------------------------
-//
-void CMusEngLiveSession::SetLcBrightnessL( TInt aValue )
-    {
-    iCurrentBrighness = aValue;
-    }
-
-// -----------------------------------------------------------------------------
-// From MLcBrightnessControl
-// -----------------------------------------------------------------------------
-//
-void CMusEngLiveSession::IncreaseLcBrightnessL()
-    {
-    iCurrentBrighness++;
-    }
-
-// -----------------------------------------------------------------------------
-// From MLcBrightnessControl
-// -----------------------------------------------------------------------------
-//
-void CMusEngLiveSession::DecreaseLcBrightnessL()
-    {
-    iCurrentBrighness--;
-    }
-
-// -----------------------------------------------------------------------------
-// From MLcZoomControl
-// -----------------------------------------------------------------------------
-//
-TInt CMusEngLiveSession::MinLcZoomL()
+EXPORT_C TInt CMusEngLiveSession::CurrentZoomL() const
     {
     return iCurrentZoom;
     }
 
-// -----------------------------------------------------------------------------
-// From MLcZoomControl
+
 // -----------------------------------------------------------------------------
 //
-TInt CMusEngLiveSession::MaxLcZoomL()
+// -----------------------------------------------------------------------------
+//
+EXPORT_C TInt CMusEngLiveSession::MaxZoomL() const
     {
     return iCurrentZoom;
     }
 
-// -----------------------------------------------------------------------------
-// From MLcZoomControl
+
 // -----------------------------------------------------------------------------
 //
-TInt CMusEngLiveSession::LcZoomValueL()
+// -----------------------------------------------------------------------------
+//
+EXPORT_C TInt CMusEngLiveSession::MinZoomL() const
     {
     return iCurrentZoom;
     }
 
-// -----------------------------------------------------------------------------
-// From MLcZoomControl
-// -----------------------------------------------------------------------------
-//
-void CMusEngLiveSession::SetLcZoomValueL( TInt aValue )
-    {
-    iCurrentZoom = aValue;
-    }
 
 // -----------------------------------------------------------------------------
-// From MLcZoomControl
+//
 // -----------------------------------------------------------------------------
 //
-void CMusEngLiveSession::LcZoomInL()
+EXPORT_C void CMusEngLiveSession::ZoomInL()
     {
     iCurrentZoom++;
     }
 
-// -----------------------------------------------------------------------------
-// From MLcZoomControl
+
 // -----------------------------------------------------------------------------
 //
-void CMusEngLiveSession::LcZoomOutL()
+// -----------------------------------------------------------------------------
+//
+EXPORT_C void CMusEngLiveSession::ZoomOutL()
     {
     iCurrentZoom--;
     }
 
-// -----------------------------------------------------------------------------
-// From MLcFileControl
-// -----------------------------------------------------------------------------
-//
-void CMusEngLiveSession::EnableLcFileL( TBool aEnable )
-    {
-    iFileEnabled = aEnable;
-    }
 
 // -----------------------------------------------------------------------------
-// From MLcFileControl
+//
 // -----------------------------------------------------------------------------
 //
-TBool CMusEngLiveSession::IsLcFileEnabled()
+EXPORT_C void CMusEngLiveSession::ZoomDefaultL()
     {
-    return iFileEnabled;
     }
 
-// -----------------------------------------------------------------------------
-// From MLcFileControl
-// -----------------------------------------------------------------------------
-//
-void CMusEngLiveSession::SetLcFileNameL( const TFileName& aFileName )
-    {
-    iRecordedFile = aFileName;
-    }
 
 // -----------------------------------------------------------------------------
-// From MLcFileControl
+// Enable camera
 // -----------------------------------------------------------------------------
 //
-TFileName& CMusEngLiveSession::LcFileName()
+EXPORT_C void CMusEngLiveSession::PlayL()
     {
-    return iRecordedFile;
+    iPlaying = ETrue;
     }
+
+
+// -----------------------------------------------------------------------------
+// Disable camera
+// -----------------------------------------------------------------------------
+//
+EXPORT_C void CMusEngLiveSession::PauseL()
+    {
+    iPlaying = EFalse;
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngLiveSession::CompleteSessionStructureL()
+    {
+    }
+
 
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
 CMusEngLiveSession::CMusEngLiveSession(
-                        const TRect& aRect, 
-                        const TDesC& aRecordedFile )
-    : CMusEngMceOutSession( aRect ),
-      iRecordedFile( aRecordedFile )
+                        MMusEngLiveSessionObserver* aSessionObserver,
+                        const TRect& aRect,
+                        TUint aSipProfileId )
+    :CMusEngMceOutSession( aRect, aSipProfileId ),
+     iDefaultZoomFactor( -1 )
     {
     }
 
@@ -413,13 +200,12 @@ CMusEngLiveSession::CMusEngLiveSession(
 //
 // -----------------------------------------------------------------------------
 //
-void CMusEngLiveSession::ConstructL()
+void CMusEngLiveSession::ConstructL( /*const TDesC& aFileName*/ )
     {
-    MUS_LOG( "mus: [ENGINE]  -> CMusEngLiveSession::ConstructL()" )
-    
-    CMusEngMceOutSession::ConstructL();
-        
-    iRemoteDisplayName = HBufC::NewL( KMaxDispName );
-
-    MUS_LOG( "mus: [ENGINE]  <- CMusEngLiveSession::ConstructL()" )
     }
+
+
+
+
+
+

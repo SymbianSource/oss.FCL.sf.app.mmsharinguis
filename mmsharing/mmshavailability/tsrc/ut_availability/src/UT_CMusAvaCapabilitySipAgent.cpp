@@ -125,11 +125,13 @@ void UT_CMusAvaCapabilitySipAgent::SetupL(  )
         {
         iProfile->iRegisteredContact = KRegisteredContact().AllocL();
         }
+    if ( !iProfile->iRegisteredContact )
+        {
+        iProfile->iRegisteredContact = KRegisteredContact().AllocL();
+        }
 
     CSipSseTestTls::OpenL();
     iStorage = CSipSseTestTls::Storage();
-    iStorage->Set( MusSettingsKeys::KFastStartupMode, 
-        MusSettingsKeys::EFastModeOff );
     
     iProfileId = MultimediaSharingSettings::SipProfileSettingL();
     } 

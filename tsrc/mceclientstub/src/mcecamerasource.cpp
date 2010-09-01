@@ -56,35 +56,14 @@ EXPORT_C CMceCameraSource* CMceCameraSource::NewL( CMceManager& aManager )
 // 
 // -----------------------------------------------------------------------------
 //
-EXPORT_C CMceCameraSource* CMceCameraSource::NewLC( CMceManager& /*aManager*/ )
+EXPORT_C CMceCameraSource* CMceCameraSource::NewLC( CMceManager& aManager )
     {
-    CMceCameraSource* self = new( ELeave )CMceCameraSource();
+    CMceCameraSource* self = new (ELeave) CMceCameraSource();
     CleanupStack::PushL( self );
+    self->ConstructL( &aManager );
     return self;
     }
 
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-EXPORT_C CMceCameraSource* CMceCameraSource::NewL()
-    {
-    CMceCameraSource* self = CMceCameraSource::NewLC();
-    CleanupStack::Pop( self );
-    return self;
-    }
-
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-EXPORT_C CMceCameraSource* CMceCameraSource::NewLC()
-    {
-    CMceCameraSource* self = new( ELeave )CMceCameraSource();
-    CleanupStack::PushL( self );
-    return self;
-    }
 
 // -----------------------------------------------------------------------------
 // 
@@ -121,7 +100,7 @@ EXPORT_C void CMceCameraSource::DisableL()
 //	    
 EXPORT_C TInt CMceCameraSource::CamerasAvailable() const
     {
-    return iCameraCount;
+    return 1;
     }
 
 
@@ -148,9 +127,6 @@ EXPORT_C void CMceCameraSource::SetCameraIndexL( TInt aCameraIndex )
 EXPORT_C void CMceCameraSource::GetCameraInfo( TCameraInfo& aInfo ) const
     {
     aInfo = iCameraInfo;
-    
-    aInfo.iMaxZoom += iCameraIndex*5;
-    aInfo.iMaxDigitalZoom += iCameraIndex*5;
     }
 
 
@@ -346,11 +322,20 @@ CMceCameraSource::CMceCameraSource()
     iContrast( 0 ),
     iBrightness( 0 ),
     iExposure( CCamera::EExposureAuto ),
-    iWhiteBalance( CCamera::EWBAuto ),
-    iCameraCount ( 2 )
+    iWhiteBalance( CCamera::EWBAuto )
     {
     iType = KMceCameraSource;
     iCameraInfo.iMinZoom = 1;
     iCameraInfo.iMaxZoom = 3;
     iCameraInfo.iMaxDigitalZoom = 10;
     }
+
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
+void CMceCameraSource::ConstructL( CMceManager* /*aManager*/ )
+    {
+    }
+

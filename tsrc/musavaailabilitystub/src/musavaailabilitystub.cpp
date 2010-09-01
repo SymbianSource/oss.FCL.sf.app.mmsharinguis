@@ -102,15 +102,6 @@ MMusAvaObserver::TAvailabilityName CMusAvaAvailabilityStub::Name()
     }
 
 // -------------------------------------------------------------------------
-//
-// -------------------------------------------------------------------------
-//
-void CMusAvaAvailabilityStub::PrepareForReceivedInviteL()
-    {
-    iPrepareForInviteCalled = ETrue;
-    }
-
-// -------------------------------------------------------------------------
 //  Constructor function.
 // -------------------------------------------------------------------------
 //

@@ -160,7 +160,7 @@ class CMceInSession : public CMceSession
 	    * Two-phased constructor.
 	    * For temporay use only.
 	    */
-        IMPORT_C static CMceInSession* NewL();
+		static CMceInSession* NewL();
 
 	    /**
 	     * C++ default constructor.

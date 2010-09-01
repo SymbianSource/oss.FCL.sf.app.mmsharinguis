@@ -92,9 +92,6 @@ RESOURCE MENU_PANE r_IndicatorTestApp_menu
         MENU_ITEM {command = EIndicatorTestAppAudiotoryNotification;  txt = "Set play sound";},
         MENU_ITEM {command = EIndicatorTestAppNoAudiotoryNotification;  txt = "Set no sound";},
 
-        MENU_ITEM {command = EIndicatorTestAppPopUpNotification;  txt = "Set pop-up notification";},
-        MENU_ITEM {command = EIndicatorTestAppNoPopUpNotification;  txt = "Set no pop-up notification";},
-
         MENU_ITEM {command = EIndicatorTestAppIconNotification;  txt = "Set icon notification";},
         MENU_ITEM {command = EIndicatorTestAppNoIconNotification;  txt = "Set no icon notification";},
 

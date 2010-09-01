@@ -12665,6 +12665,7 @@ class RTelHelper
     static void SetConfStatus( RMobileConferenceCall::TMobileConferenceStatus aConfStatus );
     static void SetCallDirection( RMobileCall::TMobileCallDirection aDirection );
     static void SetCallEmergency( TBool aVal );
+    static void SetRemoteIdStatus( RMobileCall::TMobileCallRemoteIdentityStatus aStatus );
     };
 
 #endif // __ETELMM_H__

@@ -18,13 +18,15 @@
 #include <bldvariant.hrh>
 #include <data_caging_paths.hrh>
 #include <platform_paths.hrh>
+#include <eunitcaps.h>
 
 TARGET          CenrepEditor.exe
 TARGETTYPE      exe
 
 UID             0x100039CE  0x10282398
 VENDORID        VID_DEFAULT
-CAPABILITY      CAP_APPLICATION
+CAPABILITY      EUNIT_CAPS
+
 
 EPOCSTACKSIZE   0xF000
 
@@ -63,6 +65,7 @@ END
 LANG            SC
 
 USERINCLUDE     ../inc
+USERINCLUDE     ../../../common/inc
 
 APP_LAYER_SYSTEMINCLUDE
 

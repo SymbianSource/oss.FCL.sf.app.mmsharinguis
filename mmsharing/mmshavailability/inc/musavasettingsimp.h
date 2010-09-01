@@ -61,13 +61,7 @@ public:
 	
 public: // from MMusAvaSettings
 
-    /**
-    * Returns the fast mode value.
-    */         
-
-    virtual MusSettingsKeys::TFastMode FastMode() const;
-	
-    /**
+	/**
      * Returns the manual activation
      *
      */   		
@@ -135,18 +129,22 @@ public: // from MMusAvaSettings
      * @param aObserver Pointer to observer intercase 
      */   		
     virtual void SetObserver( MMusAvaSettingsObserver& aObserver );
-    
-    /*
-    * Gets the settings observer pointer 
-    * 
-    */
-    virtual MMusAvaSettingsObserver* Observer();
 
      /**
      * Sets the for the manual activation
      *
      */   		
     virtual void SetManualActivation( TManualActivation aManualActivation );
+    
+    
+    /**
+    * Returns the direction of the mobile call.
+    *
+    * @return 0, if the direction of the call is unknown.
+    *         1, call is from public number.
+    *         2, call is from private number   
+    */         
+    virtual TInt CallPrivacy();
 
      
 public:
@@ -244,6 +242,15 @@ public:
      * @param aProfileId the SIP profile id.
      */   		
     void SetSipProfileId( TInt aProfileId );
+    
+    
+    /**
+     * Sets the call privacy e.g. current call number is from private number, 
+     * should be shown on MT.
+     *
+     * @param aPrivacy the SIP profile id.
+     */  
+    void SetCallPrivacy( TInt aPrivacy );
      
     /**
      * Returns the id of the preferable SIP profile.
@@ -251,21 +258,15 @@ public:
      * @return The SIP profile id.
      */   		
     CMusAvaSip& Sip();
+    
+    void SetOptionSentNumber( const TDesC& aTelNumber );
+    
+    const TDesC& OptionSentTelNumber() const;
+    
+    void ReleaseOptionSentNumber();
+    
 
-    /**
-     * Sets the fast mode value
-     */
-    void SetFastMode( MusSettingsKeys::TFastMode aMode );
-    
-    /**
-    * Sets contact resolving uri
-    */
-    void SetUriForContactResolvingL( const TDesC& aRemoteUri );
-    
-    /**
-    * Gets contact resolving uri
-    */
-    TPtrC ContactResolvingUri();  
+     
      
 private: 
 
@@ -296,6 +297,9 @@ private: // data
      * Owns.
      */   
     HBufC* iTelNumber;
+    
+    HBufC* iOptionSentTelNumber;
+
 
 	/**
      * Current Call Direction
@@ -354,17 +358,15 @@ private: // data
 	TManualActivation iManualActivation;
 	
 	/**
-	* Fast mode
-	*/   
-	MusSettingsKeys::TFastMode iFastMode;
-	
-	/**
-	* Contact resolving 
-	*/
-	HBufC* iContactResolvingUri;
+  * Call privacy indicator
+  * 
+  */
+  
+	TInt iCallPrivacy;
 	
     MUS_UNITTEST( UT_CMusAvaSettingsImp )	
     MUS_UNITTEST( UT_CMusAvaOptionHandler )   
+    MUS_UNITTEST( UT_CMusAvaTerminal )  
 	};
 
 #endif __MUSAVASETTINGSIMP_H__

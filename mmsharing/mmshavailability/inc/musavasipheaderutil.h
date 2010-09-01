@@ -115,6 +115,14 @@ public:
 
     static void AddAcceptSdpHeaderL(RPointerArray<CSIPHeaderBase>& aRequestHeaders );
     
+    /**
+     * Utility class to add SIP privacy header when the PS key
+     * NMusSessionInformationApi::KMusClirSetting PS indicates so.
+     * @lib AlwaysOnlinePlugin.dll
+     */
+    static void AddPrivacyHeaderL( 
+                             RPointerArray<CSIPHeaderBase>& aRequestHeaders );
+    
     };
 
 

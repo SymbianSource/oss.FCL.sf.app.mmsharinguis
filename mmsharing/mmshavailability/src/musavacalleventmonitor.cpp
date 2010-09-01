@@ -117,39 +117,66 @@ TInt CMusAvaCallEventMonitor::CallDirectionL()
         CallDirectionL" )
     return direction;
     }
-
+    
 // --------------------------------------------------------------------------
-// aTelNumber will be filled with telephone number or SIP URI of current
-// connected call
+// Returns the direction of connected call.
 // --------------------------------------------------------------------------
 //
-void
-CMusAvaCallEventMonitor::GetTelNumberL( TDes& aTelNumber, TBool& aIsSipUri )
+TInt CMusAvaCallEventMonitor::CallPrivacyL()
+    {
+    MUS_LOG( "mus: [CMusAvaCallEventMonitor]  -> CMusAvaCallEventMonitor::\
+            CallPrivacyL" )
+    // retrieve call count
+    TInt privacy( 0 );
+    User::LeaveIfError( RProperty::Get(
+        NMusSessionInformationApi::KCategoryUid,
+        NMusSessionInformationApi::KMUSPrivacy,
+        privacy ) );
 
+    MUS_LOG1( "mus: [CMusAvaCallEventMonitor]     Call privacy = %d ", 
+            privacy )
+    MUS_LOG( "mus: [CMusAvaCallEventMonitor]  <- CMusAvaCallEventMonitor::\
+        CallPrivacyL" )
+    return privacy;
+    }
+	
+// --------------------------------------------------------------------------
+// aTelNumber will be filled with telephone number of current connected call
+// --------------------------------------------------------------------------
+//
+void CMusAvaCallEventMonitor::GetTelNumberL( TDes& aTelNumber )
     {
     MUS_LOG( "mus: [CMusAvaCallEventMonitor]  -> CMusAvaCallEventMonitor::\
         GetTelNumberL" )
+    TBuf<KMusTelNumberMaxLength> telNumber;
 
-    TInt error = RProperty::Get( NMusSessionInformationApi::KCategoryUid,
-                                 NMusSessionInformationApi::KMusTelNumber,
-                                 aTelNumber );
+    MUS_LOG( "mus: [CMusAvaCallEventMonitor]  CMusAvaCallEventMonitor::\
+        GetTelNumberL - a" )
+    TInt error = RProperty::Get(
+        NMusSessionInformationApi::KCategoryUid,
+        NMusSessionInformationApi::KMusTelNumber,
+        telNumber );
 
     MUS_LOG1( "mus: [CMusAvaCallEventMonitor]  CMusAvaCallEventMonitor::\
         GetTelNumberL (%d)", error )
 
-    if ( error == KErrOverflow )
+    if ( error != KErrOverflow )
         {
-        MUS_LOG1( "mus: [CMusAvaCallEventMonitor]  CMusAvaCallEventMonitor::\
-            GetTelNumberL - Buffer too small (%d), leave", 
-            aTelNumber.MaxLength() )
-        User::Leave( error );
+        User::LeaveIfError( error );
         }
-    User::LeaveIfError( error );
-    
-    aIsSipUri = IsSipUri( aTelNumber );
-    MUS_LOG1( "mus: [CMusAvaCallEventMonitor]  CMusAvaCallEventMonitor::\
-          GetTelNumberL (is SIP URI=%d)", aIsSipUri )
-    
+
+    TInt length = telNumber.Length();
+    TInt maxLength = aTelNumber.MaxLength();
+    if ( maxLength < length )
+        {
+        // buffer is too small for returned tel number.
+        MUS_LOG2( "mus: [CMusAvaCallEventMonitor]  CMusAvaCallEventMonitor::\
+            GetTelNumberL - Buffer too small (%d, %d), leave", 
+            maxLength, length )
+        User::Leave( KErrOverflow );
+        }
+
+    aTelNumber.Copy( telNumber );
     MUS_LOG( "mus: [CMusAvaCallEventMonitor]  <- CMusAvaCallEventMonitor::\
         GetTelNumberL" )
     }
@@ -221,19 +248,38 @@ void CMusAvaCallEventMonitor::RunL()
 
             case NMusSessionInformationApi::ECallConnected:
                 {
+                // retrieve telnumber
+                TInt error;
                 TBuf<KMusTelNumberMaxLength> telNumber;
-                TBool isSipUri( EFalse );
-                GetTelNumberL( telNumber, isSipUri );
-                iObserver.CallConnectedL( telNumber, isSipUri );
+                error = RProperty::Get(
+                    NMusSessionInformationApi::KCategoryUid,
+                    NMusSessionInformationApi::KMusTelNumber,
+                    telNumber );
+
+                if ( error != KErrOverflow )
+                    {
+                    User::LeaveIfError( error );
+                    }
+
+                iObserver.CallConnectedL( telNumber );
                 break;
                 }
 
             case NMusSessionInformationApi::ECallHold:
                 {
+                 // retrieve telnumber
+                TInt error;
                 TBuf<KMusTelNumberMaxLength> telNumber;
-                TBool isSipUri( EFalse );
-                GetTelNumberL( telNumber, isSipUri );
-                iObserver.CallHoldL( telNumber, isSipUri );
+                error = RProperty::Get(
+                    NMusSessionInformationApi::KCategoryUid,
+                    NMusSessionInformationApi::KMusTelNumber,
+                    telNumber );
+
+                if ( error != KErrOverflow )
+                    {
+                    User::LeaveIfError( error );
+                    }
+                iObserver.CallHoldL( telNumber );
                 break;
                 }
 
@@ -242,6 +288,11 @@ void CMusAvaCallEventMonitor::RunL()
                 iObserver.ConferenceCallL();
                 break;
                 }
+            case NMusSessionInformationApi::EConferenceTerminated:
+            	{
+            	iObserver.ConferenceCallLTerminated();
+            	break;
+            	}
 
             default:
                 {
@@ -271,15 +322,3 @@ TInt CMusAvaCallEventMonitor::RunError( TInt aError )
     MUS_LOG( "mus: [MUSAOP]  <- CMusAvaCallEventMonitor::RunError" )
     return aError;
     }
-
-
-// --------------------------------------------------------------------------
-// CMusAvaCallEventMonitor::IsSipUri()
-// --------------------------------------------------------------------------
-//
-TBool CMusAvaCallEventMonitor::IsSipUri( const TDesC& aTelNumber ) const
-    {
-    _LIT( KSipPrefix, "sip:" );
-     TPtrC prefix = aTelNumber.Left( KSipPrefix().Length() );
-     return prefix.Compare( KSipPrefix ) == 0;
-     }

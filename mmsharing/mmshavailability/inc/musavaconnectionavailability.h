@@ -25,6 +25,7 @@
 #include "musavatelephonystatusobserver.h"
 #include "musavaconnectionmonitorobserver.h"
 #include "musunittesting.h"
+
 #include <e32base.h>
 #include <etelmm.h>
 
@@ -50,9 +51,10 @@ class TMobilePhoneRegistrationStatus;
 class CMusAvaConnectionAvailability : public CMusAvaAvailability,
                                       public MMusAvaTelephonyStatusObserver,
                                       public MMusAvaConnectionMonitorObserver
-	{
-	public:
-	/**
+    {
+public:
+    
+    /**
      * Two-phased constructor
      *
      * @since S60 v3.2
@@ -62,27 +64,26 @@ class CMusAvaConnectionAvailability : public CMusAvaAvailability,
      * @return Returns pointer to CMusAvaInterface object
      */
     static CMusAvaConnectionAvailability* NewL( MMusAvaAvailabilityObserver& aObserver,
-    											CMusAvaSettingsImp& aSettings );
+                                                CMusAvaSettingsImp& aSettings );
 
-	static CMusAvaConnectionAvailability* NewLC( MMusAvaAvailabilityObserver& aObserver,
-												 CMusAvaSettingsImp& aSettings );
+    static CMusAvaConnectionAvailability* NewLC( MMusAvaAvailabilityObserver& aObserver,
+                                                 CMusAvaSettingsImp& aSettings );
 
-	/**
+    /**
      * Destructor
      */
-
     ~CMusAvaConnectionAvailability();
 
 protected:
 
-	CMusAvaConnectionAvailability( MMusAvaAvailabilityObserver& aObserver,
-								   CMusAvaSettingsImp& aSettings );
+    CMusAvaConnectionAvailability( MMusAvaAvailabilityObserver& aObserver,
+                                   CMusAvaSettingsImp& aSettings );
 
-	void ConstructL();
+    void ConstructL();
 
-// from base class CMusAvaAvailability
 
-public:
+public:// from base class CMusAvaAvailability
+
 
     /**
      * Executes for the availability.
@@ -108,14 +109,15 @@ public:
 
 public: // from MMusAvaTelephonyStatusObserver
 
-	/**
-     * Current Network Mode Status
-	 *
-     * @since  S60 v3.2
-     * @return
-	 */
+    /**
+    * Current Network Mode Status
+    *
+    * @since  S60 v3.2
+    * @return
+    */
     void PhoneNetworkModeStatus(
-                            RMobilePhone::TMobilePhoneNetworkMode aStatus );
+            RMobilePhone::TMobilePhoneNetworkMode aStatus );
+    
     /**
      * Current Network Registration Status
      *
@@ -123,27 +125,25 @@ public: // from MMusAvaTelephonyStatusObserver
      * @return
      */
     void NetworkRegistrationStatus(
-                    RMobilePhone::TMobilePhoneRegistrationStatus aRegStatus );
+            RMobilePhone::TMobilePhoneRegistrationStatus aRegStatus );
 
 public: //from MMusAvaConnectionMonitorObserver
 
-   	/**
-	 * Event from connection monitor server
-	 *
-	 */
+    /**
+    * Event from connection monitor server
+    *
+    */
     void EventL(const CConnMonEventBase& aConnMonEvent);
-
-
 
 private:
 
-	 /**
-     * Check needs to have manual activation 
-     *
-     * @since  S60 v3.2
-     * @return TAvailabilityStatus is returned
-     */
-	MMusAvaObserver::TAvailabilityStatus ManualActivationL();
+    /**
+    * Check needs to have manual activation 
+    *
+    * @since  S60 v3.2
+    * @return TAvailabilityStatus is returned
+    */
+    MMusAvaObserver::TAvailabilityStatus ManualActivationL();
 
     /**
      * Current test network registration agains the settings
@@ -153,6 +153,8 @@ private:
      */
     MMusAvaObserver::TAvailabilityStatus NetworkRegistrationAndSettingsL();
 
+    static TBool OperatorVariant();
+    
 private: // data
 
     /**
@@ -185,6 +187,7 @@ private: // data
      */
     CMusAvaSettingsImp& iSettings;
 
+    
     MUS_UNITTEST( UT_CMusAvaConnectionAvailability )
     };
 

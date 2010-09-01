@@ -107,6 +107,17 @@ public:
      * @return SIP profile Id.
      */
     virtual TInt SipProfileId() const;
+    
+    /**
+    * Returns the direction of the mobile call.
+    *
+    * @return 0, if the direction of the call is unknown.
+    *         1, call is from public number.
+    *         2, call is from private number   
+    */         
+    virtual TInt CallPrivacy();
+    
+    
 
 private: // data
 
@@ -155,6 +166,13 @@ private: // data
      * Own.
      */
     CDesCArrayFlat* iAudioCodecs;
+    
+  	/**
+  	* Call privacy indicator
+  	* 
+  	*/
+  
+	TInt iCallPrivacy;
 
     MUS_UNITTEST( UT_CMusAvailabilityPluginManager )
 

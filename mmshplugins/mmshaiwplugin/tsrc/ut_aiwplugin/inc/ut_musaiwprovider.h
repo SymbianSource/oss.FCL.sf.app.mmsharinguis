@@ -25,8 +25,6 @@
 #include <eikmobs.h>
 
 class CMusAiwProvider;
-class CAiwMenuPane;
-class CEikMenuPane;
 
 /**
  * Main plugin class
@@ -98,23 +96,17 @@ class UT_CMusAiwProvider: public CEUnitTestSuiteClass,
         void UT_CMusAiwProvider_InitializeMenuPaneL4L();
         void UT_CMusAiwProvider_InitializeMenuPaneL5L();
         void UT_CMusAiwProvider_InitializeMenuPaneL6L();
-        void UT_CMusAiwProvider_InitializeMenuPaneLFastModeL();
-        void UT_CMusAiwProvider_InitializeMenuPaneLFastMode2L();
+        void UT_CMusAiwProvider_InitializeMenuPaneL7L();
         
+		
         void UT_CMusAiwProvider_HandleMenuCmdLL();
-        void UT_CMusAiwProvider_HandleMenuCmdLFastModeL();
         void UT_CMusAiwProvider_ApplicationRunningLL();
         void UT_CMusAiwProvider_ShowErrorNoteLL();
         void UT_CMusAiwProvider_ErrorNoteTextLCL();
         void UT_CMusAiwProvider_ErrorNoteText8LL();
-        void UT_ImplementationGroupProxyL(); 
-        void UT_HiddenFromFastSwapL();
+        void UT_ImplementationGroupProxyL();    
 
 
-    public: // Helpers
-        
-        CAiwMenuPane* CreateAiwMenuPaneLC( CEikMenuPane** aEikPane );
-        
     private: // data
 
         CMusAiwProvider* iProvider;

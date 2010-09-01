@@ -41,7 +41,6 @@ class CMusAvaOptionHandler;
 class CMusAvaObserverImp;
 class CMusAvaSettingsImp;
 class CMusAvaAvailabilityObserverImp;	
-class CSipSseTestTls;
 
 #include <e32def.h>
 #ifndef NONSHARABLE_CLASS
@@ -118,7 +117,6 @@ NONSHARABLE_CLASS( UT_CMusAvaTerminal )
     private: // NOT owned
     
     CMusAvaCapability* iCapability;
-    CSipSseTestTls* iStorage;
 
     };
 

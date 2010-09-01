@@ -25,13 +25,10 @@
 #include "muslogger.h"
 #include "musmanagerservercoreobserver.h"
 #include "musmanager.h"
-#include "musmanagerservercommon.h"
 
 using namespace MultimediaSharing;
 
 // CONSTANTS
-_LIT8( KMusEngineName, "MultimediaSharing" );
-
 
 // -----------------------------------------------------------------------------
 // CMusManagerServerCore::NewL
@@ -84,8 +81,6 @@ void CMusManagerServerCore::ConstructL()
     
     iApplicationManager = CMusApplicationManager::NewL();
     
-    iApplicationManager->ResolvePluginNameL( iPluginName );
-    
     iPluginManager = CMusAvailabilityPluginManager::NewL( *this, *iApplicationManager );
 
     MUS_LOG( "mus: [MUSSRV]  <- CMusManagerServerCore::ConstructL" );
@@ -120,7 +115,7 @@ MultimediaSharing::TMusAvailabilityStatus CMusManagerServerCore::AvailabilityQue
     {
     MUS_LOG( "mus: [MUSSRV]  -> CMusManagerServerCore::AvailabilityQueryL" );
     MultimediaSharing::TMusAvailabilityStatus status
-            = Availability();
+            = iPluginManager->Availability();
    
     MUS_LOG( "mus: [MUSSRV]  <- CMusManagerServerCore::AvailabilityQueryL" );
     return status;
@@ -132,8 +127,7 @@ MultimediaSharing::TMusAvailabilityStatus CMusManagerServerCore::AvailabilityQue
 void CMusManagerServerCore::CommandL( MultimediaSharing::TCommandType aCommandType )
     {
     MUS_LOG( "mus: [MUSSRV]  -> CMusManagerServerCore::CommandL" );
-     if ( aCommandType == MultimediaSharing::ECommandManualActivation &&
-          IsMusEnginePlugin() )
+     if ( aCommandType == MultimediaSharing::ECommandManualActivation )
 		{
 		MUS_LOG( "mus: [MUSSRV]    Manual Activation is started" )
 		iPluginManager->ManualQueryL();
@@ -148,10 +142,7 @@ void CMusManagerServerCore::CommandL( MultimediaSharing::TCommandType aCommandTy
 void CMusManagerServerCore::InvestigateAvailabilityL()
     {
     MUS_LOG( "mus: [MUSSRV]  -> CMusManagerServerCore::InvestigateAvailabilityL" );
-    if ( IsMusEnginePlugin() )
-        {
-        iPluginManager->InvestigateAvailabilityL();
-        }
+    iPluginManager->InvestigateAvailabilityL();
     MUS_LOG( "mus: [MUSSRV]  <- CMusManagerServerCore::InvestigateAvailabilityL" );
     }
 
@@ -166,41 +157,23 @@ void CMusManagerServerCore::InvitationReceivedL( TUid aChannelId )
     TInt uid = aChannelId.iUid;
 
     if( uid == CMusManager::ESipInviteDesired &&
-        ApplicationAllowed() )
-        {        
-        PrepareForReceivedInviteL();
-        
+        iPluginManager->ApplicationAllowed() )
+        {
         // write session boundary values
-        WriteSessionPropertiesL(
-                MultimediaSharing::EMusReceive,
-                Availability(),
-                iPluginManager->SessionParametersL() );
+        iApplicationManager->WriteSessionPropertiesL(
+                                    MultimediaSharing::EMusReceive,
+                                    iPluginManager->Availability(),
+                                    iPluginManager->SessionParametersL() );
 
         iApplicationManager->StartApplicationL();
         }
-    else if( uid == CMusManager::ESipInviteDesired2WayVideo &&
-            ApplicationAllowed() )
+    else if( uid == CMusManager::ESipInviteNotDesired )
         {
-        PrepareForReceivedInviteL();
-        
-        // write session boundary values
-        WriteSessionPropertiesL(
-                MultimediaSharing::EMusReceiveTwoWayVideo,
-                Availability(),
-                iPluginManager->SessionParametersL() );
-
-        iApplicationManager->StartApplicationL();
+        iPluginManager->InvitationReceivedL();
         }
-    else if ( IsMusEnginePlugin() )
+    else
         {
-        if( uid == CMusManager::ESipInviteNotDesired )
-            {
-            iPluginManager->InvitationReceivedL();
-            }
-        else
-            {
-            User::Leave( KErrNotReady );
-            }
+        User::Leave( KErrNotReady );
         }
 
     MUS_LOG( "mus: [MUSSRV]  <- CMusManagerServerCore::InvitationReceivedL" );
@@ -213,10 +186,7 @@ void CMusManagerServerCore::InvitationReceivedL( TUid aChannelId )
 void CMusManagerServerCore::OptionsReceivedL( TUid /*aChannelId*/ )
     {
     MUS_LOG( "mus: [MUSSRV]  -> CMusManagerServerCore::OptionsReceivedL" );
-    if ( IsMusEnginePlugin() )
-        {
-        iPluginManager->OptionsReceivedL();    
-        }    
+    iPluginManager->OptionsReceivedL();
     MUS_LOG( "mus: [MUSSRV]  <- CMusManagerServerCore::OptionsReceivedL" );
     }
 
@@ -228,13 +198,13 @@ void CMusManagerServerCore::StartMultimediaSharingL( MultimediaSharing::TMusUseC
     {
     MUS_LOG( "mus: [MUSSRV]  -> CMusManagerServerCore::StartMultimediaSharingL" );
     if( !iApplicationManager->ApplicationRunning() &&
-        ApplicationAllowed() )
+        iPluginManager->ApplicationAllowed() )
         {
         // write session boundary values
-        WriteSessionPropertiesL(
-                aUseCase,
-                Availability(),
-                iPluginManager->SessionParametersL() );
+        iApplicationManager->WriteSessionPropertiesL(
+                                aUseCase,
+                                iPluginManager->Availability(),
+                                iPluginManager->SessionParametersL() );
 
         // start actual application
         iApplicationManager->StartApplicationL();
@@ -264,13 +234,10 @@ void CMusManagerServerCore::StopMultimediaSharingL()
 void CMusManagerServerCore::EventNoSessions()
     {
     MUS_LOG( "mus: [MUSSRV]  -> CMusManagerServerCore::EventNoSessions" );
-    if ( IsMusEnginePlugin() ) 
+    TRAPD( error, iPluginManager->StopPluginL() );
+    if( error )
         {
-        TRAPD( error, iPluginManager->StopPluginL() );
-        if( error )
-            {
-            // iObserver.StopServer();
-            }        
+        // iObserver.StopServer();
         }
     iObserver.StopServer();
     MUS_LOG( "mus: [MUSSRV]  <- CMusManagerServerCore::EventNoSessions" );
@@ -299,18 +266,11 @@ void CMusManagerServerCore::AvailabilityChangedL(
     {
     MUS_LOG1( "mus: [MUSSRV]  -> CMusManagerServerCore::AvailabilityChangedL( %d )",
               aAvailability );
-    
-    if ( !IsMusEnginePlugin() )
-        {
-        MUS_LOG( "mus: [MUSSRV]  <- CMusManagerServerCore::AvailabilityChangedL - \
-                non-MuS plugin");
-        return;
-        }
     // inform ui via application manager (via session api)
 
-    WriteSessionPropertiesL(
-            aAvailability,
-            iPluginManager->SessionParametersL() );
+    iApplicationManager->WriteSessionPropertiesL(
+                            aAvailability,
+                            iPluginManager->SessionParametersL() );
     
     if( iAvailabilityMonitors.Count() )
     	{	
@@ -377,15 +337,9 @@ void CMusManagerServerCore::RemoveObserver( MMusMonitorAvailabilityObserver* aOb
 // Starts live video sharing.
 // -----------------------------------------------------------------------------
 //
-void CMusManagerServerCore::StartSharingWithUseCaseL( 
-    MultimediaSharing::TMusUseCase aUseCase )
+void CMusManagerServerCore::StartLiveSharingL()
     {
-    MUS_LOG1( "mus: [MUSSRV]  -> CMusManagerServerCore::StartSharingWithUseCaseL:%d", 
-              aUseCase );
-    
-    StartMultimediaSharingL( aUseCase );
-    
-    MUS_LOG( "mus: [MUSSRV]  <- CMusManagerServerCore::StartSharingWithUseCaseL" );
+    StartMultimediaSharingL( MultimediaSharing::EMusLiveVideo );
     }
 
 // -----------------------------------------------------------------------------
@@ -401,101 +355,6 @@ void CMusManagerServerCore::StopMonitoring()
        	iAvailabilityMonitors[i]->RequestComplete();
        	iAvailabilityMonitors.Remove( i );
         }			
-    }
-
-// -----------------------------------------------------------------------------
-// CMusManagerServerCore::IsMusEnginePlugin
-// -----------------------------------------------------------------------------
-//
-TBool CMusManagerServerCore::IsMusEnginePlugin()
-    {
-    TBool isMus( EFalse );    
-    if ( !iPluginName.Compare( KMusEngineName ) )
-        {
-        isMus = ETrue;
-        }
-    return isMus;
-    }
-
-// -----------------------------------------------------------------------------
-// CMusManagerServerCore::Availability
-// -----------------------------------------------------------------------------
-//
-MultimediaSharing::TMusAvailabilityStatus CMusManagerServerCore::Availability()
-    {
-    MUS_LOG( "mus: [MUSSRV]  -> CMusManagerServerCore::Availability" );
-    if ( IsMusEnginePlugin() ) 
-        {
-        MUS_LOG( "mus: [MUSSRV]  <- CMusManagerServerCore::Availability - MuS plugin" );
-        return iPluginManager->Availability();
-        }
-    else
-        {
-        MUS_LOG( "mus: [MUSSRV]  <- CMusManagerServerCore::Availability - non-MuS plugin" );
-        return EMultimediaSharingAvailable;
-        }
-    }
-
-// -----------------------------------------------------------------------------
-// CMusManagerServerCore::ApplicationAllowed
-// -----------------------------------------------------------------------------
-//
-TBool CMusManagerServerCore::ApplicationAllowed()
-    {
-    if ( IsMusEnginePlugin() )
-        {
-        return iPluginManager->ApplicationAllowed();
-        }
-    else
-        {
-        return ETrue;
-        }
-    }
-
-// -----------------------------------------------------------------------------
-// CMusManagerServerCore::PrepareForReceivedInviteL
-// -----------------------------------------------------------------------------
-//
-void CMusManagerServerCore::PrepareForReceivedInviteL()
-    {
-    if ( IsMusEnginePlugin() )
-        {
-        iPluginManager->PrepareForReceivedInviteL();
-        }
-    }
-
-// -----------------------------------------------------------------------------
-// CMusManagerServerCore::WriteSessionPropertiesL
-// -----------------------------------------------------------------------------
-//
-void CMusManagerServerCore::WriteSessionPropertiesL(
-        MultimediaSharing::TMusUseCase aUseCase,
-        MultimediaSharing::TMusAvailabilityStatus aStatus,
-        MDesCArray& aSessionParameters )
-    {
-    if ( IsMusEnginePlugin() )
-        {
-        iApplicationManager->WriteSessionPropertiesL(
-                                    aUseCase,
-                                    aStatus,
-                                    aSessionParameters );
-        }
-    }
-
-// -----------------------------------------------------------------------------
-// CMusManagerServerCore::WriteSessionPropertiesL
-// -----------------------------------------------------------------------------
-//
-void CMusManagerServerCore::WriteSessionPropertiesL(
-        MultimediaSharing::TMusAvailabilityStatus aStatus,
-        MDesCArray& aSessionParameters )
-    {
-    if ( IsMusEnginePlugin() )
-        {
-        iApplicationManager->WriteSessionPropertiesL(
-                                    aStatus,
-                                    aSessionParameters );
-        }
     }
 
 //  End of File  

@@ -52,7 +52,7 @@ CMceInSession* CMceInSession::NewL( RReadStream& /*aReadStream*/,
 // -----------------------------------------------------------------------------
 //
 
-EXPORT_C CMceInSession* CMceInSession::NewL()
+CMceInSession* CMceInSession::NewL()
     {
     CMceInSession* self = new (ELeave) CMceInSession( NULL, 0 );
     CleanupStack::PushL( self );

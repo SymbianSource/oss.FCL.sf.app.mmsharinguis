@@ -32,13 +32,14 @@
 #include <sipstrconsts.h>
 #include <sipresponseelements.h>
 #include <sipaddress.h>
+#include <sipfromheader.h>
 #include <sdpdocument.h>
 #include <sdporiginfield.h>
 #include <sdpconnectionfield.h>
 #include <sdpattributefield.h>
 #include <sdpmediafield.h>
 #include <e32math.h>
-
+#include <e32property.h>
 
 #include "mussettings.h"
 #include "muslogger.h"
@@ -48,6 +49,14 @@
 #include "musavaterminal.h"
 #include "musavacapabilitycontext.h"
 #include "musavasipheaderutil.h"
+#include "mussesseioninformationapi.h"
+
+_LIT8( KMusSipPrefix, "sip:" );
+_LIT8( KMusTelPrefix, "tel:" );
+_LIT8( KMusPlusSign, "+" );
+_LIT8( KMusAtSign, "@" );
+
+const TInt KMusMinDigitCountInTelNumber = 7;
 
 // --------------------------------------------------------------------------
 // C++ constructor
@@ -152,6 +161,7 @@ void CMusAvaCapabilityQueryBase::ConstructL( const TDesC& aSipAddress )
     CleanupStack::PopAndDestroy(sipAddress);        
     
     HBufC8* sipAddress8 = EscapeUtils::ConvertFromUnicodeToUtf8L( aSipAddress );
+    iRemoteUri.Copy( sipAddress8->Des() ) ;
     CleanupStack::PushL( sipAddress8 );
     iTerminal = &Capability().Exchange().TerminalL( sipAddress8->Des() );
     CleanupStack::PopAndDestroy( sipAddress8 ) ;
@@ -230,7 +240,24 @@ void CMusAvaCapabilityQueryBase::ExecuteL()
                                                iOriginator->Uri().UriDes());
             MUS_LOG( "mus: [MUSAVA]  AddPreferredIdentityHeaderL -> Success ")                         
             AddContactHeaderL( headers );
-            MUS_LOG( "mus: [MUSAVA]  AddContactHeaderL -> Success ")             
+            MUS_LOG( "mus: [MUSAVA]  AddContactHeaderL -> Success ")
+            
+            TBool usePrivacy = MultimediaSharingSettings::PrivacySetting();
+            if ( usePrivacy )
+                {
+                NMusSessionInformationApi::TMusClirSetting clir =
+                    NMusSessionInformationApi::ESendOwnNumber;
+                RProperty::Get( NMusSessionInformationApi::KCategoryUid,
+                                NMusSessionInformationApi::KMusClirSetting,
+                                reinterpret_cast<TInt&>( clir ) );
+                usePrivacy = ( clir == NMusSessionInformationApi::EDoNotSendOwnNumber );
+                }
+                    
+            if (usePrivacy)
+                {
+                CMusAvaSipheaderUtil::AddPrivacyHeaderL( headers );
+                MUS_LOG( "mus: [MUSAVA]  AddPrivacyHeaderL -> Success ")
+                }
             //terminal ID
             if ( Capability().Exchange().TerminalId().Length() > 0 )
                 {
@@ -250,6 +277,16 @@ void CMusAvaCapabilityQueryBase::ExecuteL()
                                 CSIPRequestElements::NewL( remoteUri );
             CleanupStack::Pop( remoteUri );
             CleanupStack::PushL( request );
+            
+            if (usePrivacy)
+                {
+                _LIT8( KAnonymous,
+                       "\"Anonymous\" <sip:anonymous@anonymous.invalid>" );
+                CSIPFromHeader* from = CSIPFromHeader::DecodeL( KAnonymous );
+                CleanupStack::PushL( from );
+                request->SetFromHeaderL( from );
+                CleanupStack::Pop( from );
+                }
             
             request->SetMethodL( 
                         SIPStrings::StringF( SipStrConsts::EOptions ) );
@@ -470,7 +507,7 @@ void CMusAvaCapabilityQueryBase::OtherSDPHeadersL( CSdpDocument& aResponseConten
     //application
     CSdpAttributeField* application = CSdpAttributeField::NewLC(
        MusAvaCapabilityContext::SDPStringL( 
-           SdpCodecStringConstants::EMediaApplication ), 
+            SdpCodecStringConstants::EMediaApplication ), 
        KCapabilitySwisApplication );
                                       
     aResponseContent.AttributeFields().AppendL( application );
@@ -489,16 +526,13 @@ void CMusAvaCapabilityQueryBase::OtherSDPHeadersL( CSdpDocument& aResponseConten
     aResponseContent.AttributeFields().AppendL( type );
     CleanupStack::Pop( type );
     
-    // Fast startup mode
-    CMusAvaCapability::AddFastModeL( aResponseContent );
-
     MUS_LOG( "mus: [MUSAVA] Adding media line to SDP" )
     //media line
-    CSdpMediaField* mediaLine = CSdpMediaField::NewLC( 
-    			MusAvaCapabilityContext::SDPStringL
+    CSdpMediaField* mediaLine=CSdpMediaField::NewLC( 
+                    MusAvaCapabilityContext::SDPStringL
     				(SdpCodecStringConstants::EMediaVideo ),
                      							       NULL,
-                         MusAvaCapabilityContext::SDPStringL
+                     MusAvaCapabilityContext::SDPStringL
                 (SdpCodecStringConstants::EProtocolRtpAvp ), 
                         KCapabilitySwisFormatListH263Only );
     
@@ -538,7 +572,111 @@ void CMusAvaCapabilityQueryBase::OtherSDPHeadersL( CSdpDocument& aResponseConten
     aResponseContent.MediaFields().AppendL( mediaLine );
     CleanupStack::Pop( mediaLine );
 
+    
     MUS_LOG( "mus: [MUSAVA] <- CMusAvaCapabilityQueryBase::OtherSDPHeadersL" )
     }
+
+// --------------------------------------------------------------------------
+// CMusAvaCapabilityQueryBase::ValidateUri
+// --------------------------------------------------------------------------
+//
+TBool CMusAvaCapabilityQueryBase::ValidateUri()
+	{
+    MUS_LOG( "mus: [MUSAVA] -> CMusAvaCapabilityQueryBase::ValidateUri" )
+    		
+	TBool valid = ETrue;
+     
+    const TDesC8& originator = iOriginator->Uri().UriDes();
+    MUS_LOG_TDESC8( "mus: [MUSAVA]  originator uri: ", originator )
+
+    TBuf8<KMaxRemoteUriLength> sipUri;
+    TBuf8<KMaxRemoteUriLength> telUri;
+    
+    if ( iRemoteUri.FindF( KMusSipPrefix ) != KErrNotFound )
+        {
+        sipUri.Copy( iRemoteUri );
+        MUS_LOG_TDESC8( "mus: [MUSAVA]  sip uri: ", sipUri )
+        }
+    else if ( iRemoteUri.FindF( KMusTelPrefix ) != KErrNotFound )
+        {
+        telUri.Copy( iRemoteUri );
+        MUS_LOG_TDESC8( "mus: [MUSAVA]  tel uri: ", telUri )
+        }
+   
+    // Tel Uri case
+    if ( telUri.Length() > 0 )
+        {
+        telUri.Trim();
+        
+        // Remove prefix and plus sign from remote uri if there is
+        TPtrC8 telUriWithoutPrefix = 
+                telUri.Right( telUri.Length() - KMusTelPrefix().Length() );
+        MUS_LOG_TDESC8( "mus: [MUSAVA]  telUriWithoutPrefix: ", telUriWithoutPrefix )
+        
+        TPtrC8 numberPartOfTelUri = 
+                telUriWithoutPrefix.Find( KMusPlusSign ) == 0 ?
+                telUriWithoutPrefix.Right( telUriWithoutPrefix.Length() - 1 ) :
+                telUriWithoutPrefix;
+        MUS_LOG_TDESC8( "mus: [MUSAVA]  numberPartOfTelUri: ", numberPartOfTelUri )
+        
+        // Remove prefix and domain part from uri in profile
+        TPtrC8 originatorWithoutPrefix = 
+        		originator.Right( originator.Length() - KMusSipPrefix().Length() );
+        MUS_LOG_TDESC8( "mus: [MUSAVA]  originatorWithoutPrefix: ", originatorWithoutPrefix )
+        
+        TPtrC8 usernameOfOriginator = 
+        		originatorWithoutPrefix.Find( KMusPlusSign ) == 0 ?
+        		originatorWithoutPrefix.Right( originatorWithoutPrefix.Length() - 1 ) :
+                originatorWithoutPrefix;
+        
+        TInt posOfAtSign = originatorWithoutPrefix.Find( KMusAtSign );
+        
+        if ( posOfAtSign >= KMusMinDigitCountInTelNumber )
+        	{
+            usernameOfOriginator.Set( 
+            		originatorWithoutPrefix.Mid( (originatorWithoutPrefix.Find( KMusAtSign ) 
+        				- KMusMinDigitCountInTelNumber), KMusMinDigitCountInTelNumber ) );
+            MUS_LOG_TDESC8( "mus: [MUSAVA]  usernameOfOriginator: ", usernameOfOriginator )
+        	}
+        
+        else
+        	{
+            usernameOfOriginator.Set( originatorWithoutPrefix.Left( posOfAtSign ) );
+            MUS_LOG_TDESC8( "mus: [MUSAVA]  usernameOfOriginator: ", usernameOfOriginator )
+        	}
+        
+        if ( numberPartOfTelUri.Length() >= KMusMinDigitCountInTelNumber )
+        	{
+            numberPartOfTelUri.Set( numberPartOfTelUri.Right( KMusMinDigitCountInTelNumber ) );
+            MUS_LOG_TDESC8( "mus: [MUSAVA]  numberPartOfTelUri: ", numberPartOfTelUri )
+        	}
+        
+                
+        if  ( numberPartOfTelUri == usernameOfOriginator )
+            {
+            MUS_LOG( "mus: Recipient address is evaluated to be same as in profile.\
+            		We do not send OPTIONS")
+			valid = EFalse;
+            MUS_LOG( "mus: [MUSAVA] <- CMusAvaCapabilityQueryBase::ValidateUri" )
+            return valid;              
+            }
+        }
+    
+    // SIP Uri case
+    if ( sipUri.Length() > 0 )
+		{
+		if ( !originator.Compare( sipUri ) )
+			{
+		    MUS_LOG( "mus: Recipient address is evaluated to be same as in profile.\
+		            		We do not send OPTIONS")
+		    valid = EFalse;
+		    MUS_LOG( "mus: [MUSAVA] <- CMusAvaCapabilityQueryBase::ValidateUri" )
+		    return valid; 
+			}
+		}
+
+    MUS_LOG( "mus: [MUSAVA] <- CMusAvaCapabilityQueryBase::ValidateUri" )
+    return valid;
+	}
 
 

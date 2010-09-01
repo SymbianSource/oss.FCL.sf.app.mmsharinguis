@@ -124,11 +124,6 @@ public: // from base class CMusAvaAvailability
      */
     virtual MMusAvaObserver::TAvailabilityName Name();
     
-    /**
-    * Invitation has been received.
-    */  
-    virtual void PrepareForReceivedInviteL();
-    
 
 public: // functions from base class MMusAvaCapabilityQueryObserver
 
@@ -163,45 +158,9 @@ public: // functions from base class MMusAvaCapabilityQueryObserver
      */
     void VideoCodecsResolvedL( const MDesCArray& aVideoCodecs );
 
+
     TBool CapabilityQueryAnswered( TBool aAnswered );
 
-    void FastModeResolved( MusSettingsKeys::TFastMode aMode );
-
-private:
-    
-    /**
-    * Change state.
-    * @param aNewState, proposed new state
-    * @return KErrNone if successfull
-    */
-    TInt DoSetState( MMusAvaObserver::TAvailabilityStatus aNewState );
-    
-    /**
-    * Handle state change in fast mode, state change may be modified
-    * based on fast mode session setup progress.
-    * @param aNewState, proposed new state
-    * @param aCouldNotProceed, ETrue if state change occured because
-    *       couldn't proceed (e.g. missing information)
-    * @return new state to set
-    */
-    MMusAvaObserver::TAvailabilityStatus HandleFastModeL( 
-        MMusAvaObserver::TAvailabilityStatus aNewState );
-    
-    MMusAvaObserver::TAvailabilityStatus HandleFastModeAvailableL(
-        MMusAvaObserver::TAvailabilityStatus aNewState );
-    
-    MMusAvaObserver::TAvailabilityStatus HandleFastModeOptionsNotSentL(
-        MMusAvaObserver::TAvailabilityStatus aNewState );
-    
-    MMusAvaObserver::TAvailabilityStatus HandleFastModeOptionNotAvailableL(
-        MMusAvaObserver::TAvailabilityStatus aNewState );
-    
-    void HandleFastModeQueryAnswered();
-    
-    TBool FastModeNegotiatedByAnswerMT();
-    
-    TBool FastModeNegotiationFailedMO();
-    
 private:
 
     /**
@@ -219,9 +178,6 @@ private:
     CMusAvaCapability*          iSwisCapability;
     TBool                       iCapabilitiesRequestAnswered;
     TBool                       iCapabilityQueryAnswered;
-    
-    TBool                       iFastModeCapable;
-    TBool                       iFastModeAvailabilityDelayed;
     
     MUS_UNITTEST ( UT_CMusAvaOptionHandler )
     MUS_UNITTEST ( UT_CMusAvaCapabilityExchange )

@@ -15,6 +15,7 @@
 *
 */
 
+
 #include "ut_musaocalleventmonitor.h"
 #include "musaocalleventmonitor.h"
 #include "mussesseioninformationapi.h"
@@ -65,8 +66,7 @@ void UT_CMusAoCallEventMonitor::ConstructL()
 //
 // -----------------------------------------------------------------------------
 //
-void UT_CMusAoCallEventMonitor::CallConnectedL( const TDesC& /*aTelNumber*/,
-												TBool /*aIsSipUri*/ )
+void UT_CMusAoCallEventMonitor::CallConnectedL( const TDesC& /*aTelNumber*/ )
     {
     iCallConnected = ETrue;
     }
@@ -76,8 +76,7 @@ void UT_CMusAoCallEventMonitor::CallConnectedL( const TDesC& /*aTelNumber*/,
 //
 // -----------------------------------------------------------------------------
 //
-void UT_CMusAoCallEventMonitor::CallHoldL( const TDesC& /*aTelNumber*/,
-										   TBool /*aIsSipUri*/ )
+void UT_CMusAoCallEventMonitor::CallHoldL( const TDesC& /*aTelNumber*/ )
     {
     iCallHold = ETrue;
     }

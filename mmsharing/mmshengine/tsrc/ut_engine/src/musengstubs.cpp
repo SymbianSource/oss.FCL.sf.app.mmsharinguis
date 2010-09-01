@@ -18,7 +18,6 @@
 
 
 #include "musengstubs.h"
-#include "musengtestdefs.h"
 #include <sipprofilealrcontroller.h>
 
 
@@ -34,16 +33,22 @@ CMusEngObserverStub::CMusEngObserverStub()
     Reset();
     }
         
+
 // -----------------------------------------------------------------------------
 // 
 // -----------------------------------------------------------------------------
 //
 CMusEngObserverStub::~CMusEngObserverStub()
     {
+    delete iIncomingSessionOriginator;
     }
 
+
+// -------- Functions from MMusEngSessionDurationTimerObserver -----------------
+
+
 // -----------------------------------------------------------------------------
-// From MMusEngSessionDurationTimerObserver
+// 
 // -----------------------------------------------------------------------------
 //
 void CMusEngObserverStub::UpdateTimerEvent()
@@ -51,31 +56,368 @@ void CMusEngObserverStub::UpdateTimerEvent()
     iUpdateTimerEventCalled = ETrue;
     }
 
+
+// ----------- Functions from MusEngSessionObserver ----------------------------
+
+
+
+
 // -----------------------------------------------------------------------------
-// From MMusEngAudioRoutingObserver
+// 
 // -----------------------------------------------------------------------------
 //	
-void CMusEngObserverStub::AudioRoutingChanged()
+void CMusEngObserverStub::SessionEstablished()
     {
-    iAudioRoutingChangedCalled = ETrue;
+    iSessionEstablishedCalled = ETrue;
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngObserverStub::SessionTerminated()
+    {
+    iSessionTerminatedCalled = ETrue;
+    }
+    
+    
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngObserverStub::SessionConnectionLost()
+    {
+    iSessionConnectionLostCalled = ETrue;
+    }
+    
+    
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngObserverStub::SessionFailed()
+    {
+    iSessionFailedCalled = ETrue;
+    }
+    
+            
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngObserverStub::StreamIdle()
+    {
+    iStreamIdleCalled = ETrue;
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngObserverStub::StreamStreaming()
+    {
+    iStreamStreamingCalled = ETrue;
+    }
+    
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngObserverStub::SessionTimeChanged( 
+                        const TTimeIntervalSeconds& /*aSeconds*/ )
+    {
+    iSessionTimeChangedCalled = ETrue;
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void CMusEngObserverStub::InactivityTimeout()
+    {
+    iInactivityTimeoutCalled = ETrue;
+    }
+
+
+
+
+
+
+// ---- FUNCTIONS OF MMusEngOutSessionObserver --------------------------------
+
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
+void CMusEngObserverStub::SessionRejected()
+    {
+    iSessionRejectedCalled = ETrue;
+    }
+
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//  
+void CMusEngObserverStub::SessionBadRequest()
+    {
+    iSessionBadRequestCalled = ETrue;
+    }
+
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
+void CMusEngObserverStub::SessionUnauthorized()
+    {
+    iSessionUnauthorizedCalled = ETrue;
+    }
+    
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
+void CMusEngObserverStub::SessionPaymentRequired()
+    {
+    iSessionPaymentRequiredCalled = ETrue;
+    }
+    
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
+void CMusEngObserverStub::SessionRecipientNotFound()
+    {
+    iSessionRecipientNotFoundCalled = ETrue;
+    }
+    
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
+void CMusEngObserverStub::SessionProxyAuthenticationRequired()
+    {
+    iSessionProxyAuthenticationRequiredCalled = ETrue;
+    }
+    
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
+void CMusEngObserverStub::SessionRequestTimeOut()
+    {
+    iSessionRequestTimeOutCalled = ETrue;
+    }
+    
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
+void CMusEngObserverStub::SessionUnsupportedMediaType()
+    {
+    iSessionUnsupportedMediaTypeCalled = ETrue;
+    }
+
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//    
+void CMusEngObserverStub::SessionBusyHere()
+    {
+    iSessionBusyHereCalled = ETrue;
+    }
+    
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
+void CMusEngObserverStub::SessionRequestCancelled()
+    {
+    iSessionRequestCancelledCalled = ETrue;
+    }
+
+
+void CMusEngObserverStub::SessionTemporarilyNotAvailable()
+    {
+    iSessionTemporarilyNotAvailable = ETrue;
+    }
+
+
+
+// ---- FUNCTIONS OF MMusEngLiveSessionObserver ----------------------------------
+
+
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
+void CMusEngObserverStub::DiskFull()
+    {
+    iDiskFullCalled = ETrue;
     }
 
 // -----------------------------------------------------------------------------
-// From MMusSipProfileUser
+// 
 // -----------------------------------------------------------------------------
-//   
-TBool CMusEngObserverStub::IsRoamingBetweenAPsAllowed()
+//
+void CMusEngObserverStub::OrientationRefreshEnded()
     {
-    return iRoamingBetweenAPsAllowed;
+    iOrientationRefreshEndedCalled = ETrue;    
+    }
+
+
+// ---- FUNCTIONS OF MMusEngClipSessionObserver ----------------------------------
+
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
+void CMusEngObserverStub::EndOfClip()
+    {
+    iEndOfClipCalled = ETrue;
+    }
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
+
+void CMusEngObserverStub::RewindFromEndL()
+	{
+	iRewindFromEnd= ETrue;
+	}
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
+void CMusEngObserverStub::TranscodingNeeded(TBool aDueUnknowCapas)
+    {
+    iTranscodingNeededCalled = ETrue;
+    iDueUnknowCapas = aDueUnknowCapas;
+    }
+
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//        
+void CMusEngObserverStub::TranscodingProgressed( TInt aPercentage )
+    {
+    iTranscodingProgressedPercentage = aPercentage;
+    }
+
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//  
+void CMusEngObserverStub::TranscodingCompletedInit()
+    {
+    iTranscodingCompletedInitCalled = ETrue;
+    }
+
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//  
+void CMusEngObserverStub::TranscodingCompletedFinalize()
+    {
+    iTranscodingCompletedFinalizeCalled = ETrue;
+    }    
+    
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//  
+void CMusEngObserverStub::TranscodingFailed()
+    {
+    iTranscodingFailedCalled = ETrue;
+    }
+ 
+
+// ---- FUNCTIONS OF MMusEngInSessionObserver ----------------------------------
+
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//	
+void CMusEngObserverStub::IncomingSessionPreNotification()
+    {
+    iIncomingSessionPreNotificationCalled = ETrue;
+    }
+    
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//	
+void CMusEngObserverStub::IncomingSession( const TDesC& aOriginator,
+                                           const TDesC& /*aOriginatorIdentity*/ )
+    {
+    iIncomingSessionCalled = ETrue;
+    iIncomingSessionOriginator = aOriginator.Alloc();
+    
+    if ( !iIncomingSessionOriginator )
+        {
+        // TODO: Handle out of memory.
+        }
+    }
+
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//	
+void CMusEngObserverStub::StreamBuffering()
+    {
+    iStreamBufferingCalled = ETrue;
+    }
+
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//	
+void CMusEngObserverStub::AudioRoutingChanged( TBool aShowNote )
+    {
+    iAudioRoutingChangedCalled = ETrue;
+    iShowNote = aShowNote;
+    }
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//    
+TBool CMusEngObserverStub::AudioRouteChangeAllowed() const
+    {
+    return iAudioRouteChangeAllowed;
     }
     
 // -----------------------------------------------------------------------------
-// From MMusSipProfileUser
+// 
 // -----------------------------------------------------------------------------
-//   
-void CMusEngObserverStub::ProfileRegistered()
+//    
+void CMusEngObserverStub::VolumeChanged( TInt aVolume, TBool /*aAudioRouteChanged*/ )
     {
-    iProfileRegisteredCalled = ETrue;
+    iVolume = aVolume;
     }
 
 // ----- HELPERS ---------------------------------------------------------------
@@ -87,10 +429,42 @@ void CMusEngObserverStub::ProfileRegistered()
 //	
 TBool CMusEngObserverStub::IsReseted()
     {
-    return ( iUpdateTimerEventCalled == EFalse &&
-             iAudioRoutingChangedCalled == EFalse &&
-             iRoamingBetweenAPsAllowed == EFalse &&
-             iProfileRegisteredCalled == EFalse );
+    return ( !iUpdateTimerEventCalled &&
+             !iSessionEstablishedCalled &&
+             !iSessionTerminatedCalled &&
+             !iSessionConnectionLostCalled &&
+             !iSessionFailedCalled &&
+             !iStreamIdleCalled &&
+             !iStreamStreamingCalled &&
+             !iSessionTimeChangedCalled &&
+             !iInactivityTimeoutCalled &&
+             !iSessionRejectedCalled &&
+             !iSessionBadRequestCalled &&
+        	 !iSessionUnauthorizedCalled &&
+        	 !iSessionPaymentRequiredCalled &&
+        	 !iSessionRecipientNotFoundCalled &&
+        	 !iSessionProxyAuthenticationRequiredCalled &&
+        	 !iSessionRequestTimeOutCalled &&
+        	 !iSessionUnsupportedMediaTypeCalled &&
+        	 !iSessionBusyHereCalled  &&
+        	 !iSessionRequestCancelledCalled &&
+        	 !iDiskFullCalled &&
+        	 !iEndOfClipCalled &&
+        	 !iRewindFromEnd &&
+        	 !iTranscodingNeededCalled &&
+        	 !iTranscodingCompletedInitCalled &&
+        	 !iTranscodingCompletedFinalizeCalled &&
+        	 !iTranscodingFailedCalled &&
+        	 !iIncomingSessionPreNotificationCalled &&
+             !iIncomingSessionCalled &&
+             !iStreamBufferingCalled &&
+             !iAudioRoutingChangedCalled &&
+             iTranscodingProgressedPercentage == 0 &&
+             !iSessionTemporarilyNotAvailable &&
+             !iIncomingSessionOriginator &&
+             !iShowNote &&
+             iAudioRouteChangeAllowed &&
+             !iVolume );
     }
 
 // -----------------------------------------------------------------------------
@@ -100,472 +474,44 @@ TBool CMusEngObserverStub::IsReseted()
 void CMusEngObserverStub::Reset()
     {
     iUpdateTimerEventCalled = EFalse;
+    iSessionEstablishedCalled = EFalse;
+    iSessionTerminatedCalled = EFalse;
+    iSessionConnectionLostCalled = EFalse;
+    iSessionFailedCalled = EFalse;
+    iStreamIdleCalled = EFalse;
+    iStreamStreamingCalled = EFalse;
+    iSessionTimeChangedCalled = EFalse;
+    iInactivityTimeoutCalled = EFalse;
+    iSessionRejectedCalled = EFalse;
+	iSessionBadRequestCalled = EFalse;
+	iSessionUnauthorizedCalled = EFalse;
+	iSessionPaymentRequiredCalled = EFalse;
+	iSessionRecipientNotFoundCalled = EFalse;
+	iSessionProxyAuthenticationRequiredCalled = EFalse;
+	iSessionRequestTimeOutCalled = EFalse;
+	iSessionUnsupportedMediaTypeCalled = EFalse;
+	iSessionBusyHereCalled = EFalse;
+	iSessionRequestCancelledCalled = EFalse;
+	iDiskFullCalled = EFalse;
+	iEndOfClipCalled = EFalse;
+	iRewindFromEnd = EFalse;
+	iTranscodingNeededCalled = EFalse;
+    iTranscodingCompletedInitCalled = EFalse;
+    iTranscodingCompletedFinalizeCalled = EFalse;
+	iTranscodingFailedCalled = EFalse;
+	iIncomingSessionPreNotificationCalled = EFalse;
+    iIncomingSessionCalled = EFalse;
+    iStreamBufferingCalled = EFalse;
     iAudioRoutingChangedCalled = EFalse;
-    iRoamingBetweenAPsAllowed = EFalse;
-    iProfileRegisteredCalled = EFalse;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//  
-TMusEngDisplayHandlerStub::TMusEngDisplayHandlerStub()
-    {
-    Reset();
-    }
-
-void TMusEngDisplayHandlerStub::Reset()
-    {
-    iRect = TRect( 0, 0, 0, 0 );
-    iSecondaryRect = TRect( 0, 0, 0, 0 );
-    iIsEnabled = EFalse;
-    iOrientation = EPortrait;
-    iIsActive = ETrue;
-    }
-
-TRect TMusEngDisplayHandlerStub::Rect() const
-    {
-    return iRect;
-    }
-
-void TMusEngDisplayHandlerStub::SetRectL( const TRect& aRect )
-    {
-    iRect = aRect;
-    }
-            
-void TMusEngDisplayHandlerStub::SetSecondaryRectL( const TRect& aSecondaryRect )
-    {
-    iSecondaryRect = aSecondaryRect;
-    }
-            
-TRect TMusEngDisplayHandlerStub::SecondaryRect() const
-    {
-    return iSecondaryRect;
-    }
-            
-void TMusEngDisplayHandlerStub::EnableDisplayL( TBool aEnable )
-    {
-    iIsEnabled = aEnable;
-    }
-            
-TBool TMusEngDisplayHandlerStub::IsDisplayEnabled()
-    {
-    return iIsEnabled;
-    }
-            
-MMusEngDisplayHandler::TDisplayOrientation TMusEngDisplayHandlerStub::OrientationL()
-    {
-    return iOrientation;
-    }
-            
-void TMusEngDisplayHandlerStub::SetOrientationL( TDisplayOrientation aOrientation )
-    {
-    iOrientation = aOrientation;
-    }
-            
-TBool TMusEngDisplayHandlerStub::IsDisplayActive()
-    {
-    return iIsActive;
-    }
-    
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//        
-CLcSessionObserverStub::CLcSessionObserverStub()
-    {
-    } 
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-CLcSessionObserverStub::~CLcSessionObserverStub()
-    {
-    }
-        
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//     
-void CLcSessionObserverStub::StateChanged( MLcSession& aSession )
-    {
-    iCalledFunction = ESessionStateChanged;
-    iCurrentSession = &aSession;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-void CLcSessionObserverStub::StateChanged( MLcVideoPlayer& aPlayer )
-    {
-    iCalledFunction = EPlayerStateChanged;
-    iCurrentPlayer = &aPlayer;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-void CLcSessionObserverStub::Updated( MLcSession& aSession )
-    {
-    iCalledFunction = ESessionUpdated;
-    iCurrentSession = &aSession;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-void CLcSessionObserverStub::Updated( MLcVideoPlayer& aPlayer )
-    {
-    iCalledFunction = EPlayerUpdated;
-    iCurrentPlayer = &aPlayer;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-void CLcSessionObserverStub::Failed( MLcSession& aSession, TInt aError )
-    {
-    iCalledFunction = ESessionFailed;
-    iCurrentSession = &aSession;
-    iError = aError;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-void CLcSessionObserverStub::Failed( MLcVideoPlayer& aPlayer, TInt aError )
-    {
-    iCalledFunction = EPlayerFailed;
-    iCurrentPlayer = &aPlayer;
-    iError = aError;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-void CLcSessionObserverStub::SessionTimeChanged(
-    MLcSession& aSession,
-    const TTimeIntervalSeconds& aSeconds )
-    {
-    iCalledFunction = ESessionTimeChanged;
-    iCurrentSession = &aSession;
-    iSessionTime = aSeconds.Int();
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-void CLcSessionObserverStub::Reset()
-    {
-    iCalledFunction = EUnknown;
-    iCurrentSession = NULL;
-    iCurrentPlayer = NULL;
-    iSessionTime = 0;
-    iError = KErrNone;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-TBool CLcSessionObserverStub::IsReseted()
-    {
-    return ( iCalledFunction == EUnknown && 
-             iCurrentSession == NULL &&
-             iCurrentPlayer == NULL &&
-             iSessionTime == 0 &&
-             iError == KErrNone );
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-CLcUiProviderStub::CLcUiProviderStub()
-    {
-    
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-CLcUiProviderStub::~CLcUiProviderStub()
-    {
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-TBool CLcUiProviderStub::SelectRecipient( 
-    MDesCArray& aRecipientAddresses, 
-    TDes& aSelectedRecipientAddress )
-    {
-    iCalledFunction = ESelectRecipient;
-    if ( aRecipientAddresses.MdcaCount() > 0 )
-        {
-        aSelectedRecipientAddress = aRecipientAddresses.MdcaPoint( 0 );
-        }
-    return iSimulatedReturnValue;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-TBool CLcUiProviderStub::InputRecipient( TDes& aRecipientAddress )
-    {
-    iCalledFunction = EInputRecipient;
-    aRecipientAddress = iRecipient;
-    return iSimulatedReturnValue;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-void CLcUiProviderStub::HandleForegroundStatus( TBool aForeground )
-    {
-    iCalledFunction = EHandleForegroundStatus;
-    iForeground = aForeground;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-void CLcUiProviderStub::BlockUi( TBool /*aBlocked*/ )
-    {
-    }
-    
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-void CLcUiProviderStub::Reset()
-    {
-    iCalledFunction = EUnknown;
-    iRecipient.Set( KNullDesC );
-    iSimulatedReturnValue = EFalse;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-TLcWindowStub::TLcWindowStub() :
-    iEnabled( EFalse ),
-    iRect(),
-    iOrientation( MLcWindow::EPortrait )
-    {
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-void TLcWindowStub::EnableLcWindowL( TBool aEnable )
-    {
-    iEnabled = aEnable;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-TBool TLcWindowStub::IsLcWindowEnabled()
-    {
-    return iEnabled;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-void TLcWindowStub::SetLcWindowRectL( TRect aRect )
-    {
-    iRect = aRect;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-TRect TLcWindowStub::LcWindowRect()
-    {
-    delete HBufC::NewL( 1 );
-    return iRect;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-void TLcWindowStub::SetLcWindowOrientationL( TLcWindowOrientation aOrientation )
-    {
-    delete HBufC::NewL( 1 );
-    iOrientation = aOrientation;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-void TLcWindowStub::Reset()
-    {
-    iEnabled = EFalse;
-    iOrientation = MLcWindow::EPortrait;
-    iRect.SetSize( TSize() );
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-MLcWindow::TLcWindowOrientation TLcWindowStub::LcWindowOrientationL()
-    {
-    delete HBufC::NewL( 1 );
-    return iOrientation;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-TLcAudioControlStub::TLcAudioControlStub()
-    {
-    Reset();
-    }
-    
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-TBool TLcAudioControlStub::IsLcAudioMutedL()
-    {
-    delete HBufC::NewL( 1 );
-    return iAudioMuted;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-void TLcAudioControlStub::MuteLcAudioL( TBool aMute )
-    {
-    delete HBufC::NewL( 1 );
-    iAudioMuted = aMute;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-TBool TLcAudioControlStub::IsLcMicMutedL()
-    {
-    delete HBufC::NewL( 1 );
-    return iMicMuted;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-void TLcAudioControlStub::MuteLcMicL( TBool aMute )
-    {
-    delete HBufC::NewL( 1 );
-    iMicMuted = aMute;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-TBool TLcAudioControlStub::IsEnablingLcLoudspeakerAllowed()
-    {
-    return iEnablingLoudspeakerAllowed;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-void TLcAudioControlStub::EnableLcLoudspeakerL( TBool aEnabled )
-    {
-    delete HBufC::NewL( 1 );
-    iLoudspeakerEnabled = aEnabled;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-TBool TLcAudioControlStub::IsLcLoudspeakerEnabled()
-    {
-    return iLoudspeakerEnabled;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-TInt TLcAudioControlStub::LcVolumeL()
-    {
-    delete HBufC::NewL( 1 );
-    return iVolume;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-void TLcAudioControlStub::SetLcVolumeL( TInt aValue )
-    {
-    delete HBufC::NewL( 1 );
-    iVolume = aValue;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-void TLcAudioControlStub::IncreaseLcVolumeL()
-    {
-    delete HBufC::NewL( 1 );
-    iVolume++;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-void TLcAudioControlStub::DecreaseLcVolumeL()
-    {
-    delete HBufC::NewL( 1 );
-    iVolume--;
-    }
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-void TLcAudioControlStub::Reset()
-    {
-    iAudioMuted = EFalse;
-    iMicMuted = EFalse;
-    iEnablingLoudspeakerAllowed = EFalse;
-    iLoudspeakerEnabled = ETrue;
+    iTranscodingProgressedPercentage = 0;
+    delete iIncomingSessionOriginator;
+    iSessionTemporarilyNotAvailable = EFalse;   
+    iIncomingSessionOriginator = NULL;
+    iShowNote = EFalse;
+    iAudioRouteChangeAllowed = ETrue;
     iVolume = 0;
+    iDueUnknowCapas = EFalse;
+    iOrientationRefreshEndedCalled = EFalse;
     }
 
 
@@ -610,8 +556,3 @@ CSipProfileAlrController::CSipProfileAlrController(
     : iRegistry( aRegistry )
     {
     }
-
-void REComSession::DestroyedImplementation(TUid /*aDtorIDKey*/)
-    {
-    }
-

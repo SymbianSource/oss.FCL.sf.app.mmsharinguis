@@ -25,7 +25,6 @@
 #include "musmanagerserversessionobserver.h"
 #include "musavailabilitypluginmanagerobserver.h"
 #include "musmanagercommon.h"
-#include "musapplicationmanager.h"
 
 class CMusApplicationManager;
 class CMusAvailabilityPlugin;
@@ -99,34 +98,13 @@ public: // from MMusAvailabilityPluginManagerObserver
 
     virtual void AvailabilityChangedL( MultimediaSharing::TMusAvailabilityStatus aAvailability );
 
-    virtual void StartSharingWithUseCaseL( MultimediaSharing::TMusUseCase aUseCase );
-    
-private: // private methods
-    
-    TBool IsMusEnginePlugin();
-    
-    MultimediaSharing::TMusAvailabilityStatus Availability();
-    
-    TBool ApplicationAllowed();
-    
-    void PrepareForReceivedInviteL();
-    
-    void WriteSessionPropertiesL(
-            MultimediaSharing::TMusUseCase aUseCase,
-            MultimediaSharing::TMusAvailabilityStatus aStatus,
-            MDesCArray& aSessionParameters );
-    
-    void WriteSessionPropertiesL(
-            MultimediaSharing::TMusAvailabilityStatus aStatus,
-            MDesCArray& aSessionParameters );
+    virtual void StartLiveSharingL();
 
 private: // owned data:
 
     CMusAvailabilityPluginManager* iPluginManager;
 
     CMusApplicationManager* iApplicationManager;
-    
-    TBuf8<KMusMgrMaxPluginNameLen> iPluginName;
 
 private: // not owned data
 

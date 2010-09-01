@@ -31,24 +31,17 @@ class MultimediaSharingSettings
     {
 public:
 
-    static MusSettingsKeys::TOperatorVariant
-                MultimediaSharingSettings::OperatorVariantSettingL();
-                    
-    static MusSettingsKeys::TAuditoryNotification AuditoryNotificationSettingL();                
-				
-		static MusSettingsKeys::TPopupNotification PopupNotificationSettingL();		
     static MusSettingsKeys::TAutoRecord AutoRecordSettingL();
 
     static TInt VideoLocationSettingL();
 
     static HBufC* VideoFolderSettingLC();
 
-    static MusSettingsKeys::TVideoDirection VideoDirectionL();
 
     static HBufC* iVideoFolder;
     static MusSettingsKeys::TAutoRecord iAutoRecord;
     static TInt iVideoLocation;
-    static MusSettingsKeys::TVideoDirection iVideoDirection;
+
 
     };
 

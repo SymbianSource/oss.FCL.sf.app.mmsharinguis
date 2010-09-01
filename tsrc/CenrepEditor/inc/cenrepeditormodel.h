@@ -40,13 +40,22 @@ class COtherResources : public CBase
 		static COtherResources* NewL();
 		static COtherResources* NewLC();
 		~COtherResources();       
-    
-	public:
+    public :
     
         void SaveL();
+        void SaveCRKeyValuesL();
+        void ReadL();
+        void ReadCRKeyValuesL();
+        void ReadKeyValueL(CRepository* repository, const TInt & aKey , TInt & aVal);
+        void SetKeyValueL(CRepository* repository, const TInt & aKey , TInt & aVal);
+
+        void ReadKeyValueL(CRepository* repository, TInt aKey, TDes& aVal);
+        void SetKeyValueL(CRepository* repository, TInt aKey, const TDesC& aVal);
+
+    private : 
+        void HandleError(TBool aType ,TInt aError , TPtrC aKeyName );
 
     public:
-        
         TInt iActivation;
         TInt iOperatorVariant;
         TInt iAuditoryNotification;
@@ -60,22 +69,15 @@ class COtherResources : public CBase
         TInt iUiOrientation; 
         TInt iCapabilityQuery;  
         TInt iProductModeVariation;
-        TInt iEncodingDevice;
-        TInt iOnlyWithActiveCSCall;
-        TInt iOnlyIn3GNetwork;
+        TInt iEncodingDevice;  
+        TInt iPrivacyVariation;
+        TInt iDummy; 
+
         TBuf<NCentralRepositoryConstants::KMaxBinaryLength>  iEncoderInfo;
         TBuf<KMaxUidStringLength> iEncodingDeviceStr;
-        TInt iCameraUsage;
-        TInt iVideoDirection;
-        TInt iVideoBandwidth;
-        TInt iFastMode;
         
-    private:
+    private :
         void ConstructL();
-        void SetKeyValueL(const TUint32& aKey , TInt& aVal);
-        
-    private:
-        CRepository* iRepository;
 	};
 
 class CPhoneResources : public CBase
@@ -84,20 +86,22 @@ class CPhoneResources : public CBase
 		static CPhoneResources* NewL();
 		static CPhoneResources* NewLC();
 		~CPhoneResources();       
-    
-	public :
+    public :
         void SaveL();
-    
+        void ReadL();        
+    private :
+        void HandleError(TBool aType ,TInt aError , TPtrC aKeyName );
     public:
         TInt iCameraAvailability;
         TInt iKeypadAvailability;
         TInt iVideoPlayerAvailability;
         TInt iCameraInformation;
         TInt iKodiakPhoneCall;
+        TInt iDummy; 
 
     private :
         void ConstructL();
-        void SetValueL(TUid aCategory, TUint aKey, TInt aValue);
+        TInt SetValueL(TUid aCategory, TUint aKey, TInt aValue);
 	};
 
 class CMusApplication : public CBase

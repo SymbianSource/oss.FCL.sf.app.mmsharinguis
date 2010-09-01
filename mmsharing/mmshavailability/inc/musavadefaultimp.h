@@ -162,8 +162,7 @@ class CMusAvaDefaultImp : public CMusAvaInterface,
         virtual TBool MandatoryAvailability();
         virtual TBool ExtensionAvailability();
         virtual MMusAvaObserver::TAvailabilityStatus AvailabilityState( MMusAvaObserver::TAvailabilityName aAvailability );
-        virtual void PrepareForReceivedInviteL();
-        
+
     public: // from base class MMusAvaAvailabilityObserver
 
        /**
@@ -189,6 +188,8 @@ class CMusAvaDefaultImp : public CMusAvaInterface,
     virtual TBool Available( MMusAvaObserver::TAvailabilityName aAvailability );
         
     virtual MMusAvaObserver::TAvailabilityStatus AvailabilityPluginState();
+    
+    virtual void AvailabilitiesAbleToShowIndicator();
     
 
     private: // data

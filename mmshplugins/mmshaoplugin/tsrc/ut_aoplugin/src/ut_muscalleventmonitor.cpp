@@ -111,7 +111,7 @@ void UT_CMusCallEventMonitor::SetupL()
                      NMusSessionInformationApi::KMusCallEvent,
                      0 );
     
-    iCallEventMonitor = CMusCallEventMonitor::NewL( iCall, *this, *this );
+    iCallEventMonitor = CMusCallEventMonitor::NewL( iCall, *this );
     
     }
 
@@ -170,13 +170,17 @@ void UT_CMusCallEventMonitor::UT_CMusCallEventMonitor_RunLL()
 
 	// Test : Local Transfered. Means no call.
     iCallEventMonitor->Cancel();
+    RProperty::Get( NMusSessionInformationApi::KCategoryUid,
+                    NMusSessionInformationApi::KMusCallEvent,
+                    val );
+    TInt callEnt = val;
     RTelHelper::SetCallEvent( RMobileCall::ELocalTransfer );    
     iCallEventMonitor->RunL();
     RProperty::Get( NMusSessionInformationApi::KCategoryUid,
                      NMusSessionInformationApi::KMusCallEvent,
                      val );
                      
-    EUNIT_ASSERT( val==NMusSessionInformationApi::ENoCall);
+    EUNIT_ASSERT( callEnt==val );
     
 	// Test : Remote is on hold
     iCallEventMonitor->Cancel();
@@ -212,12 +216,16 @@ void UT_CMusCallEventMonitor::UT_CMusCallEventMonitor_RunLL()
     
 	// Test : Remote is on conference
     iCallEventMonitor->Cancel();
+    RProperty::Get( NMusSessionInformationApi::KCategoryUid,
+                    NMusSessionInformationApi::KMusCallEvent,
+                    val );
+    callEnt = val;
     RTelHelper::SetCallEvent( RMobileCall::ERemoteConferenceCreate );
     iCallEventMonitor->RunL();
     RProperty::Get( NMusSessionInformationApi::KCategoryUid,
                      NMusSessionInformationApi::KMusCallEvent,
                      val );
-    EUNIT_ASSERT( val==NMusSessionInformationApi::EConferenceCall);
+    EUNIT_ASSERT( callEnt==val );
 
 	// Test : Remote conference transfer
     iCallEventMonitor->Cancel();
@@ -226,7 +234,7 @@ void UT_CMusCallEventMonitor::UT_CMusCallEventMonitor_RunLL()
     RProperty::Get( NMusSessionInformationApi::KCategoryUid,
                      NMusSessionInformationApi::KMusCallEvent,
                      val );
-    EUNIT_ASSERT( val==NMusSessionInformationApi::EConferenceCall);//Previous state.   
+    EUNIT_ASSERT( val==callEnt );
 
     // remote is connected state and local resume
     iCallEventMonitor->Cancel();
@@ -292,18 +300,12 @@ void UT_CMusCallEventMonitor::UT_CMusCallEventMonitor_RunErrorL()
     {
     EUNIT_ASSERT( iCallEventMonitor );
     TInt error = KErrNotFound;
-    iCallEventMonitor->RunError(error);
+    EUNIT_ASSERT_EQUALS(iCallEventMonitor->RunError(error), KErrNone);
+    EUNIT_ASSERT_EQUALS(iCallEventMonitor->RunError(KErrNone), KErrNone);
     }
 
 
-// -----------------------------------------------------------------------------
-//  MusCallStateChanged from the MusCallStateObserver 
-// -----------------------------------------------------------------------------
-//
-void UT_CMusCallEventMonitor::MusCallStateChanged()
-    {
-    //NOP:
-    }   
+   
 
 
 //  TEST TABLE

@@ -210,7 +210,7 @@ void CMusWpItem::SetActivationCondition( const TDesC& aValue )
         }
     else if ( aValue == KMusWpActivationConditionInHome() )
         {
-        iActivationCondition = MusSettingsKeys::EActiveInHomeNetworks;
+        iActivationCondition = MusSettingsKeys::EAlwaysActive;
         }
     else if ( aValue == KMusWpActivationConditionNever )
         {

@@ -105,11 +105,6 @@ class CMusAvailabilityPluginManager : public CBase,
         void InvestigateAvailabilityL();
 
         /**
-        * 
-        */
-        void PrepareForReceivedInviteL();
-        
-        /**
         *
         */
         void InvitationReceivedL();
@@ -156,14 +151,14 @@ class CMusAvailabilityPluginManager : public CBase,
 	virtual void AvailabilityError( 
 		TAvailabilityName aName, TAvailabilityStatus aStatus );
 	
+	virtual void AvailabilitiesAbleToShowIndicator();
+	
 
     public:  //from MMusAvaSettingsObserver
     
         TApplicationState ApplicationState();
         
         TBool OptionAllowed();
-        
-        void StartApplicationL( MultimediaSharing::TMusUseCase aUseCase );
     
     private: // from base class MMusIndicatorObserver.
 

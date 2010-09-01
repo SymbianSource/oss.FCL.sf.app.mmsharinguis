@@ -46,35 +46,14 @@ EXPORT_C CMceDisplaySink* CMceDisplaySink::NewL( CMceManager& aManager )
 // 
 // -----------------------------------------------------------------------------
 //
-EXPORT_C CMceDisplaySink* CMceDisplaySink::NewLC( CMceManager& /*aManager*/ )
+EXPORT_C CMceDisplaySink* CMceDisplaySink::NewLC( CMceManager& aManager )
     {
     CMceDisplaySink* self = new (ELeave) CMceDisplaySink();
     CleanupStack::PushL( self );
+    self->ConstructL( &aManager );
     return self;
     }
 
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-EXPORT_C CMceDisplaySink* CMceDisplaySink::NewL()
-    {
-    CMceDisplaySink* self = CMceDisplaySink::NewLC();
-    CleanupStack::Pop( self );
-    return self;
-    }
-
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-EXPORT_C CMceDisplaySink* CMceDisplaySink::NewLC()
-    {
-    CMceDisplaySink* self = new( ELeave )CMceDisplaySink();
-    CleanupStack::PushL( self );
-    return self;
-    }
 
 // -----------------------------------------------------------------------------
 // 
@@ -221,3 +200,17 @@ CMceDisplaySink::CMceDisplaySink()
     {
     iType = KMceDisplaySink;
     }
+
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
+void CMceDisplaySink::ConstructL( CMceManager* /*aManager*/ )
+    {
+    }
+
+
+
+
+

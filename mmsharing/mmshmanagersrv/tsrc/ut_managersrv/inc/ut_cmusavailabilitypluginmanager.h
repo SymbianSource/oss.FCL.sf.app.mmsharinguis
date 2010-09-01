@@ -77,7 +77,7 @@ public:
      *     
      * @since S60 v3.2
      */
-    virtual void StartSharingWithUseCaseL( MultimediaSharing::TMusUseCase aUseCase );
+    virtual void StartLiveSharingL();
 
 private:
 
@@ -115,7 +115,6 @@ private:
     void UT_CMusAvailabilityPluginManager_TelNumberLCL();
     void UT_CMusAvailabilityPluginManager_ContactNameLCL();
     void UT_CMusAvailabilityPluginManager_IndicateAvailabilityLL();
-    void UT_CMusAvailabilityPluginManager_PrepareForReceivedInviteLL();
 
 private: // data
 

@@ -19,27 +19,17 @@
 //  INTERNAL INCLUDES
 #include "etelmm.h"
 #include "e32property.h"
-#include "centralrepository.h"
 #include "ut_mustsypropertymonitor.h"
 #include "mustsypropertymonitor.h"
-#include "muscallmonitor.h"
-#include "musvoipcallmonitor.h"
-#include "muscallconferencemonitor.h"
+#include "mussettings.h"
+
 
 //  SYSTEM INCLUDES
 #include <digia/eunit/eunitmacros.h>
 #include <CTSYDomainPSKeys.h>
-#include <telremotepartyinformationpskeys.h>
-
 
 _LIT(KTelNo,"1234");
-_LIT( KTestProvideName, "VoIP" );
-_LIT( KDefaultSipUri, "sip:default@uri" );
 
-TName cs_call_1(_L("cs_call_1"));
-TName cs_call_2(_L("cs_call_2"));
-TName voip_call_1(_L("voip_call_1"));
-TName voip_call_2(_L("voip_call_2"));
 
 // -----------------------------------------------------------------------------
 //
@@ -103,13 +93,34 @@ void UT_CMusTsyPropertyMonitor::ConstructL()
 //
 void UT_CMusTsyPropertyMonitor::SetupL()
     {
-    iMusCentralRepository = CRepository::NewL( MusSettingsKeys::KRepositoryUid );
     RProperty::Set( NMusSessionInformationApi::KCategoryUid,
                      NMusSessionInformationApi::KMusCallEvent,
                      0 );
+    MultimediaSharingSettings::SetPropertyValueL(
+                                                MusSettingsKeys::KPrivacyExchange,
+                                                MusSettingsKeys::EPrivacy );                                                   
     
-    iMusTsyPropertyMonitor = CMusTsyPropertyMonitor::NewL( iPhone, *this );
+    iMusTsyPropertyMonitor = CMusTsyPropertyMonitor::NewL( iPhone );
     iMusTsyPropertyMonitor->iPropertyEvent.iPValue = EPSCTsyCallStateUninitialized;
+    
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusTsyPropertyMonitor::Setup2L()
+    {
+    RProperty::Set( NMusSessionInformationApi::KCategoryUid,
+                     NMusSessionInformationApi::KMusCallEvent,
+                     0 );
+    MultimediaSharingSettings::SetPropertyValueL(
+                                                MusSettingsKeys::KPrivacyExchange,
+                                                MusSettingsKeys::ENoPrivacy );                                                   
+    
+    iMusTsyPropertyMonitor = CMusTsyPropertyMonitor::NewL( iPhone );
+    iMusTsyPropertyMonitor->iPropertyEvent.iPValue = EPSCTsyCallStateUninitialized;
+    
     }
 
 
@@ -119,8 +130,6 @@ void UT_CMusTsyPropertyMonitor::SetupL()
 //
 void UT_CMusTsyPropertyMonitor::Teardown()
     {
-    delete iMusCentralRepository;
-    iMusCentralRepository = NULL;
     delete iMusTsyPropertyMonitor;
     PropertyHelper::Close();
     iPhone.Close();
@@ -135,23 +144,30 @@ void UT_CMusTsyPropertyMonitor::Teardown()
 //
 // -----------------------------------------------------------------------------
 //
+void UT_CMusTsyPropertyMonitor::UT_CMusTsyPropertyMonitor_NewLL()
+    {
+    EUNIT_ASSERT( iMusTsyPropertyMonitor);
+    EUNIT_ASSERT( MultimediaSharingSettings::PrivacySetting() );//feature is on by default
+    EUNIT_ASSERT( iMusTsyPropertyMonitor->iClirMonitor );
+    
+    MultimediaSharingSettings::SetPropertyValueL( MusSettingsKeys::KPrivacyExchange,
+                                                  MusSettingsKeys::ENoPrivacy );
+    delete iMusTsyPropertyMonitor;
+    iMusTsyPropertyMonitor = NULL;
+    
+    iMusTsyPropertyMonitor = CMusTsyPropertyMonitor::NewL( iPhone );
+    EUNIT_ASSERT( !MultimediaSharingSettings::PrivacySetting() );//feature is on by default
+    EUNIT_ASSERT( !iMusTsyPropertyMonitor->iClirMonitor );
+    
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
 void UT_CMusTsyPropertyMonitor::UT_CMusTsyPropertyMonitor_RunLL()
     {
-
-    // Set intial call type too unintialiazed.
-    if ( RProperty::Set( KPSUidCtsyCallInformation,KCTsyCallType,
-                             EPSCTsyCallTypeUninitialized ))
-        {
-        User::Leave( KErrNoMemory );
-        }
-    // Set intial call count
-    if ( RProperty::Set( NMusSessionInformationApi::KCategoryUid,
-                         NMusSessionInformationApi::KMusCallCount,
-                         0 ) != KErrNone )
-        {
-        User::Leave( KErrNoMemory );
-        }
-    
     EUNIT_ASSERT( iMusTsyPropertyMonitor);
     TInt val = KErrNone;
     
@@ -209,12 +225,13 @@ void UT_CMusTsyPropertyMonitor::UT_CMusTsyPropertyMonitor_RunLL()
 
     iMusTsyPropertyMonitor->iPropertyEvent.iPValue = EPSCTsyCallStateHold;
     iMusTsyPropertyMonitor->SetStateL( NMusSessionInformationApi::ENoCall );
-	if ( RProperty::Set( NMusSessionInformationApi::KCategoryUid,
-                     NMusSessionInformationApi::KMusCallCount,
-                     1 ) != KErrNone )
-        {
-        User::Leave( KErrNoMemory );
-        }
+    if ( RProperty::Set( NMusSessionInformationApi::KCategoryUid,
+                 NMusSessionInformationApi::KMusCallCount,
+                 1 ) != KErrNone )
+    {
+    User::Leave( KErrNoMemory );
+    }
+    
     //simulate multicall scenario
     TName callName(_L("Voice1"));
     iMusTsyPropertyMonitor->AddCallMonitorL( callName );
@@ -289,155 +306,65 @@ void UT_CMusTsyPropertyMonitor::UT_CMusTsyPropertyMonitor_RemoveCallMonitorL()
 //
 // -----------------------------------------------------------------------------
 //
-void UT_CMusTsyPropertyMonitor::UT_CMusTsyPropertyMonitor_MonitorCSCallLL()
+void UT_CMusTsyPropertyMonitor::UT_CMusTsyPropertyMonitor_MonitorCallLL()
     {
-    if ( RProperty::Set( NMusSessionInformationApi::KCategoryUid,
-                            NMusSessionInformationApi::KMusCallCount,
-                            0 ) != KErrNone )
-        {
-        User::Leave( KErrNoMemory );
-        }
     RTelHelper::SetCallStatus( (RMobileCall::TMobileCallStatus)RCall::EStatusIdle );
-    EUNIT_ASSERT( iMusTsyPropertyMonitor->iCallMonitorArray.Count() == 0 );    
-    iMusTsyPropertyMonitor->MonitorCSCallL();
     EUNIT_ASSERT( iMusTsyPropertyMonitor->iCallMonitorArray.Count() == 0 );
     
-    RTelHelper::SetCallStatus( (RMobileCall::TMobileCallStatus)RCall::EStatusHangingUp );    
-    iMusTsyPropertyMonitor->MonitorCSCallL();
+    iMusTsyPropertyMonitor->MonitorCallL();
     EUNIT_ASSERT( iMusTsyPropertyMonitor->iCallMonitorArray.Count() == 0 );
     
-    RTelHelper::SetCallStatus( (RMobileCall::TMobileCallStatus)RCall::EStatusConnected );    
-    iMusTsyPropertyMonitor->MonitorCSCallL();
-    EUNIT_ASSERT( iMusTsyPropertyMonitor->iCallMonitorArray.Count() == 1 );
+    RTelHelper::SetCallStatus( (RMobileCall::TMobileCallStatus)RCall::EStatusHangingUp );
     
-    iMusTsyPropertyMonitor->iCallMonitorArray.ResetAndDestroy();
-    RTelHelper::SetCallStatus( (RMobileCall::TMobileCallStatus)RCall::EStatusAnswering );    
-    iMusTsyPropertyMonitor->MonitorCSCallL();
-    EUNIT_ASSERT( iMusTsyPropertyMonitor->iCallMonitorArray.Count() == 1 );
-
-    iMusTsyPropertyMonitor->iCallMonitorArray.ResetAndDestroy();
-    RTelHelper::SetCallStatus( (RMobileCall::TMobileCallStatus)RCall::EStatusIdle );
-    iMusTsyPropertyMonitor->MonitorCSCallL();    
+    iMusTsyPropertyMonitor->MonitorCallL();
     EUNIT_ASSERT( iMusTsyPropertyMonitor->iCallMonitorArray.Count() == 0 );
     
-    }
-
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusTsyPropertyMonitor::UT_CMusTsyPropertyMonitor_MonitorVoipCallLL()
-    {    
-    EUNIT_ASSERT( iMusTsyPropertyMonitor->iVoipCallMonitorArray.Count() == 0 );
+    RTelHelper::SetCallStatus( (RMobileCall::TMobileCallStatus)RCall::EStatusConnected );
     if ( RProperty::Set( NMusSessionInformationApi::KCategoryUid,
                      NMusSessionInformationApi::KMusCallCount,
                      0 ) != KErrNone )
         {
         User::Leave( KErrNoMemory );
         }
+    iMusTsyPropertyMonitor->MonitorCallL();
+    EUNIT_ASSERT( iMusTsyPropertyMonitor->iCallMonitorArray.Count() == 1 );
     
-    // State connected    
-    TPSCTsyCallState callState = EPSCTsyCallStateConnected;    
-    iMusTsyPropertyMonitor->MonitorVoipCallL( callState );
-    EUNIT_ASSERT( iMusTsyPropertyMonitor->iVoipCallMonitorArray.Count() == 1 );
+    RTelHelper::SetCallStatus( (RMobileCall::TMobileCallStatus)RCall::EStatusAnswering );
+    //already exist
+    iMusTsyPropertyMonitor->MonitorCallL();
+    EUNIT_ASSERT( iMusTsyPropertyMonitor->iCallMonitorArray.Count() == 1 );
     
-    // State answering
-    iMusTsyPropertyMonitor->iVoipCallMonitorArray.ResetAndDestroy();
-    EUNIT_ASSERT( iMusTsyPropertyMonitor->iVoipCallMonitorArray.Count() == 0 );
-    callState = EPSCTsyCallStateAnswering ;    
-    iMusTsyPropertyMonitor->MonitorVoipCallL( callState );
-    EUNIT_ASSERT( iMusTsyPropertyMonitor->iVoipCallMonitorArray.Count() == 1 );
+
+    RTelHelper::SetCallStatus( (RMobileCall::TMobileCallStatus)RCall::EStatusUnknown );
     
-    // State disconnecting ( Atleast one previous voip call is present )    
-    callState = EPSCTsyCallStateDisconnecting;    
-    iMusTsyPropertyMonitor->MonitorVoipCallL( callState );
-    EUNIT_ASSERT( iMusTsyPropertyMonitor->iVoipCallMonitorArray.Count() == 0 );
+    iMusTsyPropertyMonitor->MonitorCallL();
+    EUNIT_ASSERT( iMusTsyPropertyMonitor->iCallMonitorArray.Count() == 0 );
+
+    RTelHelper::SetCallStatus( (RMobileCall::TMobileCallStatus)RCall::EStatusIdle );
+    iMusTsyPropertyMonitor->MonitorCallL();
+    
+    EUNIT_ASSERT( iMusTsyPropertyMonitor->iCallMonitorArray.Count() == 0 );
     }
 
-
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
-void UT_CMusTsyPropertyMonitor::UT_CMusTsyPropertyMonitor_MonitorCallLL()
+void UT_CMusTsyPropertyMonitor::UT_CMusTsyPropertyMonitor_MonitorCallL_2L()
     {
-    TInt tmp = 0;
+    EUNIT_ASSERT( iMusTsyPropertyMonitor->iCallMonitorArray.Count() == 0 );
+    EUNIT_ASSERT( !iMusTsyPropertyMonitor->iClirMonitor );
+    
+    RTelHelper::SetCallStatus( (RMobileCall::TMobileCallStatus)RCall::EStatusConnected );
     if ( RProperty::Set( NMusSessionInformationApi::KCategoryUid,
-                         NMusSessionInformationApi::KMusCallCount,
-                         0 ) != KErrNone )
-       {
-       User::Leave( KErrNoMemory );
-       }
-    iMusTsyPropertyMonitor->iCallMonitorArray.ResetAndDestroy();
-    iMusTsyPropertyMonitor->iVoipCallMonitorArray.ResetAndDestroy();
-    // Test : Cs call and call state is connected
-    TPSCTsyCallState callState = EPSCTsyCallStateConnected;
-    RTelHelper::SetCallStatus( (RMobileCall::TMobileCallStatus)RCall::EStatusConnected );    
-    TPSCTsyCallType callType = EPSCTsyCallTypeCSVoice;
-    iMusTsyPropertyMonitor->MonitorCallL(callState,callType);    
-    EUNIT_ASSERT( iMusTsyPropertyMonitor->iCallMonitorArray.Count() == 1 );
-    EUNIT_ASSERT( iMusTsyPropertyMonitor->iVoipCallMonitorArray.Count() == 0 );
-    RProperty::Get( NMusSessionInformationApi::KCategoryUid,
-                          NMusSessionInformationApi::KMusCallEvent,
-                          tmp );
-    EUNIT_ASSERT( tmp==NMusSessionInformationApi::ECallConnected);  
-    
-    // Test : unknown call type   
-    iMusTsyPropertyMonitor->iCallMonitorArray.ResetAndDestroy();              
-    callType = EPSCTsyCallTypeNone;
-    iMusTsyPropertyMonitor->MonitorCallL(callState,callType);    
-    EUNIT_ASSERT( iMusTsyPropertyMonitor->iCallMonitorArray.Count() == 0 );
-    EUNIT_ASSERT( iMusTsyPropertyMonitor->iVoipCallMonitorArray.Count() == 0 );
-    RProperty::Get( NMusSessionInformationApi::KCategoryUid,
-                          NMusSessionInformationApi::KMusCallEvent,
-                          tmp );
-    EUNIT_ASSERT( tmp==NMusSessionInformationApi::ENoCall);    
-    
-    // Test : Voip call and call state is connected and factory settings not found  
-    // if key not found then it should behave default = AllowedAllCalls.    
-    callState = EPSCTsyCallStateConnected;      
-    callType = EPSCTsyCallTypeVoIP;
-    iMusTsyPropertyMonitor->MonitorCallL(callState,callType);    
-    EUNIT_ASSERT( iMusTsyPropertyMonitor->iCallMonitorArray.Count() == 0 );
-    EUNIT_ASSERT( iMusTsyPropertyMonitor->iVoipCallMonitorArray.Count() == 1 );
-    RProperty::Get( NMusSessionInformationApi::KCategoryUid,
-                          NMusSessionInformationApi::KMusCallEvent,
-                          tmp );
-    EUNIT_ASSERT( tmp==NMusSessionInformationApi::ECallConnected);    
-    
-    
-    // Test : Voip call and call state is connected and factory settings set to 
-    // all call supported.
-    iMusTsyPropertyMonitor->iVoipCallMonitorArray.ResetAndDestroy();
-    iMusCentralRepository->Set(MusSettingsKeys::KAllowOnlyWithActiveCSCall,
-                                                      MusSettingsKeys::EAllowedAllCalls);
-    callState = EPSCTsyCallStateConnected;      
-    callType = EPSCTsyCallTypeVoIP;
-    iMusTsyPropertyMonitor->MonitorCallL(callState,callType);    
-    EUNIT_ASSERT( iMusTsyPropertyMonitor->iCallMonitorArray.Count() == 0 );
-    EUNIT_ASSERT( iMusTsyPropertyMonitor->iVoipCallMonitorArray.Count() == 1 );
-    RProperty::Get( NMusSessionInformationApi::KCategoryUid,
-                          NMusSessionInformationApi::KMusCallEvent,
-                          tmp );
-    EUNIT_ASSERT( tmp==NMusSessionInformationApi::ECallConnected);    
-        
-    // Test : Voip call and call state is connected but factory settings are cs only
-    iMusTsyPropertyMonitor->iVoipCallMonitorArray.ResetAndDestroy();
-    iMusCentralRepository->Set(MusSettingsKeys::KAllowOnlyWithActiveCSCall,MusSettingsKeys::EAllowedCSOnly);    
-    callState = EPSCTsyCallStateConnected;      
-    callType = EPSCTsyCallTypeVoIP;
-    iMusTsyPropertyMonitor->MonitorCallL(callState,callType);    
-    EUNIT_ASSERT( iMusTsyPropertyMonitor->iCallMonitorArray.Count() == 0 );
-    if ( iMusTsyPropertyMonitor->iVoipCallMonitorArray.Count() != 0 )
+                     NMusSessionInformationApi::KMusCallCount,
+                     0 ) != KErrNone )
         {
-        User::Leave( KErrNoMemory ); // Call was not removed because of memory running out was "silenty" handled.
+        User::Leave( KErrNoMemory );
         }
-    EUNIT_ASSERT( iMusTsyPropertyMonitor->iVoipCallMonitorArray.Count() == 0 ); 
-    RProperty::Get( NMusSessionInformationApi::KCategoryUid,
-                          NMusSessionInformationApi::KMusCallEvent,
-                          tmp );
-    EUNIT_ASSERT( tmp==NMusSessionInformationApi::ENoCall);    
+    iMusTsyPropertyMonitor->MonitorCallL();
+    EUNIT_ASSERT( iMusTsyPropertyMonitor->iCallMonitorArray.Count() == 1 );
+    
     }
 
 // -----------------------------------------------------------------------------
@@ -460,190 +387,8 @@ void UT_CMusTsyPropertyMonitor::UT_CMusTsyPropertyMonitor_RemoveUnUsedCallMonito
     iMusTsyPropertyMonitor->RemoveUnUsedCallMonitors();
     EUNIT_ASSERT( iMusTsyPropertyMonitor->iCallMonitorArray.Count()==0 );    
     }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_CMusTsyPropertyMonitor::UT_CMusTsyPropertyMonitor_CheckCallCriteriaLL()
-    {
-    if ( RProperty::Set( NMusSessionInformationApi::KCategoryUid,
-                            NMusSessionInformationApi::KMusCallCount,
-                            0 ) != KErrNone )
-          {
-          User::Leave( KErrNoMemory );
-          }
-    TInt tmp = 0;
-    iMusTsyPropertyMonitor->iCallMonitorArray.ResetAndDestroy();
-    iMusTsyPropertyMonitor->iVoipCallMonitorArray.ResetAndDestroy();
-
-    User::LeaveIfError( RProperty::Set( KPSUidTelRemotePartyInformation,
-                                        KTelCLINumber,
-                                        _L( "sip:somebody@somewhere" ) ) );
    
-    // Test : no cs call , one voip call    
-    iMusTsyPropertyMonitor->AddVoipCallMonitorL( voip_call_1 );
-    iMusTsyPropertyMonitor->CheckCallCriteriaL();
-    RProperty::Get( NMusSessionInformationApi::KCategoryUid,
-                             NMusSessionInformationApi::KMusCallEvent,
-                             tmp );
-    EUNIT_ASSERT( tmp==NMusSessionInformationApi::ECallConnected);
-    // Test : one cs call , multiple voip calls
-    iMusTsyPropertyMonitor->iCallMonitorArray.ResetAndDestroy();
-    iMusTsyPropertyMonitor->iVoipCallMonitorArray.ResetAndDestroy();
-    iMusTsyPropertyMonitor->AddCallMonitorL( cs_call_1 );
-    iMusTsyPropertyMonitor->AddVoipCallMonitorL( voip_call_1 );
-    iMusTsyPropertyMonitor->AddVoipCallMonitorL( voip_call_2 );
-    iMusTsyPropertyMonitor->CheckCallCriteriaL();
-    RProperty::Get( NMusSessionInformationApi::KCategoryUid,
-                                 NMusSessionInformationApi::KMusCallEvent,
-                                 tmp );
-    EUNIT_ASSERT( tmp==NMusSessionInformationApi::ECallHold);
-    // Test: multiple cs call, one voip call
-    iMusTsyPropertyMonitor->iCallMonitorArray.ResetAndDestroy();
-    iMusTsyPropertyMonitor->iVoipCallMonitorArray.ResetAndDestroy();
-    iMusTsyPropertyMonitor->AddCallMonitorL( cs_call_1 );
-    iMusTsyPropertyMonitor->AddCallMonitorL( cs_call_2 );
-    iMusTsyPropertyMonitor->AddVoipCallMonitorL( voip_call_1 );
-    iMusTsyPropertyMonitor->CheckCallCriteriaL();
-    RProperty::Get( NMusSessionInformationApi::KCategoryUid,
-                                 NMusSessionInformationApi::KMusCallEvent,
-                                 tmp );
-    EUNIT_ASSERT( tmp==NMusSessionInformationApi::ECallHold);    
-    
-    // Test : multiple cs call , multiple voip calls
-    iMusTsyPropertyMonitor->iCallMonitorArray.ResetAndDestroy();
-    iMusTsyPropertyMonitor->iVoipCallMonitorArray.ResetAndDestroy();  
-    iMusTsyPropertyMonitor->AddCallMonitorL( cs_call_1 );
-    iMusTsyPropertyMonitor->AddCallMonitorL( cs_call_2 );
-    iMusTsyPropertyMonitor->AddVoipCallMonitorL( voip_call_1 );
-    iMusTsyPropertyMonitor->AddVoipCallMonitorL( voip_call_2 );
-    iMusTsyPropertyMonitor->CheckCallCriteriaL();
-    RProperty::Get( NMusSessionInformationApi::KCategoryUid,
-                                  NMusSessionInformationApi::KMusCallEvent,
-                                  tmp );
-     EUNIT_ASSERT( tmp==NMusSessionInformationApi::ECallHold);       
-    // Test : one cs call , one voip call
-     iMusTsyPropertyMonitor->iCallMonitorArray.ResetAndDestroy();
-     iMusTsyPropertyMonitor->iVoipCallMonitorArray.ResetAndDestroy();  
-     iMusTsyPropertyMonitor->AddCallMonitorL( cs_call_1 );     
-     iMusTsyPropertyMonitor->AddVoipCallMonitorL( voip_call_1 );  
-     iMusTsyPropertyMonitor->CheckCallCriteriaL();
-     RProperty::Get( NMusSessionInformationApi::KCategoryUid,
-                                    NMusSessionInformationApi::KMusCallEvent,
-                                    tmp );
-     EUNIT_ASSERT( tmp==NMusSessionInformationApi::ECallHold);
-     // Test: one cs call , no voip call
-     iMusTsyPropertyMonitor->iCallMonitorArray.ResetAndDestroy();
-     iMusTsyPropertyMonitor->iVoipCallMonitorArray.ResetAndDestroy(); 
-     RTelHelper::SetCallStatus( RMobileCall::EStatusConnected );
-     iMusTsyPropertyMonitor->AddCallMonitorL( cs_call_1 );    
-     iMusTsyPropertyMonitor->CheckCallCriteriaL();
-     RProperty::Get( NMusSessionInformationApi::KCategoryUid,
-                         NMusSessionInformationApi::KMusCallEvent,
-                         tmp );
-     EUNIT_ASSERT( tmp==NMusSessionInformationApi::ECallConnected);
-    }
 
-
-
-// -----------------------------------------------------------------------------
-// UT_CMusTsyPropertyMonitor::UT_CMusTsyPropertyMonitor_IsDataReadyLL()
-// Test to query from corresponding monitors if they are ready.
-// -----------------------------------------------------------------------------
-//
-
-
-void UT_CMusTsyPropertyMonitor::UT_CMusTsyPropertyMonitor_IsDataReadyLL()
-    {
-    TBool dataReady = EFalse;
-
-    // Test-1: CS Call Ready:
-    iMusTsyPropertyMonitor->iCallMonitorArray.ResetAndDestroy();
-    iMusTsyPropertyMonitor->iVoipCallMonitorArray.ResetAndDestroy();
-
-    if ( RProperty::Set( NMusSessionInformationApi::KCategoryUid,
-                            NMusSessionInformationApi::KMusCallCount,
-                            0 ) != KErrNone )
-        {
-        User::Leave( KErrNoMemory );
-        }
-
-    User::LeaveIfError( RProperty::Set( NMusSessionInformationApi::KCategoryUid,
-                                            NMusSessionInformationApi::KMusTelNumber,
-                                            KTelNo ));
-
-    User::LeaveIfError( RProperty::Set( NMusSessionInformationApi::KCategoryUid,
-                                            NMusSessionInformationApi::KMusCallDirection,
-                                            NMusSessionInformationApi::ECallOrginated ));
-    
-    iMusTsyPropertyMonitor->AddCallMonitorL( cs_call_1 );
-    dataReady = iMusTsyPropertyMonitor->IsDataReadyL();
-    EUNIT_ASSERT_EQUALS( dataReady, ETrue )
-    
-    // Test-2: CS Call NotReady: 
-    User::LeaveIfError( RProperty::Set( NMusSessionInformationApi::KCategoryUid,
-                                            NMusSessionInformationApi::KMusTelNumber,
-                                            KNullDesC ));
-    
-    dataReady = iMusTsyPropertyMonitor->IsDataReadyL();
-    EUNIT_ASSERT_EQUALS( dataReady, EFalse )
-
-    // Test-3 VoIP Call Ready
-    iMusTsyPropertyMonitor->iCallMonitorArray.ResetAndDestroy();
-    iMusTsyPropertyMonitor->AddVoipCallMonitorL( voip_call_1 );
-    
-    User::LeaveIfError( RProperty::Set(
-                              NMusSessionInformationApi::KCategoryUid,
-                              NMusSessionInformationApi::KMusTelNumber, 
-                              KDefaultSipUri ));
-
-    User::LeaveIfError(RProperty::Set( 
-                              NMusSessionInformationApi::KCategoryUid,
-                              NMusSessionInformationApi::KMUSCallProvider,
-                              KTestProvideName ));
-    
-    dataReady = iMusTsyPropertyMonitor->IsDataReadyL();
-    EUNIT_ASSERT_EQUALS( dataReady, ETrue )
-    
-    
-    // Test-4 VoIP Call Not Ready
-    User::LeaveIfError( RProperty::Set(
-                          NMusSessionInformationApi::KCategoryUid,
-                          NMusSessionInformationApi::KMUSCallProvider, 
-                          KNullDesC ));
-    
-    dataReady = iMusTsyPropertyMonitor->IsDataReadyL();
-
-    EUNIT_ASSERT_EQUALS( dataReady, EFalse )
-
-    // Test-5: Conference Case
-    iMusTsyPropertyMonitor->iCallMonitorArray.ResetAndDestroy();
-    iMusTsyPropertyMonitor->iVoipCallMonitorArray.ResetAndDestroy(); 
-
-    iMusTsyPropertyMonitor->AddVoipCallMonitorL( voip_call_1 );
-    iMusTsyPropertyMonitor->AddVoipCallMonitorL( voip_call_2 );
-    
-    dataReady = iMusTsyPropertyMonitor->IsDataReadyL();
-    EUNIT_ASSERT_EQUALS( dataReady, EFalse )
-    iMusTsyPropertyMonitor->iVoipCallMonitorArray.ResetAndDestroy();
-    
-    // Test-3 Handling conference case.
-    iMusTsyPropertyMonitor->iConferenceMonitor->iConfStatus = RMobileConferenceCall::EConferenceActive;
-    dataReady = iMusTsyPropertyMonitor->IsDataReadyL();
-    EUNIT_ASSERT_EQUALS( dataReady, ETrue )
-    iMusTsyPropertyMonitor->iConferenceMonitor->iConfStatus = RMobileConferenceCall::EConferenceIdle;
-    }
-
-
-// -----------------------------------------------------------------------------
-//  MusCallStateChanged from the MusCallStateObserver 
-// -----------------------------------------------------------------------------
-//
-void UT_CMusTsyPropertyMonitor::MusCallStateChanged()
-    {
-    // NOP
-    }
 
 //  TEST TABLE
 
@@ -651,6 +396,14 @@ EUNIT_BEGIN_TEST_TABLE(
     UT_CMusTsyPropertyMonitor,
     "UT_CMusTsyPropertyMonitor",
     "UNIT" )
+
+    
+EUNIT_TEST(
+    "NewL - test",
+    "CMusTsyPropertyMonitor",
+    "NewL",
+    "FUNCTIONALITY",
+    SetupL, UT_CMusTsyPropertyMonitor_NewLL, Teardown)
 
 EUNIT_TEST(
     "RunL - test",
@@ -674,7 +427,7 @@ EUNIT_TEST(
     SetupL, UT_CMusTsyPropertyMonitor_RunErrorL, Teardown)
 
 EUNIT_TEST(
-    "UT_CMusTsyPropertyMonitor_RemoveUnUsedCallMonitorsL",
+    "RemoveUnUsedCallMonitorsL",
     "CMusCallStatusMonitor",
     "RemoveUnUsedCallMonitors",
     "FUNCTIONALITY",
@@ -700,35 +453,14 @@ EUNIT_TEST(
     "MonitorCallL",
     "FUNCTIONALITY",
     SetupL, UT_CMusTsyPropertyMonitor_MonitorCallLL, Teardown)
-    
-EUNIT_TEST(
-    "MonitorCsCallL - test",
-    "CMusTsyPropertyMonitor",
-    "MonitorCsCallL",
-    "FUNCTIONALITY",
-    SetupL, UT_CMusTsyPropertyMonitor_MonitorCSCallLL, Teardown)
-    
-EUNIT_TEST(
-    "MonitorVoipCallL - test",
-    "CMusTsyPropertyMonitor",
-    "MonitorVoipCallL",
-    "FUNCTIONALITY",
-    SetupL, UT_CMusTsyPropertyMonitor_MonitorVoipCallLL, Teardown)
 
 EUNIT_TEST(
-    "CheckCallCriteriaL - test",
+    "MonitorCallL no clir - test",
     "CMusTsyPropertyMonitor",
-    "CheckCallCriteriaL",
+    "MonitorCallL",
     "FUNCTIONALITY",
-    SetupL, UT_CMusTsyPropertyMonitor_CheckCallCriteriaLL, Teardown)
-    
-EUNIT_TEST(
-    "IsDataReadyL - test",
-    "CMusTsyPropertyMonitor",
-    "IsDataReadyL",
-    "FUNCTIONALITY",
-    SetupL, UT_CMusTsyPropertyMonitor_IsDataReadyLL, Teardown)
-    
+    Setup2L, UT_CMusTsyPropertyMonitor_MonitorCallL_2L, Teardown)
+
 EUNIT_END_TEST_TABLE
 
 //  END OF FILE

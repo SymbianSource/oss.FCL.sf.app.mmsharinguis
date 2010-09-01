@@ -16,21 +16,21 @@
 */
 
 
-// USER INCLUDES 
+// USER INCLUDES
 #include "musengsessiondurationtimer.h"
 #include "musengsessiondurationtimerobserver.h"
 
 
 
 // -----------------------------------------------------------------------------
-// 
+//
 // -----------------------------------------------------------------------------
 //
-CMusEngSessionDurationTimer* CMusEngSessionDurationTimer::NewL(  
-						MMusEngSessionDurationTimerObserver& aObserver )
+CMusEngSessionDurationTimer* CMusEngSessionDurationTimer::NewL(
+                        MMusEngSessionDurationTimerObserver& aObserver )
     {
-    CMusEngSessionDurationTimer* self = 
-    		new (ELeave) CMusEngSessionDurationTimer( aObserver );
+    CMusEngSessionDurationTimer* self =
+            new (ELeave) CMusEngSessionDurationTimer( aObserver );
     CleanupStack::PushL( self );
     self->ConstructL();
     CleanupStack::Pop( self) ;
@@ -39,74 +39,31 @@ CMusEngSessionDurationTimer* CMusEngSessionDurationTimer::NewL(
 
 
 // -----------------------------------------------------------------------------
-// 
+//
 // -----------------------------------------------------------------------------
 //
 CMusEngSessionDurationTimer::~CMusEngSessionDurationTimer()
     {
-    Cancel();
-    iTimer.Close();
     }
 
 
 // -----------------------------------------------------------------------------
-// 
+//
 // -----------------------------------------------------------------------------
 //
-void CMusEngSessionDurationTimer::Start(TInt aDelay )
-    {    
-    if ( !IsActive() )
-        {
-        iTimer.After( iStatus, aDelay );
-        SetActive();    	  	   	    
-        }
-    
-    }
-
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-CMusEngSessionDurationTimer::CMusEngSessionDurationTimer( 
-						MMusEngSessionDurationTimerObserver& aObserver ) 
-	: CActive( CActive::EPriorityStandard ), 
-	  iObserver( aObserver)
+CMusEngSessionDurationTimer::CMusEngSessionDurationTimer(
+                        MMusEngSessionDurationTimerObserver& aObserver )
+    : iObserver( aObserver)
     {
     }
 
 
 // -----------------------------------------------------------------------------
-// 
+//
 // -----------------------------------------------------------------------------
 //
 void CMusEngSessionDurationTimer::ConstructL()
     {
-    CActiveScheduler::Add( this );
-    User::LeaveIfError( iTimer.CreateLocal() );
-    }
-
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-void CMusEngSessionDurationTimer::RunL()
-    {
-    if ( iStatus.Int() == KErrNone )
-        {
-		iObserver.UpdateTimerEvent();
-        }
-    }
-
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-void CMusEngSessionDurationTimer::DoCancel()
-    {
-    iTimer.Cancel();
     }
 
 

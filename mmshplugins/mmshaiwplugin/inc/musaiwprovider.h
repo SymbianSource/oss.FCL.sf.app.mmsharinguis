@@ -144,9 +144,6 @@ private: // helper functions
     void OperatorVariantStartUpL( TFileName&    aFileName,
     							 CAiwMenuPane& aMenuPane,
                                  TInt          aIndex );
-    
-    void FastModeStartUpL( 
-        TFileName& aFileName, CAiwMenuPane& aMenuPane, TInt aIndex );
 
     void ShowErrorNoteL( TInt aError );
 
@@ -155,16 +152,9 @@ private: // helper functions
     HBufC8* ErrorNoteText8L( TInt aError, RResourceFile& aResourceFile );
 
     void DoInitialiseL();
+	
+    void DoInitializeMenuPaneL( CAiwMenuPane& aMenuPane, TInt aIndex );
 
-    TBool AvailabilityOk( 
-        MultimediaSharing::TMusAvailabilityStatus aAvailability ) const;
-    
-    TBool HiddenFromFastSwapL();
-    
-    TBool IsFastStartupModeL();
-    
-    void StartApplicationL( 
-        CMusManager& aManager, MultimediaSharing::TMusUseCase aUseCase );
     
 private: // data
 
@@ -176,8 +166,6 @@ private: // data
     
     /** To Differentiate Error and Warning Notes */
 	TBool iIsWarning ;
-	
-	CMusIndicatorApi* iIndicator;
     };
 
 

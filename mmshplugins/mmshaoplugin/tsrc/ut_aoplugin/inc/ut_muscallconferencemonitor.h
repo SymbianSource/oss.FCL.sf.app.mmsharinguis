@@ -72,7 +72,6 @@ NONSHARABLE_CLASS( UT_CMusCallConferenceMonitor ): public CEUnitTestSuiteClass
         void UT_CMusCallConferenceMonitor_DoCancelL();
         void UT_CMusCallConferenceMonitor_RunErrorL();
         void UT_CMusCallConferenceMonitor_MonitorCallLL();
-        void UT_CMusCallConferenceMonitor_GetConfStatus();
         
     private:    // Data
         

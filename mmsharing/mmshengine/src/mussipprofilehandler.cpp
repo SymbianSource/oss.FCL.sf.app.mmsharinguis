@@ -12,9 +12,6 @@
 * Contributors:
 *
 * Description:  Utilities to get and set profile used with SWIS.
-*  Part of     : Mus For S60 v3.2
-*  Description : Utilities to get and set profile used with SWIS.
-*  Version     : %version: 11.1.5 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -34,6 +31,8 @@
 #include <sipprofilealrcontroller.h>
 #include <uri8.h>
 
+
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -47,6 +46,7 @@ CMusSipProfileHandler* CMusSipProfileHandler::NewL( MMusSipProfileUser& aUser )
     CleanupStack::Pop( self);
     return self;
     }
+
 
 // -----------------------------------------------------------------------------
 //
@@ -75,6 +75,7 @@ void CMusSipProfileHandler::ConstructL()
     MUS_LOG( "mus: [ENGINE]  <- CMusSipProfileHandler::ConstructL()" )
     }
 
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -87,6 +88,7 @@ CMusSipProfileHandler::~CMusSipProfileHandler()
     delete iSip;
     MUS_LOG( "mus: [ENGINE]     CMusSipProfileHandler::~CMusSipProfileHandler()" )
     }
+
 
 // -----------------------------------------------------------------------------
 //
@@ -103,10 +105,15 @@ void CMusSipProfileHandler::CreateProfileL( TUint32 aSipProfileId )
         {
         profile = iProfileRegistry->DefaultProfileL();
         }
-       
+    CleanupStack::PushL( profile );
+    TBool profileRegistered = EFalse;   
+    User::LeaveIfError( profile->GetParameter( KSIPProfileRegistered,
+                                                   profileRegistered  ) );
+    CleanupStack::Pop( profile );   
     delete iSipProfile;
     iSipProfile = profile;
     }
+
 
 // -----------------------------------------------------------------------------
 //
@@ -116,6 +123,76 @@ CSIPProfile* CMusSipProfileHandler::Profile()
     {
     return iSipProfile;
     }
+
+#if 0 //TODO: should this be removed?
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+CSIPProfile& CMusSipProfileHandler::SipProfileL( TInt aSipProfileId )
+    {
+    MUS_LOG1( "mus: [ENGINE]     -> CMusSipProfileHandler::SipProfileL(),\
+              od #%d", aSipProfileId )
+
+    if ( !iSipProfile )
+        {        
+        if ( aSipProfileId != 0 )
+            {
+            iSipProfile = iProfileRegistry->ProfileL( aSipProfileId );
+            }
+        else
+            {
+            iSipProfile = iProfileRegistry->DefaultProfileL();
+            }
+        }
+
+    // The parameter val indicates if the profile can be immediately
+    // used for creating a session, or if the client must wait for
+    // the profile to be registered.
+    TBool profileRegistered = EFalse;
+    
+    User::LeaveIfError( iSipProfile->GetParameter( KSIPProfileRegistered,
+                                                   profileRegistered  ) );
+                                                       
+    if ( !profileRegistered )
+        {
+
+        #if (defined (__WINS__) || defined(__WINSCW__))
+        
+        iProfileRegistry->EnableL( *iSipProfile, *this );            
+
+        User::LeaveIfError( iSipProfile->GetParameter( KSIPProfileRegistered,
+                                                       profileRegistered  ) );
+                                               
+        if( !profileRegistered )
+            {
+            CActiveScheduler::Start();
+
+            User::LeaveIfError( iSipProfile->GetParameter( 
+                                                    KSIPProfileRegistered,
+                                                    profileRegistered  ) );
+            
+            if ( !profileRegistered )
+                {
+                User::Leave( KErrNotReady );
+                }
+            }
+
+        #else
+
+        User::Leave( KErrNotReady );
+
+        #endif
+
+        }
+    
+        
+    MUS_LOG( "mus: [ENGINE]  <- CMusSipProfileHandler::SipProfileL()" )
+    
+    return *iSipProfile;
+    }
+#endif
+
 
 // -----------------------------------------------------------------------------
 //
@@ -129,9 +206,10 @@ CUri8* CMusSipProfileHandler::UserFromProfileLC()
 
     const MDesC8Array* aors = NULL;
     User::LeaveIfError( iSipProfile->GetParameter( KSIPRegisteredAors, aors ) );
-    __ASSERT_ALWAYS( aors && aors->MdcaCount() > 0, 
-                     User::Leave( KErrArgument ) );
-    
+    if( !aors || aors->MdcaCount() <= 0 ) 
+        {    
+        User::Leave( KErrArgument );            
+        }
     TUriParser8 parser;
     User::LeaveIfError( parser.Parse( aors->MdcaPoint( 0 ) ) );
     MUS_LOG( "mus: [ENGINE]  <- CMusSipProfileHandler::UserFromProfileLC()" )
@@ -151,50 +229,13 @@ void CMusSipProfileHandler::RefreshIapAvailabilities()
 
 
 // -----------------------------------------------------------------------------
-// This function should never be called before creating a profile, but such
-// a situation will be considered as pending registration.
-// -----------------------------------------------------------------------------
-//
-TBool CMusSipProfileHandler::IsRegistered()
-    {
-    MUS_LOG( "mus: [ENGINE]  -> CMusSipProfileHandler::IsRegistered()" )
-    
-    TBool profileRegistered = EFalse;   
-    if ( iSipProfile ) 
-        {
-        iSipProfile->GetParameter( KSIPProfileRegistered, profileRegistered  );  
-        }
-    
-    MUS_LOG1( "mus: [ENGINE]  <- CMusSipProfileHandler::IsRegistered( %d )",
-              profileRegistered )
-    
-    return profileRegistered;
-    }
-
-
-// -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
 void CMusSipProfileHandler::ProfileRegistryEventOccurred(
-    TUint32 aProfileId,
-    MSIPProfileRegistryObserver::TEvent aEvent )
+    TUint32 /*aProfileId*/,
+    MSIPProfileRegistryObserver::TEvent /*aEvent*/ )
     {
-    if ( iSipProfile && aProfileId == ProfileId() )
-        {
-        switch ( aEvent )
-            {
-            case MSIPProfileRegistryObserver::EProfileRegistered:
-                {
-                iUser.ProfileRegistered();
-                break;
-                }
-            default:
-                {
-                break;
-                }
-            }
-        }
     }
 
 
@@ -207,7 +248,6 @@ void CMusSipProfileHandler::ProfileRegistryErrorOccurred(
     TInt /*aError*/)
     {
     }
-
 
 // -----------------------------------------------------------------------------
 //
@@ -256,6 +296,7 @@ void CMusSipProfileHandler::IncomingRequest(
     delete aTransaction; 
     }
 
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -264,6 +305,7 @@ void CMusSipProfileHandler::IncomingResponse(
     CSIPClientTransaction& /*aTransaction*/)
     {
     }
+
 
 // -----------------------------------------------------------------------------
 //
@@ -274,6 +316,7 @@ void CMusSipProfileHandler::IncomingResponse(
     CSIPDialogAssocBase& /*aDialogAssoc*/)
     {
     }
+
 
 // -----------------------------------------------------------------------------
 //
@@ -287,6 +330,7 @@ void CMusSipProfileHandler::IncomingResponse(
     delete aDialogAssoc;     
     }
 
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -296,6 +340,7 @@ void CMusSipProfileHandler::IncomingResponse(
     CSIPRegistrationBinding& /*aRegistration*/ )
     {
     }
+    
 
 // -----------------------------------------------------------------------------
 //
@@ -307,6 +352,7 @@ void CMusSipProfileHandler::ErrorOccured(
     {
     }
 
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -317,6 +363,7 @@ void CMusSipProfileHandler::ErrorOccured(
     CSIPRegistrationBinding& /*aRegistration*/ )
     {
     }
+
 
 // -----------------------------------------------------------------------------
 //
@@ -329,6 +376,7 @@ void CMusSipProfileHandler::ErrorOccured(
     {
     }
 
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -338,6 +386,7 @@ void CMusSipProfileHandler::ErrorOccured(
     CSIPRefresh& /*aSIPRefresh*/ )
     {
     }
+
 
 // -----------------------------------------------------------------------------
 //
@@ -349,6 +398,7 @@ void CMusSipProfileHandler::ErrorOccured(
     {
     }
 
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -359,6 +409,7 @@ void CMusSipProfileHandler::ErrorOccured(
     {
     }
 
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -368,14 +419,17 @@ void CMusSipProfileHandler::InviteCompleted(
     {
     }
 
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
 void CMusSipProfileHandler::InviteCanceled( 
-    CSIPServerTransaction& /*aTransaction*/ )
+                                    CSIPServerTransaction& /*aTransaction*/ )
     {
+    MUS_LOG( "mus: [ENGINE]      CMusSipProfileHandler::CSIPServerTransaction")
     }
+
 
 // -----------------------------------------------------------------------------
 //
@@ -385,6 +439,7 @@ void CMusSipProfileHandler::ConnectionStateChanged(
     CSIPConnection::TState /*aState*/ )
     {
     }
+
 
 // -----------------------------------------------------------------------------
 // CMusSipProfileHandler::AlrEvent

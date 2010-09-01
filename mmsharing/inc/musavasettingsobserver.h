@@ -24,8 +24,6 @@
 #include <badesca.h>
 #include <e32base.h>
 
-#include "musmanagercommon.h"
-
 /**
  *  Defines setting interface for the MusAvailability Plug-in
  *
@@ -50,8 +48,6 @@ public:
     virtual TApplicationState ApplicationState() = 0;
     
     virtual TBool OptionAllowed() = 0;
-    
-    virtual void StartApplicationL( MultimediaSharing::TMusUseCase aUseCase ) = 0;
 
     };
 

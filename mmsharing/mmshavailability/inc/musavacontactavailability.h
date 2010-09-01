@@ -22,16 +22,19 @@
 #include "musavaavailability.h"
 #include "musunittesting.h"
 #include "mussettingskeys.h"
-
+#include "muscallmonitorobserver.h"
 #include <badesca.h>
+#include <PbkFields.hrh>
 
 class MMusAvaAvailabilityObserver;
 class MMusAvaObserver;
 class CMusAvaSharedObject;
+class CPbkContactEngine;
 class CContactIdArray;
+class CPbkContactItem;
 class CContactItem;
 class CMusAvaSettingsImp;
-
+class CMusAvaCallEventMonitor;
 
 /**
  *  Implemets register vailability.
@@ -40,7 +43,8 @@ class CMusAvaSettingsImp;
  *
  *  @lib musavailabilityplugin.lib
  */
-class CMusAvaContactAvailability : public CMusAvaAvailability
+class CMusAvaContactAvailability : public CMusAvaAvailability,
+								   public MMusCallMonitorObserver
 	{
 
 public:
@@ -95,23 +99,118 @@ public: // from base class CMusAvaAvailability
      * @return Name of *this* availability.
      */
     virtual MMusAvaObserver::TAvailabilityName Name();
-
-private:
-
-     /**
-     *
-     */
-    TBool ActiveCallL( CDesCArrayFlat*& aContactsArray );
-
-
-     /**
-     *
-     */
-    TBool ResolveAddressesL( const TDesC& aContactId,
-                             CDesCArrayFlat*& aContactsArray );
-
+    // from class MMusCallMonitorObserver
+    /**
+    * Call connected
+    *
+    * @since  S60 v3.2
+    * @return
+    */
+    virtual void CallConnectedL( const TDesC& aTelNumber );
     
+    /**
+    * Call on hold
+    *
+    * @since  S60 v3.2
+    * @return
+    */
+    virtual void CallHoldL( const TDesC& aTelNumber );
+
+    /**
+    * Call disconnected
+    *
+    * @since  S60 v3.2
+    * @return
+    */
+    virtual void NoActiveCallL();
+
+    /**
+    * Call on hold
+    *
+    * @since  S60 v3.2
+    * @return
+    */
+    virtual void ConferenceCallL();
+    
+    
+    virtual void ConferenceCallLTerminated();
+
 private:
+
+     /**
+     *
+     */
+	TBool ActiveCallL( CDesCArrayFlat*& aContactsArray );
+
+     /**
+     *
+     */
+    TBool ContactL( CContactIdArray*& aContactIdArray,
+                    CPbkContactEngine& aPbkContactEngine );
+
+     /**
+     *
+     */
+    void UpdateContactNameL( CContactItem& aContactItem );
+
+     /**
+     *
+     */
+    TInt ContactArrayL(  CContactIdArray*& aContactIdArray,
+                         CPbkContactEngine& aPbkContactEngine );
+
+     /**
+     *
+     */
+    TInt ContactItem( CContactIdArray& aContactIdArray,
+                       CPbkContactItem*& aPbkContactItem,
+                       CPbkContactEngine& aPbkContactEngine );
+
+    /**
+    *
+    */
+    TBool ContactId( CPbkContactItem& aPbkItem,
+                    TPbkFieldId aTPbkFieldId  );
+    /**
+    *
+    */
+    TPbkFieldId ContactIdSearch( CContactIdArray& aContactIdArray,
+                                  CPbkContactEngine& aPbkContactEngine );
+
+     /**
+     *
+     */
+    TBool PhoneResolutionL( CPbkContactItem& aPbkItem,
+                            CDesCArrayFlat*& aContactsArray  );
+
+
+     /**
+     *
+     */
+    TBool ResolveAddressesL( CPbkContactItem& aPbkItem,
+                             CDesCArrayFlat*& aContactsArray,
+                             TPbkFieldId aTPbkFieldId  );
+
+     /**
+     *
+     */
+    TBool ResolvePhoneContactL( CPbkContactItem& aPbkItem,
+                                CDesCArrayFlat*& aContactsArray );
+
+    /* -------------------------------------------------------------------------
+    *  Checks that whether aDesItem present in aDesArray.
+    *  Utility function used to avoid dublication.
+    * -------------------------------------------------------------------------
+    */
+    TBool IsExistAlready(const MDesCArray& aDesArray,
+                                          const TDesC& aDesItem);
+
+private:
+    /**
+    * iPhoneStatus subscribe property resource. When the resource 
+    * changed somewhere,availability will get notification.
+    */
+    CMusAvaCallEventMonitor* iPhoneStatus;
 
      /**
      * resolved contact name

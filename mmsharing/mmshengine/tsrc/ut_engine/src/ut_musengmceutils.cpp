@@ -97,6 +97,16 @@ void UT_MusEngMceUtils::ConstructL()
     CEUnitTestSuiteClass::ConstructL();
     }
 
+    
+// -----------------------------------------------------------------------------
+// From MMusSipProfileUser
+// -----------------------------------------------------------------------------
+//
+TBool UT_MusEngMceUtils::IsRoamingBetweenAPsAllowed()
+    {
+    return ETrue; // Dummy implementation
+    }
+
 
 // -----------------------------------------------------------------------------
 //
@@ -105,9 +115,7 @@ void UT_MusEngMceUtils::ConstructL()
 void UT_MusEngMceUtils::SetupL()
     {
     iManager = CMceManager::NewL( TUid::Null(), NULL );
-    iObserver = new( ELeave ) CMusEngObserverStub;
-    iObserver->iRoamingBetweenAPsAllowed = ETrue;
-    iProfileHandler = CMusSipProfileHandler::NewL( *iObserver );
+    iProfileHandler = CMusSipProfileHandler::NewL( *this );
     
     iProfileHandler->CreateProfileL( KSipProfileId );
     iEmptySession = CMceOutSession::NewL( *iManager, 
@@ -154,10 +162,8 @@ void UT_MusEngMceUtils::SetupL()
     // Video part
     CMceVideoStream* videoIn  = CMceVideoStream::NewLC();
     
-    CMceDisplaySink* receivingDisplay = CMceDisplaySink::NewLC( *iManager );
-    videoIn->AddSinkL( receivingDisplay );
+    videoIn->AddSinkL( CMceDisplaySink::NewLC( *iManager ) );
     CleanupStack::Pop();
-    iReceivingDisplay = receivingDisplay;
     
     videoIn->SetSourceL( CMceRtpSource::NewLC() );
     CleanupStack::Pop();
@@ -166,56 +172,6 @@ void UT_MusEngMceUtils::SetupL()
     CleanupStack::Pop( videoIn );
     }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_MusEngMceUtils::Setup2L()
-    {
-    iManager = CMceManager::NewL( TUid::Null(), NULL );
-    iObserver = new( ELeave ) CMusEngObserverStub;
-    iObserver->iRoamingBetweenAPsAllowed = ETrue;
-    iProfileHandler = CMusSipProfileHandler::NewL( *iObserver );
-    
-    iProfileHandler->CreateProfileL( KSipProfileId );
-    iEmptySession = CMceOutSession::NewL( *iManager, 
-                                          *iProfileHandler->Profile(),
-                                          KTestRecipientSipUri8() );
-    
-    // Contruct an outgoing video sesssion                                 
-    iVideoOutSession = CMceOutSession::NewL( *iManager,
-                                             *iProfileHandler->Profile(),
-                                             KTestRecipientSipUri8() );
-    
-    
-    CMceVideoStream* videoOut = CMceVideoStream::NewLC();
-    
-    videoOut->AddSinkL( CMceRtpSink::NewLC() );
-    CleanupStack::Pop();
-    
-    videoOut->AddSinkL( CMceDisplaySink::NewLC( *iManager ) );
-    CleanupStack::Pop();
-    
-    videoOut->SetSourceL( CMceCameraSource::NewLC( *iManager ) );
-    CleanupStack::Pop();
-    
-    // Video part
-    CMceVideoStream* videoIn  = CMceVideoStream::NewLC();
-    
-    CMceDisplaySink* receivingDisplay = CMceDisplaySink::NewLC( *iManager );
-    videoIn->AddSinkL( receivingDisplay );
-    CleanupStack::Pop();
-    iReceivingDisplay = receivingDisplay;
-    
-    videoIn->SetSourceL( CMceRtpSource::NewLC() );
-    CleanupStack::Pop();
-    
-    videoOut->BindL( videoIn );
-    CleanupStack::Pop( videoIn );
-    
-    iVideoOutSession->AddStreamL( videoOut );
-    CleanupStack::Pop( videoOut );
-    }
 
 // -----------------------------------------------------------------------------
 //
@@ -226,11 +182,8 @@ void UT_MusEngMceUtils::Teardown()
     delete iEmptySession;
     delete iVideoOutSession;
     delete iVideoInSession;
-    iVideoInSession = NULL;
     delete iProfileHandler;
-    delete iObserver;
     delete iManager;
-    iReceivingDisplay = NULL; // Not owned
     }
 
 
@@ -243,7 +196,7 @@ void UT_MusEngMceUtils::Teardown()
 //
 // -----------------------------------------------------------------------------
 //
-void UT_MusEngMceUtils::UT_IsVideoInStreamL()
+void UT_MusEngMceUtils::UT_MusEngMceUtils_IsVideoInStreamL()
     {
     // Stream 0 is audio stream
     EUNIT_ASSERT( !MusEngMceUtils::IsVideoInStream( 
@@ -268,31 +221,7 @@ void UT_MusEngMceUtils::UT_IsVideoInStreamL()
 //
 // -----------------------------------------------------------------------------
 //
-void UT_MusEngMceUtils::UT_IsVideoOutStreamL()
-    {
-    // Stream 0 is audio stream
-    EUNIT_ASSERT( !MusEngMceUtils::IsVideoOutStream( 
-                                        *iVideoInSession->Streams()[0] ) )
-    
-    // No sink
-    CMceVideoStream* videoStream = CMceVideoStream::NewLC();
-    EUNIT_ASSERT( !MusEngMceUtils::IsVideoOutStream( *videoStream ) )
-    CleanupStack::PopAndDestroy( videoStream );
-    
-    // display sink
-    EUNIT_ASSERT( !MusEngMceUtils::IsVideoOutStream( 
-                                        *iVideoInSession->Streams()[1] ) )
-                                        
-    // Video outstream
-    EUNIT_ASSERT( MusEngMceUtils::IsVideoOutStream( 
-                                        *iVideoOutSession->Streams()[0] ) )
-    }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_MusEngMceUtils::UT_IsAudioInStreamL()
+void UT_MusEngMceUtils::UT_MusEngMceUtils_IsAudioInStreamL()
     {
     // Stream 0 is video stream
     EUNIT_ASSERT( !MusEngMceUtils::IsAudioInStream( 
@@ -319,7 +248,7 @@ void UT_MusEngMceUtils::UT_IsAudioInStreamL()
 //
 // -----------------------------------------------------------------------------
 //
-void UT_MusEngMceUtils::UT_GetVideoOutStreamLL()
+void UT_MusEngMceUtils::UT_MusEngMceUtils_GetVideoOutStreamLL()
     {
     // No streams, must fail
     EUNIT_ASSERT_SPECIFIC_LEAVE(
@@ -344,30 +273,15 @@ void UT_MusEngMceUtils::UT_GetVideoOutStreamLL()
                 MusEngMceUtils::GetVideoOutStreamL( *iVideoInSession ),
                 KErrNotFound )
     
-    // One incoming video stream with bound outstream, must find bound stream
-    CMceVideoStream* boundVideoOut = CMceVideoStream::NewLC();
-    boundVideoOut->AddSinkL( CMceRtpSink::NewLC() );
-    CleanupStack::Pop();
-    boundVideoOut->SetSourceL( CMceCameraSource::NewLC( *iManager ) );
-    CleanupStack::Pop();
-    reinterpret_cast<CMceVideoStream*>( 
-            iVideoInSession->Streams()[ 1 ] )->BindL( boundVideoOut );
-    CleanupStack::Pop( boundVideoOut );
-    CMceVideoStream* videoStream = MusEngMceUtils::GetVideoOutStreamL( 
-                                                    *iVideoInSession );
-    EUNIT_ASSERT( videoStream )
-    EUNIT_ASSERT( videoStream->Type() == KMceVideo )
-    EUNIT_ASSERT( videoStream->Sinks().Count() == 1 ) // Rtp
-    EUNIT_ASSERT( videoStream->Sinks()[0]->Type() == KMceRTPSink )
-
     // One outgoing video stream, succeeds
-    videoStream = MusEngMceUtils::GetVideoOutStreamL( *iVideoOutSession );
+    CMceVideoStream* videoStream = MusEngMceUtils::GetVideoOutStreamL( 
+                                                        *iVideoOutSession );
     EUNIT_ASSERT( videoStream )
     EUNIT_ASSERT( videoStream->Type() == KMceVideo )
     EUNIT_ASSERT( videoStream->Sinks().Count() == 2 ) // Rtp, Display
     EUNIT_ASSERT( videoStream->Sinks()[0]->Type() == KMceRTPSink )
     EUNIT_ASSERT( videoStream->Sinks()[1]->Type() == KMceDisplaySink )
-        
+    
     // Add another stream
     CMceVideoStream* videoOut = CMceVideoStream::NewLC();
     
@@ -392,7 +306,7 @@ void UT_MusEngMceUtils::UT_GetVideoOutStreamLL()
 //
 // -----------------------------------------------------------------------------
 //
-void UT_MusEngMceUtils::UT_GetVideoInStreamLL()
+void UT_MusEngMceUtils::UT_MusEngMceUtils_GetVideoInStreamLL()
     {
     // No streams, must fail
     EUNIT_ASSERT_SPECIFIC_LEAVE( 
@@ -448,7 +362,7 @@ void UT_MusEngMceUtils::UT_GetVideoInStreamLL()
 //
 // -----------------------------------------------------------------------------
 //
-void UT_MusEngMceUtils::UT_GetRecordingStreamL()
+void UT_MusEngMceUtils::UT_MusEngMceUtils_GetRecordingStreamL()
     {
     CMceVideoStream* recordingStream = 
                         MusEngMceUtils::GetRecordingStream( *iVideoInSession );
@@ -478,7 +392,7 @@ void UT_MusEngMceUtils::UT_GetRecordingStreamL()
 // From stream
 // -----------------------------------------------------------------------------
 //
-void UT_MusEngMceUtils::UT_GetMediaSinkFromStreamL()
+void UT_MusEngMceUtils::UT_MusEngMceUtils_GetMediaSinkL()
     {    
     CMceMediaSink* sink = MusEngMceUtils::GetMediaSink( 
                                             *(iVideoInSession->Streams()[0]), 
@@ -498,7 +412,7 @@ void UT_MusEngMceUtils::UT_GetMediaSinkFromStreamL()
 // From stream
 // -----------------------------------------------------------------------------
 //
-void UT_MusEngMceUtils::UT_GetMediaSinkLFromStreamL()
+void UT_MusEngMceUtils::UT_MusEngMceUtils_GetMediaSinkLL()
     {                                                      
     CMceMediaSink* sink = NULL;
     EUNIT_ASSERT_SPECIFIC_LEAVE(
@@ -516,7 +430,7 @@ void UT_MusEngMceUtils::UT_GetMediaSinkLFromStreamL()
 // From session
 // -----------------------------------------------------------------------------
 //
-void UT_MusEngMceUtils::UT_GetMediaSinkFromSessionL()
+void UT_MusEngMceUtils::UT_MusEngMceUtils_GetMediaSink2L()
     {
     CMceMediaSink* sink = MusEngMceUtils::GetMediaSink( *iEmptySession, 
                                                         KMceRTPSink );
@@ -533,7 +447,7 @@ void UT_MusEngMceUtils::UT_GetMediaSinkFromSessionL()
 // From session
 // -----------------------------------------------------------------------------
 //
-void UT_MusEngMceUtils::UT_GetMediaSinkLFromSessionL()
+void UT_MusEngMceUtils::UT_MusEngMceUtils_GetMediaSinkL2L()
     {
     CMceMediaSink* sink = NULL;
     EUNIT_ASSERT_SPECIFIC_LEAVE( MusEngMceUtils::GetMediaSinkL( *iEmptySession, 
@@ -549,7 +463,7 @@ void UT_MusEngMceUtils::UT_GetMediaSinkLFromSessionL()
 //
 // -----------------------------------------------------------------------------
 //
-void UT_MusEngMceUtils::UT_GetCameraLL()
+void UT_MusEngMceUtils::UT_MusEngMceUtils_GetCameraLL()
     {
     // empty session fails
     EUNIT_ASSERT_SPECIFIC_LEAVE( MusEngMceUtils::GetCameraL( *iEmptySession ),
@@ -583,7 +497,7 @@ void UT_MusEngMceUtils::UT_GetCameraLL()
 //
 // -----------------------------------------------------------------------------
 //
-void UT_MusEngMceUtils::UT_GetFileSourceLL()
+void UT_MusEngMceUtils::UT_MusEngMceUtils_GetFileSourceLL()
     {
     // empty session fails
     EUNIT_ASSERT_SPECIFIC_LEAVE( 
@@ -624,7 +538,7 @@ void UT_MusEngMceUtils::UT_GetFileSourceLL()
 //
 // -----------------------------------------------------------------------------
 //
-void UT_MusEngMceUtils::UT_GetDisplayL()
+void UT_MusEngMceUtils::UT_MusEngMceUtils_GetDisplayL()
     {
     CMceDisplaySink* display = MusEngMceUtils::GetDisplay( *iEmptySession );
     
@@ -641,7 +555,7 @@ void UT_MusEngMceUtils::UT_GetDisplayL()
 //
 // -----------------------------------------------------------------------------
 //
-void UT_MusEngMceUtils::UT_GetDisplayLL()
+void UT_MusEngMceUtils::UT_MusEngMceUtils_GetDisplayLL()
     {
     CMceDisplaySink* display = NULL;
     
@@ -659,7 +573,7 @@ void UT_MusEngMceUtils::UT_GetDisplayLL()
 //
 // -----------------------------------------------------------------------------
 //
-void UT_MusEngMceUtils::UT_AddDisplayLL()
+void UT_MusEngMceUtils::UT_MusEngMceUtils_AddDisplayLL()
     {
    
     TRect rect( 110, 111, 112, 113 );
@@ -703,14 +617,6 @@ void UT_MusEngMceUtils::UT_AddDisplayLL()
     EUNIT_ASSERT_EQUALS( display->DisplayRectL(), newRect );
     
     CleanupStack::PopAndDestroy( videoStream );
-    
-    // Add disabled display
-    CMceVideoStream* videoStream2 = CMceVideoStream::NewLC();
-    MusEngMceUtils::AddDisplayL( *videoStream2, *iManager, rect, ETrue );
-    EUNIT_ASSERT_EQUALS( videoStream2->Sinks().Count(), 1 )
-    EUNIT_ASSERT_EQUALS( videoStream2->Sinks()[0]->Type(), KMceDisplaySink )
-    EUNIT_ASSERT( !videoStream2->Sinks()[0]->IsEnabled() );
-    CleanupStack::PopAndDestroy( videoStream2 );
     }
 
 
@@ -718,7 +624,7 @@ void UT_MusEngMceUtils::UT_AddDisplayLL()
 //
 // -----------------------------------------------------------------------------
 //
-void UT_MusEngMceUtils::UT_AddSpeakerLL()
+void UT_MusEngMceUtils::UT_MusEngMceUtils_AddSpeakerLL()
     {
     // Check that speaker cannot be added to video stream
     
@@ -760,7 +666,7 @@ void UT_MusEngMceUtils::UT_AddSpeakerLL()
 //
 // -----------------------------------------------------------------------------
 //
-void UT_MusEngMceUtils::UT_DisableStreamLL()
+void UT_MusEngMceUtils::UT_MusEngMceUtils_DisableStreamLL()
     {
     CMceAudioStream* audioStream = CMceAudioStream::NewLC();
 
@@ -801,71 +707,7 @@ void UT_MusEngMceUtils::UT_DisableStreamLL()
     CleanupStack::PopAndDestroy( audioStream );
     }
 
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_MusEngMceUtils::UT_GetReceivingDisplayL()
-    {
-    CMceDisplaySink* display = MusEngMceUtils::GetReceivingDisplay( *iEmptySession );
-    
-    EUNIT_ASSERT( !display )
-    
-    display = MusEngMceUtils::GetReceivingDisplay( *iVideoOutSession );
-    
-    EUNIT_ASSERT( display )
-    EUNIT_ASSERT( display->Type() == KMceDisplaySink )
-    EUNIT_ASSERT( display == iReceivingDisplay )
-    }  
 
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_MusEngMceUtils::UT_GetReceivingDisplayLL()
-    {
-    CMceDisplaySink* display = NULL;
-    
-    EUNIT_ASSERT_SPECIFIC_LEAVE( MusEngMceUtils::GetReceivingDisplayL( *iEmptySession ),
-                                 KErrNotFound )
-    
-    display = MusEngMceUtils::GetReceivingDisplayL( *iVideoOutSession );
-    
-    EUNIT_ASSERT( display )
-    EUNIT_ASSERT( display->Type() == KMceDisplaySink )
-    EUNIT_ASSERT( display == iReceivingDisplay )
-    }  
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_MusEngMceUtils::UT_GetVfDisplayL()
-    {
-    CMceDisplaySink* display = MusEngMceUtils::GetVfDisplay( *iEmptySession );
-    
-    EUNIT_ASSERT( !display )
-    
-    display = MusEngMceUtils::GetVfDisplay( *iVideoOutSession );
-    
-    EUNIT_ASSERT( display )
-    EUNIT_ASSERT( display->Type() == KMceDisplaySink )
-    EUNIT_ASSERT( display != iReceivingDisplay )
-    } 
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void UT_MusEngMceUtils::UT_EnableInactivityTimerL()
-    {
-    // Instream not found, nothing is done
-    EUNIT_ASSERT_EQUALS( MusEngMceUtils::EnableInactivityTimer( *iEmptySession, 1000 ), KErrNotFound );
-
-    // In stream found
-    EUNIT_ASSERT_EQUALS( MusEngMceUtils::EnableInactivityTimer( *iVideoOutSession, 1000 ), KErrNone );
-    } 
 
 //  TEST TABLE
 
@@ -879,147 +721,113 @@ EUNIT_TEST(
     "MusEngMceUtils",
     "IsVideoInStream",
     "FUNCTIONALITY",
-    SetupL, UT_IsVideoInStreamL, Teardown)
+    SetupL, UT_MusEngMceUtils_IsVideoInStreamL, Teardown)
 
-EUNIT_TEST(
-    "IsVideoOutStream - test ",
-    "MusEngMceUtils",
-    "IsVideoOutStream",
-    "FUNCTIONALITY",
-    SetupL, UT_IsVideoOutStreamL, Teardown)
-    
 EUNIT_TEST(
     "IsAudioInStream - test ",
     "MusEngMceUtils",
     "IsAudioInStream",
     "FUNCTIONALITY",
-    SetupL, UT_IsAudioInStreamL, Teardown)
+    SetupL, UT_MusEngMceUtils_IsAudioInStreamL, Teardown)
 
 EUNIT_TEST(
     "GetVideoOutStreamL - test ",
     "MusEngMceUtils",
     "GetVideoOutStreamL",
     "FUNCTIONALITY",
-    SetupL, UT_GetVideoOutStreamLL, Teardown)
+    SetupL, UT_MusEngMceUtils_GetVideoOutStreamLL, Teardown)
 
 EUNIT_TEST(
     "GetVideoInStreamL - test ",
     "MusEngMceUtils",
     "GetVideoInStreamL",
     "FUNCTIONALITY",
-    SetupL, UT_GetVideoInStreamLL, Teardown)
+    SetupL, UT_MusEngMceUtils_GetVideoInStreamLL, Teardown)
 
 EUNIT_TEST(
     "GetRecordingStream - test ",
     "MusEngMceUtils",
     "GetRecordingStream",
     "FUNCTIONALITY",
-    SetupL, UT_GetRecordingStreamL, Teardown)
+    SetupL, UT_MusEngMceUtils_GetRecordingStreamL, Teardown)
 
 EUNIT_TEST(
     "GetMediaSink - test ",
     "MusEngMceUtils",
     "GetMediaSink",
     "FUNCTIONALITY",
-    SetupL, UT_GetMediaSinkFromStreamL, Teardown)
+    SetupL, UT_MusEngMceUtils_GetMediaSinkL, Teardown)
 
 EUNIT_TEST(
     "GetMediaSinkL - test ",
     "MusEngMceUtils",
     "GetMediaSinkL",
     "FUNCTIONALITY",
-    SetupL, UT_GetMediaSinkLFromStreamL, Teardown)
+    SetupL, UT_MusEngMceUtils_GetMediaSinkLL, Teardown)
 
 EUNIT_TEST(
     "GetMediaSink2 - test ",
     "MusEngMceUtils",
     "GetMediaSink2",
     "FUNCTIONALITY",
-    SetupL, UT_GetMediaSinkFromSessionL, Teardown)
+    SetupL, UT_MusEngMceUtils_GetMediaSink2L, Teardown)
 
 EUNIT_TEST(
     "GetMediaSinkL2 - test ",
     "MusEngMceUtils",
     "GetMediaSinkL2",
     "FUNCTIONALITY",
-    SetupL, UT_GetMediaSinkLFromSessionL, Teardown)
+    SetupL, UT_MusEngMceUtils_GetMediaSinkL2L, Teardown)
 
 EUNIT_TEST(
     "GetCameraL - test ",
     "MusEngMceUtils",
     "GetCameraL",
     "FUNCTIONALITY",
-    SetupL, UT_GetCameraLL, Teardown)
+    SetupL, UT_MusEngMceUtils_GetCameraLL, Teardown)
 
 EUNIT_TEST(
     "GetFileSourceL - test ",
     "MusEngMceUtils",
     "GetFileSourceL",
     "FUNCTIONALITY",
-    SetupL, UT_GetFileSourceLL, Teardown)
+    SetupL, UT_MusEngMceUtils_GetFileSourceLL, Teardown)
 
 EUNIT_TEST(
     "GetDisplay - test ",
     "MusEngMceUtils",
     "GetDisplay",
     "FUNCTIONALITY",
-    SetupL, UT_GetDisplayL, Teardown)
+    SetupL, UT_MusEngMceUtils_GetDisplayL, Teardown)
 
 EUNIT_TEST(
     "GetDisplayL - test ",
     "MusEngMceUtils",
     "GetDisplayL",
     "FUNCTIONALITY",
-    SetupL, UT_GetDisplayLL, Teardown)
+    SetupL, UT_MusEngMceUtils_GetDisplayLL, Teardown)
 
 EUNIT_TEST(
     "AddDisplayL - test ",
     "MusEngMceUtils",
     "AddDisplayL",
     "FUNCTIONALITY",
-    SetupL, UT_AddDisplayLL, Teardown)
+    SetupL, UT_MusEngMceUtils_AddDisplayLL, Teardown)
 
 EUNIT_TEST(
     "AddSpeakerL - test ",
     "MusEngMceUtils",
     "AddSpeakerL",
     "FUNCTIONALITY",
-    SetupL, UT_AddSpeakerLL, Teardown)    
+    SetupL, UT_MusEngMceUtils_AddSpeakerLL, Teardown)    
 
 EUNIT_TEST(
     "DisableStreamL - test ",
     "MusEngMceUtils",
     "DisableStreamL",
     "FUNCTIONALITY",
-    SetupL, UT_DisableStreamLL, Teardown)        
+    SetupL, UT_MusEngMceUtils_DisableStreamLL, Teardown)        
 
-EUNIT_TEST(
-    "GetReceivingDisplay - test ",
-    "MusEngMceUtils",
-    "GetReceivingDisplay",
-    "FUNCTIONALITY",
-    Setup2L, UT_GetReceivingDisplayL, Teardown)
-
-EUNIT_TEST(
-    "GetReceivingDisplayL - test ",
-    "MusEngMceUtils",
-    "GetReceivingDisplayL",
-    "FUNCTIONALITY",
-    Setup2L, UT_GetReceivingDisplayLL, Teardown)
-    
-EUNIT_TEST(
-    "GetVfDisplay - test ",
-    "MusEngMceUtils",
-    "GetVfDisplay",
-    "FUNCTIONALITY",
-    Setup2L, UT_GetVfDisplayL, Teardown)
-
-EUNIT_TEST(
-    "EnableInactivityTimer - test ",
-    "MusEngMceUtils",
-    "EnableInactivityTimer",
-    "FUNCTIONALITY",
-    Setup2L, UT_EnableInactivityTimerL, Teardown)
     
 EUNIT_END_TEST_TABLE
 

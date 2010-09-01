@@ -23,7 +23,6 @@
 #include <mcesession.h>
 #include <mcemanager.h>
 
-#include <digia/eunit/eunitmacros.h>
 // Next row is to disable warning emerging from EUnit code.
 // Placement is due to a fact that most test case files
 // include this file. Directive can be removed when 
@@ -33,14 +32,12 @@
 // Test values
 
 _LIT( KTestRecipientSipUri, "sip:TestRecipient@host.domain" );
-_LIT( KTestRecipient2SipUri, "sip:TestRecipient2@host.domain" );
 _LIT( KTestRecipientSipUriPrefixUpperCase, "SIP:TestRecipient@host.domain" );
 _LIT( KTestRecipientSipUriNoSipPrefix, "TestRecipient@host.domain" );
 _LIT( KTestRecipientTelUri, "tel:+3581111111");
 _LIT( KTestRecipientTelUriNoTelPrefix, "+3581111111" );
 
 _LIT8( KTestRecipientSipUri8, "sip:TestRecipient@host.domain" );
-_LIT8( KTestRecipient2SipUri8, "sip:TestRecipient2@host.domain" );
 _LIT8( KTestRecipientSipUriPrefixUpperCase8, "SIP:TestRecipient@host.domain" );
 _LIT8( KTestRecipientSipUriNoSipPrefix8, "TestRecipient@host.domain" );
 _LIT8( KTestRecipientTelUri8, "tel:+3581111111");
@@ -120,11 +117,8 @@ const TUint32 KTelIncallLoudspeakerVolume                   = 0x00000002;
         User::Leave( error );\
         }
 
-// NOTE! NMusSessionApi::KCategoryUid, NMusSessionApi::KRemoteSipAddress p&s property
-// should contain recipient address to be used for invitation.
-//
 #define ESTABLISH_OUT_SESSION( outSession )\
-    outSession->EstablishLcSessionL();\
+    outSession->InviteL( KTestRecipientSipUri );\
     outSession->iSession->iState = CMceSession::EEstablished;\
     for ( TInt i = 0; i < outSession->iSession->Streams().Count(); ++i )\
             {\
@@ -142,30 +136,8 @@ const TUint32 KTelIncallLoudspeakerVolume                   = 0x00000002;
 #define ESTABLISH_OUT_SESSION_AND_START_STREAMING( outSession )\
     ESTABLISH_OUT_SESSION( outSession );\
     outSession->EnableDisplayL( ETrue );\
-    outSession->LocalVideoPlayer()->LcPlayL();
-
-
-#define MUSENG_EUNIT_ASSERT_EQUALS( func, val ) \
-{\
-TInt musUnitTestRetVal = func;\
-if ( musUnitTestRetVal != KErrNoMemory ){\
-    EUNIT_ASSERT_EQUALS( musUnitTestRetVal, val );\
-    }\
-else{\
-    User::Leave( KErrNoMemory );\
-    }\
-}
-
-#define MUSENG_EUNIT_ASSERT_SPECIFIC_LEAVE( func, val ) \
-{\
-TRAPD( musUnitTestRetVal, func );\
-if ( val != KErrNoMemory && musUnitTestRetVal == KErrNoMemory ){\
-    User::Leave( KErrNoMemory );\
-    }\
-else{\
-    EUNIT_ASSERT_EQUALS( musUnitTestRetVal, val );\
-    }\
-}
+    outSession->PlayL();
+    
     
 #endif // MUSENGTESTDEFS_H
 

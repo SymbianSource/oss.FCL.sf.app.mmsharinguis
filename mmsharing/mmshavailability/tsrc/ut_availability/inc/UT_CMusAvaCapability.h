@@ -43,7 +43,6 @@ class CMusAvaObserverImp;
 class CMusAvaSettingsImp;
 class CMusAvaAvailabilityObserverImp;
 class CMusAvaCapabilityQueryObserverImp;	
-class CSipSseTestTls;
 
 #include <e32def.h>
 #ifndef NONSHARABLE_CLASS
@@ -102,19 +101,13 @@ NONSHARABLE_CLASS( UT_CMusAvaCapability )
         
         void UT_CMusAvaCapability_PopulateResponseL_OpSpecificL();
 
-        void UT_CMusAvaCapability_ResolveFastModeLL();
-
-        void UT_CMusAvaCapability_AddFastModeLL();
-
-        
     private:    // Data
 
         EUNIT_DECLARE_TEST_TABLE; 
 
     CMusAvaCapabilityExchange* iExchange;
     
-    CSipSseTestTls* iStorage;
-   
+    
     CSIP* iSIP;
     CSIPConnection* iSIPConnection;
     CSIPProfile* iProfile;

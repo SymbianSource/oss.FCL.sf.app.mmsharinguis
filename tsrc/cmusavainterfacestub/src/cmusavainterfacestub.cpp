@@ -202,19 +202,7 @@ MMusAvaObserver::TAvailabilityStatus CMusAvaInterface2::AvailabilityState(
         }
     return MMusAvaObserver::EMusAvaStatusNotExecuted;
     }
-
-// -----------------------------------------------------------------------------
-//
-// -----------------------------------------------------------------------------
-//
-void CMusAvaInterface2::PrepareForReceivedInviteL()
-    {
-    for ( TInt i = 0; i < iAvailabilities.Count(); i++ )
-       {
-       iAvailabilities[i]->PrepareForReceivedInviteL();
-       }
-    }
-
+    
 void CMusAvaInterface2::AvailabilityChanged(
         TAvailabilityName aName,
         TAvailabilityStatus aStatus )
@@ -241,43 +229,29 @@ CImplementationInformation::CImplementationInformation()
 
     }
 
-
-// -----------------------------------------------------------------------------
-// CImplementationInformation::~CImplementationInformation
-// -----------------------------------------------------------------------------
-//
 CImplementationInformation::~CImplementationInformation()
     {
-    delete iData;
-    delete iDisplayName;
-    delete iOpaqueData;
+
     }
 
+
 CImplementationInformation* CImplementationInformation::NewL(
-    TUid	aUid,
-	TInt	aVersion,
-	HBufC*  aName,
-	HBufC8* aDataType,
-	HBufC8* aOpaqueData,
-	TDriveUnit aDrive,
-	TBool aRomOnly,
-	TBool aRomBased)
+    TUid	/*aUid*/,
+	TInt	/*aVersion*/,
+	HBufC*  /*aName*/,
+	HBufC8* /*aDataType*/,
+	HBufC8* /*aOpaqueData*/,
+	TDriveUnit /*aDrive*/,
+	TBool /*aRomOnly*/,
+	TBool /*aRomBased*/)
     {
-    CImplementationInformation* self = new(ELeave)CImplementationInformation();
-    CleanupStack::PushL(self);
-    self->iData = aDataType;
-    self->iDisplayName = aName;
-    self->iOpaqueData = aOpaqueData;
-    CleanupStack::Pop(self);
-    return self;
-    //return new (ELeave) CImplementationInformation();
+    return new (ELeave) CImplementationInformation();
     }
 
 void REComSession::DestroyedImplementation( TUid )
     {
 
     }
-
 
 void REComSession::ListImplementationsL(
     TUid /*aInterfaceUid*/,
@@ -314,34 +288,6 @@ TAny* REComSession::CreateImplementationL(
     }
     
 
-
-// -----------------------------------------------------------------------------
-// REComSession::ListImplementationsL
-// -----------------------------------------------------------------------------
-//
-void REComSession::ListImplementationsL(
-                            TUid aInterfaceUid,
-                            const TEComResolverParams& resolverParams,
-                            RImplInfoPtrArray& aImplInfoArray)
-    {
-    _LIT8(KDefaultEngineName,"MultimediaSharing");
     
-    TUid uid(aInterfaceUid); 
-    TInt version = 1; 
-    HBufC*  name = _L("dummy").AllocLC();
-    HBufC8* dataType = _L8("MultimediaSharing").AllocLC();
-    HBufC8* opaqueData = _L8("dummy").AllocLC();
-    TDriveUnit drive;
-    TBool romOnly(ETrue);
-    TBool romBased(ETrue);
-    CImplementationInformation* info = 
-                    CImplementationInformation::NewL(uid,version,name,dataType,
-                                    opaqueData,drive,romOnly,romBased);
-    CleanupStack::Pop(3);
-    CleanupStack::PushL(info);
-    aImplInfoArray.AppendL(info);
-    CleanupStack::Pop(info);
-    }
 
-// End of File
 

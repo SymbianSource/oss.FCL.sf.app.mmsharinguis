@@ -20,7 +20,6 @@
 #define __MUSAVACAPABQUERYOBSERVERIMP_H__
 
 #include <e32base.h>
-#include <mussettingskeys.h>
 #include "mmusavacapabilityqueryobserver.h"
 
 class CMusAvaCapabilityQueryObserverImp : public CBase, 
@@ -48,7 +47,6 @@ public:
     
     TBool CapabilityQueryAnswered( TBool aAnswered = EFalse );
     
-    void FastModeResolved( MusSettingsKeys::TFastMode aMode );
     };
 
 

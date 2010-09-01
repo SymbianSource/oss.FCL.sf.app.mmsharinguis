@@ -324,6 +324,8 @@ EXPORT_C TInt CMceFileSource::TranscodingProgressL() const
 //
 void CMceFileSource::InitializeL( CMceManager* aManager )
     {
+    __ASSERT_ALWAYS( aManager, User::Leave( KErrArgument ) );
+
     iDuration = TTimeIntervalMicroSeconds( 100000000 );
     
     iAudioElementCount = 1;

@@ -23,6 +23,6 @@ PRJ_MMPFILES
 #include "../mmshaoplugin/group/bld.inf"
 #include "../mmshaiwplugin/group/bld.inf"
 #include "../mmshsipcrplugin/group/bld.inf"
-//#include "../mmshsettingsuiplugin/group/bld.inf"
+#include "../mmshsettingsuiplugin/group/bld.inf"
 #include "../mmshwpadapterplugin/group/bld.inf"
 //#include "../mmcctranscoder/group/bld.inf"

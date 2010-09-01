@@ -93,4 +93,8 @@ void CMusAvaObserverImp::AvailabilityError(
 	}	
 	
 
+ void CMusAvaObserverImp::AvailabilitiesAbleToShowIndicator()
+	{
+	  //nothing to do
+	}
 

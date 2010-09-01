@@ -22,7 +22,6 @@
 //  EXTERNAL INCLUDES
 #include <digia/eunit/eunitmacros.h>
 #include <sdpmediafield.h>
-#include <sdpattributefield.h>
 
 
 //  INTERNAL INCLUDES
@@ -111,9 +110,7 @@ void UT_CMusAvaCapability::SetupL(  )
     iCapability = iOptionHandler->iSwisCapability;
     
     CSipSseTestTls::OpenL();
-    iStorage = CSipSseTestTls::Storage();
-    iStorage->Set( MusSettingsKeys::KFastStartupMode, 
-         MusSettingsKeys::EFastModeOff );
+    
     }
 
 void UT_CMusAvaCapability::Teardown(  )
@@ -121,13 +118,8 @@ void UT_CMusAvaCapability::Teardown(  )
     delete iOptionHandler;
     delete iAvailabilityObserver;
     delete iConcreteSettings;
-    if ( iStorage )
-        {
-        iStorage->Clear();
-        CSipSseTestTls::Close();
-        iStorage = NULL;
-        }
-
+    CSipSseTestTls::Close();
+    
     delete iSIPConnection;
     delete iProfile;
     delete iSIP;
@@ -181,9 +173,11 @@ void UT_CMusAvaCapability::UT_CMusAvaCapability_DoPopulateResponseLL(  )
                                              KCapabilityTestTerminalID_B );
     CleanupStack::PushL( options );                                         
 
-    CSdpDocument* sdpContent = 
-            CMusAvaCapability::ResponseContentLC( *options );
-
+    // Test  : AVC enabled => H263 & H264
+    TInt32 KMusDisableAVC = 0x0ffffff1; // some value other than disable magic value
+    MultimediaSharingSettings::SetPropertyValueL(MusSettingsKeys::KEncodingDevice,
+                                                         KMusDisableAVC );
+    CSdpDocument* sdpContent = CMusAvaCapability::ResponseContentLC( *options );
     RPointerArray<CSIPHeaderBase> responseHeaders;
     CSIPHeaderBase::PushLC( &responseHeaders );
 
@@ -193,7 +187,20 @@ void UT_CMusAvaCapability::UT_CMusAvaCapability_DoPopulateResponseLL(  )
     EUNIT_ASSERT( sdpContent->AttributeFields().Count() == 2 );
     EUNIT_ASSERT( sdpContent->MediaFields().Count() == 1 );
     EUNIT_ASSERT( sdpContent->MediaFields()[0]->FormatAttributeFields().Count() == 2 );
-
+    CleanupStack::PopAndDestroy( &responseHeaders );
+    CleanupStack::PopAndDestroy( sdpContent );
+    
+    // Test : AVC disabled => H263
+    KMusDisableAVC = 0x0fffffff; // disable magic value
+    MultimediaSharingSettings::SetPropertyValueL(MusSettingsKeys::KEncodingDevice,
+                                                     KMusDisableAVC );
+    sdpContent = CMusAvaCapability::ResponseContentLC( *options );
+    CSIPHeaderBase::PushLC( &responseHeaders );
+    iCapability->PopulateResponseL( *options, responseHeaders, *sdpContent );
+    EUNIT_ASSERT( responseHeaders.Count() == 1 );
+    EUNIT_ASSERT( sdpContent->AttributeFields().Count() == 2 );
+    EUNIT_ASSERT( sdpContent->MediaFields().Count() == 1 );
+    EUNIT_ASSERT( sdpContent->MediaFields()[0]->FormatAttributeFields().Count() == 1 );
     CleanupStack::PopAndDestroy( &responseHeaders );
     CleanupStack::PopAndDestroy( sdpContent );
     CleanupStack::PopAndDestroy( options );
@@ -209,19 +216,11 @@ void UT_CMusAvaCapability::Setup1L()
     iExchange = CMusAvaCapabilityExchange::NewL( KTestTerminalId, *iCapabQueryObserver );
     iCapability = CMusAvaCapability::NewL( *iExchange );
     CSipSseTestTls::OpenL();
-    iStorage = CSipSseTestTls::Storage();
-    iStorage->Set( MusSettingsKeys::KFastStartupMode, 
-         MusSettingsKeys::EFastModeOff );
     }
 
 void UT_CMusAvaCapability::Teardown1(  )
     {
-    if ( iStorage )
-        {
-        iStorage->Clear();
-        CSipSseTestTls::Close();
-        iStorage = NULL;
-        }
+    CSipSseTestTls::Close();
     delete iCapability;
     delete iExchange;
     delete iCapabQueryObserver;     
@@ -345,49 +344,6 @@ void UT_CMusAvaCapability::UT_CMusAvaCapability_PopulateResponseL_OpSpecificL()
     }
 
 
-void UT_CMusAvaCapability::UT_CMusAvaCapability_ResolveFastModeLL()
-    {
-    // Fast mode feature is disabled in cenrep, fast mode is present in SDP
-    CSdpDocument* sdpContent = CSdpDocument::DecodeLC( KCapabilityTestSDPFastMode );
-    MusSettingsKeys::TFastMode mode = iCapability->ResolveFastModeL( *sdpContent );
-    EUNIT_ASSERT( mode == MusSettingsKeys::EFastModeOff );
-    CleanupStack::PopAndDestroy( sdpContent );
-    
-    // Fast mode feature is enabled in cenrep, fast mode is present in SDP
-    iStorage->Set( MusSettingsKeys::KFastStartupMode, MusSettingsKeys::EFastModeOn );
-    sdpContent = CSdpDocument::DecodeLC( KCapabilityTestSDPFastMode );
-    mode = iCapability->ResolveFastModeL( *sdpContent );
-    EUNIT_ASSERT( mode == MusSettingsKeys::EFastModeOn );
-    CleanupStack::PopAndDestroy( sdpContent );
-
-    // Fast mode feature is enabled in cenrep, fast mode isn't present in SDP
-    sdpContent = CSdpDocument::DecodeLC( KCapabilityTestSDP );
-    mode = iCapability->ResolveFastModeL( *sdpContent );
-    EUNIT_ASSERT( mode == MusSettingsKeys::EFastModeOff );
-    CleanupStack::PopAndDestroy( sdpContent );
-    }
-
-void UT_CMusAvaCapability::UT_CMusAvaCapability_AddFastModeLL()
-    {
-    // Fast mode feature is disabled in cenrep
-    CSdpDocument* sdpContent = CSdpDocument::DecodeLC( KCapabilityTestSDP );
-    EUNIT_ASSERT( sdpContent->AttributeFields().Count() == 2 );
-    iCapability->AddFastModeL( *sdpContent );
-    EUNIT_ASSERT( sdpContent->AttributeFields().Count() == 2 );
-    
-    // Fast mode feature is enabled in cenrep, a=keywds:fastmode added
-    iStorage->Set( MusSettingsKeys::KFastStartupMode, MusSettingsKeys::EFastModeOn );
-    iCapability->AddFastModeL( *sdpContent );
-    EUNIT_ASSERT( sdpContent->AttributeFields().Count() == 3 );
-    const CSdpAttributeField* field = sdpContent->AttributeFields()[2];
-    RStringF keywds = MusAvaCapabilityContext::SDPStringL( 
-            SdpCodecStringConstants::EAttributeKeywds );
-    EUNIT_ASSERT( field->Attribute() == keywds );
-    EUNIT_ASSERT( field->Value().Compare( KCapabilitySDPAttributeFastMode ) == 0 );
-    CleanupStack::PopAndDestroy( sdpContent );
-    }
-
-
 //  TEST TABLE
 
 EUNIT_BEGIN_TEST_TABLE(
@@ -436,20 +392,7 @@ EUNIT_TEST(
     "PopulateResponseL",
     "FUNCTIONALITY",
     Setup1L, UT_CMusAvaCapability_PopulateResponseL_OpSpecificL, Teardown1 )         
-   
-EUNIT_TEST(
-    "ResolveFastModeL - test ",
-    "CMusAvaCapability",
-    "ResolveFastModeL",
-    "FUNCTIONALITY",
-    SetupL, UT_CMusAvaCapability_ResolveFastModeLL, Teardown)
     
-EUNIT_TEST(
-    "AddFastModeL - test ",
-    "CMusAvaCapability",
-    "AddFastModeL",
-    "FUNCTIONALITY",
-    SetupL, UT_CMusAvaCapability_AddFastModeLL, Teardown)
 
 EUNIT_END_TEST_TABLE
 

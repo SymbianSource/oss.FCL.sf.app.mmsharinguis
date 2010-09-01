@@ -23,12 +23,10 @@
 #include "musengclipsession.h"
 #include "mussipprofilehandler.h"
 #include "musengmceutils.h"
-#include "mussessionproperties.h"
+
 
 //  SYSTEM INCLUDES
-#include <lcvideoplayer.h>
-#include <lcsourcefilecontrol.h>
-#include <eunitmacros.h>
+#include <digia/eunit/eunitmacros.h>
 #include <mceoutsession.h>
 #include <mcestreambundle.h>
 #include <mcevideostream.h>
@@ -43,7 +41,6 @@
 #include <drmcommon.h>
 #include <sipprofile.h>
 #include <sipstrings.h>
-#include <e32property.h>
 
 
 // -----------------------------------------------------------------------------
@@ -109,26 +106,33 @@ void UT_CMusEngClipSession::ConstructL()
 //
 void UT_CMusEngClipSession::SetupL()
     {
-    iLcSessionObserver = new( ELeave )CLcSessionObserverStub;
-    iLcUiProvider = new( ELeave )CLcUiProviderStub;
-    iAudioRoutingObserver = new( ELeave )CMusEngObserverStub; 
-    
-    iClipSession = CMusEngClipSession::NewL();
-    iClipSession->SetLcSessionObserver( iLcSessionObserver );
-    iClipSession->SetLcUiProvider( iLcUiProvider );    
-    iClipSession->LocalVideoPlayer()->LcSourceFileControl()->SetLcFileNameL(
-        KTestVideoFileName() );
-    delete iClipSession->iVideoCodecList;
-    iClipSession->iVideoCodecList = NULL;
+    iObserver = new( ELeave ) CMusEngObserverStub;
+    iClipSession = CMusEngClipSession::NewL( TRect(0,0, 100,100),
+                                             *iObserver,
+                                             *iObserver,
+                                             *iObserver );
+    iClipSession->SetClipL( KTestVideoFileName );
     iClipSession->iVideoCodecList = KMceSDPNameH264().AllocL();
 
     SIPStrings::OpenL();
-    
-    User::LeaveIfError( RProperty::Set( NMusSessionApi::KCategoryUid,
-                                        NMusSessionApi::KRemoteSipAddress,
-                                        KTestRecipientSipUri ) );
     }
 
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngClipSession::Setup2L()
+    {
+    iObserver = new( ELeave ) CMusEngObserverStub;
+    iClipSession = CMusEngClipSession::NewL( TRect(0,0, 100,100),
+                                             *iObserver,
+                                             *iObserver,
+                                             *iObserver );
+    iClipSession->SetClipL( KTestVideoFileName );
+    iClipSession->iVideoCodecList = KMceSDPNameH263().AllocL();
+
+    SIPStrings::OpenL();
+    }
     
 // -----------------------------------------------------------------------------
 //
@@ -138,15 +142,13 @@ void UT_CMusEngClipSession::Teardown()
     {
     SIPStrings::Close();
     delete iClipSession;
-    delete iLcSessionObserver;
-    delete iLcUiProvider;
-    delete iAudioRoutingObserver;
-    PropertyHelper::Close();
+    delete iObserver;
     }
 
 
 
 // TEST CASES
+
 
 // -----------------------------------------------------------------------------
 //
@@ -155,8 +157,662 @@ void UT_CMusEngClipSession::Teardown()
 void UT_CMusEngClipSession::UT_NewLL()
     {
     EUNIT_ASSERT( iClipSession )
+    EUNIT_ASSERT( iClipSession->iFileName != KNullDesC() )
     EUNIT_ASSERT( !iClipSession->iSession )
-    EUNIT_ASSERT( iClipSession->iMceManagerUid == TUid::Uid( KMusUiUid ) );
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngClipSession::UT_SetClipLL()
+    {
+    // Try with protected file, cannot use EUNIT_ASSERT_SPECIFIC_LEAVE
+    TRAPD( error, iClipSession->SetClipL( KMusDrmProtectedFileName() ) )
+    MUS_TEST_FORWARD_ALLOC_FAILURE( error );
+    EUNIT_ASSERT( error == KErrPermissionDenied )
+    EUNIT_ASSERT_EQUALS( iClipSession->iFileName, KTestVideoFileName() )
+
+    // Change the file before session is established
+    iClipSession->SetClipL( KTestAvcVideoFileName() );
+    EUNIT_ASSERT_EQUALS( iClipSession->iFileName, KTestAvcVideoFileName() )
+    EUNIT_ASSERT( !iClipSession->iSession )
+    
+    // simulate session establishment
+    ESTABLISH_OUT_SESSION( iClipSession );
+    
+    // Now test with established session
+    iClipSession->SetClipL( KTestVideoFileName() );
+    
+    CMceFileSource* file = 
+                    MusEngMceUtils::GetFileSourceL( *iClipSession->iSession );
+    
+    EUNIT_ASSERT_EQUALS( iClipSession->iFileName, KTestVideoFileName() )
+    EUNIT_ASSERT_EQUALS( file->iFileName, KTestVideoFileName() )
+    
+    
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngClipSession::UT_FastForwardLL()
+    {
+    // Try before establishment
+    EUNIT_ASSERT_SPECIFIC_LEAVE( iClipSession->FastForwardL( ETrue ),
+                                 KErrNotReady )
+    
+    // Establish session, simulate position and duration and try again   
+    ESTABLISH_OUT_SESSION( iClipSession );
+    
+    CMceFileSource* file = 
+                    MusEngMceUtils::GetFileSourceL( *iClipSession->iSession );
+                    
+    file->iDuration = KMusEngTestFileDuration;
+    file->iPosition = KMusEngTestFilePosition; 
+    
+    iClipSession->FastForwardL( ETrue );
+
+    EUNIT_ASSERT( !file->iIsEnabled )
+    EUNIT_ASSERT( iClipSession->iFFWDStartTime.Int64() > 0 )
+    EUNIT_ASSERT( iClipSession->iFRWDStartTime.Int64() == 0 )
+    
+    // Simulate fastforwarding for a while
+    User::After( 1000 );
+
+    // Try to fastforward when already fastforwarding, will be ignored
+    iClipSession->FastForwardL( ETrue );
+    EUNIT_ASSERT( !file->iIsEnabled )
+    EUNIT_ASSERT( iClipSession->iFFWDStartTime.Int64() > 0 )
+    EUNIT_ASSERT( iClipSession->iFRWDStartTime.Int64() == 0 )
+    
+    // Stop fastforwarding
+    iClipSession->FastForwardL( EFalse );
+    EUNIT_ASSERT( file->iPosition > KMusEngTestFilePosition )
+    EUNIT_ASSERT( file->iPosition != file->iDuration )
+    EUNIT_ASSERT( !file->iIsEnabled )
+    EUNIT_ASSERT( iClipSession->iFFWDStartTime.Int64() == 0 )
+    EUNIT_ASSERT( iClipSession->iFRWDStartTime.Int64() == 0 )
+    
+    // Try to stop fastforwarding again, leaves 
+    EUNIT_ASSERT_SPECIFIC_LEAVE( iClipSession->FastForwardL( EFalse ),
+                                 KErrAlreadyExists )
+    
+    // Start fastrewinding
+    iClipSession->FastRewindL( ETrue );
+    EUNIT_ASSERT( !file->iIsEnabled )
+    EUNIT_ASSERT( iClipSession->iFFWDStartTime.Int64() == 0 )
+    EUNIT_ASSERT( iClipSession->iFRWDStartTime.Int64() > 0 )
+    
+    // Start fastforwarding, rewinding should be stopped and FFWD started
+    iClipSession->FastForwardL( ETrue );
+    EUNIT_ASSERT( !file->iIsEnabled )
+    EUNIT_ASSERT( iClipSession->iFFWDStartTime.Int64() > 0 )
+    EUNIT_ASSERT( iClipSession->iFRWDStartTime.Int64() == 0 )
+    
+    // Simulate fastforwarding for a while
+    User::After( 1000 );
+    
+    // Simulate that clip is almost in end and fastforwarding would have 
+    // continued over end, position should be set to duration.
+    
+    file->iPosition = TTimeIntervalMicroSeconds( file->iDuration.Int64() - 1 );
+    
+    iClipSession->FastForwardL( EFalse );
+    EUNIT_ASSERT( file->iPosition == file->iDuration )
+    EUNIT_ASSERT( !file->iIsEnabled )
+    EUNIT_ASSERT( iClipSession->iFFWDStartTime.Int64() == 0 )
+    EUNIT_ASSERT( iClipSession->iFRWDStartTime.Int64() == 0 )
+    
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngClipSession::UT_FastRewindLL()
+    {
+    // Try before establishment
+    EUNIT_ASSERT_SPECIFIC_LEAVE( iClipSession->FastRewindL( ETrue ),
+                                 KErrNotReady )
+    
+    // Establish session, simulate position and duration and try again   
+    ESTABLISH_OUT_SESSION( iClipSession );
+    
+    CMceFileSource* file = 
+                    MusEngMceUtils::GetFileSourceL( *iClipSession->iSession );
+                    
+    file->iDuration = KMusEngTestFileDuration;
+    file->iPosition = KMusEngTestFilePosition; 
+    
+    iClipSession->FastRewindL( ETrue );
+
+    EUNIT_ASSERT( !file->iIsEnabled )
+    EUNIT_ASSERT( iClipSession->iFFWDStartTime.Int64() == 0 )
+    EUNIT_ASSERT( iClipSession->iFRWDStartTime.Int64() > 0 )
+    
+    // Simulate fastrewinding for a while
+    User::After( 1000 );
+    
+    // Try to fastrewind when already fastrewinding, will be ignored
+    iClipSession->FastRewindL( ETrue );
+    EUNIT_ASSERT( !file->iIsEnabled )
+    EUNIT_ASSERT( iClipSession->iFFWDStartTime.Int64() == 0 )
+    EUNIT_ASSERT( iClipSession->iFRWDStartTime.Int64() > 0 )
+    
+    // Stop fastrewinding
+    iClipSession->FastRewindL( EFalse );
+    EUNIT_ASSERT( file->iPosition < KMusEngTestFilePosition )
+    EUNIT_ASSERT( file->iPosition != TTimeIntervalMicroSeconds( 0 ) )
+    EUNIT_ASSERT( !file->iIsEnabled )
+    EUNIT_ASSERT( iClipSession->iFFWDStartTime.Int64() == 0 )
+    EUNIT_ASSERT( iClipSession->iFRWDStartTime.Int64() == 0 )
+    
+    // Try to stop fastrewinding again, leaves 
+    EUNIT_ASSERT_SPECIFIC_LEAVE( iClipSession->FastRewindL( EFalse ),
+                                 KErrAlreadyExists )
+    
+    // Start fastforwarding
+    iClipSession->FastForwardL( ETrue );
+    EUNIT_ASSERT( !file->iIsEnabled )
+    EUNIT_ASSERT( iClipSession->iFFWDStartTime.Int64() >= 0 )
+    EUNIT_ASSERT( iClipSession->iFRWDStartTime.Int64() == 0 )
+    
+    // Start fastrewinding, forwarding should be stopped and FFWD started
+    iClipSession->FastRewindL( ETrue );
+    EUNIT_ASSERT( !file->iIsEnabled );
+    EUNIT_ASSERT( iClipSession->iFFWDStartTime.Int64() == 0 )
+    EUNIT_ASSERT( iClipSession->iFRWDStartTime.Int64() >= 0 )
+    
+    // Simulate that clip has just begun and fastrewinding would have 
+    // continued over beginning, position should be set to zero.
+    
+    file->iPosition = TTimeIntervalMicroSeconds( 1 );
+    
+    // Simulate fastrewinding for a while
+    User::After( 1000 );
+    
+    iClipSession->FastRewindL( EFalse );
+    EUNIT_ASSERT( file->iPosition == TTimeIntervalMicroSeconds( 0 ) )
+    EUNIT_ASSERT( !file->iIsEnabled )
+    EUNIT_ASSERT( iClipSession->iFFWDStartTime.Int64() == 0 )
+    EUNIT_ASSERT( iClipSession->iFRWDStartTime.Int64() == 0 ) 
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngClipSession::UT_PositionLL()
+    {
+    // Try before establishment
+    EUNIT_ASSERT_SPECIFIC_LEAVE( iClipSession->PositionL(), KErrNotReady )
+    
+    // Establish session and try again
+    ESTABLISH_OUT_SESSION( iClipSession );
+    
+    CMceFileSource* file = 
+                    MusEngMceUtils::GetFileSourceL( *iClipSession->iSession );
+    file->iPosition = 2000000;
+    
+    EUNIT_ASSERT( iClipSession->PositionL().Int() * 1000000 == 
+                  file->iPosition.Int64() )
+    
+    // Ask position while fastforwarding, it should be bigger than real position
+    iClipSession->FastForwardL( ETrue );
+    
+    User::After( 1000000 ); // We have to wait since dividing in PositionL and 
+                            // multiplying before comparison loses difference 
+    
+    EUNIT_ASSERT( iClipSession->PositionL().Int() * 1000000 >
+                  file->iPosition.Int64() )
+    
+    // Ask position while fastforwarding beyond end of clip, clip duration is
+    // returned
+    file->iPosition = file->iDuration;
+    
+    EUNIT_ASSERT( iClipSession->PositionL().Int() * 1000000 ==
+                  file->iDuration.Int64() )
+    
+    // Stop fastforwarding, start fastrewinding, position is set to the end clip
+    iClipSession->FastForwardL( EFalse );
+    iClipSession->FastRewindL( ETrue );
+    
+    User::After( 1000000 ); // We have to wait since dividing in PositionL and 
+                            // multiplying before comparison loses difference 
+    
+    // Ask position while fastrewinding, it should be smaller than real 
+    // position
+    EUNIT_ASSERT( iClipSession->PositionL().Int() * 1000000 <
+                  file->iPosition.Int64() )
+    
+    // Ask position while fastrewinding beyond the beginning of clip, zero 
+    // returned
+    file->iPosition = 0;
+    
+    EUNIT_ASSERT( iClipSession->PositionL().Int() * 1000000 == 0 )
+    
+    // Asking position when rewinded to beginning but rewinding has ended 
+    // and clip has not ended (position should not be altered in that case)
+    iClipSession->iRewindedToBeginning = ETrue;
+    file->iPosition = 0;
+    iClipSession->iFRWDStartTime = TTime( 0 );
+    
+    EUNIT_ASSERT( iClipSession->PositionL().Int() * 1000000 == 0 )
+    
+    // Position has proceeded from beginning, rewinding to beginning info
+    // is cleared.
+    file->iPosition = 10000000;
+    iClipSession->iFRWDStartTime = TTime( 0 );
+    iClipSession->iRewindedToBeginning = EFalse;
+    EUNIT_ASSERT( iClipSession->PositionL().Int() * 1000000 == 10000000 )
+    EUNIT_ASSERT( iClipSession->iRewindedToBeginning == EFalse )
+    }
+    
+    
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngClipSession::UT_DurationLL()
+    {
+    // Try before establishment
+    EUNIT_ASSERT_SPECIFIC_LEAVE( iClipSession->DurationL(), KErrNotReady )
+    
+    // Establish session and try again
+    ESTABLISH_OUT_SESSION( iClipSession );
+    
+    CMceFileSource* file = 
+                    MusEngMceUtils::GetFileSourceL( *iClipSession->iSession );
+    file->iDuration = 2000000;
+    
+    EUNIT_ASSERT( iClipSession->DurationL().Int() * 1000000 == 
+                  file->iDuration.Int64() )
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngClipSession::UT_SetPositionLL()
+    {
+    TTimeIntervalSeconds time( 20 );
+    
+    // Try before establishment
+    EUNIT_ASSERT_SPECIFIC_LEAVE( iClipSession->SetPositionL( time ),
+                                 KErrNotReady )
+    
+    // Normal case with already disabled file source
+    ESTABLISH_OUT_SESSION( iClipSession );
+    
+    CMceFileSource* file = 
+                MusEngMceUtils::GetFileSourceL( *iClipSession->iSession ); 
+    file->iIsEnabled = EFalse;
+    
+    iClipSession->SetPositionL( time );
+    
+    EUNIT_ASSERT( file->iPosition.Int64() == 
+                  static_cast<TInt64>(time.Int()) * 1000000 )
+    EUNIT_ASSERT( !file->iIsEnabled )
+    
+    // Normal case with enabled file source
+    TTimeIntervalSeconds anotherTime( 30 );
+
+    file->iIsEnabled = ETrue;
+    iClipSession->SetPositionL( anotherTime );
+    
+    EUNIT_ASSERT( file->iPosition.Int64() == 
+                  static_cast<TInt64>(anotherTime.Int()) * 1000000 )
+    EUNIT_ASSERT( file->iIsEnabled )
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngClipSession::UT_TranscodeLToAvcL()
+    {
+    // Check that transcoding is not possible before invite
+    EUNIT_ASSERT_SPECIFIC_LEAVE( 
+                    iClipSession->TranscodeL( KTestVideoFileName() ),
+                    KErrNotReady )
+    
+    // Construct session with video and audio streams that must transcoded 
+    
+    CSIPProfile* profile = iClipSession->iSipProfileHandler->Profile();
+  
+    iClipSession->iSession = CMceOutSession::NewL( 
+                                    *(iClipSession->iManager),
+                                    *profile,
+                                    KTestRecipientSipUri8() );
+                             
+    CMceVideoStream* videoStream = CMceVideoStream::NewLC();
+
+    CMceRtpSink* rtpsink = CMceRtpSink::NewLC();
+    videoStream->AddSinkL( rtpsink );
+    CleanupStack::Pop( rtpsink );
+
+    CMceFileSource* fileSource = 
+        CMceFileSource::NewLC( *iClipSession->iManager, KTestAvcVideoFileName() );
+    videoStream->SetSourceL( fileSource );                            
+    CleanupStack::Pop( fileSource );
+
+    iClipSession->iSession->AddStreamL( videoStream );
+    CleanupStack::Pop( videoStream );
+    
+    CMceAudioStream* audioStream = CMceAudioStream::NewLC();
+        
+    audioStream->AddSinkL( CMceRtpSink::NewLC() );
+    CleanupStack::Pop();
+    
+    audioStream->SetSourceL( fileSource );
+    
+    iClipSession->iSession->AddStreamL( audioStream );
+    CleanupStack::Pop( audioStream );
+    
+    videoStream->iState = CMceMediaStream::ETranscodingRequired;
+    audioStream->iState = CMceMediaStream::ETranscodingRequired; 
+    
+    // Remove all codecs (file has some unknown codec type)
+    RPointerArray<CMceVideoCodec> videoCodecs = videoStream->Codecs();
+    for ( TInt i = 0; i < videoCodecs.Count(); i++ )
+        {
+        videoStream->RemoveCodecL( *videoCodecs[ i ] );
+        }
+    RPointerArray<CMceVideoCodec> videoCodecs2 = videoStream->Codecs();
+    EUNIT_ASSERT_EQUALS( videoCodecs2.Count(), 0 )
+    EUNIT_ASSERT( audioStream->Codecs().Count() > 1 )  
+    
+    // Add some stream which must not be transcoded
+    
+    CMceAudioStream* inStream = CMceAudioStream::NewLC();
+        
+    inStream->AddSinkL( CMceSpeakerSink::NewLC() );
+    CleanupStack::Pop();
+    
+    inStream->SetSourceL( CMceRtpSource::NewLC() );
+    CleanupStack::Pop();
+    
+    iClipSession->iSession->AddStreamL( inStream );
+    CleanupStack::Pop( inStream );
+
+    // Transcode
+    iClipSession->TranscodeL( KTestAvcVideoFileName() );
+    
+    // Check that transcoding has begun (transcoding to AVC as we know
+    // that other end supports it
+    EUNIT_ASSERT( iClipSession->iTranscodingOngoing )
+    EUNIT_ASSERT( videoStream->State() == CMceMediaStream::ETranscoding )
+    EUNIT_ASSERT( audioStream->State() == CMceMediaStream::ETranscoding )
+    EUNIT_ASSERT( inStream->State() != CMceMediaStream::ETranscoding )
+    
+    // Check that codecs have been replaced
+    const RPointerArray<CMceVideoCodec> videoCodecs3 = videoStream->Codecs();
+    EUNIT_ASSERT_EQUALS( videoCodecs3.Count(), 1 )
+    EUNIT_ASSERT( videoCodecs3[0]->SdpName().FindF( KMceSDPNameH264() ) >= 0 )
+    EUNIT_ASSERT( audioStream->Codecs().Count() == 1 )  
+    EUNIT_ASSERT( audioStream->Codecs()[0]->AllowedBitrates() == 
+                  KMceAllowedAmrNbBitrate475 )
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngClipSession::UT_TranscodeLToH263L()
+    {
+    // Check that transcoding is not possible before invite
+    EUNIT_ASSERT_SPECIFIC_LEAVE( 
+                    iClipSession->TranscodeL( KTestVideoFileName() ),
+                    KErrNotReady )
+    
+    // Construct session with video and audio streams that must transcoded 
+    
+    CSIPProfile* profile = iClipSession->iSipProfileHandler->Profile();
+  
+    iClipSession->iSession = CMceOutSession::NewL( 
+                                    *(iClipSession->iManager),
+                                    *profile,
+                                    KTestRecipientSipUri8() );
+                             
+    CMceVideoStream* videoStream = CMceVideoStream::NewLC();
+
+    CMceRtpSink* rtpsink = CMceRtpSink::NewLC();
+    videoStream->AddSinkL( rtpsink );
+    CleanupStack::Pop( rtpsink );
+
+    CMceFileSource* fileSource = 
+        CMceFileSource::NewLC( *iClipSession->iManager, KTestAvcVideoFileName() );
+    videoStream->SetSourceL( fileSource );                            
+    CleanupStack::Pop( fileSource );
+
+    iClipSession->iSession->AddStreamL( videoStream );
+    CleanupStack::Pop( videoStream );
+    
+    CMceAudioStream* audioStream = CMceAudioStream::NewLC();
+        
+    audioStream->AddSinkL( CMceRtpSink::NewLC() );
+    CleanupStack::Pop();
+    
+    audioStream->SetSourceL( fileSource );
+    
+    iClipSession->iSession->AddStreamL( audioStream );
+    CleanupStack::Pop( audioStream );
+    
+    videoStream->iState = CMceMediaStream::ETranscodingRequired;
+    audioStream->iState = CMceMediaStream::ETranscodingRequired; 
+    
+    const RPointerArray<CMceVideoCodec> videoCodecs = videoStream->Codecs();
+    EUNIT_ASSERT_EQUALS( videoCodecs.Count(), 1 )
+    EUNIT_ASSERT( videoCodecs[0]->SdpName().FindF( KMceSDPNameH264() ) >= 0 )
+    EUNIT_ASSERT( audioStream->Codecs().Count() > 1 )  
+    
+    TSize resolution(200,200); // Some value
+    videoStream->Codecs()[0]->SetResolutionL( resolution );
+    audioStream->Codecs()[0]->SetBitrate( KMceAllowedAmrNbBitrateAll );
+    
+    // Add some stream which must not be transcoded
+    
+    CMceAudioStream* inStream = CMceAudioStream::NewLC();
+        
+    inStream->AddSinkL( CMceSpeakerSink::NewLC() );
+    CleanupStack::Pop();
+    
+    inStream->SetSourceL( CMceRtpSource::NewLC() );
+    CleanupStack::Pop();
+    
+    iClipSession->iSession->AddStreamL( inStream );
+    CleanupStack::Pop( inStream );
+
+    // Transcode
+    iClipSession->TranscodeL( KTestAvcVideoFileName() );
+    
+    // Check that transcoding has begun (transcoding to H263 as we don't
+    // know whether other end supports H264)    EUNIT_ASSERT( iClipSession->iTranscodingOngoing )
+    EUNIT_ASSERT( videoStream->State() == CMceMediaStream::ETranscoding )
+    EUNIT_ASSERT( audioStream->State() == CMceMediaStream::ETranscoding )
+    EUNIT_ASSERT( inStream->State() != CMceMediaStream::ETranscoding )
+    
+    // Check that codecs have been replaced
+    const RPointerArray<CMceVideoCodec> videoCodecs2 = videoStream->Codecs();
+    EUNIT_ASSERT_EQUALS( videoCodecs2.Count(), 1 )
+    EUNIT_ASSERT( videoCodecs2[0]->SdpName().FindF( KMceSDPNameH263() ) >= 0 )
+    EUNIT_ASSERT( audioStream->Codecs().Count() == 1 )  
+    
+    EUNIT_ASSERT( videoStream->Codecs()[0]->Resolution() != resolution )
+    EUNIT_ASSERT( audioStream->Codecs()[0]->AllowedBitrates() == 
+                  KMceAllowedAmrNbBitrate475 )
+    }
+    
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngClipSession::UT_CancelTranscodeLL()
+    {
+    // Check that canceling transcoding is not possible before actual
+    // transcoding
+    EUNIT_ASSERT_SPECIFIC_LEAVE( iClipSession->CancelTranscodeL(),
+                                 KErrNotReady )
+    
+    // Construct session structure
+    
+    CSIPProfile* profile = iClipSession->iSipProfileHandler->Profile();
+  
+    iClipSession->iSession = CMceOutSession::NewL( 
+                                    *(iClipSession->iManager),
+                                    *profile,
+                                    KTestRecipientSipUri8() );
+                             
+    CMceVideoStream* videoStream = CMceVideoStream::NewLC();
+
+    CMceRtpSink* rtpsink = CMceRtpSink::NewLC();
+    videoStream->AddSinkL( rtpsink );
+    CleanupStack::Pop( rtpsink );
+
+    CMceFileSource* fileSource = 
+        CMceFileSource::NewLC( *iClipSession->iManager, KTestVideoFileName() );
+    videoStream->SetSourceL( fileSource );                            
+    CleanupStack::Pop( fileSource );
+
+    iClipSession->iSession->AddStreamL( videoStream );
+    CleanupStack::Pop( videoStream );
+    
+    CMceAudioStream* audioStream = CMceAudioStream::NewLC();
+        
+    audioStream->AddSinkL( CMceRtpSink::NewLC() );
+    CleanupStack::Pop();
+    
+    audioStream->SetSourceL( fileSource );
+    
+    iClipSession->iSession->AddStreamL( audioStream );
+    CleanupStack::Pop( audioStream );
+    
+    // Set need for transcoding
+    videoStream->iState = CMceMediaStream::ETranscodingRequired;
+    audioStream->iState = CMceMediaStream::ETranscodingRequired; 
+
+    // Transcode
+    iClipSession->TranscodeL( KTestAvcVideoFileName() );
+
+    EUNIT_ASSERT( videoStream->State() == CMceMediaStream::ETranscoding )
+    EUNIT_ASSERT( audioStream->State() == CMceMediaStream::ETranscoding )
+        
+    // Cancel
+    iClipSession->CancelTranscodeL();
+    
+    EUNIT_ASSERT( videoStream->State() == 
+                  CMceMediaStream::ETranscodingRequired )
+    EUNIT_ASSERT( audioStream->State() == 
+                  CMceMediaStream::ETranscodingRequired )
+    }
+    
+    
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//    
+void UT_CMusEngClipSession::UT_PlayLL()
+    {
+    // Check that resuming is not possible before invite
+    EUNIT_ASSERT_SPECIFIC_LEAVE( iClipSession->PlayL(), KErrNotReady )
+    
+    ESTABLISH_OUT_SESSION( iClipSession );
+
+    // Check that playing is not possible during FFWD
+    iClipSession->iFFWDStartTime = TTime( 10 );
+    EUNIT_ASSERT_SPECIFIC_LEAVE( iClipSession->PlayL(), KErrNotReady )
+    iClipSession->iFFWDStartTime = TTime( 0 );
+ 
+    // Check that playing is not possible during FRWD
+    iClipSession->iFRWDStartTime = TTime( 10 );
+    EUNIT_ASSERT_SPECIFIC_LEAVE( iClipSession->PlayL(), KErrNotReady )
+    iClipSession->iFRWDStartTime = TTime( 0 );
+
+    // Successful case
+    CMceFileSource* file = 
+            MusEngMceUtils::GetFileSourceL( *(iClipSession->iSession) );
+
+    file->iIsEnabled = EFalse;
+
+    iClipSession->PlayL();
+
+    EUNIT_ASSERT( file->IsEnabled() )
+    
+    // Try to play again, request should be ignored
+    
+    iClipSession->PlayL();
+
+    EUNIT_ASSERT( file->IsEnabled() )
+
+    }
+    
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//    
+void UT_CMusEngClipSession::UT_PauseLL()
+    {
+    // Check that pausing is not possible before invite
+    EUNIT_ASSERT_SPECIFIC_LEAVE( iClipSession->PauseL(), KErrNotReady )
+    
+    ESTABLISH_OUT_SESSION( iClipSession );
+
+    // Check that pausing is not possible during FFWD
+    iClipSession->iFFWDStartTime = TTime( 10 );
+    EUNIT_ASSERT_SPECIFIC_LEAVE( iClipSession->PauseL(), KErrNotReady )
+    iClipSession->iFFWDStartTime = TTime( 0 );
+ 
+    // Check that pausing is not possible during FRWD
+    iClipSession->iFRWDStartTime = TTime( 10 );
+    EUNIT_ASSERT_SPECIFIC_LEAVE( iClipSession->PauseL(), KErrNotReady )
+    iClipSession->iFRWDStartTime = TTime( 0 );
+
+    // Successful case
+    
+    CMceFileSource* file = 
+            MusEngMceUtils::GetFileSourceL( *(iClipSession->iSession) );
+
+    file->iIsEnabled = ETrue;
+    
+    iClipSession->PauseL();
+
+    EUNIT_ASSERT( !file->IsEnabled() )
+    
+    // Try to pause again, request should be ignored
+    
+    iClipSession->PauseL();
+
+    EUNIT_ASSERT( !file->IsEnabled() )
+
+    }
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//    
+void UT_CMusEngClipSession::UT_IsPlayingLL()
+    {
+    // Try without a session 
+    EUNIT_ASSERT_SPECIFIC_LEAVE( iClipSession->IsPlayingL(), KErrNotReady );
+    
+    // Normal cases
+    ESTABLISH_OUT_SESSION( iClipSession );
+    
+    iClipSession->PlayL();
+    EUNIT_ASSERT( iClipSession->IsPlayingL() )
+    
+    iClipSession->PauseL();
+    EUNIT_ASSERT( !iClipSession->IsPlayingL() )
     }
         
 
@@ -165,26 +821,39 @@ void UT_CMusEngClipSession::UT_NewLL()
 // -----------------------------------------------------------------------------
 //
 void UT_CMusEngClipSession::UT_CompleteSessionStructureLL()
-    {   
+    {
+    
     CMceStreamBundle* localBundle = 
-        CMceStreamBundle::NewLC( CMceStreamBundle::ELS );
+                            CMceStreamBundle::NewLC( CMceStreamBundle::ELS );
     
     // Check that structure cannot be completed before creating the session
     EUNIT_ASSERT_SPECIFIC_LEAVE( 
                 iClipSession->CompleteSessionStructureL( *localBundle ),
                 KErrNotReady )
     
-    // Normal case
-    CSIPProfile* profile = iClipSession->iSipProfileHandler->Profile();          
+    // Check that structure cannot be completed before setting the file name
+    iClipSession->iFileName = KNullDesC();          
+    CSIPProfile* profile = iClipSession->iSipProfileHandler->Profile();
+  
     iClipSession->iSession = CMceOutSession::NewL( 
-        *iClipSession->iManager, *profile, KTestRecipientSipUri8() );
+                                    *(iClipSession->iManager),
+                                    *profile,
+                                    KTestRecipientSipUri8() );
+
+    EUNIT_ASSERT_SPECIFIC_LEAVE( 
+                iClipSession->CompleteSessionStructureL( *localBundle ),
+                KErrNotReady )
     
+    // Normal case
+    iClipSession->iFileName = KTestVideoFileName();                     
     iClipSession->CompleteSessionStructureL( *localBundle );
+    
     EUNIT_ASSERT( iClipSession->iSession->Streams().Count() == 3 )
     EUNIT_ASSERT( iClipSession->iSession->Streams()[0]->Type() == KMceVideo )
     EUNIT_ASSERT( iClipSession->iSession->Streams()[0]->Source() )
     EUNIT_ASSERT( iClipSession->iSession->Streams()[0]->Source()->Type() ==
-                  KMceFileSource )             
+                  KMceFileSource )
+    EUNIT_ASSERT( !iClipSession->IsPlayingL() )              
     EUNIT_ASSERT( iClipSession->iSession->Streams()[0]->Sinks().Count() == 1 )
     EUNIT_ASSERT( iClipSession->iSession->Streams()[0]->Sinks()[0]->Type() ==
                   KMceRTPSink )
@@ -214,7 +883,7 @@ void UT_CMusEngClipSession::UT_StreamStateChangedL()
     CleanupStack::PopAndDestroy( videoStream );
     
     // Simulate sending invite
-    iClipSession->EstablishLcSessionL();
+    iClipSession->InviteL( KTestRecipientSipUri() );
    
     // Try all the stream states
     CMceMediaStream* changedStream = iClipSession->iSession->Streams()[0];
@@ -223,57 +892,56 @@ void UT_CMusEngClipSession::UT_StreamStateChangedL()
     changedStream->iState = CMceMediaStream::EUninitialized;
     static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
                                                             *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() )
+    EUNIT_ASSERT( iObserver->IsReseted() )
     
     // EInitialized, stream is initialized
     changedStream->iState = CMceMediaStream::EInitialized;
     static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
                                                             *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() )
+    EUNIT_ASSERT( iObserver->IsReseted() )
     
     // EBuffering, stream is buffering
     changedStream->iState = CMceMediaStream::EBuffering;
     static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
                                                             *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() )
+    EUNIT_ASSERT( iObserver->IsReseted() )
     
     // EIdle, stream is not receiving RTP
     changedStream->iState = CMceMediaStream::EIdle;
     static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
                                                             *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() )
+    EUNIT_ASSERT( iObserver->iStreamIdleCalled )
     
     // EStreaming, stream is streaming
     changedStream->iState = CMceMediaStream::EStreaming;
     static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
                                                             *changedStream );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::EPlayerStateChanged ) )
-    iLcSessionObserver->Reset();
+    EUNIT_ASSERT( iObserver->iStreamStreamingCalled )
+    iObserver->Reset();
     
     // EDisabled, stream is explicitly disabled
     changedStream->iState = CMceMediaStream::EDisabled;
     static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
                                                             *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() )
+    EUNIT_ASSERT( iObserver->IsReseted() )
     
     // ENoResources, stream has no needed resources to stream
     changedStream->iState = CMceMediaStream::ENoResources;
     static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
                                                             *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() )
+    EUNIT_ASSERT( iObserver->IsReseted() )
     
     // ETranscodingRequired, stream requires non-realtime transcoding
     changedStream->iState = CMceMediaStream::ETranscodingRequired;
     static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
                                                             *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() )
+    EUNIT_ASSERT( iObserver->IsReseted() )
     
     // ETranscoding, stream is transcoding in non-realtime
     changedStream->iState = CMceMediaStream::ETranscoding;
     static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
                                                             *changedStream );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() )
+    EUNIT_ASSERT( iObserver->IsReseted() )
     }
     
 
@@ -294,7 +962,7 @@ void UT_CMusEngClipSession::UT_StreamStateChangedWithSourceL()
     CleanupStack::PopAndDestroy( videoStream );
     
     // Simulate sending invite
-    iClipSession->EstablishLcSessionL();
+    iClipSession->InviteL( KTestRecipientSipUri() );
     
     // Try all the non-default stream states
     CMceMediaStream* changedStream = iClipSession->iSession->Streams()[0];
@@ -305,9 +973,68 @@ void UT_CMusEngClipSession::UT_StreamStateChangedWithSourceL()
     changedSource->iIsEnabled = EFalse;
     iClipSession->StreamStateChanged( *changedStream, *changedSource );
     
-    // TODO: EUNIT_ASSERT( iLcSessionObserver->iEndOfClipCalled )
+    EUNIT_ASSERT( iObserver->iEndOfClipCalled == ETrue )
     changedSource->iIsEnabled = ETrue;
-    iLcSessionObserver->Reset();
+    iObserver->Reset();
+    
+    // ETranscodingRequired, transcoding has failed
+    iClipSession->iSession->iState = CMceSession::EIdle;
+    iClipSession->iTranscodingOngoing = ETrue;
+    changedStream->iState = CMceMediaStream::ETranscodingRequired;
+    static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
+                            *changedStream, *changedSource );
+    EUNIT_ASSERT( iObserver->iTranscodingFailedCalled )
+    EUNIT_ASSERT( !iClipSession->iTranscodingOngoing )
+    iObserver->Reset();
+    
+    // ETranscoding, transcoding has progresssed
+    iClipSession->iSession->iState = CMceSession::EIdle;
+    changedStream->iState = CMceMediaStream::ETranscoding;
+    static_cast<CMceFileSource*>(changedSource)->iTranscodingPercentage = 20;
+    static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
+                            *changedStream, *changedSource );
+    EUNIT_ASSERT( iObserver->iTranscodingProgressedPercentage == 20 )
+    iObserver->Reset();
+    
+    // ETranscoding, transcoding has progresssed, querying percentage fails
+    iClipSession->iSession->iState = CMceSession::EIdle;
+    changedStream->iState = CMceMediaStream::ETranscoding;
+    iObserver->iTranscodingProgressedPercentage = -1; // make assertion possible
+    static_cast<CMceFileSource*>(changedSource)->iFailWithCode = KErrNotReady;
+    static_cast<CMceFileSource*>(changedSource)->iTranscodingPercentage = 30;
+    static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
+                            *changedStream, *changedSource );
+    EUNIT_ASSERT( iObserver->iTranscodingProgressedPercentage == 0 )
+    iObserver->Reset();
+
+    // EInitialized, transcoding has completed, establishment fails
+    iClipSession->iSession->iState = CMceSession::EIdle;
+    iClipSession->iSession->iFailWithCode = KErrCorrupt; // != KErrNone
+    iClipSession->iTranscodingOngoing = ETrue;
+    changedStream->iState = CMceMediaStream::EInitialized;
+    static_cast<CMceFileSource*>(changedSource)->iTranscodingPercentage = 100;
+    static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
+                            *changedStream, *changedSource );
+    EUNIT_ASSERT( iObserver->iTranscodingCompletedInitCalled )
+    EUNIT_ASSERT( iObserver->iTranscodingCompletedFinalizeCalled )
+    EUNIT_ASSERT( iObserver->iSessionFailedCalled )
+    EUNIT_ASSERT( !iClipSession->iTranscodingOngoing )
+    iObserver->Reset();
+    
+    // EInitialized, transcoding has completed, establishment succeeds
+    iClipSession->iSession->iState = CMceSession::EIdle;
+    iClipSession->iTranscodingOngoing = ETrue;
+    changedStream->iState = CMceMediaStream::EInitialized;
+    static_cast<CMceFileSource*>(changedSource)->iTranscodingPercentage = 100;
+    static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
+                            *changedStream, *changedSource );
+    EUNIT_ASSERT( iObserver->iTranscodingCompletedInitCalled )
+    EUNIT_ASSERT( iObserver->iTranscodingCompletedFinalizeCalled )    
+    // Next cannot be asserted since it is not true with alloc decoration
+    // EUNIT_ASSERT( !iObserver->iSessionFailedCalled )  
+    EUNIT_ASSERT( !iClipSession->iTranscodingOngoing )
+    iObserver->Reset();
+    
     
     // Test default stream state change behavior, remove or change when
     // behavior changes
@@ -317,13 +1044,13 @@ void UT_CMusEngClipSession::UT_StreamStateChangedWithSourceL()
     changedStream->iState = CMceMediaStream::EUninitialized;
     static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
                             *changedStream, *changedSource );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() )
+    EUNIT_ASSERT( iObserver->IsReseted() )
     
     // EInitialized, stream is initialized
     changedStream->iState = CMceMediaStream::EInitialized;
     static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
                             *changedStream, *changedSource );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() )
+    EUNIT_ASSERT( iObserver->IsReseted() )
 
     // Special meaning (Transcoding ready), tested separately
     
@@ -331,21 +1058,20 @@ void UT_CMusEngClipSession::UT_StreamStateChangedWithSourceL()
     changedStream->iState = CMceMediaStream::EBuffering;
     static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
                             *changedStream, *changedSource );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() )
+    EUNIT_ASSERT( iObserver->IsReseted() )
     
     // EIdle, stream is not receiving RTP
     changedStream->iState = CMceMediaStream::EIdle;
     static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
                             *changedStream, *changedSource );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() )
+    EUNIT_ASSERT( iObserver->iStreamIdleCalled )
     
     // EStreaming, stream is streaming
     changedStream->iState = CMceMediaStream::EStreaming;
     static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
                             *changedStream, *changedSource );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::EPlayerStateChanged ) )
-    iLcSessionObserver->Reset();
+    EUNIT_ASSERT( iObserver->iStreamStreamingCalled )
+    iObserver->Reset();
     
     // EDisabled, stream is explicitly disabled
     // This state has non-default meaning, tested before defaults
@@ -354,7 +1080,9 @@ void UT_CMusEngClipSession::UT_StreamStateChangedWithSourceL()
     changedStream->iState = CMceMediaStream::ENoResources;
     static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
                             *changedStream, *changedSource );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() )
+    EUNIT_ASSERT( iObserver->IsReseted() )
+
+    
     }
 
 
@@ -374,7 +1102,7 @@ void UT_CMusEngClipSession::UT_StreamStateChangedWithSinkL()
     CleanupStack::PopAndDestroy( videoStream );
     
     // Simulate sending invite
-    iClipSession->EstablishLcSessionL();
+    iClipSession->InviteL( KTestRecipientSipUri() );
                                      
     // Test default stream state change behavior
     CMceMediaStream* changedStream = iClipSession->iSession->Streams()[0];
@@ -385,65 +1113,65 @@ void UT_CMusEngClipSession::UT_StreamStateChangedWithSinkL()
     static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
                                                             *changedStream,
                                                             *changedSink );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() )
+    EUNIT_ASSERT( iObserver->IsReseted() )
     
     // EInitialized, stream is initialized
     changedStream->iState = CMceMediaStream::EInitialized;
     static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
                                                             *changedStream,
                                                             *changedSink );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() )
+    EUNIT_ASSERT( iObserver->IsReseted() )
     
     // EBuffering, stream is buffering
     changedStream->iState = CMceMediaStream::EBuffering;
     static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
                                                             *changedStream,
                                                             *changedSink );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() )
+    EUNIT_ASSERT( iObserver->IsReseted() )
     
     // EIdle, stream is not receiving RTP
     changedStream->iState = CMceMediaStream::EIdle;
     static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
                                                             *changedStream,
                                                             *changedSink );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() )
+    EUNIT_ASSERT( iObserver->iStreamIdleCalled );
     
     // EStreaming, stream is streaming
     changedStream->iState = CMceMediaStream::EStreaming;
     static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
                                                             *changedStream,
                                                             *changedSink );
-    EUNIT_ASSERT_EQUALS( TInt( iLcSessionObserver->iCalledFunction ),
-                         TInt( CLcSessionObserverStub::EPlayerStateChanged ) )
-    iLcSessionObserver->Reset();
+    EUNIT_ASSERT( iObserver->iStreamStreamingCalled )
+    iObserver->Reset();
     
     // EDisabled, stream is explicitly disabled
     changedStream->iState = CMceMediaStream::EDisabled;
     static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
                                                             *changedStream,
                                                             *changedSink );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() )
+    EUNIT_ASSERT( iObserver->IsReseted() )
     
     // ENoResources, stream has no needed resources to stream
     changedStream->iState = CMceMediaStream::ENoResources;
     static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
                                                             *changedStream,
                                                             *changedSink );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() )
+    EUNIT_ASSERT( iObserver->IsReseted() )
                                                             
     // ETranscodingRequired, stream requires non-realtime transcoding
     changedStream->iState = CMceMediaStream::ETranscodingRequired;
     static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
                                                             *changedStream,
                                                             *changedSink );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() )
+    EUNIT_ASSERT( iObserver->IsReseted() )
     
     // ETranscoding, stream is transcoding in non-realtime
     changedStream->iState = CMceMediaStream::ETranscoding;
     static_cast<MMceStreamObserver*>(iClipSession)->StreamStateChanged( 
                                                             *changedStream,
                                                             *changedSink );
-    EUNIT_ASSERT( iLcSessionObserver->IsReseted() )
+    EUNIT_ASSERT( iObserver->IsReseted() )
+    
     }
 
 
@@ -537,6 +1265,65 @@ void UT_CMusEngClipSession::UT_AddVideoCodecLL()
 //
 // -----------------------------------------------------------------------------
 //
+void UT_CMusEngClipSession::UT_HasClipEndedL()
+    {
+    // Try before establishing the session
+    EUNIT_ASSERT( !iClipSession->HasClipEnded() )
+    
+    // Try with session, but without video out stream 
+    
+    CSIPProfile* profile = iClipSession->iSipProfileHandler->Profile();
+  
+    iClipSession->iSession = CMceOutSession::NewL( 
+                                    *(iClipSession->iManager),
+                                    *profile,
+                                    KTestRecipientSipUri8() ); 
+    
+    EUNIT_ASSERT( !iClipSession->HasClipEnded() )
+    
+    // Try with video out stream without source...
+    CMceVideoStream* videoOut = CMceVideoStream::NewLC();
+    
+    videoOut->AddSinkL( CMceRtpSink::NewLC() );
+    CleanupStack::Pop();
+     
+    iClipSession->iSession->AddStreamL( videoOut );
+    CleanupStack::Pop( videoOut );
+    
+    EUNIT_ASSERT( !iClipSession->HasClipEnded() )
+    
+    // And with enabled source and stream     
+    videoOut->SetSourceL( CMceFileSource::NewLC( *iClipSession->iManager,
+                                                 iClipSession->iFileName ) );
+    CleanupStack::Pop();
+    
+    EUNIT_ASSERT( !iClipSession->HasClipEnded() )
+    
+    // try with different position and duration
+    (static_cast<CMceFileSource*> (videoOut->Source()))->iPosition = 90;
+    (static_cast<CMceFileSource*> (videoOut->Source()))->iDuration = 111;
+    EUNIT_ASSERT( !iClipSession->HasClipEnded() )
+    
+    // Disapling source
+    (static_cast<CMceFileSource*> (videoOut->Source()))->DisableL();
+    EUNIT_ASSERT( !iClipSession->HasClipEnded() )
+
+    // Disapling stream
+    videoOut->iState = CMceMediaStream::EDisabled;
+    EUNIT_ASSERT( !iClipSession->HasClipEnded() )
+       
+    // and finaly try with "real" end of clip 
+    (static_cast<CMceFileSource*> (videoOut->Source()))->iPosition = 0;
+    (static_cast<CMceFileSource*> (videoOut->Source()))->iDuration = 111;
+    
+    EUNIT_ASSERT( iClipSession->HasClipEnded() )
+    }
+    
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
 void UT_CMusEngClipSession::UT_ConstructAudioStructureLL()
     {
     
@@ -569,9 +1356,8 @@ void UT_CMusEngClipSession::UT_ConstructAudioStructureLL()
     videoOut->AddSinkL( CMceRtpSink::NewLC() );
     CleanupStack::Pop();
     
-    videoOut->SetSourceL( CMceFileSource::NewLC( 
-        *iClipSession->iManager,
-        iClipSession->LocalVideoPlayer()->LcSourceFileControl()->LcFileName() ) );
+    videoOut->SetSourceL( CMceFileSource::NewLC( *iClipSession->iManager,
+                                                 iClipSession->iFileName ) );
     CleanupStack::Pop();                                             
      
     iClipSession->iSession->AddStreamL( videoOut );
@@ -638,8 +1424,7 @@ void UT_CMusEngClipSession::UT_ConstructAudioStructureL_OperatorVariantL()
 //
 void UT_CMusEngClipSession::UT_EstablishSessionLL()
     {
-    iClipSession->LocalVideoPlayer()->LcSourceFileControl()->SetLcFileNameL(
-         KTestAvcVideoFileName() );
+    iClipSession->SetClipL( KTestAvcVideoFileName() );
 
     // Try to establish, must fail, because of missing session
     TRAPD( error, iClipSession->EstablishSessionL() );
@@ -652,7 +1437,7 @@ void UT_CMusEngClipSession::UT_EstablishSessionLL()
     // 1.Test that in case the peer party supports H264, no transcoding is needed
     
     // Call to CMusEngOutMceSession::InviteL leads to call to EstablishL
-    iClipSession->EstablishLcSessionL();
+    iClipSession->InviteL( KTestRecipientSipUri );
     
     const RPointerArray<CMceMediaStream>& streams = iClipSession->iSession->Streams();
 
@@ -668,10 +1453,13 @@ void UT_CMusEngClipSession::UT_EstablishSessionLL()
              
              }
          }
+
+    EUNIT_ASSERT( !iObserver->iTranscodingNeededCalled )    
+    EUNIT_ASSERT( !iClipSession->iTranscodingRequiredDueMissingOptions )
     
     ///////
     // 2.Test the case when we don't know whether peer supports H264, 
-    // transcoding is needed => function will leave with KErrNotSupported
+    // transcoding is needed, H264 codec has to be removed from the codec list
 
     delete iClipSession->iSession;
     iClipSession->iSession = NULL;
@@ -679,25 +1467,140 @@ void UT_CMusEngClipSession::UT_EstablishSessionLL()
     delete iClipSession->iVideoCodecList;
     iClipSession->iVideoCodecList = NULL;
     
-    MUSENG_EUNIT_ASSERT_SPECIFIC_LEAVE( 
-                   iClipSession->EstablishLcSessionL(),
-                   KErrNotSupported )
-    
+    // Call to CMusEngOutMceSession::InviteL leads to call to EstablishL
+    iClipSession->InviteL( KTestRecipientSipUri );
+
+    const RPointerArray<CMceMediaStream>& streams2 = iClipSession->iSession->Streams();
+
+    for ( TInt i = 0; i < streams2.Count(); ++i )
+         {
+         if ( streams2[i]->Type() == KMceVideo )
+             {
+             CMceVideoStream* videoStream = static_cast<CMceVideoStream*>( streams2[i] );
+             const RPointerArray<CMceVideoCodec> codecs = videoStream->Codecs();
+             EUNIT_ASSERT_EQUALS( codecs.Count(), 1 )
+             EUNIT_ASSERT( codecs[0]->SdpName().FindF( KMceSDPNameH263() ) >= 0 )
+             }
+         }
+ 
+    EUNIT_ASSERT( iObserver->iTranscodingNeededCalled )
+    EUNIT_ASSERT( iObserver->iDueUnknowCapas )
+    EUNIT_ASSERT( iClipSession->iTranscodingRequiredDueMissingOptions )
     
     ///////
-    // 3.Test that if peer doesn't supports H264, transcoding is needed
-    // => function will leave with KErrNotSupported
+    // 3. Establish behaves differently at second round in case clip is AVC
+    // and because remote party's capabilities were unknown. Use-case is such
+    // that AVC is tried to be transcoded first but if it fails, invite is retried
+    // by using AVC
+    iObserver->Reset();
+    iClipSession->InviteL( KTestRecipientSipUri );
+    const RPointerArray<CMceMediaStream>& testStreams = iClipSession->iSession->Streams();
+
+    for ( TInt i = 0; i < testStreams.Count(); ++i )
+        {
+        if ( testStreams[i]->Type() == KMceVideo )
+            {
+            CMceVideoStream* videoStream = static_cast<CMceVideoStream*>( testStreams[i] );
+            const RPointerArray<CMceVideoCodec> codecs = videoStream->Codecs();
+            EUNIT_ASSERT_EQUALS( codecs.Count(), 1 )
+            EUNIT_ASSERT( codecs[0]->SdpName().FindF( KMceSDPNameH264() ) >= 0 )
+            }
+        }
+    
+    EUNIT_ASSERT( !iObserver->iTranscodingNeededCalled )
+    EUNIT_ASSERT( !iObserver->iDueUnknowCapas )
+    
+    ///////
+    // 4.Test that if peer doesn't supports H264, transcoding is needed
+    // H264 codec has to be removed from the codec list
+
+    iObserver->iTranscodingNeededCalled = EFalse;
     
     delete iClipSession->iSession;
     iClipSession->iSession = NULL;
      
     iClipSession->iVideoCodecList = KMceSDPNameH263().AllocL();
     
-    MUSENG_EUNIT_ASSERT_SPECIFIC_LEAVE( 
-                    iClipSession->EstablishLcSessionL(),
-                    KErrNotSupported )
+    // Call to CMusEngOutMceSession::InviteL leads to call to EstablishL
+    iClipSession->InviteL( KTestRecipientSipUri );
+
+    const RPointerArray<CMceMediaStream>& streams3 = iClipSession->iSession->Streams();
+
+    for ( TInt i = 0; i < streams3.Count(); ++i )
+         {
+         if ( streams3[i]->Type() == KMceVideo )
+             {
+             CMceVideoStream* videoStream = static_cast<CMceVideoStream*>( streams3[i] );
+             const RPointerArray<CMceVideoCodec> codecs = videoStream->Codecs();
+             EUNIT_ASSERT_EQUALS( codecs.Count(), 1 )
+             EUNIT_ASSERT( codecs[0]->SdpName().FindF( KMceSDPNameH263() ) >= 0 )
+             }
+         }
+  
+    EUNIT_ASSERT( iObserver->iTranscodingNeededCalled )
+    EUNIT_ASSERT( !iObserver->iDueUnknowCapas )
+          
     }
 
+void UT_CMusEngClipSession::UT_IsRewindFromEndL()
+    {
+    // Try before establishing the session
+    EUNIT_ASSERT( !iClipSession->IsRewindFromEnd() )
+    
+    // Try with session, but without video out stream 
+    
+    CSIPProfile* profile = iClipSession->iSipProfileHandler->Profile();
+  
+    iClipSession->iSession = CMceOutSession::NewL( 
+                                    *(iClipSession->iManager),
+                                    *profile,
+                                    KTestRecipientSipUri8() ); 
+    
+    EUNIT_ASSERT( !iClipSession->IsRewindFromEnd() )
+    
+    // Try with video out stream without source...
+    CMceVideoStream* videoOut = CMceVideoStream::NewLC();
+    
+    videoOut->AddSinkL( CMceRtpSink::NewLC() );
+    CleanupStack::Pop();
+     
+    iClipSession->iSession->AddStreamL( videoOut );
+    CleanupStack::Pop( videoOut );
+    
+    EUNIT_ASSERT( !iClipSession->IsRewindFromEnd() )
+    
+    // And with enabled source and stream     
+    videoOut->SetSourceL( CMceFileSource::NewLC( *iClipSession->iManager,
+                                                 iClipSession->iFileName ) );
+    CleanupStack::Pop();
+    
+    EUNIT_ASSERT( !iClipSession->IsRewindFromEnd() )
+    
+    // try with different position and duration
+    (static_cast<CMceFileSource*> (videoOut->Source()))->iPosition = 90;
+    (static_cast<CMceFileSource*> (videoOut->Source()))->iDuration = 111;
+    EUNIT_ASSERT( !iClipSession->IsRewindFromEnd() )
+    
+    // Disapling source
+    (static_cast<CMceFileSource*> (videoOut->Source()))->DisableL();
+    EUNIT_ASSERT( !iClipSession->IsRewindFromEnd() )
+
+    // Disapling stream
+    videoOut->iState = CMceMediaStream::EDisabled;
+    EUNIT_ASSERT( iClipSession->IsRewindFromEnd() )
+    
+    iClipSession->iPause = ETrue;
+    EUNIT_ASSERT( !iClipSession->IsRewindFromEnd() )
+    
+    iClipSession->iPause = EFalse;
+    EUNIT_ASSERT( iClipSession->IsRewindFromEnd() )
+       
+    // and finaly try with "real" end of clip 
+    (static_cast<CMceFileSource*> (videoOut->Source()))->iPosition = 0;
+    (static_cast<CMceFileSource*> (videoOut->Source()))->iDuration = 111;
+    
+    EUNIT_ASSERT( !iClipSession->IsRewindFromEnd() )
+    }
 
 //  TEST TABLE
 
@@ -712,6 +1615,90 @@ EUNIT_TEST(
     "NewL",
     "FUNCTIONALITY",
     SetupL, UT_NewLL, Teardown)
+
+EUNIT_TEST(
+    "SetClipL - test ",
+    "CMusEngClipSession",
+    "AetClipL",
+    "FUNCTIONALITY",
+    SetupL, UT_SetClipLL, Teardown)
+
+EUNIT_TEST(
+    "FastForwardL - test ",
+    "CMusEngClipSession",
+    "FastForwardL",
+    "FUNCTIONALITY",
+    SetupL, UT_FastForwardLL, Teardown)
+
+EUNIT_TEST(
+    "FastRewindL - test ",
+    "CMusEngClipSession",
+    "FastRewindL",
+    "FUNCTIONALITY",
+    SetupL, UT_FastRewindLL, Teardown)
+
+EUNIT_TEST(
+    "PositionL - test ",
+    "CMusEngClipSession",
+    "PositionL",
+    "FUNCTIONALITY",
+    SetupL, UT_PositionLL, Teardown)
+
+EUNIT_TEST(
+    "DurationL - test ",
+    "CMusEngClipSession",
+    "DurationL",
+    "FUNCTIONALITY",
+    SetupL, UT_DurationLL, Teardown)
+
+EUNIT_TEST(
+    "SetPositionL - test ",
+    "CMusEngClipSession",
+    "SetPositionL",
+    "FUNCTIONALITY",
+    SetupL, UT_SetPositionLL, Teardown)
+    
+EUNIT_TEST(
+    "TranscodeL - To AVC test ",
+    "CMusEngClipSession",
+    "TranscodeL",
+    "FUNCTIONALITY",
+    SetupL, UT_TranscodeLToAvcL, Teardown)
+
+EUNIT_TEST(
+    "TranscodeL - To H263 test ",
+    "CMusEngClipSession",
+    "TranscodeL",
+    "FUNCTIONALITY",
+    Setup2L, UT_TranscodeLToH263L, Teardown)
+    
+EUNIT_TEST(
+    "CancelTranscodeL - test ",
+    "CMusEngClipSession",
+    "CancelTranscodeL",
+    "FUNCTIONALITY",
+    SetupL, UT_CancelTranscodeLL, Teardown)
+    
+EUNIT_TEST(
+    "PlayL - test ",
+    "CMusEngClipSession",
+    "PlayL",
+    "FUNCTIONALITY",
+    SetupL, UT_PlayLL, Teardown)
+
+EUNIT_TEST(
+    "PauseL - test ",
+    "CMusEngClipSession",
+    "PauseL",
+    "FUNCTIONALITY",
+    SetupL, UT_PauseLL, Teardown)
+
+EUNIT_TEST(
+    "IsPlayingL - test ",
+    "CMusEngClipSession",
+    "IsPlayingL",
+    "FUNCTIONALITY",
+    SetupL, UT_IsPlayingLL, Teardown)
 
 EUNIT_TEST(
     "CompleteSessionStructureL - test ",
@@ -754,6 +1741,13 @@ EUNIT_TEST(
     "AddVideoCodecL",
     "FUNCTIONALITY",
     SetupL, UT_AddVideoCodecLL, Teardown)
+    
+EUNIT_TEST(
+    "HasClipEnded - test ",
+    "CMusEngClipSession",
+    "HasClipEnded",
+    "FUNCTIONALITY",
+    SetupL, UT_HasClipEndedL, Teardown)
 
 EUNIT_TEST(
     "ConstructAudioStructureL - test ",
@@ -776,7 +1770,13 @@ EUNIT_TEST(
     "FUNCTIONALITY",
     SetupL, UT_EstablishSessionLL, Teardown)    
 
-        
+EUNIT_TEST(
+    "IsRewindFromEnd - test ",
+    "CMusEngClipSession",
+    "IsRewindFromEnd",
+    "FUNCTIONALITY",
+    SetupL, UT_IsRewindFromEndL, Teardown)
+    
 EUNIT_END_TEST_TABLE
 
 //  END OF FILE

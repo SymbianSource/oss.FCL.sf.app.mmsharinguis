@@ -97,15 +97,6 @@ TBool CMusAvaSettingsObserverImp::OptionAllowed()
 	MUS_LOG( " [MUSAVA ] ->  CMusAvaSettingsObserverImp::OptionAllowed" );
 	MUS_LOG( " [MUSAVA ] <-  CMusAvaSettingsObserverImp::OptionAllowed" );
 	return iOptionAllowed;
-	}   
-
-// -----------------------------------------------------------------------------
-//  
-// -----------------------------------------------------------------------------
-// 
-void CMusAvaSettingsObserverImp::StartApplicationL( MultimediaSharing::TMusUseCase /*aUseCase*/ )
-    {
-    iApplicationStarted = ETrue;
-    }
+	}     	
 
 

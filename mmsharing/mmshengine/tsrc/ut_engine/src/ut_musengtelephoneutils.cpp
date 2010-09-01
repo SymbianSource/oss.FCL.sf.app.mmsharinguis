@@ -27,7 +27,7 @@
 //  SYSTEM INCLUDES
 #include <digia/eunit/eunitmacros.h>
 #include <centralrepository.h>
-#include <e32property.h>
+
 
 
 
@@ -95,8 +95,9 @@ void UT_CMusEngTelephoneUtils::ConstructL()
 void UT_CMusEngTelephoneUtils::SetupL()
     {
     iObserver = new( ELeave ) CMusEngObserverStub;
-    iTelephoneUtils = CMusEngTelephoneUtils::NewL( *iObserver );
+    iTelephoneUtils = CMusEngTelephoneUtils::NewL();
     }
+
 
 // -----------------------------------------------------------------------------
 //
@@ -104,15 +105,17 @@ void UT_CMusEngTelephoneUtils::SetupL()
 //
 void UT_CMusEngTelephoneUtils::Teardown()
     {
-    delete iTelephoneUtils;
-    iTelephoneUtils = NULL;
     delete iObserver;
-    iObserver = NULL;
-    PropertyHelper::Close();
+    delete iTelephoneUtils;
     }
 
 
-// TEST CASES  
+
+// TEST CASES
+
+
+
+    
 
 // -----------------------------------------------------------------------------
 //
@@ -152,13 +155,77 @@ void UT_CMusEngTelephoneUtils::UT_AudioRoutingCanBeChangedL()
     
     iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
                   CTelephonyAudioRouting::EBTAudioAccessory;
-    EUNIT_ASSERT( !iTelephoneUtils->AudioRoutingCanBeChanged() );
+    EUNIT_ASSERT( iTelephoneUtils->AudioRoutingCanBeChanged() );
     
     iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
                   CTelephonyAudioRouting::ETTY;
-    EUNIT_ASSERT( !iTelephoneUtils->AudioRoutingCanBeChanged() );         
+    EUNIT_ASSERT( !iTelephoneUtils->AudioRoutingCanBeChanged() );
+            
+    }
+    
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//	   
+void UT_CMusEngTelephoneUtils::UT_IsAudioRoutingHeadsetL()
+    {
+    iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
+                  CTelephonyAudioRouting::EBTAudioAccessory;
+    EUNIT_ASSERT( iTelephoneUtils->IsAudioRoutingHeadset());
+    
+    iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
+                  CTelephonyAudioRouting::ENotActive;
+    EUNIT_ASSERT( !iTelephoneUtils->IsAudioRoutingHeadset() );
+       
+    iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
+                  CTelephonyAudioRouting::ENone;
+    EUNIT_ASSERT( !iTelephoneUtils->IsAudioRoutingHeadset() );
+    
+    iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
+                  CTelephonyAudioRouting::EHandset;
+    EUNIT_ASSERT( !iTelephoneUtils->IsAudioRoutingHeadset() );
+    
+    iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
+                  CTelephonyAudioRouting::ELoudspeaker;
+    EUNIT_ASSERT( !iTelephoneUtils->IsAudioRoutingHeadset() );
+    
+    iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
+                  CTelephonyAudioRouting::EWiredAudioAccessory;
+    EUNIT_ASSERT( iTelephoneUtils->IsAudioRoutingHeadset() );
+    
+    iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
+                  CTelephonyAudioRouting::ETTY;
+    EUNIT_ASSERT( !iTelephoneUtils->IsAudioRoutingHeadset() );
+            
     }
 
+void UT_CMusEngTelephoneUtils::UT_IsAudioRoutingLoudSpeakerL()
+	{
+	iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
+	              CTelephonyAudioRouting::ELoudspeaker;
+	iTelephoneUtils->iAudioOutputAtStartup = 
+			      CTelephonyAudioRouting::ELoudspeaker;
+	EUNIT_ASSERT( !iTelephoneUtils->IsAudioRoutingLoudSpeaker());
+	
+	iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
+				  CTelephonyAudioRouting::ELoudspeaker;
+	iTelephoneUtils->iAudioOutputAtStartup = 
+			      CTelephonyAudioRouting::EHandset;
+	EUNIT_ASSERT( iTelephoneUtils->IsAudioRoutingLoudSpeaker() );
+	
+	iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
+				  CTelephonyAudioRouting::ELoudspeaker;
+    iTelephoneUtils->iAudioOutputAtStartup = 
+    		      CTelephonyAudioRouting::EBTAudioAccessory;
+    EUNIT_ASSERT( iTelephoneUtils->IsAudioRoutingLoudSpeaker() );
+		
+    iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
+                  CTelephonyAudioRouting::ELoudspeaker;
+    iTelephoneUtils->iAudioOutputAtStartup = 
+    		      CTelephonyAudioRouting::EWiredAudioAccessory;
+    EUNIT_ASSERT( iTelephoneUtils->IsAudioRoutingLoudSpeaker() );
+	}
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -170,18 +237,19 @@ void UT_CMusEngTelephoneUtils::UT_LoudspeakerLL()
                   CTelephonyAudioRouting::EHandset;
     
     // Set loudspeaker on, succeeds
-    iTelephoneUtils->LoudspeakerL( ETrue );
+    iTelephoneUtils->LoudspeakerL( ETrue, ETrue );
     EUNIT_ASSERT( iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput ==
                   CTelephonyAudioRouting::ELoudspeaker );
     EUNIT_ASSERT( iTelephoneUtils->iTelephonyAudioRouting->iShowNoteMode ==
                   EFalse );
+    EUNIT_ASSERT( iTelephoneUtils->iShowDialog == ETrue );
     
     // Change conditions
     iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
                   CTelephonyAudioRouting::EWiredAudioAccessory;              
     
     // Try to set loudspeaker on, fails because current set is not handset
-    iTelephoneUtils->LoudspeakerL( ETrue );
+    iTelephoneUtils->LoudspeakerL( ETrue, ETrue );
     EUNIT_ASSERT( iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput ==
                   CTelephonyAudioRouting::EWiredAudioAccessory );  
     
@@ -192,7 +260,7 @@ void UT_CMusEngTelephoneUtils::UT_LoudspeakerLL()
                   CTelephonyAudioRouting::ELoudspeaker;  
                               
     // Try to set loudspeaker off, goes to handset
-    iTelephoneUtils->LoudspeakerL( EFalse );   
+    iTelephoneUtils->LoudspeakerL( EFalse, ETrue );   
     EUNIT_ASSERT( iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput ==
                   CTelephonyAudioRouting::EHandset );  
     
@@ -203,10 +271,11 @@ void UT_CMusEngTelephoneUtils::UT_LoudspeakerLL()
                   CTelephonyAudioRouting::EWiredAudioAccessory; 
     
     // Try to set loudspeaker off, goes to wired
-    iTelephoneUtils->LoudspeakerL( EFalse );   
+    iTelephoneUtils->LoudspeakerL( EFalse, ETrue );   
     EUNIT_ASSERT( iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput ==
                   CTelephonyAudioRouting::EWiredAudioAccessory ); 
     }
+
 
 // -----------------------------------------------------------------------------
 //
@@ -222,6 +291,7 @@ void UT_CMusEngTelephoneUtils::UT_IsLoudSpeakerEnabledL()
                                         CTelephonyAudioRouting::EHandset;
     EUNIT_ASSERT( !iTelephoneUtils->IsLoudSpeakerEnabled() );
     }
+
 
 // -----------------------------------------------------------------------------
 //
@@ -240,7 +310,9 @@ void UT_CMusEngTelephoneUtils::UT_GetVolumeLL()
     
     volume = iTelephoneUtils->GetVolumeL();
     EUNIT_ASSERT( volume == 8 );
+    
     }
+
 
 // -----------------------------------------------------------------------------
 //
@@ -292,6 +364,7 @@ void UT_CMusEngTelephoneUtils::UT_SetVolumeLL()
     EUNIT_ASSERT( loudSpeakerVolume == 10 );
     }
 
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
@@ -304,35 +377,46 @@ void UT_CMusEngTelephoneUtils::UT_AvailableOutputsChangedL()
                             *iTelephoneUtils->iTelephonyAudioRouting );
     }
 
+
 // -----------------------------------------------------------------------------
 //
 // -----------------------------------------------------------------------------
 //
 void UT_CMusEngTelephoneUtils::UT_OutputChangedL()
     {
-    // Loudspeaker
     iTelephoneUtils->iAudioOutputAtStartup = CTelephonyAudioRouting::EHandset;
     
     iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput = 
-        CTelephonyAudioRouting::ELoudspeaker;
+                                        CTelephonyAudioRouting::ELoudspeaker;
+    iTelephoneUtils->iRepository->Set( KTelIncallLoudspeakerVolume, 8 );
+    EUNIT_ASSERT( iTelephoneUtils->iCurrentVolume == 4 )
+    EUNIT_ASSERT( iObserver->iVolume == 0 );
     
     iTelephoneUtils->OutputChanged( *iTelephoneUtils->iTelephonyAudioRouting );
                                                                 
     EUNIT_ASSERT_EQUALS( iTelephoneUtils->iAudioOutputAtStartup, 
                          CTelephonyAudioRouting::ELoudspeaker )
-    EUNIT_ASSERT( iObserver->iAudioRoutingChangedCalled )
     
-    // Handset   
+    EUNIT_ASSERT( iTelephoneUtils->iCurrentVolume == 8 )
+    EUNIT_ASSERT( iObserver->iVolume == 0 );
+    // Test observer
+    
+    iTelephoneUtils->SetAudioRoutingObserver( iObserver );
+    iTelephoneUtils->SetVolumeChangeObserver(iObserver);
+    
     iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput = 
-        CTelephonyAudioRouting::EHandset;
+                                        CTelephonyAudioRouting::EHandset;
     
     iTelephoneUtils->OutputChanged( *iTelephoneUtils->iTelephonyAudioRouting );
-                                                                
+    
+    EUNIT_ASSERT( iTelephoneUtils->iCurrentVolume == 4 )
+    EUNIT_ASSERT( iObserver->iVolume == 4 );                                                               
     EUNIT_ASSERT_EQUALS( iTelephoneUtils->iAudioOutputAtStartup,
                          CTelephonyAudioRouting::EHandset )
     
     EUNIT_ASSERT( iObserver->iAudioRoutingChangedCalled )
     }
+
 
 // -----------------------------------------------------------------------------
 //
@@ -340,19 +424,46 @@ void UT_CMusEngTelephoneUtils::UT_OutputChangedL()
 //
 void UT_CMusEngTelephoneUtils::UT_SetOutputCompleteL()
     {
+    iTelephoneUtils->SetAudioRoutingObserver( iObserver );
+    iTelephoneUtils->SetVolumeChangeObserver(iObserver);
+    EUNIT_ASSERT( iObserver->iVolume == 0 );
+    EUNIT_ASSERT( iTelephoneUtils->iCurrentVolume == 4 )
+
     // Setoutput fails
     iTelephoneUtils->SetOutputComplete( 
                             *iTelephoneUtils->iTelephonyAudioRouting,
-                            KErrGeneral );                         
+                            KErrGeneral );
+                            
     EUNIT_ASSERT( !iObserver->iAudioRoutingChangedCalled )
-    iObserver->Reset();
+    EUNIT_ASSERT( iObserver->iVolume == 0 );
     
-    // Setoutput ok
+    // Setoutput succesful and note is shown by audiorouting api
+    // There's already next pending setoutput for which we are going to
+    // show note -> that cannot be forgotten
+    iTelephoneUtils->iRepository->Set( KTelIncallEarVolume, 5 );
+    iTelephoneUtils->iShowDialog = ETrue;
+    iTelephoneUtils->iTelephonyAudioRouting->SetShowNote( ETrue );
     iTelephoneUtils->SetOutputComplete( 
                             *iTelephoneUtils->iTelephonyAudioRouting,
                             KErrNone );
-    EUNIT_ASSERT( iObserver->iAudioRoutingChangedCalled )
+    EUNIT_ASSERT( iObserver->iAudioRoutingChangedCalled == ETrue )
+    EUNIT_ASSERT( iObserver->iShowNote == EFalse )
+    EUNIT_ASSERT( iTelephoneUtils->iShowDialog == ETrue )
+    EUNIT_ASSERT( iObserver->iVolume == 5 );
+    EUNIT_ASSERT( iTelephoneUtils->iCurrentVolume == 5 )
+    
+    iObserver->Reset();
+    
+    // Setoutput succesful and note is shown by us
+    iTelephoneUtils->iTelephonyAudioRouting->SetShowNote( EFalse );
+    iTelephoneUtils->SetOutputComplete( 
+                            *iTelephoneUtils->iTelephonyAudioRouting,
+                            KErrNone );
+    EUNIT_ASSERT( iObserver->iAudioRoutingChangedCalled == ETrue )
+    EUNIT_ASSERT( iObserver->iShowNote == ETrue )
+    EUNIT_ASSERT( iTelephoneUtils->iShowDialog == EFalse )
     }
+
 
 // -----------------------------------------------------------------------------
 //
@@ -365,6 +476,7 @@ void UT_CMusEngTelephoneUtils::UT_ValidateVolumeL()
     EUNIT_ASSERT( iTelephoneUtils->ValidateVolume( 5 ) == 5 );
     }
 
+
 // -----------------------------------------------------------------------------
 // We cannot assert anything after destruction. All we can do is to make
 // such condition before destruction that coverage will be achieved.
@@ -373,48 +485,139 @@ void UT_CMusEngTelephoneUtils::UT_ValidateVolumeL()
 void UT_CMusEngTelephoneUtils::UT_DestructorL()
     {
     // Simulate that 2nd phase construction has not succeeded
-    CMusEngTelephoneUtils* utils = CMusEngTelephoneUtils::NewL( *iObserver );
+    CMusEngTelephoneUtils* utils = CMusEngTelephoneUtils::NewL();
     CleanupStack::PushL( utils );
     delete utils->iTelephonyAudioRouting;
     utils->iTelephonyAudioRouting = NULL;
     CleanupStack::PopAndDestroy( utils );
     
     // Simulate that current audio output mode is same as original
-    utils = CMusEngTelephoneUtils::NewL( *iObserver );
+    utils = CMusEngTelephoneUtils::NewL();
     CleanupStack::PushL( utils );
     utils->iAudioOutputAtStartup = CTelephonyAudioRouting::EHandset;
     utils->iTelephonyAudioRouting->iCurrentOutput = 
-                                            CTelephonyAudioRouting::EHandset;
+                                        CTelephonyAudioRouting::EHandset;
+    CTelephonyAudioRouting::iPreviousOutput = 
+                                        CTelephonyAudioRouting::ELoudspeaker;
     CleanupStack::PopAndDestroy( utils );
+    EUNIT_ASSERT( CTelephonyAudioRouting::iPreviousOutput == 
+                  CTelephonyAudioRouting::ELoudspeaker )
     
     // Simulate that current audio output mode is not the same as original,
     // Setting fails
-    utils = CMusEngTelephoneUtils::NewL( *iObserver );
+    utils = CMusEngTelephoneUtils::NewL();
     CleanupStack::PushL( utils );
     utils->iAudioOutputAtStartup = CTelephonyAudioRouting::EHandset;
     utils->iTelephonyAudioRouting->iCurrentOutput = 
                                     CTelephonyAudioRouting::ELoudspeaker;
+    CTelephonyAudioRouting::iPreviousOutput = 
+                                    CTelephonyAudioRouting::EHandset;
     utils->iTelephonyAudioRouting->iForceFailWithCode = KErrGeneral;
     CleanupStack::PopAndDestroy( utils );
+    EUNIT_ASSERT( CTelephonyAudioRouting::iPreviousOutput == 
+                  CTelephonyAudioRouting::EHandset )
+    EUNIT_ASSERT( CTelephonyAudioRouting::iCurrentOutput == 
+                  CTelephonyAudioRouting::ELoudspeaker )
     
     // Simulate that current audio output mode is not the same as original,
     // Setting succeeds
-    utils = CMusEngTelephoneUtils::NewL( *iObserver );
+    utils = CMusEngTelephoneUtils::NewL();
     CleanupStack::PushL( utils );
     utils->iAudioOutputAtStartup = CTelephonyAudioRouting::EHandset;
     utils->iTelephonyAudioRouting->iCurrentOutput = 
                                     CTelephonyAudioRouting::ELoudspeaker;
+    CTelephonyAudioRouting::iPreviousOutput = 
+                                    CTelephonyAudioRouting::EHandset;
     CleanupStack::PopAndDestroy( utils );
+    EUNIT_ASSERT( CTelephonyAudioRouting::iPreviousOutput == 
+                  CTelephonyAudioRouting::ELoudspeaker )
+    EUNIT_ASSERT( CTelephonyAudioRouting::iCurrentOutput == 
+                  CTelephonyAudioRouting::EHandset )
     
     // Simulate that current audio output mode is not the same as original,
+    // Setting not done due to special case handling (ENotActive)
+    utils = CMusEngTelephoneUtils::NewL();
+    CleanupStack::PushL( utils );
+    utils->iAudioOutputAtStartup = CTelephonyAudioRouting::EHandset;
+    utils->iTelephonyAudioRouting->iCurrentOutput = 
+                                    CTelephonyAudioRouting::ENotActive;
+    CTelephonyAudioRouting::iPreviousOutput = 
+                                    CTelephonyAudioRouting::ELoudspeaker;
+    CleanupStack::PopAndDestroy( utils );
+    EUNIT_ASSERT( CTelephonyAudioRouting::iPreviousOutput == 
+                  CTelephonyAudioRouting::ELoudspeaker )
+    EUNIT_ASSERT( CTelephonyAudioRouting::iCurrentOutput == 
+                  CTelephonyAudioRouting::ENotActive )                  
+                  
+    // Simulate that current audio output mode is not the same as original,
     // Setting does not succeed as observer does not allow changes anymore
-    utils = CMusEngTelephoneUtils::NewL( *iObserver );
+    utils = CMusEngTelephoneUtils::NewL();
+    iObserver->iAudioRouteChangeAllowed = EFalse;
+    utils->SetAudioRoutingObserver( iObserver );
     CleanupStack::PushL( utils );
     utils->iAudioOutputAtStartup = CTelephonyAudioRouting::EHandset;
     utils->iTelephonyAudioRouting->iCurrentOutput = 
                                     CTelephonyAudioRouting::ELoudspeaker;
+    CTelephonyAudioRouting::iPreviousOutput = 
+                                    CTelephonyAudioRouting::EHandset;
     CleanupStack::PopAndDestroy( utils );
-    // Cannot really assert anything
+    EUNIT_ASSERT( CTelephonyAudioRouting::iPreviousOutput == 
+                  CTelephonyAudioRouting::EHandset )
+    EUNIT_ASSERT( CTelephonyAudioRouting::iCurrentOutput == 
+                  CTelephonyAudioRouting::ELoudspeaker )
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngTelephoneUtils::UT_UpdateCurrentVolumeL()
+    {    
+    //Volume changed, no observer
+    EUNIT_ASSERT( iTelephoneUtils->iCurrentVolume == 4 )
+    iTelephoneUtils->iRepository->Set( KTelIncallEarVolume, 5 );
+    iTelephoneUtils->UpdateCurrentVolume(EFalse);
+    EUNIT_ASSERT( iTelephoneUtils->iCurrentVolume == 5 )
+    EUNIT_ASSERT( iObserver->iVolume == 0 );
+
+    //Volume changed, observer set
+    iTelephoneUtils->SetVolumeChangeObserver(iObserver);
+    iTelephoneUtils->iRepository->Set( KTelIncallEarVolume, 6 );
+    iTelephoneUtils->UpdateCurrentVolume(EFalse);
+    EUNIT_ASSERT( iTelephoneUtils->iCurrentVolume == 6 )
+    EUNIT_ASSERT( iObserver->iVolume == 6 );
+
+    //Volume didn't change, observer not notified
+    iObserver->iVolume = 0;
+    iTelephoneUtils->UpdateCurrentVolume(EFalse);
+    EUNIT_ASSERT( iTelephoneUtils->iCurrentVolume == 6 )
+    EUNIT_ASSERT( iObserver->iVolume == 0 );    
+    }
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
+void UT_CMusEngTelephoneUtils::UT_HandleNotifyGenericL()
+    {
+    //Loudspeakers volume changed, no observer
+    iTelephoneUtils->iRepository->Set( KTelIncallLoudspeakerVolume, 8 );
+    EUNIT_ASSERT( iTelephoneUtils->iCurrentVolume == 4 )
+    iTelephoneUtils->HandleNotifyGeneric(KTelIncallLoudspeakerVolume);    
+    EUNIT_ASSERT( iTelephoneUtils->iCurrentVolume == 8 )
+    EUNIT_ASSERT( iObserver->iVolume == 0 );
+    
+    //Ear volume changed, observer set => observer notified
+    iTelephoneUtils->SetVolumeChangeObserver(iObserver);
+    iTelephoneUtils->HandleNotifyGeneric(KTelIncallEarVolume);    
+    EUNIT_ASSERT( iTelephoneUtils->iCurrentVolume == 4 )
+    EUNIT_ASSERT( iObserver->iVolume == 4 );
+    
+    //Volume hasn't changed => observer not notifies
+    iObserver->iVolume = 0;
+    iTelephoneUtils->HandleNotifyGeneric(KTelIncallEarVolume);    
+    EUNIT_ASSERT( iTelephoneUtils->iCurrentVolume == 4 )
+    EUNIT_ASSERT( iObserver->iVolume == 0 );
     }
 
 
@@ -439,6 +642,20 @@ EUNIT_TEST(
     "FUNCTIONALITY",
     SetupL, UT_AudioRoutingCanBeChangedL, Teardown)
 
+EUNIT_TEST(
+    "IsAudioRoutingHeadset - test ",
+    "CMusEngTelephoneUtils",
+    "IsAudioRoutingHeadset",
+    "FUNCTIONALITY",
+    SetupL, UT_IsAudioRoutingHeadsetL, Teardown)
+    
+EUNIT_TEST(
+    "IsAudioRoutingLoudSpeaker - test ",
+    "CMusEngTelephoneUtils",
+    "IsAudioRoutingLoudSpeaker",
+    "FUNCTIONALITY",
+    SetupL, UT_IsAudioRoutingLoudSpeakerL, Teardown)    
+    
 EUNIT_TEST(
     "LoudspeakerL - test ",
     "CMusEngTelephoneUtils",
@@ -502,7 +719,20 @@ EUNIT_TEST(
     "FUNCTIONALITY",
     SetupL, UT_DestructorL, Teardown)
 
-     
+EUNIT_TEST(
+    "UpdateCurrentVolume - test ",
+    "UpdateCurrentVolume",
+    "Destructor",
+    "FUNCTIONALITY",
+    SetupL, UT_UpdateCurrentVolumeL, Teardown)
+    
+EUNIT_TEST(
+    "HandleNotifyGeneric - test ",
+    "CMusEngTelephoneUtils",
+    "HandleNotifyGeneric",
+    "FUNCTIONALITY",
+    SetupL, UT_HandleNotifyGenericL, Teardown)
+
     
 EUNIT_END_TEST_TABLE
 

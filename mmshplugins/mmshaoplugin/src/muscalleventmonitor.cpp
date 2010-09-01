@@ -30,12 +30,10 @@
 // Symbian two-phase constructor.
 // ------------------------------------------------------------------------------
 //
-CMusCallEventMonitor* CMusCallEventMonitor::NewL( const RMobileCall& aCall, 
-                                                    MMusTsyPropertyObserver& aObserver,
-                                                    MMusCallStateObserver& aCallStateObserver )
+CMusCallEventMonitor* CMusCallEventMonitor::NewL( const RMobileCall& aCall, MMusTsyPropertyObserver& aObserver )
     {
     MUS_LOG( "mus: [MUSAO]  -> CMusCallEventMonitor::NewL" )
-    CMusCallEventMonitor* self = new (ELeave) CMusCallEventMonitor(aCall, aObserver, aCallStateObserver );
+    CMusCallEventMonitor* self = new (ELeave) CMusCallEventMonitor(aCall, aObserver);
     CleanupStack::PushL( self );
     self->ConstructL();
     CleanupStack::Pop( self );
@@ -73,13 +71,11 @@ void CMusCallEventMonitor::ConstructL( )
 // C++ constructor.
 // ------------------------------------------------------------------------------
 //
-CMusCallEventMonitor::CMusCallEventMonitor( const RMobileCall& aCall, 
-                                            MMusTsyPropertyObserver& aObserver,
-                                            MMusCallStateObserver& aCallStateObserver ) 
-        : CMusCallMonitorBase(aCall, aObserver, aCallStateObserver)     
+CMusCallEventMonitor::CMusCallEventMonitor( const RMobileCall& aCall, MMusTsyPropertyObserver& aObserver ) 
+        : CMusCallMonitorBase(aCall, aObserver)     
         
     { 
-    
+      
     }
 
 

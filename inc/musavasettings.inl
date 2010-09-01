@@ -11,9 +11,10 @@
 *
 * Contributors:
 *
-* Description:  ECOM interface default implementation. 
+* Description:   ECOM interface default implementation. 
 *
 */
+
 
 
 #ifndef MUSAVASETTING_INL
@@ -21,16 +22,6 @@
 
 #include "musavasettings.h"
 
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-inline MusSettingsKeys::TFastMode MMusAvaSettings::FastMode() const
-    {
-    User::Leave( KErrNotSupported );
-    return MusSettingsKeys::EFastModeOff; 
-    }
- 
 // -----------------------------------------------------------------------------
 // 
 // -----------------------------------------------------------------------------
@@ -152,19 +143,19 @@ inline void MMusAvaSettings::SetObserver( MMusAvaSettingsObserver& /*aObserver*/
 // 
 // -----------------------------------------------------------------------------
 //
-inline MMusAvaSettingsObserver* MMusAvaSettings::Observer()
+inline void MMusAvaSettings::SetManualActivation( TManualActivation /*aManualActivation*/ )
     {
-    return NULL;
+    User::Leave( KErrNotSupported );
     }
 
 // -----------------------------------------------------------------------------
 // 
 // -----------------------------------------------------------------------------
 //
-inline void MMusAvaSettings::SetManualActivation( TManualActivation /*aManualActivation*/ )
-    {
+inline TInt MMusAvaSettings::CallPrivacy()
+	{
     User::Leave( KErrNotSupported );
+    return 0; // To avoid "return value expected" warning
     }
-
 
 #endif // MUSAVASETTING_INL
