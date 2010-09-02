@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<hbdocument context="LcView" version="1.1">    
+<hbdocument context="LcView" version="1.1">
     <object name="lc_act_swapviews" type="HbAction">
         <string locid="txt_vt_opt_swap_views" name="text"/>
-    </object>    
+    </object>
     <object name="lc_act_menu_disablecamera" type="HbAction">
         <string locid="txt_vt_menu_disable_camera" name="text"/>
     </object>
@@ -13,18 +13,18 @@
         <string locid="txt_vt_menu_change_camera" name="text"/>
     </object>
     <object name="lc_act_disablecamera" type="HbAction">
-        <icon iconName="qtg_mono_camcorder_off" name="icon"/>        
+        <icon iconName="qtg_mono_camcorder_off" name="icon"/>
         <bool name="visible" value="TRUE"/>
     </object>
     <object name="lc_act_changecamera" type="HbAction">
-        <icon iconName="qtg_mono_change_cam_mode" name="icon"/>        
+        <icon iconName="qtg_mono_change_cam_mode" name="icon"/>
     </object>
     <object name="lc_act_mute" type="HbAction">
         <icon iconName="qtg_mono_mute" name="icon"/>
     </object>
     <object name="lc_act_speaker" type="HbAction">
         <icon iconName="qtg_mono_speaker" name="icon"/>
-    </object>            
+    </object>
     <object name="lc_act_openkeypad" type="HbAction">
         <string locid="txt_vt_opt_open_keypad" name="text"/>
     </object>
@@ -40,8 +40,8 @@
                 <real name="z" value="12"/>
             </widget>
             <widget name="lc_label_recipient" type="HbLabel">
-                <real name="z" value="10.0004"/>                                
-                <fontspec name="fontSpec" role="Primary" textheight="26.8"/>
+                <real name="z" value="10.0004"/>
+                <fontspec name="fontSpec" role="Primary" textheight="4un"/>
             </widget>
             <widget name="lc_button_endCall" type="HbPushButton">
                 <icon iconName="qtg_mono_end_call" name="icon"/>
@@ -50,7 +50,7 @@
             </widget>
             <widget name="lc_label_duration" type="HbLabel">
                 <real name="z" value="10.0006"/>
-                <fontspec name="fontSpec" role="Secondary" textheight="26.8"/>
+                <fontspec name="fontSpec" role="Secondary" textheight="4un"/>
             </widget>
             <widget name="lc_widget_sendvideo2" type="HbTransparentWindow">
                 <real name="z" value="13"/>
@@ -60,7 +60,7 @@
                 <sizepolicy horizontalPolicy="Preferred" horizontalStretch="0" verticalPolicy="Preferred" verticalStretch="0"/>
                 <sizehint height="44un" type="FIXED" width="44un"/>
                 <bool name="visible" value="FALSE"/>
-            </widget>            
+            </widget>
         </widget>
         <widget name="lc_menu" role="HbView:menu" type="HbMenu">
             <ref object="lc_act_swapviews" role="HbMenu:addAction"/>
@@ -120,22 +120,22 @@
         </widget>
         <widget name="lc_widget_sendvideo2" type="HbTransparentWindow">
             <sizepolicy horizontalPolicy="Preferred" horizontalStretch="0" verticalPolicy="Preferred" verticalStretch="0"/>
-            <sizehint height="144" type="FIXED" width="176"/>
+            <sizehint height="21.49254un" type="FIXED" width="26.26866un"/>
         </widget>
         <widget name="lc_toolbar" role="HbView:toolBar" type="HbToolBar">
             <bool name="visible" value="FALSE"/>
         </widget>
         <widget name="lc_widget_recvvideo" type="HbTransparentWindow">
             <sizepolicy horizontalPolicy="Preferred" horizontalStretch="0" verticalPolicy="Preferred" verticalStretch="0"/>
-            <sizehint height="288" type="FIXED" width="352"/>
+            <sizehint height="42.98508un" type="FIXED" width="52.53731un"/>
         </widget>
         <widget name="lc_widget_recvvideo2" type="HbTransparentWindow">
             <sizepolicy horizontalPolicy="Preferred" horizontalStretch="0" verticalPolicy="Preferred" verticalStretch="0"/>
-            <sizehint height="288" type="FIXED" width="352"/>
+            <sizehint height="42.98508un" type="FIXED" width="52.53731un"/>
         </widget>
         <widget name="lc_widget_sendvideo" type="HbTransparentWindow">
             <sizepolicy horizontalPolicy="Preferred" horizontalStretch="0" verticalPolicy="Preferred" verticalStretch="0"/>
-            <sizehint height="144" type="FIXED" width="176"/>
+            <sizehint height="21.49254un" type="FIXED" width="26.26866un"/>
         </widget>
     </section>
     <section name="lc_layout_landscape_swapped">
@@ -181,22 +181,22 @@
         </widget>
         <widget name="lc_widget_sendvideo2" type="HbTransparentWindow">
             <sizepolicy horizontalPolicy="Preferred" horizontalStretch="0" verticalPolicy="Preferred" verticalStretch="0"/>
-            <sizehint height="288" type="FIXED" width="352"/>
+            <sizehint height="42.98508un" type="FIXED" width="52.53731un"/>
         </widget>
         <widget name="lc_toolbar" role="HbView:toolBar" type="HbToolBar">
             <bool name="visible" value="FALSE"/>
         </widget>
         <widget name="lc_widget_recvvideo" type="HbTransparentWindow">
             <sizepolicy horizontalPolicy="Preferred" horizontalStretch="0" verticalPolicy="Preferred" verticalStretch="0"/>
-            <sizehint height="144" type="FIXED" width="176"/>
+            <sizehint height="21.49254un" type="FIXED" width="26.26866un"/>
         </widget>
         <widget name="lc_widget_recvvideo2" type="HbTransparentWindow">
             <sizepolicy horizontalPolicy="Preferred" horizontalStretch="0" verticalPolicy="Preferred" verticalStretch="0"/>
-            <sizehint height="144" type="FIXED" width="176"/>
+            <sizehint height="21.49254un" type="FIXED" width="26.26866un"/>
         </widget>
         <widget name="lc_widget_sendvideo" type="HbTransparentWindow">
             <sizepolicy horizontalPolicy="Preferred" horizontalStretch="0" verticalPolicy="Preferred" verticalStretch="0"/>
-            <sizehint height="288" type="FIXED" width="352"/>
+            <sizehint height="42.98508un" type="FIXED" width="52.53731un"/>
         </widget>
     </section>
     <section name="lc_layout_landscape_dialpad">
@@ -214,11 +214,11 @@
                 <bool name="visible" value="FALSE"/>
             </widget>
             <layout type="anchor">
-            		<anchoritem dst="lc_label_dialpad" dstEdge="RIGHT" spacing="0un" src="" srcEdge="RIGHT"/>
+                <anchoritem dst="lc_label_dialpad" dstEdge="RIGHT" spacing="0un" src="" srcEdge="RIGHT"/>
                 <anchoritem dst="lc_label_dialpad" dstEdge="TOP" spacing="0un" src="" srcEdge="TOP"/>
-                <anchoritem dst="lc_widget_recvvideo" dstEdge="LEFT" spacing="var(hb-param-margin-gene-screen)" src="" srcEdge="LEFT"/>                
+                <anchoritem dst="lc_widget_recvvideo" dstEdge="LEFT" spacing="var(hb-param-margin-gene-screen)" src="" srcEdge="LEFT"/>
                 <anchoritem dst="lc_widget_recvvideo" dstEdge="TOP" spacing="var(hb-param-margin-gene-screen)" src="" srcEdge="TOP"/>
-                <anchoritem dst="lc_widget_recvvideo2" dstEdge="LEFT" spacing="var(hb-param-margin-gene-screen)" src="" srcEdge="LEFT"/>                
+                <anchoritem dst="lc_widget_recvvideo2" dstEdge="LEFT" spacing="var(hb-param-margin-gene-screen)" src="" srcEdge="LEFT"/>
                 <anchoritem dst="lc_widget_recvvideo2" dstEdge="TOP" spacing="var(hb-param-margin-gene-screen)" src="" srcEdge="TOP"/>
                 <anchoritem dst="lc_widget_sendvideo" dstEdge="TOP" spacing="1un" src="" srcEdge="TOP"/>
                 <anchoritem dst="lc_widget_sendvideo2" dstEdge="LEFT" spacing="1un" src="" srcEdge="RIGHT"/>
@@ -230,16 +230,16 @@
             <bool name="visible" value="FALSE"/>
         </widget>
         <widget name="lc_widget_sendvideo" type="HbTransparentWindow">						
-						<sizehint height="0" type="FIXED" width="0"/>		
-						<bool name="visible" value="FALSE"/>				
-				</widget>        
+            <sizehint height="0un" type="FIXED" width="0un"/>
+            <bool name="visible" value="FALSE"/>
+        </widget>
         <widget name="lc_widget_recvvideo" type="HbTransparentWindow">
             <sizepolicy horizontalPolicy="Preferred" horizontalStretch="0" verticalPolicy="Preferred" verticalStretch="0"/>
-            <sizehint height="39.00un" type="FIXED" width="47.58un"/>
-        </widget>        
+            <sizehint height="39un" type="FIXED" width="47.58un"/>
+        </widget>
         <widget name="lc_widget_recvvideo2" type="HbTransparentWindow">
             <sizepolicy horizontalPolicy="Preferred" horizontalStretch="0" verticalPolicy="Preferred" verticalStretch="0"/>
-            <sizehint height="39.00un" type="FIXED" width="47.58un"/>
+            <sizehint height="39un" type="FIXED" width="47.58un"/>
         </widget>
         <widget name="lc_widget_sendvideo2" type="HbTransparentWindow">            
             <sizehint height="0" type="FIXED" width="0"/> 
@@ -247,7 +247,7 @@
         </widget>  
         <widget name="lc_label_dialpad" type="HbWidget">                
             <bool name="visible" value="TRUE"/>
-				</widget>
+        </widget>
     </section>
     <metadata activeUIState="landscape" display="NHD-3.2-inch_landscape" unit="un">
         <uistate name="Common ui state" sections="#common"/>

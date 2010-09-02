@@ -38,7 +38,7 @@
 #include <qtimer.h>
 #include <hblineedit.h>
 #include <dialpad.h>
-#include <HbTapGesture>
+#include <hbtapgesture.h>
 #include <DialpadVtKeyHandler.h>
 
 
@@ -74,9 +74,9 @@ LcView::LcView(LcUiEngine& engine, LcUiComponentRepository& repository)
    mEffectHandler(0),
    mItemContextMenu(0),   
    mIsOptionMenuOpen(false),
-   mDialpad(0),
-   timerId(0),
+   mDialpad(0),   
    mDialpadVtKeyHandler(0),
+   timerId(0),
    isViewReady(0)
 {
     LC_QDEBUG( "livecomms [UI] -> LcView::LcView()" )
@@ -215,6 +215,10 @@ void LcView::init()
             SLOT( updateVideoRects() ), Qt::QueuedConnection );
     }
     
+    //Subscribe to the Volume Change Events.
+    connect( &mEngine, SIGNAL(volumeChanged(int)), 
+            this, SLOT(updateVolumeSlider(int)) );
+    
     LC_QDEBUG( "livecomms [UI] <- LcView::init()" )
 }
 
@@ -291,10 +295,9 @@ void LcView::updateSwapLayout()
 //
 void LcView::activated()
 {
-    LC_QDEBUG( "livecomms [UI] -> LcView::activated()" )
-    updateVideoRects();
+    LC_QDEBUG( "livecomms [UI] -> LcView::activated()" )   
 
-    //synchronize with engine
+    updateVideoRects();
     
     if ( mEngine.mainCamera() ) {
         setCameraActionToSecondary();
@@ -313,7 +316,13 @@ void LcView::activated()
     } else {
         setSpeakerActionToSpeaker();
     }
-    
+
+    if( mEngine.isLocalPlayerPlaying() ){
+        setCameraActionToDisable();        
+    } else {
+        setCameraActionToEnable();
+    }
+
     if ( mChangeCameraAction ) {
         connect( 
             &mEngine, SIGNAL(cameraChangedToMain()),
@@ -375,6 +384,14 @@ void LcView::activated()
                  mEffectHandler, SLOT(showSendWindow()) );
         connect( &mEngine, SIGNAL(localPlayerPaused()), 
                  mEffectHandler, SLOT(hideSendWindow()) );
+        connect( &mEngine, SIGNAL(localPlayerPlaying()), 
+                 this, SLOT(setCameraActionToDisable()));
+        connect( &mEngine, SIGNAL(localPlayerPaused()), 
+                 this, SLOT(setCameraActionToEnable()));
+        connect( &mEngine, SIGNAL(localPlayerUnavailable()), 
+                 this, SLOT(setCameraActionToEnable()));
+        connect( &mEngine, SIGNAL(localPlayerPlaying()), 
+                         this, SLOT(updateVideoRects()));
     }
 
     if ( mReceivedVideoWidget ) {
@@ -382,6 +399,8 @@ void LcView::activated()
                  mEffectHandler, SLOT(showReceiveWindow()) );
         connect( &mEngine, SIGNAL(remotePlayerPaused()), 
                  mEffectHandler, SLOT(hideReceiveWindow()) );
+        connect( &mEngine, SIGNAL(remotePlayerPlaying()), 
+                         this, SLOT(updateVideoRects()) );
     }
     
     mEngine.setCurrentView(this);
@@ -1037,4 +1056,19 @@ bool LcView::isPositioned()
     LC_QDEBUG_2("livecomms [UI] - LcView::isPositioned(),",isViewReady)
     return isViewReady;    
 }
+
+
+// -----------------------------------------------------------------------------
+// LcView::updateVolumeSlider 
+// -----------------------------------------------------------------------------
+//
+void LcView::updateVolumeSlider( int aVolumeLevel )
+{
+    LC_QDEBUG("livecomms [UI] -> LcView::updateVolumeSlider()")
+    //TBD: Show volume slider, with update volume level
+    LC_QDEBUG_2("Volume Level Is,",aVolumeLevel)
+    LC_QDEBUG("livecomms [UI] <- LcView::updateVolumeSlider()")   
+}
+
+
 // End of file

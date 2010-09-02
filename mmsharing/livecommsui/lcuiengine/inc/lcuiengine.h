@@ -123,6 +123,8 @@ signals:
     void remotePlayerPaused();
     void localPlayerUnavailable();
     void remotePlayerUnavailable();
+    void volumeChanged(int aVolumeLevel);
+    
     
 public slots:
 
@@ -166,7 +168,6 @@ public: // API
     void shareCamera();
     void setCurrentView(HbView* view);
     bool SendDialTone( const QChar aKey );
-   
 
 private:
 

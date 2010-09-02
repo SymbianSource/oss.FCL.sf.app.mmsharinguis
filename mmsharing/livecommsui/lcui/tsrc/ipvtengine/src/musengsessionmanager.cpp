@@ -23,7 +23,8 @@
 #include "mccdatareceiver.h"
 #include "musenglogger.h"
 #include "mccdatastructures.h"
-
+#include <settingsinternalcrkeys.h>
+#include <centralrepository.h>
 
 // -----------------------------------------------------------------------------
 //
@@ -94,10 +95,19 @@ void CMusEngSessionManager::DataReceived( const TDataMessage& aData )
 //
 TBool CMusEngSessionManager::IsFeatureSupported( TLcFeature aLcFeature )
     {
-    return ( aLcFeature == ELcSendVideoQuery );
+    TBool ret = EFalse;
+    if ( ELcSendVideoQuery == aLcFeature )
+        {
+        TInt videoSendingSetting;
+        CRepository* repository = CRepository::NewL( KCRUidTelephonySettings );
+        if ( KErrNone == repository->Get(KSettingsVTVideoSending, videoSendingSetting) )
+            {
+            if ( VTSETTING_ALWAYS_ASK_FIRST == videoSendingSetting ) 
+                ret = ETrue;
+            }
+        delete repository;
+        }
+    return ret;
     }
-
-
-
 
 // End of File

@@ -56,6 +56,12 @@ class CMusEngSessionManager : public CLcEngine, public MMccDataReceiverObserver
         CMccDataReceiver* iMsgReceiver;
         CMccDataSender* iMsgSender;
 
+    private: // Constants
+        
+        static const int VTSETTING_ALWAYS_ASK_FIRST = 0;
+        static const int VTSETTING_DO_NOT_SHOW = 1;
+        static const int VTSETTING_SHOW_AUTOMATICALLY = 2;
+        
     };  
     
 #endif // CMUSENGSESSIONMANAGER_H

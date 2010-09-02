@@ -81,6 +81,8 @@ public: // new functions
 private: // data
 
     TVersion Version() const;
+    
+    TRequestStatus iSessionCreationStatus;
     };
 
 

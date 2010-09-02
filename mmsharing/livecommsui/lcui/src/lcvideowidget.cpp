@@ -62,15 +62,15 @@ void LcVideoWidget::paint(
 
         QPainter::CompositionMode origCompositionMode = painter->compositionMode();
         painter->setCompositionMode(QPainter::CompositionMode_Source);
-        #if ( defined __WINSCW__ ) || ( defined __WINS__ )
-                if( mLocalPlayer ){
-                    painter->setBrush(QColor(Qt::darkGreen));            
-                }else{
-                    painter->setBrush(QColor(Qt::darkRed));
-                }
-        #else
+#if ( defined __WINSCW__ ) || ( defined __WINS__ )
+        if( mLocalPlayer ){
+            painter->setBrush(QColor(Qt::darkGreen));            
+        }else{
+            painter->setBrush(QColor(Qt::darkRed));
+        }
+#else
         painter->setBrush(QColor(0,0,0,0));
-        #endif
+#endif
         painter->drawRoundedRect( option->exposedRect, 
             lcVideoWidgetCornerRounding, lcVideoWidgetCornerRounding);
         

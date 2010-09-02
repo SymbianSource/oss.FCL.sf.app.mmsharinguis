@@ -25,8 +25,12 @@
 #include <QObject>
 #include <QString>
 #include <QTime>
+#include <XQSettingsKey>
+#include <XQSettingsManager>
+#include <QVariant>
 #include <lcuiengine.h>
 #include <lcengine.h>
+
 
 class MLcSession;
 class MLcAudioControl;
@@ -109,6 +113,7 @@ private slots:
     void startReceiving();
     void stopForcefully();
     void handleEngineForegroundStatus();
+    void volumeLevelChanged(const XQSettingsKey& aKey, const QVariant& aValue);
     
 private: // From MLcSessionObserver
     
@@ -151,8 +156,12 @@ private: // New functions
     void stopSessionDurationTimer();
     void fillRemoteInfo(bool informChanges);
     void startStopGuardTimer();
-    bool isAllowedToShareVideo();
-    int vtVideoSendingSetting();
+    void showSendVideoQueryWhenNecessary();
+
+    void subscribeVolumeEvents();
+    void unSubscribeVolumeEvents();
+    void doUpdate( MLcVideoPlayer& aPlayer );
+    void doUpdate( MLcSession& aSession );
     
 private: // New functions wrapping the leaving functions in LC plug-in API
     
@@ -193,11 +202,9 @@ private: // Data
     TRect mRemoteRect;
     LcActivityManager* mActivityManager;
     
-private: // Constants
-    
-    static const int VTSETTING_ALWAYS_ASK_FIRST = 0;
-    static const int VTSETTING_DO_NOT_SHOW = 1;
-    static const int VTSETTING_SHOW_AUTOMATICALLY = 2;
+    XQSettingsManager* mSettingsMgr;
+    XQSettingsKey* mEarVolumeKey; 
+    XQSettingsKey* mLoudSpeakerKey; 
     
 friend class LcUiEngine;    
 };

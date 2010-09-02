@@ -41,6 +41,7 @@
 #include <hblineedit.h>
 #include <QCoreApplication>
 #include <QGesture>
+#include <QWidget.h>
 #include <hbtapgesture.h>
 
 // Helper Class
@@ -275,6 +276,18 @@ QRectF HbMainWindow::sceneRect() const
 {
     return QRectF( 0, 0, 360, 640 );
 }
+
+// -----------------------------------------------------------------------------
+// HbMainWindow::windowSurface
+// -----------------------------------------------------------------------------
+//
+QWindowSurface* HbMainWindow::windowSurface() const
+{
+    return mSurface;
+}
+
+
+
 
 // HbWidget
 

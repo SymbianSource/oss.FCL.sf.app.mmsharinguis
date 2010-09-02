@@ -86,6 +86,7 @@ private slots:
     void disableControls();
     void enableControls();    
     void watchInactivity();
+    void updateVolumeSlider(int aVolumeLevel);
 
 protected: // From HbView
     

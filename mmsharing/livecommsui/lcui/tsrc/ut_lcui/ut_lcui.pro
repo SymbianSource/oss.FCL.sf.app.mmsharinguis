@@ -31,9 +31,9 @@ DEFINES += UNIT_TESTING
 DEFINES += QT_NO_DEBUG_OUTPUT
 
 DEPENDPATH += .
+INCLUDEPATH = hbstubs $$INCLUDEPATH
 INCLUDEPATH += .
 INCLUDEPATH += $$LCUI_DIR/inc
-INCLUDEPATH += hbstubs
 INCLUDEPATH += $$MUS_DIR/tsrc/qtestutils/inc
 INCLUDEPATH += $$MUS_DIR/mmsharinguis_plat/live_comms_plugin_api/inc
 INCLUDEPATH += /epoc32/include/ecom

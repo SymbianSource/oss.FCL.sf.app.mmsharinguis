@@ -147,7 +147,7 @@ bool LcUiEnginePrivate::usingVideoTelephoneEngine()
 
 void LcUiEnginePrivate::setMainCamera(const bool aMainCamera)
 {
-    mMainCamera = aMainCamera;
+    mMainCamera = aMainCamera;    
 }
 
 bool LcUiEnginePrivate::mainCamera() const
@@ -354,7 +354,7 @@ void lcutStub_LcUiEngine_setCameraMain( bool val )
 
 void lcutStub_LcUiEngine_setMuted( bool val )
 {
-    lcutStub_LcUiEngine_layout = val;
+    lcutStub_LcUiEngine_muted = val;
 }
 
 void lcutStub_LcUiEngine_setSpeaker( bool val )
@@ -392,6 +392,10 @@ void LcUiEnginePrivate::stopLocalVideo()
 void LcUiEnginePrivate::startLocalVideo()
 {
     lcutStub_LcUiEngine_localplaying = true;
+}
+
+void LcUiEnginePrivate::volumeLevelChanged(const XQSettingsKey& /*aKey*/, const QVariant& /*aValue*/)
+{
 }
 
 // End of file

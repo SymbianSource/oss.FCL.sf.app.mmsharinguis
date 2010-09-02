@@ -51,8 +51,7 @@
 #include <xqsettingsmanager.h>
 #include <xqsettingskey.h>
 #include <settingsinternalcrkeys.h>
-
-
+#include <telincallvolcntrlcrkeys.h>
 
 #define LC_VTPLUGIN_NAME "Videotelephony";
 
@@ -81,7 +80,10 @@ LcUiEnginePrivate::LcUiEnginePrivate(LcUiEngine& uiEngine,
       mIsMinimized(false),
       mFirstForegroundSwitch(true),
       mCurrentView(0),
-      mActivityManager(0)
+      mActivityManager(0),
+      mSettingsMgr(0),
+      mEarVolumeKey(0),
+      mLoudSpeakerKey(0) 
 {
     LC_QDEBUG( "livecomms [UI] -> LcUiEnginePrivate::LcUiEnginePrivate()" )
         
@@ -118,6 +120,14 @@ LcUiEnginePrivate::LcUiEnginePrivate(LcUiEngine& uiEngine,
     }
 
     mActivityManager = new LcActivityManager;
+    
+    mSettingsMgr = new XQSettingsManager(this);
+    mEarVolumeKey = new XQSettingsKey(XQSettingsKey::TargetCentralRepository, 
+            KCRUidInCallVolume.iUid, KTelIncallEarVolume);
+    mLoudSpeakerKey = new XQSettingsKey(XQSettingsKey::TargetCentralRepository, 
+            KCRUidInCallVolume.iUid,KTelIncallLoudspeakerVolume);
+    
+    subscribeVolumeEvents();
       
     LC_QDEBUG( "livecomms [UI] <- LcUiEnginePrivate::LcUiEnginePrivate()" )   
 }
@@ -129,6 +139,11 @@ LcUiEnginePrivate::LcUiEnginePrivate(LcUiEngine& uiEngine,
 LcUiEnginePrivate::~LcUiEnginePrivate()
 {
     LC_QDEBUG( "livecomms [UI] -> LcUiEnginePrivate::~LcUiEnginePrivate()" )
+
+    unSubscribeVolumeEvents();
+    delete mEarVolumeKey;
+    delete mLoudSpeakerKey;
+
     delete mLiveCommsEngine;
     delete mCloseTimer;
     delete mActivityManager;
@@ -171,11 +186,12 @@ void LcUiEnginePrivate::stop()
     startStopGuardTimer();
     
     int err = terminateSession();
-    
-    if ( !err && session().LcSessionState() ==  MLcSession::EClosing ) {        
-        LC_QDEBUG( "livecomms [UI] not closing UI yet, waiting for session termination..." )
-    } else {
-        LC_QDEBUG( "livecomms [UI] closing UI..." )
+    LC_QDEBUG_2( "livecomms [UI] terminateSession error = ",  err )
+    // if there is an error in terminating session 
+    // or session state is already closed , stop ui
+    // else wait for session state events.
+    if( err || session().LcSessionState() ==  MLcSession::EClosed ){
+        LC_QDEBUG( "livecomms [UI] closing ui... ")
         emit mUiEngine.stopped();
     }
     LC_QDEBUG( "livecomms [UI] <- LcUiEnginePrivate::stop()" )
@@ -609,41 +625,7 @@ void LcUiEnginePrivate::stopForcefully()
 void LcUiEnginePrivate::StateChanged( MLcSession& aSession )
 {
     LC_QDEBUG( "livecomms [UI] -> LcUiEnginePrivate::StateChanged( session )" )
-    
-    MLcSession::TLcSessionState newState = MLcSession::EUninitialized;
-    newState = aSession.LcSessionState();
-    
-    LC_QDEBUG_2( "livecomms [UI] new state=", newState )
-    
-    if ( newState == MLcSession::EOpen ) {
-        LC_QDEBUG( "livecomms [UI] state is MLcSession::EOpen" )
-        cancelCloseTimer();
-        hideNotes( false );
-        if( isAllowedToShareVideo() ) {
-            startLocalVideo();
-        }
-        startRemoteVideo();
-        fillRemoteInfo( true );
-        emitViewLayoutChanged();
-        startSessionDurationTimer();
-        
-    } else if ( newState == MLcSession::EReceived ) {
-        LC_QDEBUG( "livecomms [UI] state is MLcSession::EReceived" )
-        mRecipient = DESC_TO_QSTRING( session().RemoteDisplayName() );        
-        if ( mAcceptQuery && 
-             featureSupported( CLcEngine::ELcShowAcceptQuery ) ) {
-            mAcceptQuery->show();
-        } else {
-            startReceiving();
-        }        
-    } else if ( newState == MLcSession::EClosed ) {
-        LC_QDEBUG( "livecomms [UI] state is MLcSession::EClosed, closing UI..." )
-        emit mUiEngine.stopped();
-            
-    } else if ( newState == MLcSession::EOpening ){
-        LC_QDEBUG( "livecomms [UI] state is MLcSession::EOpening" )
-    }
-
+    doUpdate( aSession );
     LC_QDEBUG( "livecomms [UI] <- LcUiEnginePrivate::StateChanged( session )" )
 }
 
@@ -653,50 +635,9 @@ void LcUiEnginePrivate::StateChanged( MLcSession& aSession )
 //
 void LcUiEnginePrivate::StateChanged( MLcVideoPlayer& aPlayer )
 {
-    LC_QDEBUG( "livecomms [UI] -> LcUiEnginePrivate::StateChanged( player )" )
-    
+    LC_QDEBUG( "livecomms [UI] -> LcUiEnginePrivate::StateChanged( player )" )    
     emitViewLayoutChanged();
-    
-    if ( aPlayer.LcVideoPlayerState() == MLcVideoPlayer::EPlaying ) { 
-        if ( &aPlayer == session().RemoteVideoPlayer() ) {
-            if ( mWaitingNote ) {
-                mWaitingNote->hide();
-            }
-            emit mUiEngine.remotePlayerPlaying();
-        }
-        if ( &aPlayer == session().LocalVideoPlayer() ) {
-            emit mUiEngine.localPlayerPlaying();
-        }
-    } else if ( aPlayer.LcVideoPlayerState() == MLcVideoPlayer::EPreparing ) {
-        if ( &aPlayer == session().RemoteVideoPlayer() ) {
-            emit mUiEngine.remotePlayerPreparing();
-        }
-        if ( &aPlayer == session().LocalVideoPlayer() ) {           
-            emit mUiEngine.localPlayerPreparing();
-        }    
-    } else if ( aPlayer.LcVideoPlayerState() == MLcVideoPlayer::EBuffering ) {
-        if ( &aPlayer == session().RemoteVideoPlayer() ) {
-            emit mUiEngine.remotePlayerBuffering();
-        }
-        if ( &aPlayer == session().LocalVideoPlayer() ) {
-            emit mUiEngine.localPlayerBuffering();
-        }    
-    } else if ( aPlayer.LcVideoPlayerState() == MLcVideoPlayer::EPaused ) {
-        if ( &aPlayer == session().RemoteVideoPlayer() ) {
-            emit mUiEngine.remotePlayerPaused();
-        }
-        if ( &aPlayer == session().LocalVideoPlayer() ) {
-            emit mUiEngine.localPlayerPaused();
-        }    
-    } else if ( aPlayer.LcVideoPlayerState() == MLcVideoPlayer::EUnavailable ) {
-        if ( &aPlayer == session().RemoteVideoPlayer() ) {
-            emit mUiEngine.remotePlayerUnavailable();
-        }
-        if ( &aPlayer == session().LocalVideoPlayer() ) {
-            emit mUiEngine.localPlayerUnavailable();
-        }    
-    }
-    
+    doUpdate( aPlayer );    
     LC_QDEBUG( "livecomms [UI] <- LcUiEnginePrivate::StateChanged( player )" )
 }
 
@@ -704,10 +645,11 @@ void LcUiEnginePrivate::StateChanged( MLcVideoPlayer& aPlayer )
 // LcUiEnginePrivate::Updated
 // -----------------------------------------------------------------------------
 //
-void LcUiEnginePrivate::Updated( MLcSession& /*aSession*/ )
+void LcUiEnginePrivate::Updated( MLcSession& aSession )
 {
     LC_QDEBUG( "livecomms [UI] -> LcUiEnginePrivate::Updated( session )" )
     emitViewLayoutChanged();
+    doUpdate( aSession );
     LC_QDEBUG( "livecomms [UI] <- LcUiEnginePrivate::Updated( session )" )
 }
 
@@ -715,10 +657,11 @@ void LcUiEnginePrivate::Updated( MLcSession& /*aSession*/ )
 // LcUiEnginePrivate::Updated
 // -----------------------------------------------------------------------------
 //
-void LcUiEnginePrivate::Updated( MLcVideoPlayer& /*aPlayer*/ )
+void LcUiEnginePrivate::Updated( MLcVideoPlayer& aPlayer )
 {
     LC_QDEBUG( "livecomms [UI] -> LcUiEnginePrivate::Updated( player )" )
     emitViewLayoutChanged();
+    doUpdate( aPlayer );    
     LC_QDEBUG( "livecomms [UI] <- LcUiEnginePrivate::Updated( player )" )
 }
 
@@ -1419,40 +1362,14 @@ bool  LcUiEnginePrivate::SendDialTone(const QChar  aKey)
 // LcUiEnginePrivate::isAllowedToShareVideo
 // -----------------------------------------------------------------------------
 //
-bool LcUiEnginePrivate::isAllowedToShareVideo()
+void LcUiEnginePrivate::showSendVideoQueryWhenNecessary()
 {
-    LC_QDEBUG( "livecomms [UI] -> LcUiEnginePrivate::isAllowedToShareVideo()" )
-    if (!featureSupported( CLcEngine::ELcSendVideoQuery )) //outgoing videocall
-        return true;
-    else { //incoming videocall
-        int ownVtVideoSendingSetting = vtVideoSendingSetting();
-        if (VTSETTING_SHOW_AUTOMATICALLY == ownVtVideoSendingSetting)
-            return true;
-        else if (VTSETTING_DO_NOT_SHOW == ownVtVideoSendingSetting)
-            return false;
-        else {
-            if (mShareOwnVideoQuery)
-                mShareOwnVideoQuery->show();
-            return false;
-        }
+    LC_QDEBUG( "livecomms [UI] -> LcUiEnginePrivate::showSendVideoQueryWhenNecessary()" )
+    if (featureSupported( CLcEngine::ELcSendVideoQuery )) {
+        if (mShareOwnVideoQuery)
+            mShareOwnVideoQuery->show();
     }
-    LC_QDEBUG( "livecomms [UI] <- LcUiEnginePrivate::isAllowedToShareVideo()" )
-}
-
-// -----------------------------------------------------------------------------
-// LcUiEnginePrivate::vtVideoSendingSetting
-// -----------------------------------------------------------------------------
-//
-int LcUiEnginePrivate::vtVideoSendingSetting()
-{
-    LC_QDEBUG( "livecomms [UI] -> LcUiEnginePrivate::vtVideoSendingSetting()" )
-    XQSettingsManager settings;
-    XQSettingsKey settingsKey(XQSettingsKey::TargetCentralRepository, 
-                              KCRUidTelephonySettings.iUid, 
-                              KSettingsVTVideoSending);
-    QVariant ownVtVideoSendingSetting = settings.readItemValue(settingsKey);
-    LC_QDEBUG( "livecomms [UI] <- LcUiEnginePrivate::vtVideoSendingSetting()" )
-    return ownVtVideoSendingSetting.toInt();
+    LC_QDEBUG( "livecomms [UI] <- LcUiEnginePrivate::showSendVideoQueryWhenNecessary()" )
 }
 
 // -----------------------------------------------------------------------------
@@ -1484,5 +1401,147 @@ void LcUiEnginePrivate::startLocalVideo()
         enableWindow( localPlayer, true );
     }
     LC_QDEBUG( "livecomms [UI] <- LcUiEnginePrivate::startLocalVideo()" )
+}
+
+// -----------------------------------------------------------------------------
+// LcUiEnginePrivate::subscribeVolumeEvents
+// -----------------------------------------------------------------------------
+//
+
+void LcUiEnginePrivate::subscribeVolumeEvents()
+{
+    LC_QDEBUG( "livecomms [UI] -> LcUiEnginePrivate::subscribeVolumeEvents()" )
+    mSettingsMgr->startMonitoring( *mEarVolumeKey, XQSettingsManager::TypeInt );
+    mSettingsMgr->startMonitoring( *mLoudSpeakerKey, XQSettingsManager::TypeInt );
+    connect(mSettingsMgr, 
+            SIGNAL(valueChanged(const XQSettingsKey&, const QVariant&)), 
+            this, SLOT(volumeLevelChanged(const XQSettingsKey&, const QVariant&)));
+    LC_QDEBUG( "livecomms [UI] <- LcUiEnginePrivate::subscribeVolumeEvents()" )
+}
+
+
+// -----------------------------------------------------------------------------
+// LcUiEnginePrivate::unSubscribeVolumeEvents
+// -----------------------------------------------------------------------------
+//
+void LcUiEnginePrivate::unSubscribeVolumeEvents()
+{
+    LC_QDEBUG( "livecomms [UI] -> LcUiEnginePrivate::unSubscribeVolumeEvents()")
+    mSettingsMgr->stopMonitoring( *mEarVolumeKey );
+    mSettingsMgr->stopMonitoring( *mLoudSpeakerKey );
+    disconnect(mSettingsMgr, 
+                SIGNAL( valueChanged(const XQSettingsKey&, const QVariant& ) ), 
+                this, SLOT(volumeLevelChanged(const XQSettingsKey&, const QVariant&)));
+    LC_QDEBUG( "livecomms [UI] <- LcUiEnginePrivate::unSubscribeVolumeEvents()" )
+}
+
+
+// -----------------------------------------------------------------------------
+// LcUiEnginePrivate::volumeLevelChanged
+// -----------------------------------------------------------------------------
+//
+
+void LcUiEnginePrivate::volumeLevelChanged( const XQSettingsKey& aKey, 
+                                            const QVariant& aValue )
+{
+    LC_QDEBUG( "livecomms [UI] -> LcUiEnginePrivate::volumeLevelChanged()" )
+
+    // Ensure We only send value for the valid keys. 
+    if ((aKey.key() == mEarVolumeKey->key() && aKey.uid() == mEarVolumeKey->uid()) ||
+        (aKey.key() == mLoudSpeakerKey->key() && aKey.uid() == mLoudSpeakerKey->uid()) ) {
+    
+        emit mUiEngine.volumeChanged( aValue.toInt() );
+    }
+    LC_QDEBUG( "livecomms [UI] <- LcUiEnginePrivate::volumeLevelChanged()" )
+}
+
+// -----------------------------------------------------------------------------
+// LcUiEnginePrivate::doUpdate( MLcVideoPlayer& aPlayer )
+// -----------------------------------------------------------------------------
+//
+
+void LcUiEnginePrivate::doUpdate( MLcVideoPlayer& aPlayer )
+{
+    LC_QDEBUG( "livecomms [UI] -> LcUiEnginePrivate::doUpdate(), videoplayer" )
+    if ( aPlayer.LcVideoPlayerState() == MLcVideoPlayer::EPlaying ) { 
+        if ( &aPlayer == session().RemoteVideoPlayer() ) {
+            if ( mWaitingNote ) {
+                mWaitingNote->hide();
+            }
+            emit mUiEngine.remotePlayerPlaying();
+        }
+        if ( &aPlayer == session().LocalVideoPlayer() ) {
+            emit mUiEngine.localPlayerPlaying();
+        }
+    } else if ( aPlayer.LcVideoPlayerState() == MLcVideoPlayer::EPreparing ) {
+        if ( &aPlayer == session().RemoteVideoPlayer() ) {
+            emit mUiEngine.remotePlayerPreparing();
+        }
+        if ( &aPlayer == session().LocalVideoPlayer() ) {           
+            emit mUiEngine.localPlayerPreparing();
+        }    
+    } else if ( aPlayer.LcVideoPlayerState() == MLcVideoPlayer::EBuffering ) {
+        if ( &aPlayer == session().RemoteVideoPlayer() ) {
+            emit mUiEngine.remotePlayerBuffering();
+        }
+        if ( &aPlayer == session().LocalVideoPlayer() ) {
+            emit mUiEngine.localPlayerBuffering();
+        }    
+    } else if ( aPlayer.LcVideoPlayerState() == MLcVideoPlayer::EPaused ) {
+        if ( &aPlayer == session().RemoteVideoPlayer() ) {
+            emit mUiEngine.remotePlayerPaused();
+        }
+        if ( &aPlayer == session().LocalVideoPlayer() ) {
+            emit mUiEngine.localPlayerPaused();
+        }    
+    } else if ( aPlayer.LcVideoPlayerState() == MLcVideoPlayer::EUnavailable ) {
+        if ( &aPlayer == session().RemoteVideoPlayer() ) {
+            emit mUiEngine.remotePlayerUnavailable();
+        }
+        if ( &aPlayer == session().LocalVideoPlayer() ) {
+            emit mUiEngine.localPlayerUnavailable();
+        }    
+    }
+    LC_QDEBUG( "livecomms [UI] <- LcUiEnginePrivate::doUpdate(),videoplayer" )
+}
+
+// -----------------------------------------------------------------------------
+// LcUiEnginePrivate::doUpdate( MLcSession& aSession )
+// -----------------------------------------------------------------------------
+//
+
+void LcUiEnginePrivate::doUpdate( MLcSession& aSession )
+{
+    LC_QDEBUG( "livecomms [UI] -> LcUiEnginePrivate::doUpdate(),session" )
+    MLcSession::TLcSessionState newState = MLcSession::EUninitialized;
+    newState = aSession.LcSessionState();    
+    LC_QDEBUG_2( "livecomms [UI] session state = ", newState )    
+    if ( newState == MLcSession::EOpen ) {
+        LC_QDEBUG( "livecomms [UI] session state is MLcSession::EOpen" )
+        cancelCloseTimer();
+        hideNotes( false );
+        showSendVideoQueryWhenNecessary();
+        startRemoteVideo();
+        fillRemoteInfo( true );
+        emitViewLayoutChanged();
+        startSessionDurationTimer();
+        
+    } else if ( newState == MLcSession::EReceived ) {
+        LC_QDEBUG( "livecomms [UI] state state is MLcSession::EReceived" )
+        mRecipient = DESC_TO_QSTRING( session().RemoteDisplayName() );        
+        if ( mAcceptQuery && 
+             featureSupported( CLcEngine::ELcShowAcceptQuery ) ) {
+            mAcceptQuery->show();
+        } else {
+            startReceiving();
+        }        
+    } else if ( newState == MLcSession::EClosed ) {
+        LC_QDEBUG( "livecomms [UI] state state is MLcSession::EClosed, closing UI..." )
+        emit mUiEngine.stopped();
+            
+    } else if ( newState == MLcSession::EOpening ){
+        LC_QDEBUG( "livecomms [UI] state state is MLcSession::EOpening" )
+    }
+    LC_QDEBUG( "livecomms [UI] <- LcUiEnginePrivate::doUpdate(),session" )
 }
 // End of File

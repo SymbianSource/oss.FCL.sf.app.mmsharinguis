@@ -40,6 +40,7 @@
 #include <xqsettingsmanager.h>
 #include <xqsettingskey.h>
 #include <settingsinternalcrkeys.h>
+#include <telincallvolcntrlcrkeys.h>
 
 const char lcutMultimediaSharingEng[] = "MultimediaSharing";
 const char lcutVideotelephonyEng[] = "Videotelephony";
@@ -418,7 +419,7 @@ void UT_LcUiEngine::testSessionStateChanged()
     QVERIFY( mEngine->d->mShareOwnVideoQuery );
     QVERIFY( mEngine->d->mShareOwnVideoQuery->isVisible() );
     CLcVideoPlayer* localPlayer = LC_SESSION( mEngine )->iLocalPlayer;
-    //QVERIFY( localPlayer->iState == MLcVideoPlayer::EPaused );
+    localPlayer = 0;
     
     // MO call and sharing own video allowed by default , popup query not shown
     lcutStub_LcSession_reset();
@@ -430,8 +431,6 @@ void UT_LcUiEngine::testSessionStateChanged()
     mEngine->d->StateChanged( *LC_SESSION( mEngine ) );    
     QVERIFY( mEngine->d->mShareOwnVideoQuery );
     QVERIFY( !mEngine->d->mShareOwnVideoQuery->isVisible() );
-    localPlayer = LC_SESSION( mEngine )->iLocalPlayer;
-    QVERIFY( localPlayer->iState == MLcVideoPlayer::EPlaying );
         
 }
 
@@ -834,9 +833,9 @@ void UT_LcUiEngine::testStartPlayback()
 
 void UT_LcUiEngine::testStop()
 {
-    // Ensure that in MLcSession::EClosing state, "stopped" signal won't be emited
+    // Ensure that in MLcSession::EOpen state, "stopped" signal won't be emited
     // Check also that session duration timer is stopped
-    LC_SESSION( mEngine )->iState = MLcSession::EClosing;
+    LC_SESSION( mEngine )->iState = MLcSession::EOpen;
     mEngine->d->startSessionDurationTimer();
     QVERIFY( mEngine->d->mSessionDurationTimerId != 0 );
     QSignalSpy spy(mEngine, SIGNAL(stopped()));
@@ -848,11 +847,10 @@ void UT_LcUiEngine::testStop()
     QCOMPARE( spy.count(), 0 );
     QVERIFY( mEngine->d->mSessionDurationTimerId == 0 );
 
-    // Ensure that any other state than MLcSession::EClosing, will cause emition
-    // of "stopped" signal
+    // Ensure that MLcSession::EClosed, will cause emition of "stopped" signal
     lcutStub_LcSession_reset();
     lcutStub_LcPlayer_reset();
-    LC_SESSION( mEngine )->iState = MLcSession::EInitialized;
+    LC_SESSION( mEngine )->iState = MLcSession::EClosed;
     mEngine->d->stop();
     QVERIFY( lcutStub_LcSession_expectCall( lcutStub_LcSession_terminateSession ) );
     QVERIFY( lcutStub_LcPlayer_expectCall( lcutStub_LcPlayer_NoCall ) );
@@ -1206,57 +1204,73 @@ void UT_LcUiEngine::testSendDialTone()
 }
 
 
-void UT_LcUiEngine::testVtVideoSendingSetting() 
-{
-    int settingsKeyValueDoNotShow = 1;
-    if (!setVtVideoSendingSetting(settingsKeyValueDoNotShow))
-        QFAIL("Writing test key to central repository failed.");
-    QCOMPARE(mEngine->d->vtVideoSendingSetting(), settingsKeyValueDoNotShow);
-}
-
-
 void UT_LcUiEngine::testShareVideoIsAllowedShownAutomatically() 
 {
+    lcutStub_LcEngine_setLcFeatureSupported( false );
     mShareOwnVideoQuery->hide();
     mEngine->d->setUiComponents(mInvitingNote,mWaitingNote,mAcceptQuery,mRecipientQuery,mShareOwnVideoQuery);
-    int settingsKeyValueShowAutomatically = 2;
-    if (!setVtVideoSendingSetting(settingsKeyValueShowAutomatically))
-        QFAIL("Writing test key to central repository failed.");
-    QVERIFY(mEngine->d->isAllowedToShareVideo());
+    mEngine->d->showSendVideoQueryWhenNecessary();
     QVERIFY(mEngine->d->mShareOwnVideoQuery && !mEngine->d->mShareOwnVideoQuery->isVisible());
 }
 
 
 void UT_LcUiEngine::testShareVideoIsNotAllowedShown() 
 {
+    lcutStub_LcEngine_setLcFeatureSupported( false );
     mShareOwnVideoQuery->hide();
     mEngine->d->setUiComponents(mInvitingNote,mWaitingNote,mAcceptQuery,mRecipientQuery,mShareOwnVideoQuery);
-    int settingsKeyValueDoNotShow = 1;
-    if (!setVtVideoSendingSetting(settingsKeyValueDoNotShow))
-        QFAIL("Writing test key to central repository failed.");
-    QVERIFY(!mEngine->d->isAllowedToShareVideo());
+    mEngine->d->showSendVideoQueryWhenNecessary();
     QVERIFY(mEngine->d->mShareOwnVideoQuery && !mEngine->d->mShareOwnVideoQuery->isVisible());    
 }
 
 
 void UT_LcUiEngine::testShareVideoPermissionAskedAlways() 
 {
+    lcutStub_LcEngine_setLcFeatureSupported( true );
     mShareOwnVideoQuery->hide();
     mEngine->d->setUiComponents(mInvitingNote,mWaitingNote,mAcceptQuery,mRecipientQuery,mShareOwnVideoQuery);
-    int settingsKeyValueAlwaysAsk = 0;
-    if (!setVtVideoSendingSetting(settingsKeyValueAlwaysAsk))
-        QFAIL("Writing test key to central repository failed.");
-    QVERIFY(!mEngine->d->isAllowedToShareVideo());
+    mEngine->d->showSendVideoQueryWhenNecessary();
     QVERIFY(mEngine->d->mShareOwnVideoQuery && mEngine->d->mShareOwnVideoQuery->isVisible());
 }
 
 
-bool UT_LcUiEngine::setVtVideoSendingSetting(int key)
+void UT_LcUiEngine::testVolumeLevelChanged()
 {
-    QVariant settingsKeyValue(key);  
-    XQSettingsManager settings;
-    XQSettingsKey settingsKey(XQSettingsKey::TargetCentralRepository, 
-                              KCRUidTelephonySettings.iUid, 
-                              KSettingsVTVideoSending);
-    return settings.writeItemValue(settingsKey, settingsKeyValue);
+    // Subscribe to the events.
+    mEngine->d->subscribeVolumeEvents();
+
+    QSignalSpy spy(mEngine, SIGNAL(volumeChanged(int)));
+    QCOMPARE( spy.count(), 0 );
+
+    
+    //Test1: Known Key Event handled
+    QVariant value;
+    value.setValue(5);
+    
+    XQSettingsKey validKey1(XQSettingsKey::TargetCentralRepository, 
+                            KCRUidInCallVolume.iUid, KTelIncallEarVolume);
+    mEngine->d->volumeLevelChanged(validKey1, value);
+    QCOMPARE( spy.count(), 1 );
+    spy.clear();
+
+    
+    //Test2: Known Key Event-2 handled
+    XQSettingsKey validKey2(XQSettingsKey::TargetCentralRepository, 
+                            KCRUidInCallVolume.iUid,KTelIncallLoudspeakerVolume);
+    mEngine->d->volumeLevelChanged(validKey2, value);
+    QCOMPARE( spy.count(), 1 );
+    spy.clear();
+    
+    //Test3: Unknow Key Event Ignored.
+    XQSettingsKey unKnownKey(XQSettingsKey::TargetCentralRepository, 
+                            787,899);
+    mEngine->d->volumeLevelChanged(unKnownKey, value);
+    QCOMPARE( spy.count(), 0 );
+    
+    // Un-Subscribe Events.
+    mEngine->d->unSubscribeVolumeEvents();
 }
+
+
+
+// End of file

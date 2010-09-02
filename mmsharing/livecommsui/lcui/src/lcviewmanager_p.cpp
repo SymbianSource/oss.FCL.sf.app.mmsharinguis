@@ -46,6 +46,7 @@ LcMainWindow::LcMainWindow() :
 {
     // TODO: remove flag WindowFlagFixedHorizontal if portait layout
     // is going to be supported.
+    qApp->installEventFilter(this);
 }
 
 // -----------------------------------------------------------------------------
@@ -57,20 +58,22 @@ LcMainWindow::~LcMainWindow()
 }
 
 // -----------------------------------------------------------------------------
-// LcMainWindow::event
+// LcMainWindow::eventFilter
 // -----------------------------------------------------------------------------
 //
-bool LcMainWindow::event(QEvent *event)
-{
-    if ( event->type() == QEvent::FocusIn ){
-        LC_QDEBUG( "livecomms [UI] -> LcMainWindow::event(), focus in" )
+bool LcMainWindow::eventFilter ( QObject * watched, QEvent * event )
+{    
+    if ( event->type() == QEvent::ApplicationActivate ){
+        LC_QDEBUG( "livecomms [UI] -> LcMainWindow::eventFilter(), ApplicationActivate" )
         emit appFocusGained();
-    } else if ( event->type() == QEvent::FocusOut ){
-        LC_QDEBUG( "livecomms [UI] -> LcMainWindow::event(), focus out" )
+    } else if (( event->type() == QEvent::ApplicationDeactivate ) && 
+            ( !this->windowSurface()) ){
+        LC_QDEBUG( "livecomms [UI] -> LcMainWindow::eventFilter(), ApplicationDeactivate" )
         emit appFocusLost();
     }
-    return HbMainWindow::event(event);
+    return QObject::eventFilter(watched, event);
 }
+
 
 // -----------------------------------------------------------------------------
 // LcViewManagerPrivate::LcViewManagerPrivate
@@ -102,12 +105,12 @@ LcViewManagerPrivate::~LcViewManagerPrivate()
 {
     LC_QDEBUG( "livecomms [UI] -> LcViewManagerPrivate::~LcViewManagerPrivate()" )
 
+    delete mEngine;
     QList<HbView *> views = mMainWindow.views();
     foreach( HbView* view, views ){
         mMainWindow.removeView(view);
     }
-    delete mRepository;
-    delete mEngine;
+    delete mRepository;    
 
     LC_QDEBUG( "livecomms [UI] <- LcViewManagerPrivate::~LcViewManagerPrivate()" ) 
 }

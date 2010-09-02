@@ -70,9 +70,21 @@ void MusManagerServerMain::ThreadFunctionL (RSemaphore& aSemaphore)
 
 	// Start handling requests
 	CActiveScheduler::Start();
+	
+	// Open semaphore for destruction phase as it may take several seconds.
+	// Client can then interpret that it needs to soon start the server again.
+	// Even if creation of semaphore fails it is better to continue with gracefull shutdown.
+    RSemaphore closingSemaphore;
+    TInt err = closingSemaphore.CreateGlobal( KMusManagerServerClosingSemaphoreName, 0 );
 
     // This will be executed after the active scheduler has been stopped:
     CleanupStack::PopAndDestroy(server); 
+    
+    if ( err == KErrNone )
+        {
+        closingSemaphore.Signal();
+        }
+    closingSemaphore.Close();
 	}
 
 // -----------------------------------------------------------------------------

@@ -69,7 +69,7 @@ LcUiComponentRepository::LcUiComponentRepository(LcUiEngine& engine)
     mSlots->insert( lcActEnableCameraId, SLOT( disableCamera() ) );
     mSlots->insert( lcActMuteId, SLOT( mute() ) );
     mSlots->insert( lcActGalleryId, SLOT( notSupported() ) );
-    mSlots->insert( lcActChangeCameraId, SLOT( notSupported() ) );    
+    mSlots->insert( lcActChangeCameraId, SLOT( changeCamera() ) );    
     mSlots->insert( lcActAdjustVideoId, SLOT( notSupported() ) );
     mSlots->insert( lcActShareImageId, SLOT( notSupported() ) );
     mSlots->insert( lcActSwapViewsId, SLOT( swap() ) );
@@ -79,7 +79,7 @@ LcUiComponentRepository::LcUiComponentRepository(LcUiEngine& engine)
     mSlots->insert( lcActSpeakerId, SLOT( speaker() ) );
 
     mSlots->insert( lcActMenuDisableCameraId, SLOT( disableCamera() ) );    
-    mSlots->insert( lcActMenuChangeCameraId, SLOT( notSupported() ) );  
+    mSlots->insert( lcActMenuChangeCameraId, SLOT( changeCamera() ) );    
     
     LC_QDEBUG( "livecomms [UI] <- LcUiComponentRepository::LcUiComponentRepository()" )
 }
@@ -505,7 +505,7 @@ void LcUiComponentRepository::connectActions( LcView& view ) const
         static_cast<HbAction*>( findObject( lcActEnableCameraId ) );
 
     QObject::connect( changeCamera, SIGNAL(triggered()), 
-      &view, SLOT(notSupported()) );
+      &view, SLOT(changeCamera()) );
 
     QObject::connect( disableCamera, SIGNAL(triggered()), 
       &view, SLOT(disableCamera()) );

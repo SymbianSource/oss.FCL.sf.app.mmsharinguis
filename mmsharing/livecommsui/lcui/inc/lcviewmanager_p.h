@@ -36,9 +36,9 @@ public:
     LcMainWindow();
     virtual ~LcMainWindow();
     
-protected: // From HbMainWindow
-    
-    bool event(QEvent *event);
+protected: // From QObject
+
+    bool eventFilter ( QObject * watched, QEvent * event ); 
     
 signals:
         

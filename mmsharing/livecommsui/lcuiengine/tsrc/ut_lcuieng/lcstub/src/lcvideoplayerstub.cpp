@@ -29,7 +29,7 @@
 
 #include <QStringList>
 
-static QStringList lcutStub_LcPlayer_calledMethods = 0;
+static QStringList lcutStub_LcPlayer_calledMethods;
 static bool lcutStub_LcPlayer_asyncCompletionEnabled = false;
 
 // -----------------------------------------------------------------------------

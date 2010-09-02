@@ -35,6 +35,7 @@
 #include <cntdef.h>
 #include <cntfldst.h>
 
+
 #include "svptimer.h"
 
 RDrawableWindow* testWindow = 0;
@@ -63,6 +64,9 @@ void CMusEngMceSession::ConstructL()
     iTimer = CSVPTimer::NewL( *this, 1 ); 
     iCameraHandler.SetSession( this );
     
+    // indicator control
+    iIndicatorCtr = new  ( ELeave ) LcVtIndicatorController();
+    
     MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::ConstructL()" )
     }
 
@@ -78,6 +82,12 @@ CMusEngMceSession::~CMusEngMceSession()
     delete iRemoteVideoPlayer; 
     delete iLiveVideoPlayer;    
     delete iScreen;
+    
+    if (iIndicatorCtr)
+        {
+        iIndicatorCtr->disableActiveCallIndicator();
+        delete iIndicatorCtr;
+        }    
     MUS_LOG( "mus: [ENGINE]  <- CMusEngMceSession::~CMusEngMceSession()" )
     }
 	
@@ -618,6 +628,14 @@ TInt CMusEngMceSession::SetForegroundStatus( TBool aIsForeground )
     if ( iScreen ){
         iScreen->Update(aIsForeground);
     }
+    
+    if ( aIsForeground )
+        {
+        iIndicatorCtr->disableActiveCallIndicator();
+        }
+    else {
+        iIndicatorCtr->enableActiveCallIndicator();
+        }
     return KErrNone;
     }
 

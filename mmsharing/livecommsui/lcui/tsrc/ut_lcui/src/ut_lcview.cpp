@@ -72,8 +72,11 @@ void UT_LcView::init()
     mView = new LcView( *mEngine, *mRepository );
     mView->mRecipient = mRecipient;
     mView->mEndCallButton = mEndCallButton;
-    mAction = new HbAction();
-    mAction2 = new HbAction();
+    mView->mChangeCameraAction = new HbAction();
+    mView->mMuteAction = new HbAction();
+    mView->mSpeakerAction = new HbAction();
+    mView->mDisableCameraAction = new HbAction();   
+    mView->mDisableCameraMenuAction = new HbAction(); 
 }
 
 void UT_LcView::cleanup()
@@ -82,9 +85,7 @@ void UT_LcView::cleanup()
     delete mRecipient;
     delete mView;
     delete mEngine;
-    delete mRepository;
-    delete mAction;
-    delete mAction2;
+    delete mRepository;    
     delete mEndCallButton;
 }
 
@@ -105,10 +106,6 @@ void UT_LcView::testActivated()
     QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_setContentAreas, 2 ) );
     
     lcutStub_LcUiEngine_reset();
-    mView->mChangeCameraAction = mAction;
-    mView->mMuteAction = mAction;
-    mView->mSpeakerAction = mAction;
-
     mView->activated();
     QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_updateSession, 0 ) );
     QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_setOrientation, 1 ) );
@@ -123,6 +120,42 @@ void UT_LcView::testActivated()
     QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_updateSession, 0 ) );
     QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_setOrientation, 1 ) );
     QVERIFY( lcutStub_LcUiEngine_expectCall( lcutStub_LcUiEngine_setContentAreas, 2 ) );
+    
+    // normal scenario
+    lcutStub_LcUiEngine_reset();
+    mView->mChangeCameraAction = new HbAction();
+    mView->mMuteAction = new HbAction();
+    mView->mSpeakerAction = new HbAction();
+    mView->mDisableCameraAction = new HbAction();   
+     
+    mView->mEngine.setMainCamera( true );
+    lcutStub_LcUiEngine_setMuted( true);
+    lcutStub_LcUiEngine_setSpeaker( true );
+    lcutStub_LcUiEngine_setLocalPlaying( true );
+    mView->activated();
+    QVERIFY( mView->mChangeCameraAction );
+    QVERIFY( mView->mChangeCameraAction->icon() ==  HbIcon( lcIconNameSecondaryCamera ) );
+    QVERIFY( mView->mMuteAction );
+    QVERIFY( mView->mMuteAction->icon() ==  HbIcon( lcIconNameUnmuteMic ) );
+    QVERIFY( mView->mSpeakerAction );
+    QVERIFY( mView->mSpeakerAction->icon() ==  HbIcon( lcIconNameHandset ) );
+    QVERIFY( mView->mDisableCameraAction );
+    QVERIFY( mView->mDisableCameraAction->icon() ==  HbIcon( lcIconNameDisableCamera ) );
+    
+    // dude trust me , ofcourse not everything normal everytime
+    mView->mEngine.setMainCamera( false );    
+    lcutStub_LcUiEngine_setMuted( false );
+    lcutStub_LcUiEngine_setSpeaker( false );
+    lcutStub_LcUiEngine_setLocalPlaying( false );
+    mView->activated();
+    QVERIFY( mView->mChangeCameraAction );
+    QVERIFY( mView->mChangeCameraAction->icon() ==  HbIcon( lcIconNameMainCamera ) );
+    QVERIFY( mView->mMuteAction );
+    QVERIFY( mView->mMuteAction->icon() ==  HbIcon( lcIconNameMuteMic ) );
+    QVERIFY( mView->mSpeakerAction );
+    QVERIFY( mView->mSpeakerAction->icon() ==  HbIcon( lcIconNameLoudspeaker ) ); 
+    QVERIFY( mView->mDisableCameraAction );
+    QVERIFY( mView->mDisableCameraAction->icon() ==  HbIcon( lcIconNameEnableCamera ) );
 }
 
 void UT_LcView::testInit()
@@ -157,11 +190,6 @@ void UT_LcView::testDeactivated()
 
 void UT_LcView::testSetCameraActionToMain()
 {
-    mView->mChangeCameraAction = mAction;
-    mView->mMuteAction = mAction;
-    mView->mSpeakerAction = mAction;
-    mView->mDisableCameraAction = mAction;
-
     mView->setCameraActionToMain();
     QVERIFY( mView->mChangeCameraAction->text().isEmpty() );
     QCOMPARE( mView->mChangeCameraAction->icon(), HbIcon(lcIconNameMainCamera) );
@@ -169,11 +197,6 @@ void UT_LcView::testSetCameraActionToMain()
 
 void UT_LcView::testSetCameraActionToSecondary()
 {
-    mView->mChangeCameraAction = mAction;
-    mView->mMuteAction = mAction;
-    mView->mSpeakerAction = mAction;
-    mView->mDisableCameraAction = mAction;
-
     mView->setCameraActionToSecondary();
     QVERIFY( mView->mChangeCameraAction->text().isEmpty() );
     QCOMPARE( mView->mChangeCameraAction->icon(), HbIcon(lcIconNameSecondaryCamera) );
@@ -181,11 +204,6 @@ void UT_LcView::testSetCameraActionToSecondary()
 
 void UT_LcView::testSetMuteActionToUnmute()
 {
-    mView->mChangeCameraAction = mAction;
-    mView->mMuteAction = mAction;
-    mView->mSpeakerAction = mAction;
-    mView->mDisableCameraAction = mAction;
-    
     mView->setMuteActionToUnmute();
     QVERIFY( mView->mMuteAction->text().isEmpty() );
     QCOMPARE (mView->mMuteAction->icon(), HbIcon(lcIconNameUnmuteMic));
@@ -193,11 +211,6 @@ void UT_LcView::testSetMuteActionToUnmute()
 
 void UT_LcView::testSetMuteActionToMute()
 {
-    mView->mChangeCameraAction = mAction;
-    mView->mMuteAction = mAction;
-    mView->mSpeakerAction = mAction;
-    mView->mDisableCameraAction = mAction;
-    
     mView->setMuteActionToMute();
     QVERIFY( mView->mMuteAction->text().isEmpty() );
     QCOMPARE (mView->mMuteAction->icon(), HbIcon(lcIconNameMuteMic));
@@ -205,11 +218,6 @@ void UT_LcView::testSetMuteActionToMute()
 
 void UT_LcView::testSetSpeakerActionToHandset()
 {
-    mView->mChangeCameraAction = mAction;
-    mView->mMuteAction = mAction;
-    mView->mSpeakerAction = mAction;
-    mView->mDisableCameraAction = mAction;
-
     mView->setSpeakerActionToHandset();
     QVERIFY( mView->mSpeakerAction->text().isEmpty() );
     QCOMPARE( mView->mSpeakerAction->icon(), HbIcon(lcIconNameHandset) );
@@ -217,11 +225,6 @@ void UT_LcView::testSetSpeakerActionToHandset()
 
 void UT_LcView::testSetSpeakerActionToSpeaker()
 {
-    mView->mChangeCameraAction = mAction;
-    mView->mMuteAction = mAction;
-    mView->mSpeakerAction = mAction;
-    mView->mDisableCameraAction = mAction;
-
     mView->setSpeakerActionToSpeaker();
     QVERIFY( mView->mSpeakerAction->text().isEmpty() );
     QCOMPARE( mView->mSpeakerAction->icon(), HbIcon(lcIconNameLoudspeaker) );
@@ -230,23 +233,13 @@ void UT_LcView::testSetSpeakerActionToSpeaker()
 void UT_LcView::testSetCameraActionToEnable()
 {
     mView->setCameraActionToEnable();
-
-    mView->mDisableCameraAction = mAction;
-    mView->mDisableCameraMenuAction = mAction2;
-
-    mView->setCameraActionToEnable();
     QVERIFY( mView->mDisableCameraAction->text().isEmpty() );
     QCOMPARE( mView->mDisableCameraAction->icon(), HbIcon(lcIconNameEnableCamera) );
     QCOMPARE( mView->mDisableCameraMenuAction->text(), hbTrId( "txt_vt_menu_enable_camera" ) );   
 }
 
 void UT_LcView::testSetCameraActionToDisable()
-{
-    mView->setCameraActionToDisable();
-
-    mView->mDisableCameraAction = mAction;
-    mView->mDisableCameraMenuAction = mAction2;
-
+{    
     mView->setCameraActionToDisable();
     QVERIFY( mView->mDisableCameraAction->text().isEmpty() );
     QCOMPARE( mView->mDisableCameraAction->icon(), HbIcon(lcIconNameDisableCamera) );

@@ -54,20 +54,12 @@ SYSTEMINCLUDE 	/epoc32/include/ecom
 
 LIBRARY         euser.lib
 LIBRARY         bafl.lib
-LIBRARY         inetprotutil.lib
-LIBRARY		phoneclient.lib
 LIBRARY		centralrepository.lib
-LIBRARY		sipprofilecli.lib
-LIBRARY		sipclient.lib
-LIBRARY         sipcodec.lib
-LIBRARY 	mceclient.lib  
-LIBRARY 	drmcommon.lib
 LIBRARY		charconv.lib
-LIBRARY         telephonyaudiorouting.lib
 LIBRARY         cntmodel.lib ecom.lib
-LIBRARY ecam.lib
 LIBRARY ws32.lib
 LIBRARY bitgdi.lib
 LIBRARY fbscli.lib
 LIBRARY cone.lib
+LIBRARY lcvtindicatorcontroller.lib
 DEBUGLIBRARY    flogger.lib

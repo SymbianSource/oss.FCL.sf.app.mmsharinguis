@@ -1,14 +1,15 @@
-<!DOCTYPE RCC><RCC version="1.0">
+<!DOCTYPE RCC>
+<RCC version="1.0">
     <qresource prefix="/">
         <file alias="hbpushbutton_color.css">resources/hbpushbutton_color.css</file>
     </qresource>
     <qresource prefix="/xml" >
-        <file alias="lcidleview.docml">resources/lcviews/lcidleview.docml</file>
-        <file alias="lcreceiveview.docml">resources/lcviews/lcreceiveview.docml</file>
-        <file alias="lcreceiveonlyview.docml">resources/lcviews/lcreceiveonlyview.docml</file>
-        <file alias="lcsendview.docml">resources/lcviews/lcsendview.docml</file>
-        <file alias="lctwowayview.docml">resources/lcviews/lctwowayview.docml</file>
-        <file alias="lcvtview.docml">resources/lcviews/lcvtview.docml</file>
+        <file alias="lcidleview.docml">resources/lcviews/lcidleview.docml.bin</file>
+        <file alias="lcreceiveview.docml">resources/lcviews/lcreceiveview.docml.bin</file>
+        <file alias="lcreceiveonlyview.docml">resources/lcviews/lcreceiveonlyview.docml.bin</file>
+        <file alias="lcsendview.docml">resources/lcviews/lcsendview.docml.bin</file>
+        <file alias="lctwowayview.docml">resources/lcviews/lctwowayview.docml.bin</file>
+        <file alias="lcvtview.docml">resources/lcviews/lcvtview.docml.bin</file>
     </qresource>
     <qresource prefix="/" >
         <file alias="win_appear.fxml" >resources/win_appear.fxml</file>

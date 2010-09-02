@@ -21,6 +21,8 @@
 #include "musmanageripccommon.h"
 #include "muslogger.h"
 
+const TInt KMusServerClosingWaitTimeoutInMicrosecs = 10000000; // 10 secs
+
 // ----------------------------------------------------------------------------
 // MusManagerServerStarter::Start
 // ----------------------------------------------------------------------------
@@ -59,8 +61,15 @@ TBool MusManagerServerStarter::Started()
     TFullName name;
     if (findServer.Next(name) == KErrNone)
         {
-    MUS_LOG( "mus: [MUSCLI]  <- MusManagerServerStarter::Start()" );
-        return ETrue; // Server already running
+        MUS_LOG( "mus: [MUSCLI]  <- MusManagerServerStarter::Start()" );
+    
+        // Server may be running but already doing destruction, report
+        // it as not running in such case.
+        RSemaphore closingSemaphore;
+        TBool closingCurrently( 
+            closingSemaphore.OpenGlobal( KMusManagerServerClosingSemaphoreName ) == KErrNone );
+        closingSemaphore.Close();
+        return !closingCurrently;
         }
     MUS_LOG( "mus: [MUSCLI]  <- MusManagerServerStarter::Start()" );
     return EFalse;
@@ -73,6 +82,23 @@ TBool MusManagerServerStarter::Started()
 TInt MusManagerServerStarter::CreateServerProcess( RSemaphore& aSemaphore )
     {
     TInt err = KErrNone;
+    
+    RSemaphore closingSemaphore;
+    if ( closingSemaphore.OpenGlobal( KMusManagerServerClosingSemaphoreName ) == KErrNone )
+        {
+        MUS_LOG( "mus: [MUSCLI]     CreateServerProcess, wait for server closing" );
+        // Don't wait forever if server is somehow horribly jammed
+        
+        TInt waitErr = closingSemaphore.Wait( KMusServerClosingWaitTimeoutInMicrosecs );
+        MUS_LOG1( "mus: [MUSCLI]    CreateServerProcess, waitErr( %d )",
+                  waitErr );
+        closingSemaphore.Close();
+        if ( waitErr != KErrNone )
+            {
+            return waitErr;
+            }
+        }
+    
     const TUidType serverUid( KNullUid, KNullUid, KServerUid3 );
     RProcess server;
     err = server.Create( KMusManagerServerName, KNullDesC() ,serverUid );

@@ -166,19 +166,30 @@ void UT_LcUiViewManager::testMainWindowEvent()
      QSignalSpy spy( &mViewManager->mMainWindow, SIGNAL(appFocusGained()) );
      // Not interesting event
      QEvent event(QEvent::MaxUser);
-     mViewManager->mMainWindow.event(&event);
+     mViewManager->mMainWindow.eventFilter(0, &event);
      QVERIFY( spy.count() == 0 );
      
      // Focus in event
-     QEvent event2(QEvent::FocusIn);
-     mViewManager->mMainWindow.event(&event2);
+     QEvent event2(QEvent::ApplicationActivate);
+     mViewManager->mMainWindow.eventFilter(0, &event2);
      QVERIFY( spy.count() == 1 );
-     
+      
+     // test: Complete focus lost
      QSignalSpy spy2( &mViewManager->mMainWindow, SIGNAL(appFocusLost()) );
      // Focus in event
-     QEvent event3(QEvent::FocusOut);
-     mViewManager->mMainWindow.event(&event3);
+     QEvent event3(QEvent::ApplicationDeactivate);
+     mViewManager->mMainWindow.mSurface = 0;
+     mViewManager->mMainWindow.eventFilter(0, &event3);
      QVERIFY( spy2.count() == 1 );
+     
+     // test: partial focus lost i.e. in case of golbal popup.
+     QSignalSpy spy3( &mViewManager->mMainWindow, SIGNAL(appFocusLost()) );
+     // Partial focus in event i.e. Global popup
+     QEvent event4(QEvent::ApplicationDeactivate);
+     QWindowSurface surf;
+     mViewManager->mMainWindow.mSurface = &surf;
+     mViewManager->mMainWindow.eventFilter(0, &event4);
+     QVERIFY( spy3.count() == 0 );
 }
 
 // end of file

@@ -105,9 +105,7 @@ private:
     LcView* mView;
     LcUiEngine* mEngine;
     HbLabel* mRecipient;
-    LcUiComponentRepository* mRepository;
-    HbAction* mAction;
-    HbAction* mAction2;
+    LcUiComponentRepository* mRepository;    
     HbPushButton* mEndCallButton;
 };
 

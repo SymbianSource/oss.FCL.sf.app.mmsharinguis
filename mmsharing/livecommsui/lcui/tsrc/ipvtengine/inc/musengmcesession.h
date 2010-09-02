@@ -28,6 +28,8 @@
 
 #include <e32base.h>
 
+#include    <lcvtindicatorcontroller.h>
+
 
 // FORWARD DECLARATIONS
 class CContactTextField;
@@ -283,6 +285,9 @@ class CMusEngMceSession : public CBase,
         * iBackground is set to EFalse
         */
         TBool iBackground;
+        
+        // indicator control
+        LcVtIndicatorController* iIndicatorCtr;
 
 
     };

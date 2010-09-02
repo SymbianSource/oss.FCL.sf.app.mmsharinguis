@@ -89,15 +89,11 @@ private slots: //test methods
     void testIsMinimized();
     void testHandleForegroundStatus();
     void testSendDialTone();
-    void testVtVideoSendingSetting(); 
     void testShareVideoIsAllowedShownAutomatically(); 
     void testShareVideoIsNotAllowedShown();
-    void testShareVideoPermissionAskedAlways(); 
+    void testShareVideoPermissionAskedAlways();
+    void testVolumeLevelChanged();
     
-private: // utility functions
- 
-    bool setVtVideoSendingSetting(int key);
-
 private:
     
     LcUiEngine* mEngine;

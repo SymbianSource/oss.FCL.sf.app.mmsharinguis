@@ -28,7 +28,7 @@
 #include <QStringList>
 
 
-static QStringList lcutStub_LcSession_calledMethods = 0;
+static QStringList lcutStub_LcSession_calledMethods;
 static MLcUiProvider* lcutStub_LcSession_uiProvider = 0;
  
 // -----------------------------------------------------------------------------

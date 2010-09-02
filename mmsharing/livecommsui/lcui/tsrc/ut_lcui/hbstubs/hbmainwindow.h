@@ -23,6 +23,9 @@
 #include <hbnamespace.h>
 
 class QGraphicsWidget;
+class QWindowSurface 
+    {
+    };
 class HbAction;
 class HbView;
 
@@ -44,12 +47,18 @@ public:
     void show(){};
     QList<HbView *> views() const;
     QRectF sceneRect() const;
+
+    //Overiding function for stub
+    QWindowSurface *windowSurface() const;
     
 private: // Data added for the unit testing stub
-	HbView* mCurrentView; // Not owned
-	int mViewCount;
-	Qt::Orientation mOrientation;
-  QList<HbView*> mTestViews;
+    HbView* mCurrentView; // Not owned
+    int mViewCount;
+    Qt::Orientation mOrientation;
+    QList<HbView*> mTestViews;
+
+public :     
+    QWindowSurface *mSurface;
 };
 
 #endif // HBMAINWINDOW_H

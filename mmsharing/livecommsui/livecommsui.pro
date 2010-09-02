@@ -22,6 +22,14 @@ TRANSLATIONS = dialer.ts
 
 LCUI_DIR = lcui
 LCUIENGINE_DIR = lcuiengine
+DOCML_DIR = lcui/resources/lcviews
+
+DOCML += $$DOCML_DIR/lcidleview.docml
+DOCML += $$DOCML_DIR/lcreceiveview.docml
+DOCML += $$DOCML_DIR/lcreceiveonlyview.docml
+DOCML += $$DOCML_DIR/lcsendview.docml
+DOCML += $$DOCML_DIR/lctwowayview.docml
+DOCML += $$DOCML_DIR/lcvtview.docml
 
 RESOURCES += $$LCUI_DIR/livecommsui.qrc
 
@@ -49,7 +57,6 @@ libFiles.sources = livecommsui.dll
 DEPLOYMENT += libFiles
 
 symbian: {
-    DOCML_DIR = lcui/resources/lcviews
 
     INCLUDEPATH += /epoc32/include/ecom
     INCLUDEPATH += $$APP_LAYER_SYSTEMINCLUDE
@@ -85,12 +92,6 @@ symbian: {
     MMP_RULES += defFiles
             
     :BLD_INF_RULES.prj_exports += "$$LCUI_DIR/inc/lcviewmanager.h /epoc32/include/lcviewmanager.h"
-    :BLD_INF_RULES.prj_exports += "$$LCUI_DIR/inc/lcexport.h /epoc32/include/lcexport.h"
-    :BLD_INF_RULES.prj_exports += "$$DOCML_DIR/lcidleview.docml z:/data/others/lcidleview.docml"
-    :BLD_INF_RULES.prj_exports += "$$DOCML_DIR/lcreceiveView.docml z:/data/others/lcreceiveview.docml"
-    :BLD_INF_RULES.prj_exports += "$$DOCML_DIR/lcsendview.docml z:/data/others/lcsendview.docml"
-    :BLD_INF_RULES.prj_exports += "$$DOCML_DIR/lctwowayview.docml z:/data/others/lctwowayview.docml"
-    :BLD_INF_RULES.prj_exports += "$$DOCML_DIR/lcvtview.docml z:/data/others/lcvtview.docml"
-    :BLD_INF_RULES.prj_exports += "$$DOCML_DIR/lcreceiveonlyView.docml z:/data/others/lcreceiveonlyview.docml"
+    :BLD_INF_RULES.prj_exports += "$$LCUI_DIR/inc/lcexport.h /epoc32/include/lcexport.h"    
 }
 
