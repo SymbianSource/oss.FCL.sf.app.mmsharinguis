@@ -509,6 +509,8 @@ void CMusUiAppUi::HandleExit()
         RemoveView( KMusUidClipSharingView );
         RemoveView( KMusUidReceivingView );
 
+        iExiting = EFalse;
+        
         User::Exit( KErrNone );
         }
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiAppUi::HandleExit" );
@@ -774,4 +776,24 @@ void CMusUiAppUi::HandleControlEventL(CCoeControl* aControl,TCoeEvent aEventType
         }
 
     }
+
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
+void CMusUiAppUi::SetExitingFlag()
+	{
+	iExiting = ETrue;
+	}
+
+
+// -----------------------------------------------------------------------------
+// 
+// -----------------------------------------------------------------------------
+//
+TBool CMusUiAppUi::IsExiting ()
+	{
+	return iExiting;
+	}
 // end of file

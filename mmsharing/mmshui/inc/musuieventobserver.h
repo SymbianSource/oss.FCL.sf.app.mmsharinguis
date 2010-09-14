@@ -70,6 +70,8 @@ public:
     virtual TInt GetUiVolumeValue() = 0;
     
     virtual CMusUiResourceHandler* ResourceHandler() = 0;
+   
+    virtual void SetExitingFlag() = 0;
 	};
 
 #endif // MUSUIEVENTOBSERVER_H

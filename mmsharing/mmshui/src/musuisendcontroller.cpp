@@ -640,7 +640,7 @@ void CMusUiSendController::ExitProcedureL( TBool aUserAcceptance )
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiSendController::ExitProcedureL" );
     
     DismissWaitDialog();
-    
+    iEventObserver.SetExitingFlag();
     switch ( iShutdownState )
         {
         case EMusUiShutdownStarted:

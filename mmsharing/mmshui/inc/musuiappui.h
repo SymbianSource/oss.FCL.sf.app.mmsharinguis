@@ -127,6 +127,10 @@ public:	// from MMusUiEventObserver
     virtual TInt GetUiVolumeValue();
     
     virtual CMusUiResourceHandler* ResourceHandler();
+    
+    void SetExitingFlag();
+    
+    TBool IsExiting();
 
 private: // from base class CEikAppUi
 
@@ -197,6 +201,8 @@ private: // data
     TBool iForeground;
     
     CMusUiResourceHandler* iResourceHandler;
+
+    TBool iExiting;
 
 	
     };

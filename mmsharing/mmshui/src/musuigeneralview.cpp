@@ -41,7 +41,7 @@
 #include <AknIncallBubbleNotify.h>
 #include <featmgr.h>
 
-const TInt KBackgroundIntervalForClose = 10 * 1000 * 1000; // 10s
+const TInt KBackgroundIntervalForClose = 30 * 1000 * 1000; // 30s
 const TInt KMusFgBgEventFiltering = 200 * 1000; // 200 ms
 
 // -----------------------------------------------------------------------------

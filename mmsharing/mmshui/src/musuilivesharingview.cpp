@@ -130,6 +130,11 @@ void CMusUiLiveSharingView::DynInitMenuPaneL( TInt aResourceId,
                                               CEikMenuPane* aMenuPane )
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiLiveSharingView::DynInitMenuPaneL [%d]" );
+    //if the mus is in exit procedure,we do nothing
+    if ( MusAppUi()->IsExiting() )
+    	{
+        return;
+    	}
     SetZoomVisible(EFalse);
     SetBrightnessVisible(EFalse);
     // Base class initiated initialization first
