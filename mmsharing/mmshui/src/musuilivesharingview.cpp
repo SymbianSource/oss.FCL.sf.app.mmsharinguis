@@ -705,6 +705,7 @@ void CMusUiLiveSharingView::DoActivateL( const TVwsViewId& aPrevViewId,
                                                          videoRect );
         iController->StartInvitationL();
         }
+    iBackgroundContainer->SetUiEventController( EventController() );
 
     iContainer->SetController( iController );
 

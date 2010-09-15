@@ -1105,11 +1105,13 @@ TBool CMusEngClipSession::IsRewindFromEnd()
                         position.Int64(), 
                         duration.Int64() )
                         
-            TRAP( error, isRewindFromEnd = 
+            isRewindFromEnd = 
                         ( position.Int64() != 0 && 
+                          position.Int64() == duration.Int64() && 
                           !filesource->IsEnabled() && 
                           videoOut->State() == CMceMediaStream::EDisabled &&
-                          !iPause ) )
+                          !iPause );
+                          
             if(  isRewindFromEnd )
                 {
                 MUS_LOG( "mus: [ENGINE]     Rewind from end of clip" )

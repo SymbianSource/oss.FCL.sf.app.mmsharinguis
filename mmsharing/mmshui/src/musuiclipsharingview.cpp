@@ -630,6 +630,7 @@ void CMusUiClipSharingView::DoActivateL( const TVwsViewId& aPrevViewId,
                                                          *this,
                                                          videoRect );
         }
+    iBackgroundContainer->SetUiEventController( EventController() );
     
     iContainer->SetController( iController );
 

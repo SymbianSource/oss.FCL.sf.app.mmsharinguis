@@ -474,6 +474,7 @@ void CMusUiReceiveView::DoActivateL( const TVwsViewId& aPrevViewId,
                                                      *this, 
                                                      videoRect );
         }
+    iBackgroundContainer->SetUiEventController( EventController() );
 
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiReceiveView::DoActivateL" );
     }

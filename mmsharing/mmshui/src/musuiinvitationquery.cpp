@@ -146,7 +146,7 @@ void CMusUiInvitationQuery::RunL()
     {
     MUS_LOG1( "mus: [MUSUI ]     -> CMusUiInvitationQuery::RunL [%d]", iStatus.Int() );
     iActiveTimer->Cancel();
-    if ( iStatus == EAknSoftkeyYes )
+    if ( iStatus == EAknSoftkeyYes || iStatus == EEikBidOk )
         {
         MUS_LOG( "mus: [MUSUI ]     CMusUiInvitationQuery::RunL: if" );
         iObserver.InvitationAcceptedL();

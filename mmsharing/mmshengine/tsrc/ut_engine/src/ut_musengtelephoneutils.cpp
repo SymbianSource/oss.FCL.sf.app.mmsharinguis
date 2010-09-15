@@ -151,7 +151,7 @@ void UT_CMusEngTelephoneUtils::UT_AudioRoutingCanBeChangedL()
     
     iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
                   CTelephonyAudioRouting::EWiredAudioAccessory;
-    EUNIT_ASSERT( !iTelephoneUtils->AudioRoutingCanBeChanged() );
+    EUNIT_ASSERT( iTelephoneUtils->AudioRoutingCanBeChanged() );
     
     iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
                   CTelephonyAudioRouting::EBTAudioAccessory;
@@ -248,10 +248,10 @@ void UT_CMusEngTelephoneUtils::UT_LoudspeakerLL()
     iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
                   CTelephonyAudioRouting::EWiredAudioAccessory;              
     
-    // Try to set loudspeaker on, fails because current set is not handset
+    // Try to set loudspeaker on, succeed
     iTelephoneUtils->LoudspeakerL( ETrue, ETrue );
     EUNIT_ASSERT( iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput ==
-                  CTelephonyAudioRouting::EWiredAudioAccessory );  
+    		      CTelephonyAudioRouting::ELoudspeaker );  
     
     // Change conditions
     iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =

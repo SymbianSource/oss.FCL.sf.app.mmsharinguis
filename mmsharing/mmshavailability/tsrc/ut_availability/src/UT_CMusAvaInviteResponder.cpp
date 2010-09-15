@@ -25,6 +25,7 @@
 #include "muslogger.h"
 #include "CSipSseTestTls.h"
 #include "musavacapabilitytesthelper.h" //remove compilation warning
+#include "mussettings.h"
 
 //  EXTERNAL INCLUDES
 #include <digia/eunit/eunitmacros.h>
@@ -118,7 +119,15 @@ void UT_CMusAvaInviteResponder::UT_CMusAvaInviteResponder_AnswerLL()
     iResponderObserverImp->iApplicationState = MMusAvaSettingsObserver::EApplicationStateNotDefined;
     iInviteResponder->iTransaction->iIsClientTransaction = EFalse;
     iInviteResponder->AnswerL();
-    EUNIT_ASSERT( iInviteResponder->iTransaction->iResponseElements->StatusCode() == 603 );
+    if ( MultimediaSharingSettings::OperatorVariantSettingL() == 
+	     MusSettingsKeys::EOperatorSpecific )
+    	{
+        EUNIT_ASSERT( iInviteResponder->iTransaction->iResponseElements->StatusCode() == 486 );
+    	}
+    else
+    	{
+        EUNIT_ASSERT( iInviteResponder->iTransaction->iResponseElements->StatusCode() == 603 );
+    	}
     }  
 
 void UT_CMusAvaInviteResponder::UT_CMusAvaInviteResponder_SendResponseLL()

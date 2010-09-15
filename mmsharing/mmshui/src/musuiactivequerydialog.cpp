@@ -109,7 +109,7 @@ void CMusUiActiveQueryDialog::ShowL( const TDesC& aPrompt )
 void CMusUiActiveQueryDialog::RunL()
     {
     MUS_LOG1( "mus: [MUSUI ]     -> CMusUiActiveQueryDialog::RunL [%d]", iStatus.Int() );
-    if ( iStatus == EAknSoftkeyYes )
+    if ( iStatus == EAknSoftkeyYes || iStatus == EEikBidOk )
         {
         MUS_LOG( "mus: [MUSUI ]     CMusUiActiveQueryDialog::RunL: if" );
         iObserver.QueryAcceptedL( ETrue );

@@ -20,6 +20,7 @@
 #include "musavainviteresponder.h"
 #include "musavainviteresponderobserver.h"
 #include "muslogger.h"
+#include "mussettings.h"
 
 #include <e32cmn.h>
 #include <sipresponseelements.h>
@@ -110,8 +111,16 @@ void CMusAvaInviteResponder::AnswerL()
         SendResponseL( KMUSAVA486, KMusAvaStatusBusy );
         }
     else
-        {
-        SendResponseL( KMUSAVA603, KMusAvaStatusDecline );
+        {  
+        if ( MultimediaSharingSettings::OperatorVariantSettingL() == 
+		     MusSettingsKeys::EOperatorSpecific )
+        	{
+            SendResponseL( KMUSAVA486, KMusAvaStatusBusy );
+        	}
+        else
+        	{
+            SendResponseL( KMUSAVA603, KMusAvaStatusDecline );
+            }
         }
     }
 

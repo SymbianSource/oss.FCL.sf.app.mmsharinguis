@@ -200,7 +200,7 @@ void UT_CMusEngSession::UT_AudioRoutingCanBeChangedL()
     EUNIT_ASSERT( iLiveSession->AudioRoutingCanBeChanged() );
     
     iLiveSession->iTelephoneUtils->iTelephonyAudioRouting->iCurrentOutput =
-                  CTelephonyAudioRouting::EWiredAudioAccessory;
+    		      CTelephonyAudioRouting::ETTY;
     EUNIT_ASSERT( !iLiveSession->AudioRoutingCanBeChanged() );
     }
     

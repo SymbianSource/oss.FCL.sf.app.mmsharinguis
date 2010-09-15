@@ -234,6 +234,12 @@ void CMusUiGeneralView::DynInitToolbarL( TInt /*aResourceId*/,
                         ETrue,
                         ETrue );
     
+    Toolbar()->HideItem( EventControllerL().IsMicMutedL() ?
+							EMusuiCmdToolbarUnmute :
+							EMusuiCmdToolbarMute,
+						EFalse,
+						ETrue );
+    
     TBool loudSpeakerEnabled( EventControllerL().IsLoudSpeakerEnabled() );
       
     Toolbar()->HideItem( loudSpeakerEnabled ?
@@ -242,18 +248,12 @@ void CMusUiGeneralView::DynInitToolbarL( TInt /*aResourceId*/,
                          ETrue,
                          ETrue );
     
-    // Dim audio routing button if audio routing cannot be changed
-    // or when some button is selected
-    TBool dimAudioRouting( iToolbarItemSelected || 
-                           !EventControllerL().AudioRoutingCanBeChanged() );
-                                                 
-    Toolbar()->SetItemDimmed( loudSpeakerEnabled ?
-                                    EMusuiCmdToolbarSpeakerOff :
-                                    EMusuiCmdToolbarSpeakerOn,
-                              dimAudioRouting,
-                              ETrue );                 
-    
-    
+    Toolbar()->HideItem( loudSpeakerEnabled ?
+							EMusuiCmdToolbarSpeakerOff :
+							EMusuiCmdToolbarSpeakerOn,
+						EFalse,
+						ETrue );
+      
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiGeneralView::DynInitToolbarL" );
     }
 
