@@ -21,7 +21,7 @@
 #include "ut_lcview.h"
 #include "ut_lceffecthandler.h"
 #include "ut_lcvideowidget.h"
-#include "testresultxmlparser.h"
+#include "testrunner.h"
 #include <qapplication.h>
 #include <QtTest/QtTest>
 #include <stdio.h>
@@ -29,55 +29,40 @@
 #include <QFile>
 #include <QTextStream>
 
-#define UT_ARGS( args, file )\
-    QStringList args( "ut_lcui");\
-    args << "-silent" << "-xml" << "-o" << file
-
 int main(int argc, char *argv[]) 
 {
-    bool promptOnExit(true);
-    for (int i=0; i<argc; i++) {
-        if (QString(argv[i]) == "-noprompt")
-            promptOnExit = false;
-    }
     printf("Running tests...\n");
+            
     QApplication app(argc, argv);
-    TestResultXmlParser parser;
+    QStringList args = app.arguments();
+    QString combinedOutputFileName;
+    for ( int i = 0; i < args.count(); i++ ){
+        QString arg = args.at(i);
+        if ( arg == QString("-o") && i + 1 < args.count() ){
+            i++;
+            combinedOutputFileName = args.at(i);
+        }
+    }
+    
+    TestRunner testRunner("LcUi", combinedOutputFileName);
     
     UT_LcUiViewManager ut_lcViewManager;
-    QString resultFileName = "c:/ut_lcui_LcViewManager.xml";
-    UT_ARGS( args_lcViewManager, resultFileName );
-    QTest::qExec( &ut_lcViewManager, args_lcViewManager );
-    parser.parseAndPrintResults(resultFileName);
-    
+    testRunner.runTests(ut_lcViewManager);
+   
     UT_LcUiComponentRepository ut_lcUiComponentRepository;
-    resultFileName = "c:/ut_lcui_LcUiComponentRepository.xml";
-    UT_ARGS( args_lcUiComponentRepository, resultFileName );
-    QTest::qExec( &ut_lcUiComponentRepository, args_lcUiComponentRepository );
-    parser.parseAndPrintResults(resultFileName);
+    testRunner.runTests(ut_lcUiComponentRepository);
  
     UT_LcView ut_lcView;
-    resultFileName = "c:/ut_lcui_LcView.xml";
-    UT_ARGS( args_lcView, resultFileName ); 
-    QTest::qExec( &ut_lcView, args_lcView );
-    parser.parseAndPrintResults(resultFileName);
+    testRunner.runTests(ut_lcView);
     
     UT_LcEffectHandler ut_effectHandler;
-    resultFileName = "c:/ut_lcui_LcEffectHandler.xml";
-    UT_ARGS( args_lcEffectHandler, resultFileName ); 
-    QTest::qExec( &ut_effectHandler, args_lcEffectHandler );
-    parser.parseAndPrintResults(resultFileName);
+    testRunner.runTests(ut_effectHandler);
     
     UT_LcVideoWidget ut_videoWidget;
-    resultFileName = "c:/ut_lcui_LcVideoWidget.xml";
-    UT_ARGS( args_lcVideoWidget, resultFileName ); 
-    QTest::qExec( &ut_videoWidget, args_lcVideoWidget );
-    parser.parseAndPrintResults(resultFileName);
+    testRunner.runTests(ut_videoWidget);
   
-    if (promptOnExit) {
-        printf("Press any key...\n");
-        getchar(); 
-    }
+    testRunner.printResults();
+    
     return 0;
 }
 

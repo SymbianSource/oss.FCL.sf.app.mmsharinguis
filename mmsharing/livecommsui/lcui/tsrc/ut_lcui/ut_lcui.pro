@@ -72,7 +72,7 @@ SOURCES += $$LCUI_DIR/src/lceffecthandler.cpp
 SOURCES += src/ut_lcvideowidget.cpp
 SOURCES += $$LCUI_DIR/src/lcvideowidget.cpp
 SOURCES += $$LCUIENGINE_DIR/src/lcuiengine.cpp
-SOURCES += $$MUS_DIR/tsrc/qtestutils/src/testresultxmlparser.cpp
+SOURCES += $$MUS_DIR/tsrc/qtestutils/src/testrunner.cpp
 
 
 symbian: {

@@ -19,7 +19,7 @@
 #include <QtTest/QtTest>
 
 #include "ut_lcuiengine.h"
-#include "testresultxmlparser.h"
+#include "testrunner.h"
 
 #if defined(Q_OS_SYMBIAN)
 #include "ut_lcactivitymanager.h"
@@ -27,36 +27,31 @@
 
 int main(int argc, char *argv[]) 
 {
-    bool promptOnExit(true);
-    for (int i=0; i<argc; i++) {
-        if (QString(argv[i]) == "-noprompt")
-            promptOnExit = false;
-    }
     printf("Running tests...\n");
-    
+            
     QApplication app(argc, argv);
-    TestResultXmlParser parser;
+    QStringList args = app.arguments();
+    QString combinedOutputFileName;
+    for ( int i = 0; i < args.count(); i++ ){
+        QString arg = args.at(i);
+        if ( arg == QString("-o") && i + 1 < args.count() ){
+            i++;
+            combinedOutputFileName = args.at(i);
+        }
+    }
+    
+    TestRunner testRunner("LcEngine", combinedOutputFileName);
     
     UT_LcUiEngine ut_lcUiEngine;
-    QString resultFileName = "c:/ut_lcui_lcUiEngine.xml";
-    QStringList args_lcUiEngine( "ut_lcuiengine");
-    args_lcUiEngine << "-xml" << "-o" << resultFileName;
-    QTest::qExec(&ut_lcUiEngine, args_lcUiEngine);
-    parser.parseAndPrintResults(resultFileName,true); 
+    testRunner.runTests(ut_lcUiEngine);
 
 #if defined(Q_OS_SYMBIAN)
     UT_LcActivityManager ut_lcActivityManager;
-    resultFileName = "c:/ut_lcui_lcActivityManager.xml";
-    QStringList args_lcActivityManager( "ut_lcuiengine");
-    args_lcActivityManager << "-xml" << "-o" << resultFileName;
-    QTest::qExec(&ut_lcActivityManager, args_lcActivityManager);
-    parser.parseAndPrintResults(resultFileName,true); 
+    testRunner.runTests(ut_lcActivityManager);
 #endif
     
-    if (promptOnExit) {
-        printf("Press any key...\n");
-        getchar(); 
-    }
+    testRunner.printResults();
+    
     return 0;   
 }
 

@@ -39,7 +39,7 @@ HEADERS += $$MUSAPP_DIR/inc/lcapplication.h
 SOURCES += src/main.cpp
 SOURCES += src/ut_lcapplication.cpp
 SOURCES += $$MUSAPP_DIR/src/lcapplication.cpp
-SOURCES += $$MUS_DIR/tsrc/qtestutils/src/testresultxmlparser.cpp
+SOURCES += $$MUS_DIR/tsrc/qtestutils/src/testrunner.cpp
 
 
 symbian: {

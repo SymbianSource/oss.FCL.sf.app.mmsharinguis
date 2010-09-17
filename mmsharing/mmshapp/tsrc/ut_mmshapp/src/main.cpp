@@ -18,31 +18,30 @@
 #include <QtTest/QtTest>
 
 #include "ut_lcapplication.h"
-#include "testresultxmlparser.h"
+#include "testrunner.h"
 
 
 int main(int argc, char *argv[]) 
 {
-    bool promptOnExit(true);
-    for (int i=0; i<argc; i++) {
-        if (QString(argv[i]) == "-noprompt")
-            promptOnExit = false;
-    }
     printf("Running tests...\n");
-    
+            
     QApplication app(argc, argv);
-    TestResultXmlParser parser;
+    QStringList args = app.arguments();
+    QString combinedOutputFileName;
+    for ( int i = 0; i < args.count(); i++ ){
+        QString arg = args.at(i);
+        if ( arg == QString("-o") && i + 1 < args.count() ){
+            i++;
+            combinedOutputFileName = args.at(i);
+        }
+    }
+    
+    TestRunner testRunner("LcApplication", combinedOutputFileName);
     
     UT_LcApplication ut_lcApplication;
-    QString resultFileName = "c:/ut_lcapplication.xml";
-    QStringList args_lcApplication( "ut_lcapplication");
-    args_lcApplication << "-xml" << "-o" << resultFileName;
-    QTest::qExec(&ut_lcApplication, args_lcApplication);
-    parser.parseAndPrintResults(resultFileName,true); 
+    testRunner.runTests(ut_lcApplication);
+    
+    testRunner.printResults();
 
-    if (promptOnExit) {
-        printf("Press any key...\n");
-        getchar(); 
-    }
     return 0;   
 }

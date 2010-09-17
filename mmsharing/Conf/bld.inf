@@ -1,0 +1,31 @@
+/*
+* Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:  Exports for mmsharing
+*
+*/
+
+
+#include <platform_paths.hrh>
+
+PRJ_PLATFORMS
+DEFAULT
+
+PRJ_EXPORTS
+
+../mmshshared/loc/mus.loc APP_LAYER_LOC_EXPORT_PATH(mus.loc)
+../mmshshared/loc/musoperator.loc APP_LAYER_LOC_EXPORT_PATH(musoperator.loc)
+multimediasharing.confml APP_LAYER_CONFML(multimediasharing.confml)
+multimediasharing_1028238B.crml APP_LAYER_CRML(multimediasharing_1028238B.crml)
+../cenrep/backup_registration.xml  /epoc32/data/z/private/1028238D/backup_registration.xml
+

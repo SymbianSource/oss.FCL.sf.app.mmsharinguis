@@ -15,19 +15,26 @@
 *
 */
 
-#ifndef TESTRESULTXMLPARSER_H
-#define TESTRESULTXMLPARSER_H
+#ifndef TESTRUNNER_H
+#define TESTRUNNER_H
 
 #include <QXmlDefaultHandler>
 
+class QXmlStreamWriter;
+class QXmlStreamReader;
 
-class TestResultXmlParser : public QXmlDefaultHandler
+class TestRunner : public QXmlDefaultHandler
 {
 public: // Constructors and destructor
-    TestResultXmlParser();
-    ~TestResultXmlParser();    
+    TestRunner(const QString& name, const QString& combinedOutputFileName = QString() );
+    ~TestRunner();
+        
+public: // New functions
     
-public: // From QXmlContentHandler 
+    int runTests(QObject& testObject);
+    void printResults();
+    
+protected: // From QXmlContentHandler 
     bool startElement(
         const QString& namespaceURI,
         const QString& localName,
@@ -40,29 +47,27 @@ public: // From QXmlContentHandler
         const QString& qName);
     
     bool characters(const QString& ch);
-       
-public: // New functions
-    
-    int parse(const QString& fileName);
-    
-    int parseAndPrintResults(
-        const QString& fileName,
-        bool printDetails=false);
-    
-    int testCount();
-    
-    QStringList errors();
-    
+
+private: // New functions
+
+    void parse(const QString& fileName);
+    void combineResults();
+    void appendToXml(QXmlStreamWriter& writer, QXmlStreamReader& reader, QString& caseName);
+
 private: // Data
+    QStringList mTestRunParams;
+    QString mHomeDir;
     int mTestCount;
-    QStringList* mErrors;
+    QStringList mErrors;
     bool mParsingIncidentElement;
     bool mParsingDescriptionElement;
     bool mCurrentTestFailed;
     QString mCurrentTestName;
     QString mCurrentTestFile;
     int mCurrentTestFailureLine;
+    QString mCombinedOutputFileName;
+    QStringList mResultFiles;
 };
 
 
-#endif // TESTRESULTXMLPARSER_H
+#endif // TESTRUNNER_H

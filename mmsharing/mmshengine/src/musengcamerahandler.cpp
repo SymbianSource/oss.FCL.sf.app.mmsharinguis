@@ -603,7 +603,6 @@ void TMusEngCameraHandler::ChangeCameraL( TCurrentCamera aCurrentCamera )
     __ASSERT_ALWAYS( iSession != NULL, User::Leave( KErrNotReady ) );
     
     CMceCameraSource* camera = MusEngMceUtils::GetCameraL( *iSession );
-    CMceDisplaySink* display = MusEngMceUtils::GetDisplayL( *iSession );
     
     if ( camera->CamerasAvailable() )
         {

@@ -45,7 +45,7 @@ SOURCES += hbstubs/qthighway_stub.cpp
 SOURCES += lcstub/src/lcsessionstub.cpp
 SOURCES += lcstub/src/lcvideoplayerstub.cpp
 SOURCES += lcstub/src/lcenginestub.cpp
-SOURCES += $$MUS_DIR/tsrc/qtestutils/src/testresultxmlparser.cpp
+SOURCES += $$MUS_DIR/tsrc/qtestutils/src/testrunner.cpp
 
 symbian: {
     INCLUDEPATH += $$LCUIENGINE_DIR/inc
