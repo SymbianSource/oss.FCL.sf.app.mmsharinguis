@@ -107,10 +107,10 @@
                 <anchoritem dst="lc_widget_sendvideo2" dstEdge="TOP" spacing="20.75un" src="" srcEdge="TOP"/>
                 <anchoritem dst="lc_label_recipient" dstEdge="BOTTOM" spacing="0un" src="lc_label_duration" srcEdge="TOP"/>
                 <anchoritem dst="lc_label_recipient" dstEdge="RIGHT" spacing="var(hb-param-margin-gene-right)" src="" srcEdge="RIGHT"/>
-                <anchoritem dst="lc_label_recipient" dstEdge="LEFT" spacing="var(hb-param-margin-gene-left)" src="lc_widget_recvvideo" srcEdge="RIGHT"/>
+                <anchoritem dst="lc_label_recipient" dstEdge="LEFT" spacing="7.5un" src="lc_widget_recvvideo" srcEdge="RIGHT"/>
                 <anchoritem dst="lc_label_duration" dstEdge="BOTTOM" spacing="-1.5un" src="lc_widget_sendvideo" srcEdge="TOP"/>
                 <anchoritem dst="lc_label_duration" dstEdge="RIGHT" spacing="var(hb-param-margin-gene-screen)" src="" srcEdge="RIGHT"/>
-                <anchoritem dst="lc_label_duration" dstEdge="LEFT" spacing="var(hb-param-margin-gene-left)" src="lc_widget_recvvideo" srcEdge="RIGHT"/>
+                <anchoritem dst="lc_label_duration" dstEdge="LEFT" spacing="7.5un" src="lc_widget_recvvideo" srcEdge="RIGHT"/>
                 <anchoritem dst="lc_button_endCall" dstEdge="LEFT" spacing="4un" src="lc_widget_sendvideo" srcEdge="LEFT"/>
                 <anchoritem dst="lc_button_endCall" dstEdge="RIGHT" spacing="-4un" src="lc_widget_sendvideo" srcEdge="RIGHT"/>
                 <anchoritem dst="lc_button_endCall" dstEdge="BOTTOM" spacing="-1.5un" src="lc_widget_sendvideo" srcEdge="BOTTOM"/>
@@ -168,10 +168,10 @@
                 <anchoritem dst="lc_widget_recvvideo2" dstEdge="TOP" spacing="20.75un" src="" srcEdge="TOP"/>
                 <anchoritem dst="lc_label_recipient" dstEdge="BOTTOM" spacing="0un" src="lc_label_duration" srcEdge="TOP"/>
                 <anchoritem dst="lc_label_recipient" dstEdge="RIGHT" spacing="var(hb-param-margin-gene-right)" src="" srcEdge="RIGHT"/>
-                <anchoritem dst="lc_label_recipient" dstEdge="LEFT" spacing="var(hb-param-margin-gene-left)" src="lc_widget_sendvideo" srcEdge="RIGHT"/>
+                <anchoritem dst="lc_label_recipient" dstEdge="LEFT" spacing="7.5un" src="lc_widget_sendvideo" srcEdge="RIGHT"/>
                 <anchoritem dst="lc_label_duration" dstEdge="BOTTOM" spacing="-1.5un" src="lc_widget_recvvideo" srcEdge="TOP"/>
                 <anchoritem dst="lc_label_duration" dstEdge="RIGHT" spacing="var(hb-param-margin-gene-screen)" src="" srcEdge="RIGHT"/>
-                <anchoritem dst="lc_label_duration" dstEdge="LEFT" spacing="var(hb-param-margin-gene-left)" src="lc_widget_sendvideo" srcEdge="RIGHT"/>
+                <anchoritem dst="lc_label_duration" dstEdge="LEFT" spacing="7.5un" src="lc_widget_sendvideo" srcEdge="RIGHT"/>
                 <anchoritem dst="lc_button_endCall" dstEdge="LEFT" spacing="4un" src="lc_widget_recvvideo" srcEdge="LEFT"/>
                 <anchoritem dst="lc_button_endCall" dstEdge="RIGHT" spacing="-4un" src="lc_widget_recvvideo" srcEdge="RIGHT"/>
                 <anchoritem dst="lc_button_endCall" dstEdge="BOTTOM" spacing="-1.5un" src="lc_widget_recvvideo" srcEdge="BOTTOM"/>

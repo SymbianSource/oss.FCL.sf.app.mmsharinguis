@@ -55,6 +55,33 @@ void LcUiEngine::zoom( int value )
     LC_QDEBUG( "livecomms [UI] <- LcUiEngine::zoom()" )
 }
 
+
+// -----------------------------------------------------------------------------
+// LcUiEngine::volume
+// -----------------------------------------------------------------------------
+//
+void LcUiEngine::volume( int value )
+{
+    LC_QDEBUG( "livecomms [UI] -> LcUiEngine::volume()" )
+    d->volume(value);
+    LC_QDEBUG( "livecomms [UI] <- LcUiEngine::volume()" )
+}
+
+
+
+// -----------------------------------------------------------------------------
+// LcUiEngine::volumeMuted
+// -----------------------------------------------------------------------------
+//
+void LcUiEngine::volumeMuted( bool value )
+{
+    LC_QDEBUG( "livecomms [UI] -> LcUiEngine::volumeMuted()" )
+    d->volumeMuted(value);
+    LC_QDEBUG( "livecomms [UI] <- LcUiEngine::volumeMuted()" )
+}
+
+
+
 // -----------------------------------------------------------------------------
 // LcUiEngine::stop
 // -----------------------------------------------------------------------------
@@ -208,6 +235,20 @@ int LcUiEngine::zoomValues( LcControlValues& values ) const
     LC_QDEBUG( "livecomms [UI] <-> LcUiEngine::zoomValues()" )
     return d->zoomValues(values);
 }
+
+
+
+// -----------------------------------------------------------------------------
+// LcUiEngine::volumeValues
+// -----------------------------------------------------------------------------
+//
+int LcUiEngine::volumeValues( LcControlValues& values ) const
+{    
+    LC_QDEBUG( "livecomms [UI] <-> LcUiEngine::volumeValues()" )
+    return d->volumeValues(values);
+}
+
+
 
 // -----------------------------------------------------------------------------
 // LcUiEngine::toggleEnableCamera

@@ -83,7 +83,7 @@ LcUiEnginePrivate::LcUiEnginePrivate(LcUiEngine& uiEngine,
       mActivityManager(0),
       mSettingsMgr(0),
       mEarVolumeKey(0),
-      mLoudSpeakerKey(0) 
+      mLoudSpeakerKey(0)
 {
     LC_QDEBUG( "livecomms [UI] -> LcUiEnginePrivate::LcUiEnginePrivate()" )
         
@@ -165,6 +165,40 @@ void LcUiEnginePrivate::zoom( int value )
     }
     
     LC_QDEBUG( "livecomms [UI] <- LcUiEnginePrivate::zoom()" )
+}
+
+// -----------------------------------------------------------------------------
+// LcUiEnginePrivate::volume
+// -----------------------------------------------------------------------------
+//
+void LcUiEnginePrivate::volume( int value )
+{
+    LC_QDEBUG( "livecomms [UI] -> LcUiEnginePrivate::volume()" )
+    // TODO: Replace TRAP with QT_TRANSLATE_SYMBIAN_LEAVE_TO_EXCEPTION (Qt4.5.2)
+    MLcAudioControl* audio = audioControl();
+    if ( audio ) {
+        int currentValue( -1 ); // Not defined yet
+        TRAP_IGNORE( currentValue = audio->LcVolumeL());
+        if ( currentValue != value ) {
+            TRAP_IGNORE( audio->SetLcVolumeL( value ) );
+        }
+    }
+}
+
+// -----------------------------------------------------------------------------
+// LcUiEnginePrivate::volumeMuted
+// -----------------------------------------------------------------------------
+//
+void LcUiEnginePrivate::volumeMuted( bool value)
+{
+    LC_QDEBUG( "livecomms [UI] -> LcUiEnginePrivate::volumeMuted()" )
+    // TODO: Replace TRAP with QT_TRANSLATE_SYMBIAN_LEAVE_TO_EXCEPTION (Qt4.5.2)
+    MLcAudioControl* audio = audioControl();
+    if ( audio ) {
+        LC_QDEBUG_2( "livecomms [UI] Volume Mute Status = ",  value )
+        TRAP_IGNORE( audio->MuteLcAudioL(value) );
+    }
+    LC_QDEBUG( "livecomms [UI] <- LcUiEnginePrivate::volumeMuted()" )
 }
 
 // -----------------------------------------------------------------------------
@@ -442,6 +476,32 @@ int LcUiEnginePrivate::zoomValues( LcControlValues& values ) const
 }
 
 // -----------------------------------------------------------------------------
+// LcUiEnginePrivate::volumeValues
+// -----------------------------------------------------------------------------
+//
+int LcUiEnginePrivate::volumeValues( LcControlValues& values ) const
+{
+    LC_QDEBUG( "livecomms [UI] -> LcUiEnginePrivate::volumeValues()" )
+    int err( -1 );
+    // TODO: Replace TRAP with QT_TRANSLATE_SYMBIAN_LEAVE_TO_EXCEPTION (Qt4.5.2)
+    MLcAudioControl* volume = audioControl();
+    if ( volume ) {
+        //HardCoded Value since no API for quering volume control 
+        //Information. 
+        TRAP( err,
+                values.mMinValue = lcVolumeMin;
+                values.mMaxValue = lcVolumeMax;
+                values.mValue = volume->LcVolumeL(); );
+    } else {
+        LC_QDEBUG( "livecomms [UI] - Volume control does not exisit" )
+    }
+    LC_QDEBUG( "livecomms [UI] <- LcUiEnginePrivate::volumeValues()" )
+    return err;
+}
+
+
+
+// -----------------------------------------------------------------------------
 // LcUiEnginePrivate::toggleEnableCamera
 // -----------------------------------------------------------------------------
 //
@@ -498,7 +558,6 @@ void LcUiEnginePrivate::toggleCamera()
     }
 
     setMainCamera( !mMainCamera );
-    
     // Enabling / disabling the camera is an asynchronous operation.
     // Assuming here that the operation will eventually succeed.  
     if ( mMainCamera ) {
@@ -1027,6 +1086,7 @@ MLcVideoPlayer* LcUiEnginePrivate::visibleRemotePlayer() const
 //
 MLcAudioControl* LcUiEnginePrivate::audioControl() const
 {
+    LC_QDEBUG( "livecomms [UI] -> LcUiEnginePrivate::audioControl()" )
     MLcAudioControl* audioControl( 0 );
     if ( session().LocalVideoPlayer() ) {
         audioControl = session().LocalVideoPlayer()->LcAudioControl();
@@ -1034,6 +1094,7 @@ MLcAudioControl* LcUiEnginePrivate::audioControl() const
     if ( !audioControl && session().RemoteVideoPlayer() ) {
         audioControl = session().RemoteVideoPlayer()->LcAudioControl();
     }
+    LC_QDEBUG( "livecomms [UI] <- LcUiEnginePrivate::audioControl()" )
     return audioControl;
 }
 
@@ -1463,6 +1524,7 @@ void LcUiEnginePrivate::volumeLevelChanged( const XQSettingsKey& aKey,
 void LcUiEnginePrivate::doUpdate( MLcVideoPlayer& aPlayer )
 {
     LC_QDEBUG( "livecomms [UI] -> LcUiEnginePrivate::doUpdate(), videoplayer" )
+        
     if ( aPlayer.LcVideoPlayerState() == MLcVideoPlayer::EPlaying ) { 
         if ( &aPlayer == session().RemoteVideoPlayer() ) {
             if ( mWaitingNote ) {

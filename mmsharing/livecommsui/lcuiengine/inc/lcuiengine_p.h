@@ -63,6 +63,8 @@ public:
 public slots:
 
     void zoom( int value );
+    void volume( int value );
+    void volumeMuted( bool value );
     void stop();
     void stopLocalVideo();
     void startLocalVideo();
@@ -87,6 +89,7 @@ public: // API
     void toggleSpeaker();
     bool isSpeakerOn() const;
     int zoomValues( LcControlValues& values ) const;
+    int volumeValues( LcControlValues& values ) const;
     void toggleDisableCamera();
     void setMainCamera(const bool aMainCamera);
     bool mainCamera() const;
@@ -204,9 +207,9 @@ private: // Data
     
     XQSettingsManager* mSettingsMgr;
     XQSettingsKey* mEarVolumeKey; 
-    XQSettingsKey* mLoudSpeakerKey; 
-    
-friend class LcUiEngine;    
+    XQSettingsKey* mLoudSpeakerKey;
+
+    friend class LcUiEngine;    
 };
 
 #endif // LCUIENGINEPRIVATE_H

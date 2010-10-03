@@ -1272,5 +1272,46 @@ void UT_LcUiEngine::testVolumeLevelChanged()
 }
 
 
+void UT_LcUiEngine::testVolume()
+{
+    MLcVideoPlayer* player = 
+        mEngine->d->mLiveCommsEngine->Session().LocalVideoPlayer();
+
+    mEngine->d->volume(1);
+    QCOMPARE( player->LcAudioControl()->LcVolumeL(), 1 );
+    
+    mEngine->d->volume(2);
+    QCOMPARE( player->LcAudioControl()->LcVolumeL(), 2 );
+
+    mEngine->d->volume(2);
+    QCOMPARE( player->LcAudioControl()->LcVolumeL(), 2 );
+}
+
+
+void UT_LcUiEngine::testVolumeValues()
+{
+    LcControlValues volumeData;
+    MLcVideoPlayer* player = 
+        mEngine->d->mLiveCommsEngine->Session().LocalVideoPlayer();
+    mEngine->d->volume(5);
+    mEngine->volumeValues(volumeData);
+    
+    QCOMPARE( volumeData.mMaxValue, lcVolumeMax ); // Hardcoded Value since no getter  API yet
+    QCOMPARE( volumeData.mMinValue, lcVolumeMin );  // Hardcoded Value since no getter  API yet
+    QCOMPARE( volumeData.mValue, 5 );      
+}
+
+
+
+void UT_LcUiEngine::testvolumeMuted()
+{
+    MLcVideoPlayer* player = 
+        mEngine->d->mLiveCommsEngine->Session().LocalVideoPlayer();
+    mEngine->d->volumeMuted(true);
+    QVERIFY ( player->LcAudioControl()->IsLcAudioMutedL());
+    
+    mEngine->d->volumeMuted(false);
+    QVERIFY ( !player->LcAudioControl()->IsLcAudioMutedL());
+}
 
 // End of file

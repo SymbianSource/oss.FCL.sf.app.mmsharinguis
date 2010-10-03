@@ -157,5 +157,8 @@ const char lcEffectWinSwapDownId[] = "swapDown";
 const char lcEffectWinSwapUpId[] = "swapUp";
 
 const char lcEffectWinDefaultCallback[] = "windowDisappearComplete";
+const int  lcVolumeMax = 10;
+const int  lcVolumeMin = 0;
+const int  lcVolSliderTimeOut = 10000; // TBD: Define value as per UI specs currently missing.
 
 #endif /* LCUIDEFS_H_ */

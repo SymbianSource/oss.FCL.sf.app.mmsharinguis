@@ -40,14 +40,13 @@
 #include <dialpad.h>
 #include <hbtapgesture.h>
 #include <DialpadVtKeyHandler.h>
+#include <hbvolumesliderpopup.h>
 
 
 
-#if ( defined __WINSCW__ ) || ( defined __WINS__ )
-const int inActivityTimeout = 5000; //5 secs
-#else
-const int inActivityTimeout = 2000; //2 secs
-#endif
+//Inactivity timeout. Optimized according to other apps like camera.
+const int inActivityTimeout = 6000; //6 secs
+
 
 // -----------------------------------------------------------------------------
 // LcView::LcView
@@ -217,7 +216,7 @@ void LcView::init()
     
     //Subscribe to the Volume Change Events.
     connect( &mEngine, SIGNAL(volumeChanged(int)), 
-            this, SLOT(updateVolumeSlider(int)) );
+            this, SLOT(showVolumeSlider(int)) );
     
     LC_QDEBUG( "livecomms [UI] <- LcView::init()" )
 }
@@ -244,8 +243,6 @@ void LcView::updateVideoRects()
             sharedContentRect.moveTop(
                     sharedContentRect.y() + mapToParent(scenePos()).y());
             sharedContentRect = translateRectForOrientation(sharedContentRect);
-            mEffectHandler->setVisibility(
-                    mSharedVideoWidget, mEngine.isLocalPlayerPlaying());
         }
         
         if ( mReceivedVideoWidget ) {
@@ -253,8 +250,6 @@ void LcView::updateVideoRects()
             receivedContentRect.moveTop(
                     receivedContentRect.y() + mapToParent(scenePos()).y());
             receivedContentRect = translateRectForOrientation(receivedContentRect);
-            mEffectHandler->setVisibility(
-                    mReceivedVideoWidget, mEngine.isRemotePlayerPlaying());
         }
         
         mEngine.setContentAreas( sharedContentRect, receivedContentRect );
@@ -381,9 +376,7 @@ void LcView::activated()
     
     if ( mSharedVideoWidget ) {
         connect( &mEngine, SIGNAL(localPlayerPlaying()), 
-                 mEffectHandler, SLOT(showSendWindow()) );
-        connect( &mEngine, SIGNAL(localPlayerPaused()), 
-                 mEffectHandler, SLOT(hideSendWindow()) );
+                 this, SLOT(showSendVideo()) );
         connect( &mEngine, SIGNAL(localPlayerPlaying()), 
                  this, SLOT(setCameraActionToDisable()));
         connect( &mEngine, SIGNAL(localPlayerPaused()), 
@@ -396,9 +389,7 @@ void LcView::activated()
 
     if ( mReceivedVideoWidget ) {
         connect( &mEngine, SIGNAL(remotePlayerPlaying()), 
-                 mEffectHandler, SLOT(showReceiveWindow()) );
-        connect( &mEngine, SIGNAL(remotePlayerPaused()), 
-                 mEffectHandler, SLOT(hideReceiveWindow()) );
+                 this, SLOT(showReceivedVideo()) );
         connect( &mEngine, SIGNAL(remotePlayerPlaying()), 
                          this, SLOT(updateVideoRects()) );
     }
@@ -472,8 +463,7 @@ void LcView::endVideoSession()
 void LcView::disableCamera()
 {
     LC_QDEBUG( "livecomms [UI] -> LcView::disableCamera()" )
- 
-    mEffectHandler->setDissappearEffect( LcEffectHandler::NormalDissappear );
+
     mEngine.toggleDisableCamera();
     toFullScreen( mEngine.fullScreenMode() );
     
@@ -501,10 +491,14 @@ void LcView::mute()
 void LcView::changeCamera()
 {
     LC_QDEBUG( "livecomms [UI] -> LcView::changeCamera()" )
-   
-    mEffectHandler->setDissappearEffect( LcEffectHandler::DissappearToFlip );
+
     mEngine.toggleCamera();
     toFullScreen( false );
+    
+    // Change Camera may take some time run some affects.
+    if ( mEffectHandler ) {
+        mEffectHandler->startEffects();    
+    }
         
     LC_QDEBUG( "livecomms [UI] <- LcView::changeCamera()" )
 }
@@ -1004,8 +998,6 @@ void LcView::toFullScreen( bool fullscreen )
     setStatusBarVisible( !fullscreen );
     toolBar()->setVisible( !fullscreen );
     setVisibility( mEndCallButton, !fullscreen );    
-    setVisibility( mDuration, !fullscreen );
-    setVisibility( mRecipient, !fullscreen );
     emit contentFullScreenChanged();
 }
 
@@ -1059,15 +1051,43 @@ bool LcView::isPositioned()
 
 
 // -----------------------------------------------------------------------------
-// LcView::updateVolumeSlider 
+// LcView::showVolumeSlider 
 // -----------------------------------------------------------------------------
 //
-void LcView::updateVolumeSlider( int aVolumeLevel )
+void LcView::showVolumeSlider( int aVolumeLevel )
 {
-    LC_QDEBUG("livecomms [UI] -> LcView::updateVolumeSlider()")
-    //TBD: Show volume slider, with update volume level
-    LC_QDEBUG_2("Volume Level Is,",aVolumeLevel)
-    LC_QDEBUG("livecomms [UI] <- LcView::updateVolumeSlider()")   
+    LC_QDEBUG("livecomms [UI] -> LcView::showVolumeSlider()")
+    LC_QDEBUG_2("livecomms [UI] Volume Level Is,",aVolumeLevel)
+    mRepository.volumeSlider()->setValue(aVolumeLevel);
+    mRepository.volumeSlider()->show();
+    LC_QDEBUG("livecomms [UI] <- LcView::showVolumeSlider()")   
+}
+
+
+// -----------------------------------------------------------------------------
+// LcView::showSendVideo 
+// -----------------------------------------------------------------------------
+//
+void LcView::showSendVideo()
+{
+    // Showing Send Send Video Effects only occurs at the startup 
+    disconnect( &mEngine, SIGNAL(localPlayerPlaying()), 
+                this, SLOT(showSendVideo()) );
+    mEffectHandler->showSendWindow();
+}
+
+
+// -----------------------------------------------------------------------------
+// LcView::showReceivedVideo 
+// -----------------------------------------------------------------------------
+//
+void LcView::showReceivedVideo()
+{
+    // Showing Received Video Effects only occurs at the startup 
+    disconnect( &mEngine, SIGNAL(remotePlayerPlaying()), 
+             this, SLOT(showReceivedVideo()) );
+
+    mEffectHandler->showReceiveWindow();
 }
 
 

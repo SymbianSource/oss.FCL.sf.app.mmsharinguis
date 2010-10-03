@@ -35,15 +35,18 @@ public:
     
     LcMainWindow();
     virtual ~LcMainWindow();
-    
-protected: // From QObject
 
-    bool eventFilter ( QObject * watched, QEvent * event ); 
-    
+private slots:
+
+    void handleBackground();
+    void handleForeground();
+
+
 signals:
-        
+
     void appFocusGained();
     void appFocusLost();
+  
     
 private:
     friend class UT_LcUiViewManager;    

@@ -196,6 +196,19 @@ int LcUiEnginePrivate::zoomValues( LcControlValues& values ) const
     return 0;
 }
 
+
+void LcUiEnginePrivate::volume( int /*value*/ )
+{
+}
+
+int LcUiEnginePrivate::volumeValues( LcControlValues& values ) const
+{
+    values.mMaxValue = 10;
+    values.mMinValue = 0;
+    values.mValue = 5;
+    return 0;
+}
+
 void LcUiEnginePrivate::timerEvent(QTimerEvent */*event*/)
 {
 }
@@ -395,6 +408,10 @@ void LcUiEnginePrivate::startLocalVideo()
 }
 
 void LcUiEnginePrivate::volumeLevelChanged(const XQSettingsKey& /*aKey*/, const QVariant& /*aValue*/)
+{
+}
+
+void LcUiEnginePrivate::volumeMuted( bool /*value*/ )
 {
 }
 

@@ -93,7 +93,9 @@ private slots: //test methods
     void testShareVideoIsNotAllowedShown();
     void testShareVideoPermissionAskedAlways();
     void testVolumeLevelChanged();
-    
+    void testVolume();
+    void testVolumeValues();
+    void testvolumeMuted();    
 private:
     
     LcUiEngine* mEngine;

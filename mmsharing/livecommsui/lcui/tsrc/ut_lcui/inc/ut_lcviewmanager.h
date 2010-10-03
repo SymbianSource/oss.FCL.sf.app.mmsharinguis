@@ -52,7 +52,8 @@ private slots: //test methods
     void testChangeView();
     void testTerminateSession();
     void testPrepareOrientationChange();
-    void testMainWindowEvent();
+    void testHandleBackground();
+    void testhandleForeground();
 
 private:
  

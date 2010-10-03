@@ -45,8 +45,8 @@ LcMainWindow::LcMainWindow() :
     HbMainWindow(0, Hb::WindowFlagFixedHorizontal | Hb::WindowFlagTransparent)
 {
     // TODO: remove flag WindowFlagFixedHorizontal if portait layout
-    // is going to be supported.
-    qApp->installEventFilter(this);
+    connect( this, SIGNAL(obscured()), this, SLOT(handleBackground()));
+    connect( this, SIGNAL(revealed()), this, SLOT(handleForeground()));
 }
 
 // -----------------------------------------------------------------------------
@@ -58,20 +58,21 @@ LcMainWindow::~LcMainWindow()
 }
 
 // -----------------------------------------------------------------------------
-// LcMainWindow::eventFilter
+// LcMainWindow::handleBackground
 // -----------------------------------------------------------------------------
 //
-bool LcMainWindow::eventFilter ( QObject * watched, QEvent * event )
-{    
-    if ( event->type() == QEvent::ApplicationActivate ){
-        LC_QDEBUG( "livecomms [UI] -> LcMainWindow::eventFilter(), ApplicationActivate" )
-        emit appFocusGained();
-    } else if (( event->type() == QEvent::ApplicationDeactivate ) && 
-            ( !this->windowSurface()) ){
-        LC_QDEBUG( "livecomms [UI] -> LcMainWindow::eventFilter(), ApplicationDeactivate" )
-        emit appFocusLost();
-    }
-    return QObject::eventFilter(watched, event);
+void LcMainWindow::handleBackground()
+{
+    emit appFocusLost();
+}
+
+// -----------------------------------------------------------------------------
+// LcMainWindow::handleForeground
+// -----------------------------------------------------------------------------
+//
+void LcMainWindow::handleForeground()
+{
+    emit appFocusGained();
 }
 
 

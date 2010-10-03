@@ -29,10 +29,12 @@ class HbDialog;
 class LcUiEngine;
 class HbMenu;
 class HbMessageBox;
+class HbVolumeSliderPopup;
 
 class LcUiComponentRepository : public HbDocumentLoader   
 {   
     friend class UT_LcUiComponentRepository;
+    friend class UT_LcView;
     
 public:    
 
@@ -59,6 +61,8 @@ public:
     QString layout()const;
     // returns the previously loaded layout name
     QString previousLayout()const;
+    
+    HbVolumeSliderPopup* volumeSlider();
     
 private: //from HbDocumentLoader
 
@@ -98,6 +102,7 @@ private:
     HbProgressDialog* mInvitingNote;
     HbProgressDialog* mWaitingNote;
     HbDialog* mRecipientQuery;
+    HbVolumeSliderPopup* mVolumeSlider; 
     HbMessageBox* mShareOwnVideoQuery;
     
     QString mLayout;

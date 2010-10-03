@@ -53,7 +53,7 @@
     <unit bldFile="mmshplugins/mmshaoplugin/group"/>
    </component>
    <component id="mmshaiwplugin" filter="s60" name="Multimedia Sharing AIW Plugin" class="plugin">
-    <unit bldFile="mmshplugins/mmshaiwplugin/group"/>
+    <!-- <unit bldFile="mmshplugins/mmshaiwplugin/group"/> -->
    </component>
    <component id="mmshsipcrplugin" filter="s60" name="Multimedia Sharing SIP Client Resolver Plugin" class="plugin">
     <unit bldFile="mmshplugins/mmshsipcrplugin/group"/>

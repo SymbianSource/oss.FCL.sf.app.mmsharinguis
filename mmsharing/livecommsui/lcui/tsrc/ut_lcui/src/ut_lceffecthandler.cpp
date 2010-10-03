@@ -252,9 +252,11 @@ void UT_LcEffectHandler::testEffectComplete()
     mEffectHandler->windowDisappearToFlipComplete( status );
     QVERIFY( !sharedVideoWidget->isVisible() );
 
-        lcutStub_LcUiEngine_setLocalPlaying( false );
+    //Video Rects are shown so that to show the last frame even if 
+    //no streaming i.e. pause
+    lcutStub_LcUiEngine_setLocalPlaying( false );
     mEffectHandler->windowFlipComplete( status );
-    QVERIFY( !sharedVideoWidget->isVisible() );
+    QVERIFY( sharedVideoWidget->isVisible() );
 
         lcutStub_LcUiEngine_setLocalPlaying( true );
     mEffectHandler->windowFlipComplete( status );
@@ -293,20 +295,21 @@ void UT_LcEffectHandler::testEffectComplete()
     QVERIFY( sharedVideoWidget->isVisible() );
     QCOMPARE( spy.count(), 1 );
 
-    // Players are disabled so even when swap completes, widgets are not set
-    // visible
+    //Test: Swap Completes and player state is not playing 
+    //Ensur that video windows
+    
     sharedVideoWidget->hide();
     receivedVideoWidget->hide();
-        lcutStub_LcUiEngine_setLocalPlaying( false );
+    lcutStub_LcUiEngine_setLocalPlaying( false );
     mEffectHandler->windowSwapSharedComplete( status );
-    QVERIFY( !sharedVideoWidget->isVisible() );
+    QVERIFY( sharedVideoWidget->isVisible() );
     
     sharedVideoWidget->hide();
     receivedVideoWidget->hide();
         lcutStub_LcUiEngine_setRemotePlaying( false );
     mEffectHandler->windowSwapReceivedComplete( status );
-    QVERIFY( !receivedVideoWidget->isVisible() );
-    QVERIFY( !sharedVideoWidget->isVisible() );
+    QVERIFY( receivedVideoWidget->isVisible() );
+    QVERIFY( sharedVideoWidget->isVisible() );
 }
 
 void UT_LcEffectHandler::testStartEffect()

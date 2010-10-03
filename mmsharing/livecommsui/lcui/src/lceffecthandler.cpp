@@ -276,9 +276,7 @@ void LcEffectHandler::windowFlipComplete(HbEffect::EffectStatus status)
 {
     Q_UNUSED(status);
     LC_QDEBUG( "livecomms [UI] -> LcEffectHandler::flipHideComplete()" )
-    if( mEngine.isLocalPlayerPlaying() ) {
-        showSendWindow();
-    }
+    showSendWindow();
     LC_QDEBUG( "livecomms [UI] <- LcEffectHandler::flipHideComplete()" )
 }
 
@@ -349,17 +347,10 @@ void LcEffectHandler::handleSwapCompletion()
     LC_QDEBUG( "livecomms [UI] -> LcEffectHandler::handleSwapCompletion()" )
     if ( mSwapSharedCompleted && mSwapReceivedCompleted ){
         LC_QDEBUG( "livecomms [UI]  Both swaps done, complete" )
-        
         emit swapCompleted();
-        
-        if( mEngine.isLocalPlayerPlaying() ) {
-            showSendWindow();
-        }
-        if( mEngine.isRemotePlayerPlaying() ) {
-            showReceiveWindow();
-        }
-
-    mSwapInProgress = false;
+        showSendWindow();
+        showReceiveWindow();
+        mSwapInProgress = false;
     }
     LC_QDEBUG( "livecomms [UI] <- LcEffectHandler::handleSwapCompletion()" )
 }

@@ -358,16 +358,16 @@ void CLcVideoPlayer::IncreaseLcVolumeL()
     iVolume++;
     }
 
-// -----------------------------------------------------------------------------
-// From MLcAudioControl
-// -----------------------------------------------------------------------------
-//
 void CLcVideoPlayer::DecreaseLcVolumeL()
     {
     User::LeaveIfError( lcutStub_LcEngine_failure() );
     iVolume--;
     }
 
+// -----------------------------------------------------------------------------
+// From MLcAudioControl
+// -----------------------------------------------------------------------------
+//
 TInt CLcVideoPlayer::LcCameraCountL()
     {
     User::LeaveIfError( lcutStub_LcEngine_failure() );

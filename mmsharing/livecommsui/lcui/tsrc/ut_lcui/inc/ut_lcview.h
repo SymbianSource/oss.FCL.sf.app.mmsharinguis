@@ -98,6 +98,9 @@ private slots: //test methods
     void testTimerEvent();
     void testIsVideoPositionedCorrectly();
     void testIsPositioned();
+    void testShowVolumeSlider();
+    void testShowSendVideo();
+    void testshowReceivedVideo();
 
 private:
  

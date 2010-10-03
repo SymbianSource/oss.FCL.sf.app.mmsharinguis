@@ -70,6 +70,8 @@ public slots:
     void updateSwapLayout();
     void menuAboutToShow();    
     void back();
+    void showSendVideo();
+    void showReceivedVideo();
 //temp
     void notSupported();
 
@@ -86,7 +88,7 @@ private slots:
     void disableControls();
     void enableControls();    
     void watchInactivity();
-    void updateVolumeSlider(int aVolumeLevel);
+    void showVolumeSlider(int aVolumeLevel);
 
 protected: // From HbView
     

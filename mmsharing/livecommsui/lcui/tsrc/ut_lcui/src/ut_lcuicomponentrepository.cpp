@@ -32,6 +32,7 @@
 #include <hbaction.h>
 #include <hbinstance.h>
 #include <hbprogressdialog.h>
+#include <hbvolumesliderpopup.h>
 
 #define UT_SET_ORIENTATION(orient) \
 HbInstance::instance()->allMainWindows().at(0)->setOrientation(orient);
@@ -70,6 +71,7 @@ void UT_LcUiComponentRepository::testConstructor()
     QVERIFY( !mRepository->mInvitingNote );
     QVERIFY( !mRepository->mWaitingNote );
     QVERIFY( !mRepository->mRecipientQuery );
+    QVERIFY( !mRepository->mVolumeSlider );
     
 }
 
@@ -320,3 +322,25 @@ void UT_LcUiComponentRepository::testLoadLayout()
     QVERIFY( mRepository->previousLayout() == lcLayoutLandscapeDialpadId );
         
 }
+
+
+void UT_LcUiComponentRepository::testVolumeSlider()
+{
+    mEngine->volume(5);
+    QVERIFY( !mRepository->mVolumeSlider );
+    HbDialog* slider = mRepository->volumeSlider();
+    QVERIFY( mRepository->mVolumeSlider );
+    QVERIFY( slider == mRepository->mVolumeSlider );
+    QVERIFY( !mRepository->mVolumeSlider->isVisible() );
+    QCOMPARE( mRepository->mVolumeSlider->timeout(), lcVolSliderTimeOut ); 
+    QCOMPARE(mRepository->mVolumeSlider->minimum(), lcVolumeMin);
+    QCOMPARE(mRepository->mVolumeSlider->maximum(), lcVolumeMax);
+    QCOMPARE(mRepository->mVolumeSlider->value(), 5);
+    QCOMPARE(mRepository->mVolumeSlider->singleStep(), 1);
+    // Existing slider returned
+    HbDialog* slider2 = mRepository->volumeSlider();
+    QVERIFY( slider2 == slider );
+}
+
+
+// End of File

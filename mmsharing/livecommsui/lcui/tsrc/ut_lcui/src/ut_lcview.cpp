@@ -41,6 +41,7 @@
 #include <dialpad.h>
 #include <dialpadvtkeyhandler.h>
 #include <HbTapGesture.h>
+#include <hbvolumesliderpopup.h>
 
 // Stub Helper
 #include <hbstub_helper.h>
@@ -279,6 +280,7 @@ void UT_LcView::testMute()
     QVERIFY( !mEngine->fullScreenMode());
 }
 
+
 void UT_LcView::testChangeCamera()
 {
     mView->init();    
@@ -476,8 +478,8 @@ void UT_LcView::testToFullScreen()
     QVERIFY( !HbStubHelper::isStatusBarVisible() );
     QVERIFY( !mView->toolBar()->isVisible() );    
     QVERIFY( !mView->mEndCallButton->isVisible() );
-    QVERIFY( !mView->mDuration->isVisible() );
-    QVERIFY( !mView->mRecipient->isVisible() );    
+    QVERIFY( mView->mDuration->isVisible() );
+    QVERIFY( mView->mRecipient->isVisible() );    
     
     // Test2 : not in full screen
     mView->init();
@@ -653,8 +655,8 @@ void UT_LcView::testTimerEvent()
     QVERIFY( !HbStubHelper::isStatusBarVisible() );
     QVERIFY( !mView->toolBar()->isVisible() );    
     QVERIFY( !mView->mEndCallButton->isVisible());
-    QVERIFY( !mView->mDuration->isVisible());
-    QVERIFY( !mView->mRecipient->isVisible());    
+    QVERIFY( mView->mDuration->isVisible());
+    QVERIFY( mView->mRecipient->isVisible());    
     delete event;
     
     // not a timer we want
@@ -691,8 +693,8 @@ void UT_LcView::testUpdateSwapLayout()
     QVERIFY( !HbStubHelper::isStatusBarVisible() );
     QVERIFY( !mView->isItemVisible(Hb::DockWidgetItem ) );
     QVERIFY( !mView->mEndCallButton->isVisible());
-    QVERIFY( !mView->mDuration->isVisible());
-    QVERIFY( !mView->mRecipient->isVisible());    
+    QVERIFY( mView->mDuration->isVisible());
+    QVERIFY( mView->mRecipient->isVisible());    
 }
 
 void UT_LcView::testMenuAboutToShow()
@@ -867,8 +869,6 @@ void UT_LcView::testWatchInactivity()
     
 }
 
-
-
 void UT_LcView::testIsVideoPositionedCorrectly()
 {
     //Test1: Null video Widget returns true
@@ -909,3 +909,35 @@ void UT_LcView::testIsPositioned()
     mView->isPositioned();
     QVERIFY( !mView->isViewReady );
 }
+
+
+void UT_LcView::testShowVolumeSlider()
+{
+    mView->showVolumeSlider(5);
+    QVERIFY( mView->mRepository.mVolumeSlider->isVisible() );
+    QCOMPARE( mView->mRepository.mVolumeSlider->value(),  5);
+    QCOMPARE( mView->mRepository.mVolumeSlider->minimum(), lcVolumeMin );
+    QCOMPARE( mView->mRepository.mVolumeSlider->maximum(), lcVolumeMax);
+}
+
+
+void UT_LcView::testShowSendVideo()
+{
+    mRepository->mReturnSendVideo = true;
+    mView->init();
+    mView->mSharedVideoWidget->setVisible(false);
+    mView->showSendVideo();
+    QVERIFY( mView->mSharedVideoWidget->isVisible() );
+}
+
+
+void UT_LcView::testshowReceivedVideo()
+{
+    mView->init();
+    mView->mReceivedVideoWidget->setVisible(false);
+    mView->showReceivedVideo();
+    QVERIFY( mView->mReceivedVideoWidget->isVisible() );
+}
+
+
+// End of File

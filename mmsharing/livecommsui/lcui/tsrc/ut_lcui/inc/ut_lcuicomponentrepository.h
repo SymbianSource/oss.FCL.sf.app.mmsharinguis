@@ -66,6 +66,7 @@ private slots: //test methods
     void testLoadView_FileNotFound();
     void testConnect();
     void testLoadLayout();
+    void testVolumeSlider();
     
 private:
  

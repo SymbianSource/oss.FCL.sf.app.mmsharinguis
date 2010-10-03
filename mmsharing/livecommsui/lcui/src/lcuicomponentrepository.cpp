@@ -37,6 +37,7 @@
 #include <hbframedrawer.h>
 #include <hbstyleloader.h>
 #include <dialpad.h>
+#include <hbvolumesliderpopup.h>
 
 // -----------------------------------------------------------------------------
 // LcUiComponentRepository::LcUiComponentRepository
@@ -56,6 +57,7 @@ LcUiComponentRepository::LcUiComponentRepository(LcUiEngine& engine)
       mInvitingNote(0),
       mWaitingNote(0),
       mRecipientQuery(0),
+      mVolumeSlider(0),
       mShareOwnVideoQuery(0)
 {
     LC_QDEBUG( "livecomms [UI] -> LcUiComponentRepository::LcUiComponentRepository()" )
@@ -106,7 +108,11 @@ LcUiComponentRepository::~LcUiComponentRepository()
     delete mWaitingNote;
     delete mRecipientQuery;
     delete mShareOwnVideoQuery;
- 
+    
+    if ( mVolumeSlider ) {
+        delete mVolumeSlider;
+    }
+    
     LC_QDEBUG( "livecomms [UI] <- LcUiComponentRepository::~LcUiComponentRepository()" )
 }
 
@@ -586,4 +592,42 @@ QString LcUiComponentRepository::previousLayout()const
                                                               mPreviousLayout )    
     return mPreviousLayout;
     }
+
+
+// -----------------------------------------------------------------------------
+// LcUiComponentRepository::volumeSlider
+// -----------------------------------------------------------------------------
+//
+HbVolumeSliderPopup* LcUiComponentRepository::volumeSlider()
+{
+    LC_QDEBUG( "livecomms [UI] -> LcUiComponentRepository::volumeSlider()" );
+    
+    if ( !mVolumeSlider ) {
+        mVolumeSlider = new HbVolumeSliderPopup();
+        mVolumeSlider->setDismissPolicy(HbDialog::TapOutside);
+        mVolumeSlider->setTimeout(lcVolSliderTimeOut);
+        LcControlValues values;
+        mEngine.volumeValues(values);
+        
+        LC_QDEBUG_2( "livecomms [UI] Min Volume Value :", values.mMinValue )    
+        LC_QDEBUG_2( "livecomms [UI] Max Volume Value :", values.mMaxValue )
+        LC_QDEBUG_2( "livecomms [UI] Current Volume Value :", values.mValue )    
+
+        mVolumeSlider->setRange(values.mMinValue, values.mMaxValue);
+        mVolumeSlider->setValue(values.mValue);
+        mVolumeSlider->setSingleStep(1);
+        mVolumeSlider->hide();
+
+        //set the current volume level to the corresponding engine.
+        QObject::connect( mVolumeSlider, SIGNAL(valueChanged(int)), 
+                          &mEngine, SLOT(volume(int)) );
+        QObject::connect( mVolumeSlider, SIGNAL(iconToggled(bool)), 
+                          &mEngine, SLOT(volumeMuted(bool)));
+    }
+    
+    LC_QDEBUG( "livecomms [UI] <- LcUiComponentRepository::volumeSlider()" );
+    return mVolumeSlider;
+}
+
+
 // End of file
