@@ -52,8 +52,7 @@ using namespace MusSettingsKeys;
 void CMusUiAppUi::ConstructL()
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiAppUi::ConstructL" );
-    BaseConstructL( EAknEnableSkin | EAppOrientationAutomatic | EAknEnableMSK 
-    		      | EAknSingleClickCompatible );
+    BaseConstructL( EAknEnableSkin | EAppOrientationAutomatic | EAknEnableMSK );
     
     iResourceHandler = CMusUiResourceHandler::NewL( *this );
     MultimediaSharing::TMusUseCase usecase = MusUiStartController::ReadUseCaseL();
@@ -509,8 +508,6 @@ void CMusUiAppUi::HandleExit()
         RemoveView( KMusUidClipSharingView );
         RemoveView( KMusUidReceivingView );
 
-        iExiting = EFalse;
-        
         User::Exit( KErrNone );
         }
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiAppUi::HandleExit" );
@@ -776,24 +773,4 @@ void CMusUiAppUi::HandleControlEventL(CCoeControl* aControl,TCoeEvent aEventType
         }
 
     }
-
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-void CMusUiAppUi::SetExitingFlag()
-	{
-	iExiting = ETrue;
-	}
-
-
-// -----------------------------------------------------------------------------
-// 
-// -----------------------------------------------------------------------------
-//
-TBool CMusUiAppUi::IsExiting ()
-	{
-	return iExiting;
-	}
 // end of file

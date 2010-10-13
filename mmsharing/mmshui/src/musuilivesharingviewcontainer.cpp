@@ -198,9 +198,13 @@ TKeyResponse CMusUiLiveSharingViewContainer::OfferKeyEventL(
               aKeyEvent.iScanCode );
             
     TKeyResponse ret( EKeyWasNotConsumed );
+    
+    if ( IsVisible() )
+    	{
+		return ret;
+		}
 
-    if ( MUS_NO_TOOLBAR )
-        {
+
         CMusUiLiveSharingView* view = 
             static_cast< CMusUiLiveSharingView* >( MusUiView() );      
         switch ( aKeyEvent.iCode )
@@ -231,7 +235,6 @@ TKeyResponse CMusUiLiveSharingViewContainer::OfferKeyEventL(
                 }
             default:
                 break;
-            }
         }
 
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiLiveSharingViewContainer::OfferKeyEventL" );

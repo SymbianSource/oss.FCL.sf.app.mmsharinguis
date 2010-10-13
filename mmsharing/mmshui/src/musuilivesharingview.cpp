@@ -130,11 +130,6 @@ void CMusUiLiveSharingView::DynInitMenuPaneL( TInt aResourceId,
                                               CEikMenuPane* aMenuPane )
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiLiveSharingView::DynInitMenuPaneL [%d]" );
-    //if the mus is in exit procedure,we do nothing
-    if ( MusAppUi()->IsExiting() )
-    	{
-        return;
-    	}
     SetZoomVisible(EFalse);
     SetBrightnessVisible(EFalse);
     // Base class initiated initialization first
@@ -228,6 +223,11 @@ void CMusUiLiveSharingView::HandleToolbarCommandL( TInt aCommand )
                             aCommand );
     
      __ASSERT_ALWAYS( iController, User::Leave( KErrNotReady ) );
+     
+     if( !iContainer->IsVisible() )
+    	 {
+         iController->ResetSelectedFlags();
+    	 }
 
     switch ( aCommand )
         {
@@ -413,8 +413,7 @@ void CMusUiLiveSharingView::DynInitToolbarL( TInt aResourceId,
              !AknLayoutUtils::PenEnabled() )
             {
             aToolbar->SetFocusedItemL( EMusuiCmdToolbarPauseLive );
-            }     
-        Toolbar()->RemoveItem( EMusuiCmdToolbarBlank );
+            }                                
         }
                         
     // Last generic base class functionality
@@ -705,7 +704,6 @@ void CMusUiLiveSharingView::DoActivateL( const TVwsViewId& aPrevViewId,
                                                          videoRect );
         iController->StartInvitationL();
         }
-    iBackgroundContainer->SetUiEventController( EventController() );
 
     iContainer->SetController( iController );
 

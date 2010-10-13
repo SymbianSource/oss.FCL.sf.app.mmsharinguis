@@ -969,17 +969,6 @@ RESOURCE AVKON_TOOLBAR r_mus_toolbar
                     };
                 };
             },
-	
-	//****************************************************************** //
-        TBAR_CTRL
-            {
-            type = EAknCtButton;
-            id = EMusuiCmdToolbarBlank;
-            control = AVKON_BUTTON
-                {
-                flags = KAknButtonSizeFitText;
-                };
-            },
            
         // ****************************************************************** //
         

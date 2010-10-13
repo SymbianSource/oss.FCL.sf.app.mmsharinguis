@@ -629,6 +629,17 @@ TBool CMusUiLiveSharingController::BrightnessSelected()
 //
 // -----------------------------------------------------------------------------
 //
+void CMusUiLiveSharingController::ResetSelectedFlags()
+	{
+	iToolbarZoomSelected = EFalse;
+	iToolbarBrightnessSelected = EFalse;
+	}
+
+
+// -----------------------------------------------------------------------------
+//
+// -----------------------------------------------------------------------------
+//
 void CMusUiLiveSharingController::ZoomL()
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiLiveSharingController::ZoomL" );

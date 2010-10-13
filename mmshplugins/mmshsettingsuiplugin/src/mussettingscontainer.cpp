@@ -12,7 +12,7 @@
 * Contributors:
 *
 * Description:  Container for MUSSettingsPlugin.
-*  Version     : %version: be1sipx1#22 % << Don't touch! Updated by Synergy at check-out.
+*  Version     : %version: 21 % << Don't touch! Updated by Synergy at check-out.
 *
 */
 
@@ -88,7 +88,6 @@ CMusSettingsContainer::~CMusSettingsContainer()
     delete iActivationItems;
     delete iProfileItems;
     delete iAutoRecordItems;
-    delete iNoteItems;
     delete iListboxItemArray;
     MUS_LOG( "[MUSSET] <- CMusSettingsContainer::~CMusSettingsContainer()" )
     }
@@ -118,9 +117,6 @@ void CMusSettingsContainer::ConstructListBoxL( TInt aResLbxId )
     iProfileItems = iCoeEnv->ReadDesC16ArrayResourceL(
     	R_SIP_PROFILE_SETTING_PAGE_LBX );
 
-    iNoteItems = iCoeEnv->ReadDesC16ArrayResourceL(
-							R_VS_AUDIO_SETTING_PAGE_LBX );
-    
     CreateListBoxItemsL();
 
     // Operator variant mode needs some item should not be visible to user.
@@ -392,7 +388,7 @@ void CMusSettingsContainer::MakeNoteItemL()
                                     MusSettingsKeys::EAuditoryNotificationOff );
         }
 
-    AddItemL( KGSSettIdNote, ( *iNoteItems )[ auditoryNotification ] );
+    AddItemL( KGSSettIdNote, ( *iActivationItems )[ auditoryNotification ] );
 	
     MUS_LOG( "[MUSSET] <- CMusSettingsContainer::MakeNoteItemL()" )
     }

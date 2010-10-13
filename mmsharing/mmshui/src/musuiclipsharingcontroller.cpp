@@ -596,6 +596,9 @@ void CMusUiClipSharingController::HandleCommandL(TInt aCommand)
                 {
                 iEventObserver.ShowNaviPaneIconL( EMusUiNaviIconForward );
                 iClipObserver.SetPositionValueL( iSession->PositionL().Int() );
+                iSharingObserver.ReplaceToolbarCommand( EMusuiCmdToolbarPause,
+                		                                EMusuiCmdToolbarUnPause,
+                                                        ETrue );
                 //iClipObserver.SetDurationVisible();
                 }
             MUS_LOG( "mus: [MUSUI ]     CMusUiClipSharingController::HandleCommandL: EMusuiCmdViewFastForward END" );
@@ -608,6 +611,9 @@ void CMusUiClipSharingController::HandleCommandL(TInt aCommand)
                 {
                 iEventObserver.ShowNaviPaneIconL( EMusUiNaviIconRew );
                 iClipObserver.SetPositionValueL( iSession->PositionL().Int() );
+                iSharingObserver.ReplaceToolbarCommand( EMusuiCmdToolbarPause,
+                		                                EMusuiCmdToolbarUnPause,
+                                                        ETrue );
                 //iClipObserver.SetDurationVisible();
                 }
             MUS_LOG( "mus: [MUSUI ]     CMusUiClipSharingController::HandleCommandL: EMusuiCmdViewFastReverse END" );
@@ -619,6 +625,9 @@ void CMusUiClipSharingController::HandleCommandL(TInt aCommand)
                 {
                 iEventObserver.ShowNaviPaneIconL( EMusUiNaviIconPause );
                 PauseL();
+                iSharingObserver.ReplaceToolbarCommand( EMusuiCmdToolbarUnPause,
+                		                                EMusuiCmdToolbarPause,
+                                                        ETrue );
                 }
             break;
             }
@@ -628,6 +637,9 @@ void CMusUiClipSharingController::HandleCommandL(TInt aCommand)
                 {
                 iEventObserver.ShowNaviPaneIconL( EMusUiNaviIconPause );
                 PauseL();
+                iSharingObserver.ReplaceToolbarCommand( EMusuiCmdToolbarUnPause,
+                		                                EMusuiCmdToolbarPause,
+                                                        ETrue );
                 }
             break;
             }

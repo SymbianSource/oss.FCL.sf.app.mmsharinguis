@@ -105,6 +105,11 @@ public:	// new functions
      * or menu 
      */
     TBool BrightnessSelected();
+    
+    /**
+     * Reset brightness and zoom selected value  
+     */    
+    void ResetSelectedFlags();
 
     void LevelIndicatorDismissed();
     TBool ToolbarZoomSelected();

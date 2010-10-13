@@ -300,8 +300,6 @@ void CMusUiReceiveView::DynInitToolbarL( TInt aResourceId,
         {
         aToolbar->SetFocusedItemL( EMusuiCmdToolbarFullScreen );
         }
-		
-    Toolbar()->RemoveItem( EMusuiCmdToolbarBlank );
     
     // Last generic base class functionality
     CMusUiGeneralView::DynInitToolbarL( aResourceId, aToolbar );
@@ -474,7 +472,6 @@ void CMusUiReceiveView::DoActivateL( const TVwsViewId& aPrevViewId,
                                                      *this, 
                                                      videoRect );
         }
-    iBackgroundContainer->SetUiEventController( EventController() );
 
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiReceiveView::DoActivateL" );
     }

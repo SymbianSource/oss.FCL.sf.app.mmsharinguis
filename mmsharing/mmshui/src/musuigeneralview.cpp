@@ -41,7 +41,7 @@
 #include <AknIncallBubbleNotify.h>
 #include <featmgr.h>
 
-const TInt KBackgroundIntervalForClose = 30 * 1000 * 1000; // 30s
+const TInt KBackgroundIntervalForClose = 10 * 1000 * 1000; // 10s
 const TInt KMusFgBgEventFiltering = 200 * 1000; // 200 ms
 
 // -----------------------------------------------------------------------------
@@ -234,12 +234,6 @@ void CMusUiGeneralView::DynInitToolbarL( TInt /*aResourceId*/,
                         ETrue,
                         ETrue );
     
-    Toolbar()->HideItem( EventControllerL().IsMicMutedL() ?
-							EMusuiCmdToolbarUnmute :
-							EMusuiCmdToolbarMute,
-						EFalse,
-						ETrue );
-    
     TBool loudSpeakerEnabled( EventControllerL().IsLoudSpeakerEnabled() );
       
     Toolbar()->HideItem( loudSpeakerEnabled ?
@@ -248,12 +242,18 @@ void CMusUiGeneralView::DynInitToolbarL( TInt /*aResourceId*/,
                          ETrue,
                          ETrue );
     
-    Toolbar()->HideItem( loudSpeakerEnabled ?
-							EMusuiCmdToolbarSpeakerOff :
-							EMusuiCmdToolbarSpeakerOn,
-						EFalse,
-						ETrue );
-      
+    // Dim audio routing button if audio routing cannot be changed
+    // or when some button is selected
+    TBool dimAudioRouting( iToolbarItemSelected || 
+                           !EventControllerL().AudioRoutingCanBeChanged() );
+                                                 
+    Toolbar()->SetItemDimmed( loudSpeakerEnabled ?
+                                    EMusuiCmdToolbarSpeakerOff :
+                                    EMusuiCmdToolbarSpeakerOn,
+                              dimAudioRouting,
+                              ETrue );                 
+    
+    
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiGeneralView::DynInitToolbarL" );
     }
 

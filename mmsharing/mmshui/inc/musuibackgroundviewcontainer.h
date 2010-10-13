@@ -23,7 +23,6 @@
 #include <coecntrl.h>                // Control base class
 
 class MAknsControlContext;
-class CMusUiEventController;
 
 /**
  * This class handles ordinal position two plain window.
@@ -70,11 +69,6 @@ public:
      */ 
     void UpdateOrdinalPositionValue( TBool aUp );
     
-     /**
-     * Sets the event controller
-     */ 
-    void SetUiEventController( CMusUiEventController* aController );
-    
 private: // Construction
     
     CMusUiBackgroundViewContainer( TInt aOrdinalPosition );
@@ -87,14 +81,6 @@ private: // from base class CCoeControl
     * From CoeControl,SizeChanged.
     */
     void SizeChanged();
-    
-    /**
-     * Handles a change to the application's resources which are shared
-     * across the environment.
-     *
-     * @param aType The type of resources that have changed.
-     */
-    void HandleResourceChange( TInt aType );
 
     /**
      * Returns the number of control contained by this class.
@@ -159,11 +145,6 @@ private: // data
     * Ordinal Postion for windows group
     */
     TInt iOrdinalPosition;
-
-    /**
-    * Event controller
-    */    
-    CMusUiEventController* iController;
 
     };
 

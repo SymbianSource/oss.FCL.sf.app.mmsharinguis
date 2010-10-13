@@ -18,7 +18,6 @@
 #include "musuibackgroundviewcontainer.h"
 #include "musuiappui.h"
 #include "muslogger.h" // debug logging
-#include "musuieventcontroller.h"
 
 #include <AknsControlContext.h>
 #include <AknsBasicBackgroundControlContext.h>
@@ -55,8 +54,7 @@ CMusUiBackgroundViewContainer* CMusUiBackgroundViewContainer::NewL(
 // -----------------------------------------------------------------------------
 //
 CMusUiBackgroundViewContainer::CMusUiBackgroundViewContainer( 
-    TInt aOrdinalPosition ) : iOrdinalPosition( aOrdinalPosition ),
-            iController( NULL )
+    TInt aOrdinalPosition ) : iOrdinalPosition( aOrdinalPosition )
     {
     }
 
@@ -174,16 +172,6 @@ void CMusUiBackgroundViewContainer::UpdateOrdinalPositionValue( TBool aUp )
 
 
 // -----------------------------------------------------------------------------
-// Sets the event controller
-// -----------------------------------------------------------------------------
-//
-void CMusUiBackgroundViewContainer::SetUiEventController( CMusUiEventController* aController )
-	{
-	iController = aController;
-	}
-
-
-// -----------------------------------------------------------------------------
 // Called by framework when the view size is changed
 // -----------------------------------------------------------------------------
 //
@@ -199,33 +187,6 @@ void CMusUiBackgroundViewContainer::SizeChanged()
     SetOrdinalPosition();
     //MakeVisible( EFalse );
     MUS_LOG( "mus: [MUSUI ]  <- CMusUiBackgroundViewContainer::SizeChanged()" );
-    }
-
-
-// -----------------------------------------------------------------------------
-// From base class CCoeControl.  Handles a change to the application's
-// resources which are shared across the environment.
-// -----------------------------------------------------------------------------
-//
-void CMusUiBackgroundViewContainer::HandleResourceChange( TInt aType )
-    {
-    MUS_LOG( "mus: [MUSUI ]  -> CMusUiBackgroundViewContainer::HandleResourceChange" );
-    CCoeControl::HandleResourceChange( aType );
-    
-    TBool displayEnabled( EFalse );
-    if ( iController )
-        {
-        TRAP_IGNORE( displayEnabled = iController->IsDisplayEnabledL() )
-        }
-        
-    if ( aType == KEikDynamicLayoutVariantSwitch && !displayEnabled )
-        {
-        TRect mainPaneRect;
-        AknLayoutUtils::LayoutMetricsRect( AknLayoutUtils::EMainPane,
-            mainPaneRect );
-        SetRect( mainPaneRect );
-        }
-    MUS_LOG( "mus: [MUSUI ]  <- CMusUiBackgroundViewContainer::HandleResourceChange" );
     }
 
 

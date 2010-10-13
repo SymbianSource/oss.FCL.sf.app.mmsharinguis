@@ -39,8 +39,6 @@
 #include <pathinfo.h>
 #include <CDirectoryLocalizer.h>
 
-_LIT16( KMusUSign, "%U" );
-
 
 using namespace NMusSessionApi;
 
@@ -403,31 +401,9 @@ void CMusUiSendController::SessionRejected()
     {
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiSendController::SessionRejected" );
     DismissWaitDialog();
-    
-    delete iDialogPrompt;
-    iDialogPrompt = NULL;
-    
-    TRAP_IGNORE ( iDialogPrompt = StringLoader::LoadL(
-            		      R_MUS_LIVE_SHARING_VIEW_NOTE_CONNECTION_REJECTED ) );
-    
-    if ( iDialogPrompt->Find( KMusUSign ) >= KErrNone )
-		{
-        delete iDialogPrompt;
-        iDialogPrompt = NULL;
-        TRAP_IGNORE ( iDialogPrompt = StringLoader::LoadL(
-    				      R_MUS_LIVE_SHARING_VIEW_NOTE_CONNECTION_REJECTED,
-    					  MusTelNumberValue() ) );
-		}
-	else
-		{
-	    // NOP
-		}
-    
-    if ( iDialogPrompt )
-		{
-		TRAP_IGNORE (
-				MusUiDialogUtil::ShowInformationDialogL( *iDialogPrompt ) );
-		}
+    TRAP_IGNORE (
+            MusUiDialogUtil::ShowInformationDialogL( 
+                        R_MUS_LIVE_SHARING_VIEW_NOTE_CONNECTION_REJECTED ) );
     
     TRAP_IGNORE( iCallbackService->AsyncEventL( EMusUiAsyncHandleExit ) );
        
@@ -664,7 +640,7 @@ void CMusUiSendController::ExitProcedureL( TBool aUserAcceptance )
     MUS_LOG( "mus: [MUSUI ]  -> CMusUiSendController::ExitProcedureL" );
     
     DismissWaitDialog();
-    iEventObserver.SetExitingFlag();
+    
     switch ( iShutdownState )
         {
         case EMusUiShutdownStarted:

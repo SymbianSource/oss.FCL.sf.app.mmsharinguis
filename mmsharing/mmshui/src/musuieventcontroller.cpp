@@ -964,6 +964,8 @@ void CMusUiEventController::HandleCommandL( TInt aCommand )
             EngineSession()->VolumeUpL();
             // Status pane update will be done later. When we get 
 			// VolumeChanged() callback
+            iSharingObserver.ActivateVolumeControlL( 
+                                            EngineSession()->VolumeL() );
             break;
             }
         case EMusuiCmdViewVolumeDown:
@@ -973,6 +975,8 @@ void CMusUiEventController::HandleCommandL( TInt aCommand )
             EngineSession()->VolumeDownL();
             // Status pane update will be done later. When we get 
 			// VolumeChanged() callback
+            iSharingObserver.ActivateVolumeControlL( 
+                                            EngineSession()->VolumeL() );            
             break;
             }
         case EMusuiCmdViewVolumeChanged:

@@ -1587,24 +1587,18 @@ void UT_CMusEngClipSession::UT_IsRewindFromEndL()
 
     // Disapling stream
     videoOut->iState = CMceMediaStream::EDisabled;
-    EUNIT_ASSERT( !iClipSession->IsRewindFromEnd() )
+    EUNIT_ASSERT( iClipSession->IsRewindFromEnd() )
     
     iClipSession->iPause = ETrue;
     EUNIT_ASSERT( !iClipSession->IsRewindFromEnd() )
     
     iClipSession->iPause = EFalse;
-    EUNIT_ASSERT(!iClipSession->IsRewindFromEnd() )
-
+    EUNIT_ASSERT( iClipSession->IsRewindFromEnd() )
+       
     // and finaly try with "real" end of clip 
     (static_cast<CMceFileSource*> (videoOut->Source()))->iPosition = 0;
     (static_cast<CMceFileSource*> (videoOut->Source()))->iDuration = 111;
-    EUNIT_ASSERT( !iClipSession->IsRewindFromEnd() )
-
-    (static_cast<CMceFileSource*> (videoOut->Source()))->iPosition = 111;
-    (static_cast<CMceFileSource*> (videoOut->Source()))->iDuration = 111;
-    EUNIT_ASSERT( iClipSession->IsRewindFromEnd() )
-
-    videoOut->iState = CMceMediaStream::EIdle;
+    
     EUNIT_ASSERT( !iClipSession->IsRewindFromEnd() )
     }
 
