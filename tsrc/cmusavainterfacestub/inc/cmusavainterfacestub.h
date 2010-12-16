@@ -110,6 +110,9 @@ public: //From MMusAvaObserver
     virtual void AvailabilityError(
         TAvailabilityName aName,
         TAvailabilityStatus aStatus );
+
+    virtual void  AvailabilitiesAbleToShowIndicator();
+
     virtual void SetSettingsObserver( MMusAvaSettingsObserver& aObserver );
 
 private:

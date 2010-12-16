@@ -210,6 +210,11 @@ void CMusAvaInterface2::AvailabilityChanged(
 		
 	}
 
+void CMusAvaInterface2::AvailabilitiesAbleToShowIndicator()
+	{
+	
+	}
+
 void CMusAvaInterface2::AvailabilityError(
         TAvailabilityName aName,
         TAvailabilityStatus aStatus )

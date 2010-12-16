@@ -73,6 +73,15 @@ SOURCE                  musmanagerserveritcutility.cpp
 SOURCE                  musmanagerservermain.cpp
 SOURCE                  musmanagerserversession.cpp
 
+USERINCLUDE             ../../../../../tsrc/mmusavasettingsstub/inc
+USERINCLUDE             ../../../../../tsrc/cmusavainterfacestub/inc
+USERINCLUDE             ../../../../../tsrc/musavaailabilitystub/inc
+USERINCLUDE             ../../../../mmshavailability/tsrc/ut_availability/stubs/inc
+USERINCLUDE             ../../../../../tsrc/ututils/inc
+USERINCLUDE             ../../../../../tsrc/propertystub/inc
+USERINCLUDE             ../../../../../tsrc/Apastub/inc
+
+
 USERINCLUDE             ../inc
 USERINCLUDE             ../../../../mmshavailability/inc
 USERINCLUDE             ../../../inc
@@ -81,13 +90,6 @@ USERINCLUDE             ../../../../mmshindicator/inc
 USERINCLUDE             ../../../../inc
 USERINCLUDE             ../../../../../inc
 
-USERINCLUDE             ../../../../../tsrc/mmusavasettingsstub/inc
-USERINCLUDE             ../../../../../tsrc/cmusavainterfacestub/inc
-USERINCLUDE             ../../../../../tsrc/musavaailabilitystub/inc
-USERINCLUDE             ../../../../mmshavailability/tsrc/ut_availability/stubs/inc
-USERINCLUDE             ../../../../../tsrc/ututils/inc
-USERINCLUDE             ../../../../../tsrc/propertystub/inc
-USERINCLUDE             ../../../../../tsrc/Apastub/inc
 
 SYSTEMINCLUDE           ../../../../../tsrc/propertystub/inc
 SYSTEMINCLUDE           ../../../../../tsrc/Apastub/inc

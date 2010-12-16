@@ -42,7 +42,7 @@
 #include <featmgr.h>
 
 const TInt KBackgroundIntervalForClose = 10 * 1000 * 1000; // 10s
-const TInt KMusFgBgEventFiltering = 200 * 1000; // 200 ms
+const TInt KMusFgBgEventFiltering = 500 * 1000; // 500 ms
 
 // -----------------------------------------------------------------------------
 // EPOC two-phased constructor
